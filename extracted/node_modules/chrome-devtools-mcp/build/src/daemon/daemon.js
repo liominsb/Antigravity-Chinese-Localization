@@ -1,0 +1,203 @@
+#!/usr/bin/env node
+/**
+ * @license
+ * Copyright 2026 Google LLC
+ * SPDX-License-Identifier: Apache-2.0
+ */
+import fs from 'node:fs';
+import { createServer } from 'node:net';
+import path from 'node:path';
+import process from 'node:process';
+import { logger } from '../logger.js';
+import { Client, PipeTransport, StdioClientTransport, } from '../third_party/index.js';
+import { VERSION } from '../version.js';
+import { DAEMON_CLIENT_NAME, getPidFilePath, getSocketPath, INDEX_SCRIPT_PATH, IS_WINDOWS, isDaemonRunning, } from './utils.js';
+const sessionId = process.env.CHROME_DEVTOOLS_MCP_SESSION_ID || '';
+logger(`Daemon sessionId: ${sessionId}`);
+if (isDaemonRunning(sessionId)) {
+    logger('Another daemon process is running.');
+    process.exit(1);
+}
+const pidFilePath = getPidFilePath(sessionId);
+fs.mkdirSync(path.dirname(pidFilePath), {
+    recursive: true,
+});
+fs.writeFileSync(pidFilePath, process.pid.toString());
+logger(`Writing ${process.pid.toString()} to ${pidFilePath}`);
+const socketPath = getSocketPath(sessionId);
+const startDate = new Date();
+const mcpServerArgs = process.argv.slice(2);
+let mcpClient = null;
+let mcpTransport = null;
+let server = null;
+async function setupMCPClient() {
+    console.log('Setting up MCP client connection...');
+    // Create stdio transport for chrome-devtools-mcp
+    mcpTransport = new StdioClientTransport({
+        command: process.execPath,
+        args: [INDEX_SCRIPT_PATH, ...mcpServerArgs],
+        env: process.env,
+    });
+    mcpClient = new Client({
+        name: DAEMON_CLIENT_NAME,
+        version: VERSION,
+    }, {
+        capabilities: {},
+    });
+    await mcpClient.connect(mcpTransport);
+    console.log('MCP client connected');
+}
+async function handleRequest(msg) {
+    try {
+        if (msg.method === 'invoke_tool') {
+            if (!mcpClient) {
+                throw new Error('MCP client not initialized');
+            }
+            const { tool, args } = msg;
+            const result = (await mcpClient.callTool({
+                name: tool,
+                arguments: args || {},
+            }));
+            return {
+                success: true,
+                result: JSON.stringify(result),
+            };
+        }
+        else if (msg.method === 'stop') {
+            // Ensure we are not interrupting in-progress starting.
+            await started;
+            // Trigger cleanup asynchronously.
+            setImmediate(() => {
+                void cleanup();
+            });
+            return {
+                success: true,
+                message: 'stopping',
+            };
+        }
+        else if (msg.method === 'status') {
+            return {
+                success: true,
+                result: JSON.stringify({
+                    pid: process.pid,
+                    socketPath,
+                    startDate: startDate.toISOString(),
+                    version: VERSION,
+                    args: mcpServerArgs,
+                }),
+            };
+        }
+        {
+            return {
+                success: false,
+                error: `Unknown method: ${JSON.stringify(msg, null, 2)}`,
+            };
+        }
+    }
+    catch (error) {
+        const errorMessage = error instanceof Error ? error.message : String(error);
+        return {
+            success: false,
+            error: errorMessage,
+        };
+    }
+}
+async function startSocketServer() {
+    // Remove existing socket file if it exists (only on non-Windows)
+    if (!IS_WINDOWS) {
+        try {
+            fs.unlinkSync(socketPath);
+        }
+        catch {
+            // ignore errors.
+        }
+    }
+    return await new Promise((resolve, reject) => {
+        server = createServer(socket => {
+            const transport = new PipeTransport(socket, socket);
+            transport.onmessage = async (message) => {
+                logger('onmessage', message);
+                const response = await handleRequest(JSON.parse(message));
+                transport.send(JSON.stringify(response));
+                socket.end();
+            };
+            socket.on('error', error => {
+                logger('Socket error:', error);
+            });
+        });
+        server.listen({
+            path: socketPath,
+            readableAll: false,
+            writableAll: false,
+        }, async () => {
+            console.log(`Daemon server listening on ${socketPath}`);
+            try {
+                // Setup MCP client
+                await setupMCPClient();
+                resolve();
+            }
+            catch (err) {
+                reject(err);
+            }
+        });
+        server.on('error', error => {
+            logger('Server error:', error);
+            reject(error);
+        });
+    });
+}
+async function cleanup() {
+    console.log('Cleaning up daemon...');
+    try {
+        await mcpClient?.close();
+    }
+    catch (error) {
+        logger('Error closing MCP client:', error);
+    }
+    try {
+        await mcpTransport?.close();
+    }
+    catch (error) {
+        logger('Error closing MCP transport:', error);
+    }
+    if (server) {
+        await new Promise(resolve => {
+            server.close(() => resolve());
+        });
+    }
+    if (!IS_WINDOWS) {
+        try {
+            fs.unlinkSync(socketPath);
+        }
+        catch {
+            // ignore errors
+        }
+    }
+    logger(`unlinking ${pidFilePath}`);
+    if (fs.existsSync(pidFilePath)) {
+        fs.unlinkSync(pidFilePath);
+    }
+    process.exit(0);
+}
+// Handle shutdown signals
+process.on('SIGTERM', () => {
+    void cleanup();
+});
+process.on('SIGINT', () => {
+    void cleanup();
+});
+process.on('SIGHUP', () => {
+    void cleanup();
+});
+// Handle uncaught errors
+process.on('uncaughtException', error => {
+    logger('Uncaught exception:', error);
+});
+process.on('unhandledRejection', error => {
+    logger('Unhandled rejection:', error);
+});
+// Start the server
+const started = startSocketServer().catch(error => {
+    logger('Failed to start daemon server:', error);
+    process.exit(1);
+});

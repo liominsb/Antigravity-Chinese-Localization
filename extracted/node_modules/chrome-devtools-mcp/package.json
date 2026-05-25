@@ -1,0 +1,61 @@
+{
+  "name": "chrome-devtools-mcp",
+  "version": "0.23.0",
+  "description": "MCP server for Chrome DevTools",
+  "type": "module",
+  "bin": {
+    "chrome-devtools-mcp": "./build/src/bin/chrome-devtools-mcp.js",
+    "chrome-devtools": "./build/src/bin/chrome-devtools.js"
+  },
+  "main": "./build/src/index.js",
+  "files": [
+    "build/src",
+    "LICENSE",
+    "!*.tsbuildinfo"
+  ],
+  "repository": "ChromeDevTools/chrome-devtools-mcp",
+  "author": "Google LLC",
+  "license": "Apache-2.0",
+  "homepage": "https://github.com/ChromeDevTools/chrome-devtools-mcp#readme",
+  "mcpName": "io.github.ChromeDevTools/chrome-devtools-mcp",
+  "devDependencies": {
+    "@eslint/js": "^9.35.0",
+    "@google/genai": "^1.37.0",
+    "@modelcontextprotocol/sdk": "1.29.0",
+    "@rollup/plugin-commonjs": "^29.0.0",
+    "@rollup/plugin-json": "^6.1.0",
+    "@rollup/plugin-node-resolve": "^16.0.3",
+    "@stylistic/eslint-plugin": "^5.4.0",
+    "@types/debug": "^4.1.12",
+    "@types/filesystem": "^0.0.36",
+    "@types/node": "^25.0.0",
+    "@types/semver": "^7.7.1",
+    "@types/sinon": "^21.0.0",
+    "@types/yargs": "^17.0.33",
+    "@typescript-eslint/eslint-plugin": "^8.43.0",
+    "@typescript-eslint/parser": "^8.43.0",
+    "chrome-devtools-frontend": "1.0.1613625",
+    "core-js": "3.49.0",
+    "debug": "4.4.3",
+    "eslint": "^9.35.0",
+    "eslint-import-resolver-typescript": "^4.4.4",
+    "eslint-plugin-import": "^2.32.0",
+    "globals": "^17.0.0",
+    "lighthouse": "13.1.0",
+    "prettier": "^3.6.2",
+    "puppeteer": "24.42.0",
+    "rollup": "4.60.2",
+    "rollup-plugin-cleanup": "^3.2.1",
+    "rollup-plugin-license": "^3.6.0",
+    "semver": "^7.7.4",
+    "sinon": "^21.0.0",
+    "tiktoken": "^1.0.22",
+    "typescript": "^6.0.2",
+    "typescript-eslint": "^8.43.0",
+    "urlpattern-polyfill": "^10.1.0",
+    "yargs": "18.0.0"
+  },
+  "engines": {
+    "node": "^20.19.0 || ^22.12.0 || >=23"
+  }
+}

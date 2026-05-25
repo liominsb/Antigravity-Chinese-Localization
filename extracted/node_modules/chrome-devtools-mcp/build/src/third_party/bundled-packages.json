@@ -1,0 +1,11 @@
+{
+  "@modelcontextprotocol/sdk": "1.29.0",
+  "chrome-devtools-frontend": "1.0.1613625",
+  "core-js": "3.49.0",
+  "debug": "4.4.3",
+  "lighthouse": "13.1.0",
+  "semver": "^7.7.4",
+  "urlpattern-polyfill": "^10.1.0",
+  "yargs": "18.0.0",
+  "puppeteer-core": "24.42.0"
+}

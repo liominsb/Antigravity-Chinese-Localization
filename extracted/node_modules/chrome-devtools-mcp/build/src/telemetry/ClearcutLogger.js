@@ -1,0 +1,241 @@
+/**
+ * @license
+ * Copyright 2026 Google LLC
+ * SPDX-License-Identifier: Apache-2.0
+ */
+import process from 'node:process';
+import { DAEMON_CLIENT_NAME } from '../daemon/utils.js';
+import { logger } from '../logger.js';
+import { FilePersistence } from './persistence.js';
+import { McpClient, WatchdogMessageType, OsType, } from './types.js';
+import { WatchdogClient } from './WatchdogClient.js';
+const MS_PER_DAY = 24 * 60 * 60 * 1000;
+export const PARAM_BLOCKLIST = new Set(['uid', 'reqid', 'msgid']);
+const SUPPORTED_ZOD_TYPES = [
+    'ZodString',
+    'ZodNumber',
+    'ZodBoolean',
+    'ZodArray',
+    'ZodEnum',
+];
+function isZodType(type) {
+    return SUPPORTED_ZOD_TYPES.includes(type);
+}
+export function getZodType(zodType) {
+    const def = zodType._def;
+    const typeName = def.typeName;
+    if (typeName === 'ZodOptional' ||
+        typeName === 'ZodDefault' ||
+        typeName === 'ZodNullable') {
+        return getZodType(def.innerType);
+    }
+    if (typeName === 'ZodEffects') {
+        return getZodType(def.schema);
+    }
+    if (isZodType(typeName)) {
+        return typeName;
+    }
+    throw new Error(`Unsupported zod type for tool parameter: ${typeName}`);
+}
+export function transformArgName(zodType, name) {
+    const snakeCaseName = name.replace(/[A-Z]/g, letter => `_${letter.toLowerCase()}`);
+    if (zodType === 'ZodString') {
+        return `${snakeCaseName}_length`;
+    }
+    else if (zodType === 'ZodArray') {
+        return `${snakeCaseName}_count`;
+    }
+    else {
+        return snakeCaseName;
+    }
+}
+export function transformArgType(zodType) {
+    if (zodType === 'ZodString' || zodType === 'ZodArray') {
+        return 'number';
+    }
+    switch (zodType) {
+        case 'ZodNumber':
+            return 'number';
+        case 'ZodBoolean':
+            return 'boolean';
+        case 'ZodEnum':
+            return 'enum';
+        default:
+            throw new Error(`Unsupported zod type for tool parameter: ${zodType}`);
+    }
+}
+function transformValue(zodType, value) {
+    if (zodType === 'ZodString') {
+        return value.length;
+    }
+    else if (zodType === 'ZodArray') {
+        return value.length;
+    }
+    else {
+        return value;
+    }
+}
+function hasEquivalentType(zodType, value) {
+    if (zodType === 'ZodString') {
+        return typeof value === 'string';
+    }
+    else if (zodType === 'ZodArray') {
+        return Array.isArray(value);
+    }
+    else if (zodType === 'ZodNumber') {
+        return typeof value === 'number';
+    }
+    else if (zodType === 'ZodBoolean') {
+        return typeof value === 'boolean';
+    }
+    else if (zodType === 'ZodEnum') {
+        return (typeof value === 'string' ||
+            typeof value === 'number' ||
+            typeof value === 'boolean');
+    }
+    else {
+        return false;
+    }
+}
+export function sanitizeParams(params, schema) {
+    const transformed = {};
+    for (const [name, value] of Object.entries(params)) {
+        if (PARAM_BLOCKLIST.has(name)) {
+            continue;
+        }
+        const zodType = getZodType(schema[name]);
+        if (!hasEquivalentType(zodType, value)) {
+            throw new Error(`parameter ${name} has type ${zodType} but value ${value} is not of equivalent type`);
+        }
+        const transformedName = transformArgName(zodType, name);
+        const transformedValue = transformValue(zodType, value);
+        transformed[transformedName] = transformedValue;
+    }
+    return transformed;
+}
+function detectOsType() {
+    switch (process.platform) {
+        case 'win32':
+            return OsType.OS_TYPE_WINDOWS;
+        case 'darwin':
+            return OsType.OS_TYPE_MACOS;
+        case 'linux':
+            return OsType.OS_TYPE_LINUX;
+        default:
+            return OsType.OS_TYPE_UNSPECIFIED;
+    }
+}
+export class ClearcutLogger {
+    #persistence;
+    #watchdog;
+    #mcpClient;
+    constructor(options) {
+        this.#persistence = options.persistence ?? new FilePersistence();
+        this.#watchdog =
+            options.watchdogClient ??
+                new WatchdogClient({
+                    parentPid: process.pid,
+                    appVersion: options.appVersion,
+                    osType: detectOsType(),
+                    logFile: options.logFile,
+                    clearcutEndpoint: options.clearcutEndpoint,
+                    clearcutForceFlushIntervalMs: options.clearcutForceFlushIntervalMs,
+                    clearcutIncludePidHeader: options.clearcutIncludePidHeader,
+                });
+        this.#mcpClient = McpClient.MCP_CLIENT_UNSPECIFIED;
+    }
+    setClientName(clientName) {
+        const lowerName = clientName.toLowerCase();
+        if (lowerName.includes('claude')) {
+            this.#mcpClient = McpClient.MCP_CLIENT_CLAUDE_CODE;
+        }
+        else if (lowerName.includes('gemini')) {
+            this.#mcpClient = McpClient.MCP_CLIENT_GEMINI_CLI;
+        }
+        else if (clientName === DAEMON_CLIENT_NAME) {
+            this.#mcpClient = McpClient.MCP_CLIENT_DT_MCP_CLI;
+        }
+        else if (lowerName.includes('openclaw')) {
+            this.#mcpClient = McpClient.MCP_CLIENT_OPENCLAW;
+        }
+        else if (lowerName.includes('codex')) {
+            this.#mcpClient = McpClient.MCP_CLIENT_CODEX;
+        }
+        else if (lowerName.includes('antigravity')) {
+            this.#mcpClient = McpClient.MCP_CLIENT_ANTIGRAVITY;
+        }
+        else {
+            this.#mcpClient = McpClient.MCP_CLIENT_OTHER;
+        }
+    }
+    async logToolInvocation(args) {
+        const tool_invocation = {
+            tool_name: args.toolName,
+            success: args.success,
+            latency_ms: args.latencyMs,
+        };
+        if (Object.keys(args.params).length > 0) {
+            tool_invocation.tool_params = {
+                [`${args.toolName}_params`]: sanitizeParams(args.params, args.schema),
+            };
+        }
+        this.#watchdog.send({
+            type: WatchdogMessageType.LOG_EVENT,
+            payload: {
+                mcp_client: this.#mcpClient,
+                tool_invocation: tool_invocation,
+            },
+        });
+    }
+    async logServerStart(flagUsage) {
+        this.#watchdog.send({
+            type: WatchdogMessageType.LOG_EVENT,
+            payload: {
+                mcp_client: this.#mcpClient,
+                server_start: {
+                    flag_usage: flagUsage,
+                },
+            },
+        });
+    }
+    async logDailyActiveIfNeeded() {
+        try {
+            const state = await this.#persistence.loadState();
+            if (this.#shouldLogDailyActive(state)) {
+                let daysSince = -1;
+                if (state.lastActive) {
+                    const lastActiveDate = new Date(state.lastActive);
+                    const now = new Date();
+                    const diffTime = Math.abs(now.getTime() - lastActiveDate.getTime());
+                    daysSince = Math.ceil(diffTime / MS_PER_DAY);
+                }
+                this.#watchdog.send({
+                    type: WatchdogMessageType.LOG_EVENT,
+                    payload: {
+                        mcp_client: this.#mcpClient,
+                        daily_active: {
+                            days_since_last_active: daysSince,
+                        },
+                    },
+                });
+                state.lastActive = new Date().toISOString();
+                await this.#persistence.saveState(state);
+            }
+        }
+        catch (err) {
+            logger('Error in logDailyActiveIfNeeded:', err);
+        }
+    }
+    #shouldLogDailyActive(state) {
+        if (!state.lastActive) {
+            return true;
+        }
+        const lastActiveDate = new Date(state.lastActive);
+        const now = new Date();
+        // Compare UTC dates
+        const isSameDay = lastActiveDate.getUTCFullYear() === now.getUTCFullYear() &&
+            lastActiveDate.getUTCMonth() === now.getUTCMonth() &&
+            lastActiveDate.getUTCDate() === now.getUTCDate();
+        return !isSameDay;
+    }
+}

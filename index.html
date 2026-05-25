@@ -1,0 +1,603 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Antigravity 2.0 一键汉化控制中心</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700;800&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+  <style>
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+    }
+
+    :root {
+      --bg-gradient-1: #0f0c20;
+      --bg-gradient-2: #06060c;
+      --accent: #7c4dff;
+      --accent-glow: rgba(124, 77, 255, 0.4);
+      --success: #00e676;
+      --success-glow: rgba(0, 230, 118, 0.4);
+      --warning: #ffb300;
+      --error: #ff1744;
+      --text-main: #f5f6fa;
+      --text-muted: #8b9bb4;
+      --panel-bg: rgba(20, 20, 35, 0.6);
+      --border-color: rgba(255, 255, 255, 0.08);
+    }
+
+    body {
+      font-family: 'Outfit', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+      background: linear-gradient(135deg, var(--bg-gradient-1), var(--bg-gradient-2));
+      color: var(--text-main);
+      min-height: 100vh;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      padding: 30px;
+      overflow-x: hidden;
+      position: relative;
+    }
+
+    /* Ambient background glows */
+    body::before {
+      content: '';
+      position: absolute;
+      width: 400px;
+      height: 400px;
+      background: radial-gradient(circle, var(--accent-glow) 0%, transparent 70%);
+      top: -100px;
+      left: -100px;
+      z-index: 0;
+      pointer-events: none;
+    }
+
+    body::after {
+      content: '';
+      position: absolute;
+      width: 500px;
+      height: 500px;
+      background: radial-gradient(circle, rgba(0, 230, 118, 0.15) 0%, transparent 70%);
+      bottom: -150px;
+      right: -100px;
+      z-index: 0;
+      pointer-events: none;
+    }
+
+    .main-container {
+      width: 100%;
+      max-width: 900px;
+      background: var(--panel-bg);
+      backdrop-filter: blur(25px);
+      -webkit-backdrop-filter: blur(25px);
+      border: 1px solid var(--border-color);
+      border-radius: 24px;
+      padding: 40px;
+      box-shadow: 0 20px 50px rgba(0, 0, 0, 0.4), inset 0 1px 0 rgba(255, 255, 255, 0.1);
+      z-index: 1;
+      position: relative;
+      animation: slideIn 0.8s cubic-bezier(0.16, 1, 0.3, 1);
+    }
+
+    @keyframes slideIn {
+      from { opacity: 0; transform: translateY(30px); }
+      to { opacity: 1; transform: translateY(0); }
+    }
+
+    /* Header */
+    header {
+      text-align: center;
+      margin-bottom: 35px;
+    }
+
+    .logo-area {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      width: 70px;
+      height: 70px;
+      border-radius: 20px;
+      background: linear-gradient(135deg, var(--accent), #b388ff);
+      box-shadow: 0 8px 24px var(--accent-glow);
+      margin-bottom: 18px;
+      position: relative;
+      animation: float 4s ease-in-out infinite;
+    }
+
+    @keyframes float {
+      0%, 100% { transform: translateY(0); }
+      50% { transform: translateY(-8px); }
+    }
+
+    .logo-area svg {
+      width: 36px;
+      height: 36px;
+      fill: #fff;
+    }
+
+    h1 {
+      font-size: 2.2rem;
+      font-weight: 800;
+      letter-spacing: -0.5px;
+      background: linear-gradient(120deg, #fff 30%, var(--text-muted) 100%);
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+      margin-bottom: 6px;
+    }
+
+    .subtitle {
+      color: var(--text-muted);
+      font-size: 1.05rem;
+      font-weight: 300;
+    }
+
+    /* Grid of statuses */
+    .status-grid {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 20px;
+      margin-bottom: 35px;
+    }
+
+    .status-card {
+      background: rgba(255, 255, 255, 0.03);
+      border: 1px solid rgba(255, 255, 255, 0.05);
+      border-radius: 16px;
+      padding: 20px;
+      display: flex;
+      flex-direction: column;
+      justify-content: space-between;
+      transition: all 0.3s ease;
+    }
+
+    .status-card:hover {
+      background: rgba(255, 255, 255, 0.06);
+      border-color: rgba(255, 255, 255, 0.1);
+      transform: translateY(-2px);
+    }
+
+    .status-title {
+      font-size: 0.85rem;
+      text-transform: uppercase;
+      letter-spacing: 1px;
+      color: var(--text-muted);
+      margin-bottom: 12px;
+    }
+
+    .status-value {
+      font-size: 1.25rem;
+      font-weight: 600;
+      display: flex;
+      align-items: center;
+      gap: 10px;
+    }
+
+    .dot {
+      width: 10px;
+      height: 10px;
+      border-radius: 50%;
+      display: inline-block;
+    }
+
+    .dot.green {
+      background-color: var(--success);
+      box-shadow: 0 0 10px var(--success-glow);
+      animation: pulseGreen 2s infinite;
+    }
+
+    .dot.amber {
+      background-color: var(--warning);
+      box-shadow: 0 0 10px rgba(255, 179, 0, 0.4);
+      animation: pulseAmber 2s infinite;
+    }
+
+    .dot.red {
+      background-color: var(--error);
+      box-shadow: 0 0 10px rgba(255, 23, 68, 0.4);
+    }
+
+    @keyframes pulseGreen {
+      0%, 100% { transform: scale(1); opacity: 1; }
+      50% { transform: scale(1.2); opacity: 0.6; }
+    }
+
+    @keyframes pulseAmber {
+      0%, 100% { transform: scale(1); opacity: 1; }
+      50% { transform: scale(1.2); opacity: 0.6; }
+    }
+
+    /* Actions Panel */
+    .actions-panel {
+      display: flex;
+      flex-direction: column;
+      gap: 20px;
+      margin-bottom: 35px;
+    }
+
+    .primary-btn {
+      width: 100%;
+      background: linear-gradient(135deg, var(--accent), #b388ff);
+      color: #fff;
+      border: none;
+      font-size: 1.2rem;
+      font-weight: 700;
+      padding: 18px 30px;
+      border-radius: 16px;
+      cursor: pointer;
+      box-shadow: 0 8px 30px var(--accent-glow);
+      transition: all 0.3s cubic-bezier(0.16, 1, 0.3, 1);
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      gap: 12px;
+    }
+
+    .primary-btn:hover:not(:disabled) {
+      transform: translateY(-3px);
+      box-shadow: 0 12px 35px rgba(124, 77, 255, 0.6);
+      filter: brightness(1.1);
+    }
+
+    .primary-btn:active:not(:disabled) {
+      transform: translateY(-1px);
+    }
+
+    .primary-btn:disabled {
+      background: rgba(255, 255, 255, 0.1);
+      color: rgba(255, 255, 255, 0.3);
+      cursor: not-allowed;
+      box-shadow: none;
+    }
+
+    .secondary-actions {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 15px;
+    }
+
+    .sec-btn {
+      background: rgba(255, 255, 255, 0.05);
+      border: 1px solid rgba(255, 255, 255, 0.08);
+      color: var(--text-main);
+      font-size: 0.95rem;
+      font-weight: 600;
+      padding: 14px 20px;
+      border-radius: 14px;
+      cursor: pointer;
+      transition: all 0.2s ease;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 8px;
+    }
+
+    .sec-btn:hover:not(:disabled) {
+      background: rgba(255, 255, 255, 0.1);
+      border-color: rgba(255, 255, 255, 0.15);
+      transform: translateY(-1px);
+    }
+
+    .sec-btn:disabled {
+      opacity: 0.4;
+      cursor: not-allowed;
+    }
+
+    /* Terminal Console */
+    .console-panel {
+      background: rgba(0, 0, 0, 0.4);
+      border: 1px solid rgba(255, 255, 255, 0.05);
+      border-radius: 16px;
+      padding: 24px;
+      position: relative;
+    }
+
+    .console-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 14px;
+      border-bottom: 1px solid rgba(255, 255, 255, 0.06);
+      padding-bottom: 10px;
+    }
+
+    .console-title {
+      font-size: 0.85rem;
+      text-transform: uppercase;
+      letter-spacing: 1px;
+      color: var(--text-muted);
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+
+    .console-dots {
+      display: flex;
+      gap: 6px;
+    }
+
+    .console-dot {
+      width: 10px;
+      height: 10px;
+      border-radius: 50%;
+      background: rgba(255, 255, 255, 0.15);
+    }
+
+    .console-body {
+      font-family: 'JetBrains Mono', 'Courier New', Courier, monospace;
+      font-size: 0.85rem;
+      color: #8be9fd;
+      height: 200px;
+      overflow-y: auto;
+      display: flex;
+      flex-direction: column;
+      gap: 6px;
+      scroll-behavior: smooth;
+    }
+
+    .console-line {
+      line-height: 1.5;
+      word-break: break-all;
+    }
+
+    .console-line.success { color: var(--success); }
+    .console-line.error { color: var(--error); }
+    .console-line.info { color: var(--text-muted); }
+
+    /* Custom Scrollbar */
+    .console-body::-webkit-scrollbar {
+      width: 6px;
+    }
+    .console-body::-webkit-scrollbar-track {
+      background: transparent;
+    }
+    .console-body::-webkit-scrollbar-thumb {
+      background: rgba(255, 255, 255, 0.1);
+      border-radius: 3px;
+    }
+    .console-body::-webkit-scrollbar-thumb:hover {
+      background: rgba(255, 255, 255, 0.2);
+    }
+
+    /* Modal / Feedback overlay */
+    .loader-ring {
+      display: inline-block;
+      width: 24px;
+      height: 24px;
+      border: 3px solid rgba(255, 255, 255, 0.3);
+      border-radius: 50%;
+      border-top-color: #fff;
+      animation: spin 1s ease-in-out infinite;
+    }
+
+    @keyframes spin {
+      to { transform: rotate(360deg); }
+    }
+  </style>
+</head>
+<body>
+
+  <div class="main-container">
+    <header>
+      <div class="logo-area">
+        <svg viewBox="0 0 24 24">
+          <path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm1 17h-2v-2h2v2zm2.07-7.75l-.9.92C13.45 12.9 13 13.5 13 15h-2v-.5c0-1.1.45-2.1 1.17-2.83l1.24-1.26c.37-.36.59-.86.59-1.41 0-1.1-.9-2-2-2s-2 .9-2 2H7c0-2.76 2.24-5 5-5s5 2.24 5 5c0 1.04-.42 1.99-1.07 2.75z"/>
+        </svg>
+      </div>
+      <h1>Antigravity 2.0</h1>
+      <p class="subtitle">智能控制台 &amp; 极简一键汉化系统</p>
+    </header>
+
+    <!-- State indicators -->
+    <div class="status-grid">
+      <div class="status-card">
+        <span class="status-title">应用检测</span>
+        <span class="status-value" id="status-installed"><span class="dot red"></span>未检测</span>
+      </div>
+      <div class="status-card">
+        <span class="status-title">备份状态</span>
+        <span class="status-value" id="status-backup"><span class="dot red"></span>无备份</span>
+      </div>
+      <div class="status-card">
+        <span class="status-title">进程监控</span>
+        <span class="status-value" id="status-running"><span class="dot red"></span>未运行</span>
+      </div>
+    </div>
+
+    <!-- Actions -->
+    <div class="actions-panel">
+      <button class="primary-btn" id="btn-localize" onclick="localize()">
+        <svg style="width:24px; height:24px; fill:currentColor" viewBox="0 0 24 24">
+          <path d="M12.87 15.07l-2.54-2.51.03-.03c1.74-1.94 2.98-4.17 3.71-6.53H17V4h-7V2H8v2H1v2h11.17C11.5 7.92 10.44 9.75 9 11.35 8.07 10.32 7.3 9.19 6.69 8h-2c.73 1.63 1.73 3.17 2.98 4.56l-5.09 5.02L4 19l5-5 3.11 3.11.76-1.04zM18.5 10h-2L12 22h2l1.12-3h4.75L21 22h2l-4.5-12zm-2.62 7l1.62-4.33L19.12 17h-3.24z"/>
+        </svg>
+        <span>一键汉化 (English → 简体中文)</span>
+      </button>
+
+      <div class="secondary-actions">
+        <button class="sec-btn" id="btn-restore" onclick="restore()">
+          <svg style="width:18px; height:18px; fill:currentColor" viewBox="0 0 24 24">
+            <path d="M13 3c-4.97 0-9 4.03-9 9H1l3.89 3.89.07.14L9 12H6c0-3.87 3.13-7 7-7s7 3.13 7 7-3.13 7-7 7c-1.93 0-3.68-.79-4.94-2.06l-1.42 1.42C8.27 19.99 10.51 21 13 21c4.97 0 9-4.03 9-9s-4.03-9-9-9zm-1 5v5l4.25 2.52.77-1.28-3.52-2.09V8z"/>
+          </svg>
+          还原英文原版
+        </button>
+        <button class="sec-btn" id="btn-launch" onclick="launch()">
+          <svg style="width:18px; height:18px; fill:currentColor" viewBox="0 0 24 24">
+            <path d="M5 13h11.86l-5.43 5.43 1.42 1.42L21.14 12l-8.29-8.29-1.42 1.42L16.86 11H5v2z"/>
+          </svg>
+          启动软件
+        </button>
+      </div>
+    </div>
+
+    <!-- Live Console Output -->
+    <div class="console-panel">
+      <div class="console-header">
+        <span class="console-title">
+          <svg style="width:16px; height:16px; fill:currentColor" viewBox="0 0 24 24">
+            <path d="M20 4H4c-1.1 0-1.99.9-1.99 2L2 18c0 1.1.9 2 2 2h16c1.1 0 2-.9 2-2V6c0-1.1-.9-2-2-2zm-8 12H4v-2h8v2zm8-4H4V8h16v4z"/>
+          </svg>
+          实时部署日志 (Real-time logs)
+        </span>
+        <div class="console-dots">
+          <span class="console-dot"></span>
+          <span class="console-dot"></span>
+          <span class="console-dot"></span>
+        </div>
+      </div>
+      <div class="console-body" id="console">
+        <div class="console-line info">[系统] 等待操作... 双击 "双击运行汉化.bat" 确保服务完全启动。</div>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    const API_BASE = 'http://localhost:3388';
+    const consoleEl = document.getElementById('console');
+
+    function appendLog(text) {
+      const line = document.createElement('div');
+      line.className = 'console-line';
+      
+      if (text.includes('🎉') || text.includes('成功') || text.includes('完成')) {
+        line.classList.add('success');
+      } else if (text.includes('失败') || text.includes('错误') || text.includes('Error')) {
+        line.classList.add('error');
+      } else if (text.includes('===') || text.includes('等待')) {
+        line.classList.add('info');
+      }
+      
+      line.textContent = text;
+      consoleEl.appendChild(line);
+      consoleEl.scrollTop = consoleEl.scrollHeight;
+    }
+
+    async function updateStatus() {
+      try {
+        const res = await fetch(`${API_BASE}/api/status`);
+        if (!res.ok) throw new Error();
+        const data = await res.json();
+        
+        // Installed status
+        const insEl = document.getElementById('status-installed');
+        if (data.isInstalled) {
+          insEl.innerHTML = '<span class="dot green"></span>已安装 v2.0';
+        } else {
+          insEl.innerHTML = '<span class="dot red"></span>未检测到';
+        }
+
+        // Backup status
+        const bakEl = document.getElementById('status-backup');
+        if (data.hasBackup) {
+          bakEl.innerHTML = '<span class="dot green"></span>已备份';
+          document.getElementById('btn-restore').disabled = false;
+        } else {
+          bakEl.innerHTML = '<span class="dot amber"></span>未备份';
+          document.getElementById('btn-restore').disabled = true;
+        }
+
+        // Running status
+        const runEl = document.getElementById('status-running');
+        if (data.isRunning) {
+          runEl.innerHTML = '<span class="dot green"></span>运行中 (占锁)';
+        } else {
+          runEl.innerHTML = '<span class="dot amber"></span>已关闭 (就绪)';
+        }
+      } catch (e) {
+        // Server might be starting or down
+        document.getElementById('status-installed').innerHTML = '<span class="dot red"></span>未连接服务';
+        document.getElementById('status-backup').innerHTML = '<span class="dot red"></span>未连接服务';
+        document.getElementById('status-running').innerHTML = '<span class="dot red"></span>未连接服务';
+      }
+    }
+
+    async function fetchLogs() {
+      try {
+        const res = await fetch(`${API_BASE}/api/logs`);
+        if (!res.ok) return;
+        const data = await res.json();
+        consoleEl.innerHTML = '';
+        data.logs.forEach(appendLog);
+      } catch (e) {}
+    }
+
+    async function setButtonLoading(btnId, isLoading, loadingText = '') {
+      const btn = document.getElementById(btnId);
+      if (isLoading) {
+        btn.disabled = true;
+        btn.dataset.originalHtml = btn.innerHTML;
+        btn.innerHTML = `<span class="loader-ring"></span> <span>${loadingText}</span>`;
+      } else {
+        btn.disabled = false;
+        btn.innerHTML = btn.dataset.originalHtml;
+      }
+    }
+
+    async function localize() {
+      if (!confirm('汉化流程将临时关闭正在运行的 Antigravity 2.0，是否继续？')) {
+        return;
+      }
+      setButtonLoading('btn-localize', true, '正在汉化打包中，请稍候...');
+      try {
+        const res = await fetch(`${API_BASE}/api/localize`, { method: 'POST' });
+        const data = await res.json();
+        fetchLogs();
+        if (data.success) {
+          alert('🎉 汉化打包部署成功！原生菜单、托盘及 Web UI 已完成汉化。');
+        } else {
+          alert('❌ 汉化失败: ' + data.error);
+        }
+      } catch (e) {
+        alert('❌ 服务无响应，请确保 localize.js 服务正在运行。');
+      } finally {
+        setButtonLoading('btn-localize', false);
+        updateStatus();
+      }
+    }
+
+    async function restore() {
+      if (!confirm('确定将软件还原为纯英文原版吗？')) {
+        return;
+      }
+      setButtonLoading('btn-restore', true, '还原中...');
+      try {
+        const res = await fetch(`${API_BASE}/api/restore`, { method: 'POST' });
+        const data = await res.json();
+        fetchLogs();
+        if (data.success) {
+          alert('🎉 已成功还原为官方英文版！');
+        } else {
+          alert('❌ 还原失败: ' + data.error);
+        }
+      } catch (e) {
+        alert('❌ 服务无响应。');
+      } finally {
+        setButtonLoading('btn-restore', false);
+        updateStatus();
+      }
+    }
+
+    async function launch() {
+      try {
+        const res = await fetch(`${API_BASE}/api/launch`, { method: 'POST' });
+        const data = await res.json();
+        fetchLogs();
+        if (data.success) {
+          appendLog('[系统] Antigravity 2.0 启动成功！');
+        } else {
+          alert('❌ 启动失败: ' + data.error);
+        }
+      } catch (e) {
+        alert('❌ 服务无响应。');
+      } finally {
+        setTimeout(updateStatus, 3000);
+      }
+    }
+
+    // Auto update status and logs
+    setInterval(updateStatus, 2000);
+    updateStatus();
+  </script>
+</body>
+</html>

@@ -139,7 +139,7 @@
       display: grid;
       grid-template-columns: repeat(3, 1fr);
       gap: 20px;
-      margin-bottom: 35px;
+      margin-bottom: 30px;
     }
 
     .status-card {
@@ -207,6 +207,170 @@
     @keyframes pulseAmber {
       0%, 100% { transform: scale(1); opacity: 1; }
       50% { transform: scale(1.2); opacity: 0.6; }
+    }
+
+    /* Configuration Panel Style */
+    .config-panel {
+      background: rgba(255, 255, 255, 0.02);
+      border: 1px solid rgba(255, 255, 255, 0.05);
+      border-radius: 20px;
+      padding: 24px 28px;
+      margin-bottom: 30px;
+      transition: all 0.3s cubic-bezier(0.16, 1, 0.3, 1);
+      box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.03);
+    }
+
+    .config-panel:hover {
+      background: rgba(255, 255, 255, 0.04);
+      border-color: rgba(124, 77, 255, 0.2);
+      box-shadow: 0 8px 30px rgba(0, 0, 0, 0.15);
+    }
+
+    .panel-subtitle {
+      font-size: 1rem;
+      font-weight: 600;
+      color: var(--text-main);
+      margin-bottom: 20px;
+      display: flex;
+      align-items: center;
+      gap: 10px;
+    }
+
+    .panel-subtitle svg {
+      width: 18px;
+      height: 18px;
+      fill: var(--accent);
+    }
+
+    .input-row {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 20px;
+      align-items: flex-start;
+      margin-bottom: 20px;
+    }
+
+    .input-group {
+      display: flex;
+      flex-direction: column;
+      gap: 8px;
+    }
+
+    .input-group label {
+      font-size: 0.85rem;
+      color: var(--text-muted);
+      font-weight: 500;
+      letter-spacing: 0.5px;
+    }
+
+    .input-group input {
+      background: rgba(0, 0, 0, 0.3);
+      border: 1px solid rgba(255, 255, 255, 0.1);
+      border-radius: 12px;
+      padding: 14px 18px;
+      color: var(--text-main);
+      font-family: inherit;
+      font-size: 0.95rem;
+      transition: all 0.25s ease;
+      box-shadow: inset 0 2px 4px rgba(0, 0, 0, 0.2);
+    }
+
+    .input-group input:focus {
+      outline: none;
+      border-color: var(--accent);
+      box-shadow: 0 0 12px rgba(124, 77, 255, 0.25), inset 0 1px 2px rgba(0, 0, 0, 0.3);
+      background: rgba(0, 0, 0, 0.4);
+    }
+
+    /* Custom Checkbox Design */
+    .checkbox-group {
+      display: flex;
+      align-items: center;
+      height: 100%;
+      padding-top: 26px; /* Align horizontally with input */
+    }
+
+    .custom-checkbox-container {
+      display: inline-flex;
+      align-items: center;
+      position: relative;
+      padding-left: 28px;
+      cursor: pointer;
+      font-size: 0.9rem;
+      color: var(--text-main);
+      user-select: none;
+      font-weight: 500;
+      transition: color 0.2s ease;
+    }
+
+    .custom-checkbox-container:hover {
+      color: #fff;
+    }
+
+    .custom-checkbox-container input {
+      position: absolute;
+      opacity: 0;
+      cursor: pointer;
+      height: 0;
+      width: 0;
+    }
+
+    .checkbox-checkmark {
+      position: absolute;
+      top: 50%;
+      transform: translateY(-50%);
+      left: 0;
+      height: 18px;
+      width: 18px;
+      background-color: rgba(0, 0, 0, 0.4);
+      border: 1px solid rgba(255, 255, 255, 0.2);
+      border-radius: 5px;
+      transition: all 0.2s cubic-bezier(0.16, 1, 0.3, 1);
+    }
+
+    .custom-checkbox-container:hover input ~ .checkbox-checkmark {
+      border-color: var(--accent);
+      background-color: rgba(0, 0, 0, 0.5);
+    }
+
+    .custom-checkbox-container input:checked ~ .checkbox-checkmark {
+      background-color: var(--accent);
+      border-color: var(--accent);
+      box-shadow: 0 0 8px rgba(124, 77, 255, 0.4);
+    }
+
+    .checkbox-checkmark:after {
+      content: "";
+      position: absolute;
+      display: none;
+    }
+
+    .custom-checkbox-container input:checked ~ .checkbox-checkmark:after {
+      display: block;
+    }
+
+    .custom-checkbox-container .checkbox-checkmark:after {
+      left: 5px;
+      top: 2px;
+      width: 5px;
+      height: 9px;
+      border: solid white;
+      border-width: 0 2px 2px 0;
+      transform: rotate(45deg);
+    }
+
+    /* Animation transition for custom path block */
+    .custom-path-wrapper {
+      transition: all 0.3s cubic-bezier(0.16, 1, 0.3, 1);
+      max-height: 0;
+      opacity: 0;
+      overflow: hidden;
+    }
+
+    .custom-path-wrapper.visible {
+      max-height: 120px;
+      opacity: 1;
+      margin-top: 10px;
     }
 
     /* Actions Panel */
@@ -337,16 +501,6 @@
       scroll-behavior: smooth;
     }
 
-    .console-line {
-      line-height: 1.5;
-      word-break: break-all;
-    }
-
-    .console-line.success { color: var(--success); }
-    .console-line.error { color: var(--error); }
-    .console-line.info { color: var(--text-muted); }
-
-    /* Custom Scrollbar */
     .console-body::-webkit-scrollbar {
       width: 6px;
     }
@@ -361,7 +515,15 @@
       background: rgba(255, 255, 255, 0.2);
     }
 
-    /* Modal / Feedback overlay */
+    .console-line {
+      line-height: 1.5;
+      word-break: break-all;
+    }
+
+    .console-line.success { color: var(--success); }
+    .console-line.error { color: var(--error); }
+    .console-line.info { color: var(--text-muted); }
+
     .loader-ring {
       display: inline-block;
       width: 24px;
@@ -403,6 +565,53 @@
       <div class="status-card">
         <span class="status-title">进程监控</span>
         <span class="status-value" id="status-running"><span class="dot red"></span>未运行</span>
+      </div>
+    </div>
+
+    <!-- Dynamic Path Configuration Card -->
+    <div class="config-panel">
+      <h3 class="panel-subtitle">
+        <svg viewBox="0 0 24 24">
+          <path d="M19.14 12.94c.04-.3.06-.61.06-.94 0-.32-.02-.64-.07-.94l2.03-1.58c.18-.14.23-.41.12-.61l-1.92-3.32c-.12-.22-.37-.29-.59-.22l-2.39.96c-.5-.38-1.03-.7-1.62-.94l-.36-2.54c-.04-.24-.24-.41-.48-.41h-3.84c-.24 0-.43.17-.47.41l-.36 2.54c-.59.24-1.13.57-1.62.94l-2.39-.96c-.22-.08-.47 0-.59.22L2.74 8.87c-.12.21-.08.47.12.61l2.03 1.58c-.05.3-.09.63-.09.94s.02.64.07.94l-2.03 1.58c-.18.14-.23.41-.12.61l1.92 3.32c.12.22.37.29.59.22l2.39-.96c.5.38 1.03.7 1.62.94l.36 2.54c.05.24.24.41.48.41h3.84c.24 0 .44-.17.47-.41l.36-2.54c.59-.24 1.13-.56 1.62-.94l2.39.96c.22.08.47 0 .59-.22l1.92-3.32c.12-.22.07-.47-.12-.61l-2.01-1.58zM12 15.6c-1.98 0-3.6-1.62-3.6-3.6s1.62-3.6 3.6-3.6 3.6 1.62 3.6 3.6-1.62 3.6-3.6 3.6z"/>
+        </svg>
+        配置部署目标路径
+      </h3>
+      
+      <!-- 隐藏的诱饵输入框，用于吸引并消耗密码管理器及浏览器的自动填充动作 -->
+      <div style="position: absolute; top: -9999px; left: -9999px; width: 1px; height: 1px; overflow: hidden;">
+        <input type="text" id="fake-username" name="username" autocomplete="username" tabindex="-1">
+        <input type="password" id="fake-password" name="password" autocomplete="current-password" tabindex="-1">
+      </div>
+
+      <div class="input-row">
+        <div class="input-group">
+          <label for="tgt-win-owner">Windows 系统账户名 (Host Account)</label>
+          <!-- 采用 readonly 焦点激活防御 + new-password 声明 + 诱饵混淆，彻底终结任何密码管理器在失焦或鼠标移出时的强制篡改 -->
+          <input type="text" id="tgt-win-owner" name="tgt-win-owner" placeholder="例如: 11215" 
+                 autocomplete="new-password" autocorrect="off" autocapitalize="off" spellcheck="false" 
+                 readonly onfocus="this.removeAttribute('readonly')" onblur="this.setAttribute('readonly', true)"
+                 oninput="saveSettings()">
+        </div>
+        <div class="checkbox-group" style="display: flex; align-items: center; justify-content: space-between; width: 100%; gap: 15px; padding-top: 26px;">
+          <label class="custom-checkbox-container" style="margin-bottom: 0;">
+            <input type="checkbox" id="chk-default-path" checked onchange="togglePathInput()">
+            <span class="checkbox-checkmark"></span>
+            使用 Windows 默认安装路径
+          </label>
+          <button class="sec-btn" id="btn-detect" onclick="manualDetectPath()" style="padding: 10px 18px; font-size: 0.85rem; margin-top: 0; white-space: nowrap; border-radius: 10px; background: rgba(124, 77, 255, 0.1); border-color: rgba(124, 77, 255, 0.2); transition: all 0.2s ease;">
+            <svg style="width:14px; height:14px; fill:currentColor; vertical-align: middle; margin-right: 4px;" viewBox="0 0 24 24">
+              <path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm1 15h-2v-6h2v6zm0-8h-2V7h2v2z"/>
+            </svg>
+            立即检测路径
+          </button>
+        </div>
+      </div>
+
+      <div class="custom-path-wrapper" id="custom-path-wrapper">
+        <div class="input-group">
+          <label for="input-custom-path">自定义程序路径 (APP_DIR)</label>
+          <input type="text" id="input-custom-path" name="custom-app-dir" placeholder="C:\Users\用户名\AppData\Local\Programs\antigravity" autocomplete="off" autocorrect="off" autocapitalize="off" spellcheck="false" oninput="saveAndTriggerStatus()">
+        </div>
       </div>
     </div>
 
@@ -456,6 +665,42 @@
     const API_BASE = 'http://localhost:3388';
     const consoleEl = document.getElementById('console');
 
+    // UI elements (Refactored to tgt-win-owner with readonly armor to block password manager autofill hooks)
+    const inputUsername = document.getElementById('tgt-win-owner');
+    const chkDefaultPath = document.getElementById('chk-default-path');
+    const inputCustomPath = document.getElementById('input-custom-path');
+    const customPathWrapper = document.getElementById('custom-path-wrapper');
+
+    // Load saved settings from localStorage
+    inputUsername.value = localStorage.getItem('localizer_username') || '';
+    const savedUseDefault = localStorage.getItem('localizer_use_default') !== 'false';
+    chkDefaultPath.checked = savedUseDefault;
+    inputCustomPath.value = localStorage.getItem('localizer_custom_path') || '';
+
+    function togglePathInput() {
+      const useDefault = chkDefaultPath.checked;
+      if (useDefault) {
+        customPathWrapper.classList.remove('visible');
+      } else {
+        customPathWrapper.classList.add('visible');
+      }
+      saveSettings();
+    }
+
+    function getParams() {
+      const username = inputUsername.value.trim();
+      const useDefault = chkDefaultPath.checked;
+      const customPath = inputCustomPath.value.trim();
+      return { username, useDefault, customPath };
+    }
+
+    function saveSettings() {
+      const params = getParams();
+      localStorage.setItem('localizer_username', params.username);
+      localStorage.setItem('localizer_use_default', params.useDefault);
+      localStorage.setItem('localizer_custom_path', params.customPath);
+    }
+
     function appendLog(text) {
       const line = document.createElement('div');
       line.className = 'console-line';
@@ -474,15 +719,26 @@
     }
 
     async function updateStatus() {
+      const params = getParams();
+      
+      // 如果使用默认路径但账户名为空，则直接标记为等待输入，且不发起后端请求，防误报
+      if (params.useDefault && !params.username) {
+        document.getElementById('status-installed').innerHTML = '<span class="dot red"></span>等待输入账户名';
+        document.getElementById('status-backup').innerHTML = '<span class="dot amber"></span>等待配置';
+        document.getElementById('status-running').innerHTML = '<span class="dot amber"></span>等待配置';
+        return;
+      }
+
       try {
-        const res = await fetch(`${API_BASE}/api/status`);
+        const queryStr = `?username=${encodeURIComponent(params.username)}&useDefault=${params.useDefault}&customPath=${encodeURIComponent(params.customPath)}`;
+        const res = await fetch(`${API_BASE}/api/status${queryStr}`);
         if (!res.ok) throw new Error();
         const data = await res.json();
         
         // Installed status
         const insEl = document.getElementById('status-installed');
         if (data.isInstalled) {
-          insEl.innerHTML = '<span class="dot green"></span>已安装 v2.0';
+          insEl.innerHTML = '<span class="dot green"></span>已检测到程序';
         } else {
           insEl.innerHTML = '<span class="dot red"></span>未检测到';
         }
@@ -493,16 +749,16 @@
           bakEl.innerHTML = '<span class="dot green"></span>已备份';
           document.getElementById('btn-restore').disabled = false;
         } else {
-          bakEl.innerHTML = '<span class="dot amber"></span>未备份';
+          bakEl.innerHTML = '<span class="dot amber"></span>无备份';
           document.getElementById('btn-restore').disabled = true;
         }
 
-        // Running status
+        // Running status (以已关闭为绿色就绪，运行中为黄色警示占锁，完全符合一键部署逻辑)
         const runEl = document.getElementById('status-running');
         if (data.isRunning) {
-          runEl.innerHTML = '<span class="dot green"></span>运行中 (占锁)';
+          runEl.innerHTML = '<span class="dot amber"></span>运行中 (占锁)';
         } else {
-          runEl.innerHTML = '<span class="dot amber"></span>已关闭 (就绪)';
+          runEl.innerHTML = '<span class="dot green"></span>已关闭 (就绪)';
         }
       } catch (e) {
         // Server might be starting or down
@@ -512,14 +768,41 @@
       }
     }
 
+    let isServiceConnected = true; // 记录当前服务连接状态，用于心跳状态突变时刷新指示灯
+    let lastLogsHash = ''; // 记录上一次渲染的日志特征值，避免无新日志时重绘导致滚动条闪烁滑动
+
     async function fetchLogs() {
       try {
         const res = await fetch(`${API_BASE}/api/logs`);
-        if (!res.ok) return;
+        if (!res.ok) throw new Error();
         const data = await res.json();
+        
+        // 增量比较：如果日志内容与上次完全一致，则直接跳过重绘，使滑块稳如泰山！
+        const currentLogsStr = JSON.stringify(data.logs);
+        if (currentLogsStr === lastLogsHash) {
+          if (!isServiceConnected) {
+            isServiceConnected = true;
+            updateStatus();
+          }
+          return;
+        }
+        
+        lastLogsHash = currentLogsStr;
         consoleEl.innerHTML = '';
         data.logs.forEach(appendLog);
-      } catch (e) {}
+        
+        // 如果之前是断开状态，现在连上了，自动触发一次检测刷新
+        if (!isServiceConnected) {
+          isServiceConnected = true;
+          updateStatus();
+        }
+      } catch (e) {
+        // 心跳断开，立即标记并更新指示灯为“未连接服务”
+        isServiceConnected = false;
+        document.getElementById('status-installed').innerHTML = '<span class="dot red"></span>未连接服务';
+        document.getElementById('status-backup').innerHTML = '<span class="dot red"></span>未连接服务';
+        document.getElementById('status-running').innerHTML = '<span class="dot red"></span>未连接服务';
+      }
     }
 
     async function setButtonLoading(btnId, isLoading, loadingText = '') {
@@ -540,7 +823,12 @@
       }
       setButtonLoading('btn-localize', true, '正在汉化打包中，请稍候...');
       try {
-        const res = await fetch(`${API_BASE}/api/localize`, { method: 'POST' });
+        const params = getParams();
+        const res = await fetch(`${API_BASE}/api/localize`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify(params)
+        });
         const data = await res.json();
         fetchLogs();
         if (data.success) {
@@ -562,7 +850,12 @@
       }
       setButtonLoading('btn-restore', true, '还原中...');
       try {
-        const res = await fetch(`${API_BASE}/api/restore`, { method: 'POST' });
+        const params = getParams();
+        const res = await fetch(`${API_BASE}/api/restore`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify(params)
+        });
         const data = await res.json();
         fetchLogs();
         if (data.success) {
@@ -580,7 +873,12 @@
 
     async function launch() {
       try {
-        const res = await fetch(`${API_BASE}/api/launch`, { method: 'POST' });
+        const params = getParams();
+        const res = await fetch(`${API_BASE}/api/launch`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify(params)
+        });
         const data = await res.json();
         fetchLogs();
         if (data.success) {
@@ -595,9 +893,33 @@
       }
     }
 
-    // Auto update status and logs
-    setInterval(updateStatus, 2000);
+    // 手动点击触发路径检测函数
+    async function manualDetectPath() {
+      saveSettings();
+      appendLog('[系统] 正在检测配置的安装路径，请稍候...');
+      const btn = document.getElementById('btn-detect');
+      const originalText = btn.innerHTML;
+      btn.disabled = true;
+      btn.innerHTML = `<span class="loader-ring" style="width: 14px; height: 14px; border-width: 2px;"></span> 正在检测...`;
+      try {
+        await updateStatus();
+        appendLog('[系统] 检测路径完成，已更新上方应用检测指示灯。');
+      } catch (e) {
+        appendLog('[系统] 检测失败，服务未响应。');
+      } finally {
+        btn.disabled = false;
+        btn.innerHTML = originalText;
+      }
+    }
+
+    // Call togglePathInput on load to set initial visibility and triggers
+    togglePathInput();
+
+    // 运行的时候先自动检测一次
     updateStatus();
+
+    // 自动轮询拉取最新打包日志，不再自动探测状态以防篡改或打字时冲突
+    setInterval(fetchLogs, 2500);
   </script>
 </body>
 </html>

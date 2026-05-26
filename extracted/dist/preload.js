@@ -192,8 +192,8 @@ electron_1.contextBridge.exposeInMainWorld('ide', ideAPI);
     "Select a folder": "选择文件夹",
     "Open Folder": "打开文件夹",
     "Create New Project": "创建新项目",
-    "Antigravity": "Antigravity 汉化版",
-    "Antigravity 2.0": "Antigravity 2.0 汉化版",
+    "Antigravity": "Antigravity",
+    "Antigravity 2.0": "Antigravity 2.0",
     "Google DeepMind": "谷歌 DeepMind",
     "Advanced Agentic Coding": "高级智能体编码",
     "Welcome to Antigravity": "欢迎使用 Antigravity",
@@ -215,42 +215,42 @@ electron_1.contextBridge.exposeInMainWorld('ide', ideAPI);
     "timer": "定时器",
     "Timers": "定时器",
     "Cron Jobs": "计划任务",
-    "Schedule": "排程",
+    "Schedule": "调度",
     "Directory analysis": "目录分析",
     "Web search": "网页搜索",
     "File edit": "文件编辑",
     "Command execution": "命令执行",
     "Semantic search": "语义搜索",
 
-    // Added sentences based on user feedback
+    // Added sentences & refined for user experience
     "Permissions": "权限",
-    "Configure global allowed and denied resource permissions. Learn more.": "配置全局允许和拒绝的资源权限。了解更多。",
-    "Configure global allowed and denied resource permissions.": "配置全局允许和拒绝的资源权限。",
+    "Configure global allowed and denied resource permissions. Learn more.": "配置全局允许与拒绝的资源访问权限。了解更多。",
+    "Configure global allowed and denied resource permissions.": "配置全局允许与拒绝的资源访问权限。",
     "Learn more.": "了解更多。",
     "Learn more": "了解更多",
-    "Project-Specific Settings": "项目专用设置",
-    "Project-Specific": "项目专用",
-    "Modify scoped permissions, folders, and Agent settings like Sandbox and Terminal command execution.": "修改作用域权限、文件夹以及智能体设置（例如沙盒和终端命令执行）。",
-    "Modify scoped permissions, folders, and Agent settings": "修改作用域权限、文件夹以及智能体设置",
-    "like Sandbox and Terminal command execution.": "例如沙盒和终端命令执行。",
+    "Project-Specific Settings": "项目专属设置",
+    "Project-Specific": "项目专属",
+    "Modify scoped permissions, folders, and Agent settings like Sandbox and Terminal command execution.": "修改项目专属访问权限、工作文件夹以及智能体设置（例如沙盒和终端命令执行）。",
+    "Modify scoped permissions, folders, and Agent settings": "修改项目专属访问权限、工作文件夹以及智能体设置",
+    "like Sandbox and Terminal command execution.": "例如沙盒与终端命令执行。",
     "Go to Projects": "转到项目",
     "File Permissions": "文件权限",
     "File Access Rules": "文件访问规则",
-    "Configure allowed and denied paths for file reads and writes.": "配置文件读取和写入的允许和拒绝路径。",
+    "Configure allowed and denied paths for file reads and writes.": "配置文件读写的允许与拒绝路径。",
     "Network Permissions": "网络权限",
     "Network Access Rules": "网络访问规则",
-    "Configure allowed and denied URLs for reading.": "配置允许和拒绝读取的 URL。",
+    "Configure allowed and denied URLs for reading.": "配置允许或禁止读取的 URL。",
     "Terminal & Tooling Permissions": "终端和工具权限",
     "Terminal Commands": "终端命令",
     "Configure allowed terminal commands.": "配置允许执行的终端命令。",
     "Commands Outside Sandbox": "沙盒外命令",
-    "Configure allowed commands outside the sandbox.": "配置允许在沙盒外运行的命令。",
+    "Configure allowed commands outside the sandbox.": "配置允许在沙盒外执行的终端命令。",
     "MCP Tools": "MCP 工具",
     "Configure external tools via Model Context Protocol.": "通过模型上下文协议 (MCP) 配置外部工具。",
     "Global": "全局",
     "Sandbox": "沙盒",
-    "Sandbox enabled": "已启用沙盒",
-    "Sandbox disabled": "已禁用沙盒",
+    "Sandbox enabled": "沙盒已启用",
+    "Sandbox disabled": "沙盒已禁用",
     "Allowed": "已允许",
     "Denied": "已拒绝",
     "Paths": "路径",
@@ -259,32 +259,32 @@ electron_1.contextBridge.exposeInMainWorld('ide', ideAPI);
 
     // Appearance & Settings
     "Appearance": "外观",
-    "Configure the Agent's visual theme and display preferences.": "配置智能体的视觉主题和显示偏好。",
+    "Configure the Agent's visual theme and display preferences.": "配置智能体的视觉主题与显示偏好。",
     "Chat Settings": "聊天设置",
-    "Verbose Agent Chat": "详细智能体聊天",
-    "Display and preserve intermediate thinking steps": "显示并保留中间思考步骤",
+    "Verbose Agent Chat": "显示智能体详细输出",
+    "Display and preserve intermediate thinking steps": "显示并保留智能体中间思考过程",
     "Choose light, dark, or inherit system settings.": "选择浅色、深色，或继承系统设置。",
     "Dark": "深色",
     "Light": "浅色",
     "Light Theme": "浅色主题",
     "Preset": "预设",
     "Default Light": "默认浅色",
-    "Background": "背景",
-    "Foreground": "前景",
+    "Background": "背景色",
+    "Foreground": "前景色",
     "Accent": "强调色",
     "Dark Theme": "深色主题",
     "Default Dark": "默认深色",
     
     // Customizations
     "Customizations": "自定义",
-    "Configure default behaviors, skills, and MCP servers.": "配置默认行为、技能和 MCP 服务器。",
-    "Token Usage": "Token 使用量",
-    "The breakdown below shows token usage from customizations like skills, rules, and MCP. If the budget is exceeded, large customizations will be truncated automatically.": "下方的细目显示了来自技能、规则和 MCP 等自定义项的 Token 使用情况。如果超出预算，大型自定义项将被自动截断。",
-    "of the customization budget is available.": "的自定义预算可用。",
-    "100.0% of the customization budget is available.": "100.0% 的自定义预算可用。",
+    "Configure default behaviors, skills, and MCP servers.": "配置默认行为、技能以及 MCP 服务器。",
+    "Token Usage": "Token 使用详情",
+    "The breakdown below shows token usage from customizations like skills, rules, and MCP. If the budget is exceeded, large customizations will be truncated automatically.": "以下详情展示了来自技能、规则和 MCP 等自定义项的 Token 使用情况。如果额度超限，大型自定义内容将被自动截断。",
+    "of the customization budget is available.": "的自定义额度可用。",
+    "100.0% of the customization budget is available.": "100.0% 的自定义额度可用。",
     "No customizations found for this workspace.": "未找到此工作区的自定义项。",
     "Installed MCP Servers": "已安装的 MCP 服务器",
-    "No MCP Servers": "无 MCP 服务器",
+    "No MCP Servers": "无已安装的 MCP 服务器",
     "You currently don't have any MCP Servers installed.": "您当前未安装任何 MCP 服务器。",
     "Add an MCP server above": "在上方添加一个 MCP 服务器",
     "Build With Google Plugins": "使用 Google 插件构建",
@@ -293,32 +293,37 @@ electron_1.contextBridge.exposeInMainWorld('ide', ideAPI);
     "Account": "账号",
     "Manage your plan, credentials, and general preferences.": "管理您的计划、凭据和常规偏好。",
     "Enable Telemetry": "启用遥测",
-    "When toggled on, Antigravity collects usage data to help Google enhance performance and features.": "开启后，Antigravity 会收集使用数据，以帮助 Google 提升性能和功能。",
+    "When toggled on, Antigravity collects usage data to help Google enhance performance and features.": "开启后，Antigravity 会收集匿名使用数据，以帮助 Google 持续改进性能和功能。",
     "Marketing Emails": "营销电子邮件",
-    "Receive product updates, tips, and promotions from Google Antigravity via email.": "通过电子邮件接收来自 Google Antigravity 的产品更新、提示和促销信息。",
+    "Receive product updates, tips, and promotions from Google Antigravity via email.": "通过电子邮件接收来自 Google Antigravity 的产品更新、技巧与促销信息。",
     "Your Plan:": "您的计划：",
     "Your Plan: Google AI Pro": "您的计划：Google AI Pro",
-    "You can upgrade to a Google AI Ultra plan to receive the highest rate limits.": "您可以升级到 Google AI Ultra 计划以获得最高的使用配额限制。",
+    "You can upgrade to a Google AI Ultra plan to receive the highest rate limits.": "您可以升级到 Google AI Ultra 计划以获得更高额的使用速率限制。",
     "Email": "电子邮件",
     
     // Browser & App Settings
     "Browser Settings": "浏览器设置",
     "Configure the browser subagent. It requires Google Chrome to be installed. The browser subagent can be invoked by typing /browser in the conversation input box.": "配置浏览器子智能体。这需要安装 Google Chrome。可以在对话输入框中输入 /browser 来调用浏览器子智能体。",
+    "Configure the browser subagent. It requires Google Chrome to be installed. The browser subagent can be invoked by typing": "配置浏览器子智能体。这需要安装 Google Chrome。可以通过输入",
+    "in the conversation input box.": "在对话输入框中调用该子智能体。",
     "Browser Javascript Execution Policy": "浏览器 JavaScript 执行策略",
     "Controls whether the agent can run custom JavaScript to automate complex browser actions.": "控制智能体是否可以运行自定义 JavaScript 以自动化复杂的浏览器操作。",
-    "Request Review": "请求审核",
-    "Actuation Permissions": "操作权限",
-    "Browser Actuation Rules": "浏览器操作规则",
-    "Configure allowed and denied URLs for browser actuation.": "配置允许和拒绝浏览器操作的 URL。",
+    "Request Review": "需要人工审核",
+    "Disabled": "已禁用",
+    "Block all browser JavaScript execution.": "禁止执行所有浏览器 JavaScript。",
+    "Prompt for approval before running browser scripts.": "在运行浏览器脚本前需人工批准。",
+    "Allow full browser script execution without prompting.": "允许执行所有浏览器脚本（无需提示）。",
+    "Actuation Permissions": "动作执行权限",
+    "Browser Actuation Rules": "浏览器操作控制规则",
+    "Configure allowed and denied URLs for browser actuation.": "配置允许或禁止浏览器执行动作的 URL 列表。",
     "App Settings": "应用设置",
-    "Manage application settings.": "管理应用程序设置。",
-    "Prevent Sleep": "防止睡眠",
-    "Prevent the computer from sleeping while the app is running.": "在应用程序运行时防止计算机进入睡眠状态。",
-    "Keep In Menu Bar": "保留在菜单栏",
-    "The app will be accessible from the menu bar and will keep running in the background when all windows are closed.": "关闭所有窗口后，该应用程序可从菜单栏访问，并在后台继续运行。",
+    "Prevent Sleep": "防止计算机休眠",
+    "Prevent the computer from sleeping while the app is running.": "在应用运行时防止计算机进入休眠状态。",
+    "Keep In Menu Bar": "常驻系统托盘",
+    "The app will be accessible from the menu bar and will keep running in the background when all windows are closed.": "关闭所有窗口后，应用将常驻菜单栏并在后台保持运行。",
     "Notifications": "通知",
     "Notification Settings": "通知设置",
-    "To modify notification settings, open your operating system's system preferences.": "要修改通知设置，请打开您操作系统的系统偏好设置。",
+    "To modify notification settings, open your operating system's system preferences.": "如需修改通知设置，请打开您操作系统的系统偏好设置。",
 
     // Agent Settings
     "Agent Settings": "智能体设置",
@@ -326,26 +331,26 @@ electron_1.contextBridge.exposeInMainWorld('ide', ideAPI);
     "Choose a predefined security preset for the agent. This controls terminal auto-execution policy, and file access policy.": "为智能体选择预定义的安全预设。这将控制终端自动执行策略和文件访问策略。",
     "Choose a predefined security preset for the agent.": "为智能体选择预定义的安全预设。",
     "This controls terminal auto-execution policy, and file access policy.": "这将控制终端自动执行策略和文件访问策略。",
-    "Learn more about Default": "了解关于 Default 的更多信息",
+    "Learn more about Default": "了解关于默认预设的更多信息",
     "Default": "默认",
     "Agent Behavior": "智能体行为",
     "Artifact Review Policy": "工件审核策略",
-    "Specifies agent's behavior when asking for review on artifacts, which are documents it creates to enable a richer conversation experience.": "指定智能体请求审核工件时的行为，工件是其为提供更丰富对话体验而创建的文档。",
+    "Specifies agent's behavior when asking for review on artifacts, which are documents it creates to enable a richer conversation experience.": "设置智能体在请求审核工件时的行为方式。工件是其为提供更丰富对话体验而创建的文档。",
     "Always Ask": "始终询问",
-    "Local Permissions": "本地权限",
-    "Inherits from global settings. Local permissions have higher priority.": "继承自全局设置。本地权限具有更高优先级。",
+    "Local Permissions": "项目专属权限",
+    "Inherits from global settings. Local permissions have higher priority.": "继承自全局设置。项目专属权限具有更高的优先级。",
     "Inherits from global settings.": "继承自全局设置。",
-    "Local permissions have higher priority.": "本地权限具有更高优先级。",
+    "Local permissions have higher priority.": "项目专属权限具有更高的优先级。",
     "Danger Zone": "危险区域",
     "Delete Project": "删除项目",
-    "Permanently delete this project and all of its conversations.": "永久删除此项目及其所有对话。",
+    "Permanently delete this project and all of its conversations.": "永久删除当前项目及其包含的所有历史对话。",
     
     // Additional Agent Settings & Context Menu
     "Custom": "自定义",
     "Outside of folders file access policy": "文件夹外文件访问策略",
     "Configures how the agent tries to access files outside of its working folders.": "配置智能体如何尝试访问其工作文件夹外部的文件。",
     "Terminal command Auto execution": "终端命令自动执行",
-    "Controls whether terminal commands require your approval before running.": "控制终端命令在运行前是否需要您的批准。",
+    "Controls whether terminal commands require your approval before running.": "控制终端命令在运行前是否需要您批准。",
     "Require Review": "需要审核",
     "Add Context": "添加上下文",
     "Media": "媒体",
@@ -354,19 +359,26 @@ electron_1.contextBridge.exposeInMainWorld('ide', ideAPI);
     "Browser": "浏览器",
     "Worktree": "工作树",
     "Projects": "项目",
+    "Review Changes": "审核更改",
+    "Ask anything, @ to mention, / for actions": "输入任何问题，输入 @ 提及，/ 触发操作",
+    "Ask anything, @to mention, /for actions": "输入任何问题，输入 @ 提及，/ 触发操作",
+    "Ask anything, @ to mention, / for commands": "输入任何问题，输入 @ 提及，/ 触发命令",
+    "Ask anything, @to mention, /for commands": "输入任何问题，输入 @ 提及，/ 触发命令",
+    "Overview": "概览",
+    "Artifacts": "工件",
     "Conversations": "对话",
-    "Agent settings and permissions for conversations outside of projects.": "项目外部对话的智能体设置和权限。",
+    "Agent settings and permissions for conversations outside of projects.": "项目外部对话的智能体设置和权限配置。",
     "Not in Project": "不在项目中",
-    "Manage project folders, agent settings, and permissions.": "管理项目文件夹、智能体设置和权限。",
+    "Manage project folders, agent settings, and permissions.": "管理项目文件夹、智能体设置和专属权限。",
 
     // Security Presets
-    "Requires manual review for all terminal commands and file accesses outside of the working folders.": "所有终端命令及工作文件夹外部的文件访问均需手动审核。",
-    "Full Machine": "完整机器访问",
-    "All terminal commands require review. The agent can read or write to any file in the machine.": "所有终端命令均需审核。智能体可以读取或写入机器上的任何文件。",
-    "Unrestricted": "无限制",
-    "Disables all safety barriers for maximal iteration velocity.": "禁用所有安全屏障，以获得最大的迭代速度。",
-    "Manually customize individual settings.": "手动自定义各个设置。",
-    "Always Proceed": "始终继续",
+    "Requires manual review for all terminal commands and file accesses outside of the working folders.": "运行终端命令以及访问工作区外的文件时，均需手动人工审核。",
+    "Full Machine": "完整本机访问",
+    "All terminal commands require review. The agent can read or write to any file in the machine.": "所有终端命令均需审核，智能体可读写本机上的任意文件。",
+    "Unrestricted": "无限制模式",
+    "Disables all safety barriers for maximal iteration velocity.": "禁用所有安全屏障以获得极致的迭代效率。",
+    "Manually customize individual settings.": "手动自定义各项具体设置。",
+    "Always Proceed": "自动继续",
 
     // Themes
     "One Light": "One 浅色",
@@ -374,17 +386,17 @@ electron_1.contextBridge.exposeInMainWorld('ide', ideAPI);
     "One Dark Pro": "One 深色 Pro",
     
     // Models
-    "Configure AI models and view your quota.": "配置 AI 模型并查看您的配额。",
+    "Configure AI models and view your quota.": "配置 AI 模型并查看您的配额与可用点数。",
     "Refresh": "刷新",
-    "Model Credits": "模型积分",
-    "Enable AI Credit Overages": "启用 AI 积分超额",
-    "When toggled on, Antigravity will use your AI credits to fulfill model requests once you're out of model quota. Antigravity will always use your model quota first before using AI credits.": "开启后，如果您的模型配额用尽，Antigravity 将使用您的 AI 积分来满足模型请求。Antigravity 始终会优先使用模型配额，然后再使用 AI 积分。",
+    "Model Credits": "模型额度",
+    "Enable AI Credit Overages": "允许 AI 额度超限使用",
+    "When toggled on, Antigravity will use your AI credits to fulfill model requests once you're out of model quota. Antigravity will always use your model quota first before using AI credits.": "开启后，当您的免费配额耗尽时，Antigravity 将使用您的 AI 点数来满足请求。系统会优先扣除免费模型配额，配额不足时再使用点数。",
     "Model Quota": "模型配额",
-    "View your available model quota and AI credits. Model quota refreshes periodically based on your plan. Enable AI Credit Overages to continue using models when your quota is exhausted.": "查看您的可用模型配额和 AI 积分。模型配额会根据您的计划定期刷新。如果配额用尽，可启用 AI 积分超额以继续使用模型。",
+    "View your available model quota and AI credits. Model quota refreshes periodically based on your plan. Enable AI Credit Overages to continue using models when your quota is exhausted.": "查看您的可用模型配额与 AI 账户额度。模型配额会根据您的订阅计划定期刷新。额度耗尽后，可开启 AI 额度超限使用以继续体验。",
 
     // Shortcuts & UI
     "Shortcuts": "快捷键",
-    "Keyboard shortcuts for quick navigation and control.": "用于快速导航和控制的键盘快捷键。",
+    "Keyboard shortcuts for quick navigation and control.": "用于快速导航与控制的键盘快捷键。",
     "Recommended": "推荐",
     "Open Conversation Picker": "打开对话选择器",
     "Open File Search": "打开文件搜索",
@@ -399,6 +411,8 @@ electron_1.contextBridge.exposeInMainWorld('ide', ideAPI);
     "Select Next Conversation": "选择下一个对话",
     "Open Settings": "打开设置",
     "Conversation": "对话",
+    "Conversation History": "历史对话",
+    "Conversation history": "历史对话",
     "Toggle Model Selector": "切换模型选择器",
     "Toggle Voice Recording": "切换录音",
     "Find in Pane": "在窗格中查找",
@@ -412,19 +426,30 @@ electron_1.contextBridge.exposeInMainWorld('ide', ideAPI);
     // Feedback
     "Provide Feedback": "提供反馈",
     "Feedback Type": "反馈类型",
-    "Bug Report": "错误报告",
+    "Bug Report": "Bug 报告",
     "Feature Request": "功能请求",
-    "Auth and Billing": "认证与计费",
-    "General Feedback": "通用反馈",
-    "Please describe the feature you'd like to see. The more detailed the requirements, the easier it will be for our team to incorporate your ideas. Some helpful information includes:": "请描述您希望看到的功能。需求越详细，我们的团队就越容易采纳您的想法。一些有用的信息包括：",
-    "What is missing in your workflow": "您的工作流程中缺少什么",
-    "What you would like to see to address this gap in your workflow": "您希望看到什么来解决您的工作流程中的这一差距",
-    "How this feature would help you and other users": "此功能将如何帮助您和其他用户",
-    "Describe the feature you would like to see...": "描述您希望看到的功能...",
-    "Attach a screenshot (optional)": "附加屏幕截图（可选）",
-    "Attach Antigravity server logs": "附加 Antigravity 服务器日志",
-    "Send feedback as": "发送反馈作为",
-    "We recommend attaching logs. Attaching logs will help the Antigravity team act on and prioritize your feedback.": "我们建议附加日志。附加日志将帮助 Antigravity 团队采取行动并优先处理您的反馈。"
+    "Auth and Billing": "账号与计费",
+    "General Feedback": "常规反馈",
+    "Please describe the feature you'd like to see. The more detailed the requirements, the easier it will be for our team to incorporate your ideas. Some helpful information includes:": "请描述您希望获得的新功能。需求描述越详尽，我们的团队就越容易采纳您的想法。以下是一些建议提供的信息：",
+    "What is missing in your workflow": "您的工作流中缺少了什么",
+    "What you would like to see to address this gap in your workflow": "您希望通过什么功能来解决这一需求",
+    "How this feature would help you and other users": "此功能如何帮助您和其他用户",
+    "Describe the feature you would like to see...": "请描述您希望获得的新功能...",
+    "Attach a screenshot (optional)": "添加屏幕截图（可选）",
+    "Attach Antigravity server logs": "附带 Antigravity 服务器日志",
+    "Send feedback as": "发送反馈身份",
+    "We recommend attaching logs. Attaching logs will help the Antigravity team act on and prioritize your feedback.": "我们建议附带日志。这将有助于 Antigravity 团队更快速、更有针对性地处理您的问题。",
+
+    // Automatic Update Menus
+    "Checking for Updates...": "正在检查更新...",
+    "Downloading Update...": "正在下载更新...",
+    "Restart to Update": "重启以应用更新",
+    "Check for Updates": "检查更新",
+    "No updates available": "当前已是最新版本",
+    "Update available": "发现新版本",
+    "Downloading...": "正在下载...",
+    "Update downloaded": "更新已下载完成",
+    "Error checking for updates": "检查更新失败"
   };
 
   const coreWords = {
@@ -441,7 +466,11 @@ electron_1.contextBridge.exposeInMainWorld('ide', ideAPI);
     "active": "活跃", "background": "后台", "parent": "父级", "child": "子级", "branch": "分支", "share": "共享", "inherit": "继承",
     "original": "原始", "backup": "备份", "duration": "持续时间", "seconds": "秒", "timer": "定时器", "timers": "定时器",
     "schedule": "调度", "cron": "定时任务", "tools": "工具", "tool": "工具", "execute": "执行", "execution": "执行", "plan": "计划",
-    "chat": "聊天", "message": "消息", "messages": "消息", "history": "历史", "clear history": "清除历史"
+    "chat": "聊天", "message": "消息", "messages": "消息", "history": "历史", "clear history": "清除历史",
+    "worked": "工作了", "changed": "已更改", "review": "审核", "reviewing": "审核中", "reviewed": "已审核", "for": "持续",
+    "thought": "思考了", "edited": "编辑了", "canceled": "已取消", "js": "Js",
+    "explore": "探索", "explored": "浏览了", "change": "更改", "changes": "更改",
+    "turn": "回合", "turns": "回合"
   };
 
   const combinedDict = Object.assign({}, coreWords, dictionary);
@@ -456,54 +485,178 @@ electron_1.contextBridge.exposeInMainWorld('ide', ideAPI);
     const trimmed = text.trim();
     if (!trimmed) return text;
 
-    let hasColon = false, hasChineseColon = false;
+    // --- Dynamic Agent Logs Regex Rules (Fixed Escaping) ---
+    let dynamicMatch = trimmed;
+    let isDynamic = false;
+    
+    if (/^Worked for \d+s$/.test(trimmed)) {
+      dynamicMatch = dynamicMatch.replace(/Worked for (\d+)s/, '已工作 $1 秒');
+      isDynamic = true;
+    }
+    if (/^Thought for \d+s$/.test(trimmed)) {
+      dynamicMatch = dynamicMatch.replace(/Thought for (\d+)s/, '已思考 $1 秒');
+      isDynamic = true;
+    }
+    if (/^Edited .* \+\d+ -\d+$/.test(trimmed)) {
+      dynamicMatch = dynamicMatch.replace(/Edited (.*) \+(\d+) -(\d+)/, '编辑了 $1 (+$2 -$3)');
+      isDynamic = true;
+    }
+    if (/^\d+ files? changed$/.test(trimmed)) {
+      dynamicMatch = dynamicMatch.replace(/^(\d+) files? changed(.*)/, '$1 个文件已更改$2');
+      isDynamic = true;
+    }
+    if (/^Explored/.test(trimmed)) {
+      if (/^Explored \d+ files?$/.test(trimmed)) {
+        dynamicMatch = dynamicMatch.replace(/^Explored (\d+) files?(.*)/, '浏览了 $1 个文件$2');
+      } else if (/^Explored (.*)$/.test(trimmed)) {
+        dynamicMatch = dynamicMatch.replace(/^Explored (.*)/, '浏览了 $1');
+      }
+      isDynamic = true;
+    }
+    if (/^Canceled taskkill/.test(trimmed)) {
+      dynamicMatch = dynamicMatch.replace(/^Canceled (.*)/, '已取消 $1');
+      isDynamic = true;
+    }
+
+    if (isDynamic) {
+      return text.replace(trimmed, dynamicMatch);
+    }
+    // --- End Dynamic Regex ---
+
+    // 1. Direct Literal Match (Exact match including punctuation)
+    if (dictionary[trimmed]) {
+      return text.replace(trimmed, dictionary[trimmed]);
+    }
+    
+    const trimmedLower = trimmed.toLowerCase();
+    for (const key in dictionary) {
+      if (key.toLowerCase() === trimmedLower) {
+        return text.replace(trimmed, dictionary[key]);
+      }
+    }
+
+    // 2. Intelligent Punctuation Stripping & Reconstruction
     let core = trimmed;
-    if (core.endsWith(':')) { hasColon = true; core = core.slice(0, -1).trim(); }
-    else if (core.endsWith('：')) { hasChineseColon = true; core = core.slice(0, -1).trim(); }
+    let trailPunc = '';
+    let matchPunc = '';
 
-    let translated = '';
+    // Strip trailing common punctuation
+    const puncRegex = /(\.\.\.|…|\.|\?|!|:|：|？|！|。)$/;
+    const match = core.match(puncRegex);
+    if (match) {
+      matchPunc = match[0];
+      core = core.slice(0, -matchPunc.length).trim();
+      
+      // Determine the correct Chinese counterpart punctuation
+      if (matchPunc === '.') trailPunc = '。';
+      else if (matchPunc === '?') trailPunc = '？';
+      else if (matchPunc === '!') trailPunc = '！';
+      else if (matchPunc === ':') trailPunc = '：';
+      else if (matchPunc === '：') trailPunc = '：';
+      else if (matchPunc === '？') trailPunc = '？';
+      else if (matchPunc === '！') trailPunc = '！';
+      else if (matchPunc === '。') trailPunc = '。';
+      else trailPunc = matchPunc; // keep ..., …
+    }
 
+    // Check stripped core in dictionary
+    let coreTranslated = '';
     if (dictionary[core]) {
-      translated = dictionary[core];
+      coreTranslated = dictionary[core];
     } else {
-      const lower = core.toLowerCase();
-      let found = false;
+      const coreLower = core.toLowerCase();
       for (const key in dictionary) {
-        if (key.toLowerCase() === lower) {
-          translated = dictionary[key];
-          found = true;
+        if (key.toLowerCase() === coreLower) {
+          coreTranslated = dictionary[key];
           break;
         }
       }
+    }
 
-      if (!found) {
-        let temp = core;
-        let replaced = false;
-        const sortedKeys = Object.keys(combinedDict).sort((a, b) => b.length - a.length);
-        for (const key of sortedKeys) {
-          if (key.length <= 3 && !/^[a-zA-Z0-9]+$/.test(key)) continue;
-          const escapedKey = escapeRegExp(key);
-          const startBoundary = /^[a-zA-Z0-9]/.test(key) ? '\\b' : '';
-          const endBoundary = /[a-zA-Z0-9]$/.test(key) ? '\\b' : '';
-          const regex = new RegExp(startBoundary + escapedKey + endBoundary, 'gi');
-          if (regex.test(temp)) {
-            temp = temp.replace(regex, combinedDict[key]);
-            replaced = true;
-          }
-        }
-        translated = replaced ? temp : core;
+    if (coreTranslated) {
+      return text.replace(trimmed, coreTranslated + trailPunc);
+    }
+
+    // 3. Fallback to word-by-word ONLY for short strings (<= 3 words)
+    // 如果短语中已经包含了中文字符（即原本就是汉化内容或中英混排），则严禁进入英文分词翻译
+    // 这可以完美阻止像中英文混排短语被分词规则执行二次翻译导致重叠和污染
+    if (/[一-龥]/.test(core)) {
+      return text;
+    }
+    // This prevents long unmatched sentences from getting mangled into Chinglish.
+    const wordsCount = core.split(/s+/).filter(Boolean).length;
+    if (wordsCount > 3) {
+      return text; // Do not translate, keep original English sentence clean
+    }
+
+    let temp = core;
+    let replaced = false;
+    const sortedKeys = Object.keys(combinedDict).sort((a, b) => b.length - a.length);
+    for (const key of sortedKeys) {
+      if (key.length <= 3 && !/^[a-zA-Z0-9]+$/.test(key)) continue;
+      const escapedKey = escapeRegExp(key);
+      const startBoundary = /^[a-zA-Z0-9]/.test(key) ? '\\b' : '';
+      const endBoundary = /[a-zA-Z0-9]$/.test(key) ? '\\b' : '';
+      const regex = new RegExp(startBoundary + escapedKey + endBoundary, 'gi');
+      if (regex.test(temp)) {
+        temp = temp.replace(regex, combinedDict[key]);
+        replaced = true;
       }
     }
 
-    if (hasColon || hasChineseColon) {
-      translated = translated + '：';
+    let finalTranslated = replaced ? temp : core;
+    // 消除中文字符之间可能由分词替换残留的英文空格，提升翻译句子的连贯精致度
+    finalTranslated = finalTranslated.replace(/([一-龥])s+([一-龥])/g, '$1$2');
+    if (matchPunc) {
+      finalTranslated += trailPunc;
+    }
+    return text.replace(trimmed, finalTranslated);
+  }
+
+  function shouldSkipNode(node) {
+    if (!node) return true;
+    
+    // 如果是文本节点，我们检查其父元素；如果是属性/元素节点，检查自身
+    const element = node.nodeType === Node.TEXT_NODE ? node.parentElement : node;
+    if (!element) return false;
+
+    // 1. 绝对不能翻译的脚本/样式/代码块标签
+    const skipTags = ['SCRIPT', 'STYLE', 'CODE', 'PRE', 'NOSCRIPT'];
+    if (skipTags.includes(element.tagName)) {
+      return true;
     }
 
-    return text.replace(trimmed, translated);
+    // 2. 如果是文本节点，并且其父元素是输入框/文本域，必须跳过文本节点翻译
+    if (node.nodeType === Node.TEXT_NODE) {
+      if (element.tagName === 'INPUT' || element.tagName === 'TEXTAREA') {
+        return true;
+      }
+    }
+
+    // 3. 向上递归检查祖先节点，判断是否处于富文本编辑区（contenteditable="true"）或代码编辑器中
+    let cur = element;
+    while (cur) {
+      if (cur.getAttribute && cur.getAttribute('contenteditable') === 'true') {
+        return true;
+      }
+      if (cur.classList && (
+        cur.classList.contains('monaco-editor') || 
+        cur.classList.contains('editor-instance') ||
+        cur.classList.contains('input-area') ||
+        cur.classList.contains('chat-input')
+      )) {
+        return true;
+      }
+      cur = cur.parentElement;
+    }
+
+    return false;
   }
 
   function translateNode(node) {
     if (!node) return;
+    if (shouldSkipNode(node)) return;
+
     if (node.nodeType === Node.TEXT_NODE) {
       const original = node.nodeValue;
       const translated = translateString(original);
@@ -513,6 +666,10 @@ electron_1.contextBridge.exposeInMainWorld('ide', ideAPI);
     } else if (node.nodeType === Node.ELEMENT_NODE) {
       ['placeholder', 'title', 'aria-label', 'value'].forEach(attr => {
         if (node.hasAttribute && node.hasAttribute(attr)) {
+          // 双重锁死：绝对不翻译任何输入框或编辑区的用户 value 属性
+          if (attr === 'value' && (node.tagName === 'INPUT' || node.tagName === 'TEXTAREA')) {
+            return;
+          }
           const original = node.getAttribute(attr);
           if (original && (node.tagName !== 'INPUT' || node.type === 'button' || node.type === 'submit' || attr !== 'value')) {
             const translated = translateString(original);
@@ -551,19 +708,33 @@ electron_1.contextBridge.exposeInMainWorld('ide', ideAPI);
       try {
         for (const mutation of mutations) {
           if (mutation.type === 'childList') {
-            mutation.addedNodes.forEach(translateNode);
+            mutation.addedNodes.forEach(node => {
+              if (!shouldSkipNode(node)) {
+                translateNode(node);
+              }
+            });
           } else if (mutation.type === 'characterData') {
-            const original = mutation.target.nodeValue;
-            const translated = translateString(original);
-            if (original !== translated) {
-              mutation.target.nodeValue = translated;
-            }
-          } else if (mutation.type === 'attributes') {
-            const original = mutation.target.getAttribute(mutation.attributeName);
-            if (original) {
+            const node = mutation.target;
+            if (!shouldSkipNode(node)) {
+              const original = node.nodeValue;
               const translated = translateString(original);
               if (original !== translated) {
-                mutation.target.setAttribute(mutation.attributeName, translated);
+                node.nodeValue = translated;
+              }
+            }
+          } else if (mutation.type === 'attributes') {
+            const target = mutation.target;
+            if (!shouldSkipNode(target)) {
+              const attrName = mutation.attributeName;
+              if (attrName === 'value' && (target.tagName === 'INPUT' || target.tagName === 'TEXTAREA')) {
+                continue;
+              }
+              const original = target.getAttribute(attrName);
+              if (original) {
+                const translated = translateString(original);
+                if (original !== translated) {
+                  target.setAttribute(attrName, translated);
+                }
               }
             }
           }

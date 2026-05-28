@@ -16,11 +16,29 @@ function log(msg) {
   console.log(formatted);
 }
 
+function getHostUsername() {
+  return process.env.USER || process.env.USERNAME || (process.platform === 'win32' ? '11215' : 'ranger');
+}
+
+function getAsarCmd() {
+  const majorVersion = parseInt(process.versions.node.split('.')[0], 10);
+  if (majorVersion >= 18) {
+    return 'npx -y @electron/asar';
+  } else {
+    return 'npx -y asar@3.2.0';
+  }
+}
+
 // Check if Antigravity processes are running
 function isAppRunning() {
   try {
-    const output = execSync('tasklist', { encoding: 'utf-8' });
-    return output.toLowerCase().includes('antigravity.exe');
+    if (process.platform === 'win32') {
+      const output = execSync('tasklist', { encoding: 'utf-8' });
+      return output.toLowerCase().includes('antigravity.exe');
+    } else {
+      const output = execSync('pgrep -fl antigravity', { encoding: 'utf-8' });
+      return output.toLowerCase().includes('antigravity');
+    }
   } catch (e) {
     return false;
   }
@@ -30,7 +48,11 @@ function isAppRunning() {
 function killApp() {
   log('正在尝试关闭运行中的 Antigravity 2.0...');
   try {
-    execSync('taskkill /F /IM Antigravity.exe', { stdio: 'ignore' });
+    if (process.platform === 'win32') {
+      execSync('taskkill /F /IM Antigravity.exe', { stdio: 'ignore' });
+    } else {
+      execSync('pkill -f antigravity', { stdio: 'ignore' });
+    }
     log('已成功强制关闭 Antigravity 进程！');
   } catch (e) {
     log('Antigravity 未在运行或关闭时无需操作。');
@@ -42,8 +64,14 @@ function getAppDir(username, useDefault, customPath) {
   if ((useDefault === false || useDefault === 'false') && customPath) {
     return customPath.trim();
   }
-  const user = username ? username.trim() : '11215';
-  return `C:\\Users\\${user}\\AppData\\Local\\Programs\\antigravity`;
+  const isWin = process.platform === 'win32';
+  const defaultUser = getHostUsername();
+  const user = username ? username.trim() : defaultUser;
+  if (isWin) {
+    return `C:\\Users\\${user}\\AppData\\Local\\Programs\\antigravity`;
+  } else {
+    return `/home/${user}/Antigravity/Antigravity-x64`;
+  }
 }
 
 // Web UI DOM Localization engine injection payload
@@ -863,13 +891,17 @@ async function runLocalizationWorkflow(appDir) {
   // 3. Clean up existing extract dir if any
   if (fs.existsSync(EXTRACT_DIR)) {
     log('正在清理历史解压目录...');
-    fs.rmSync(EXTRACT_DIR, { recursive: true, force: true });
+    if (typeof fs.rmSync === 'function') {
+      fs.rmSync(EXTRACT_DIR, { recursive: true, force: true });
+    } else {
+      fs.rmdirSync(EXTRACT_DIR, { recursive: true });
+    }
   }
 
   // 4. Unpack app.asar
   log('正在解包 app.asar...');
   try {
-    execSync(`npx @electron/asar extract "${asarPath}" "${EXTRACT_DIR}"`, { cwd: WORKSPACE_DIR });
+    execSync(`${getAsarCmd()} extract "${asarPath}" "${EXTRACT_DIR}"`, { cwd: WORKSPACE_DIR });
     log('解包成功。');
   } catch (e) {
     throw new Error('解压 app.asar 失败: ' + e.message);
@@ -886,7 +918,7 @@ async function runLocalizationWorkflow(appDir) {
 
   log('正在将修改后的文件重新打包为 app.asar...');
   try {
-    execSync(`npx @electron/asar pack "${EXTRACT_DIR}" "${tempAsar}"`, { cwd: WORKSPACE_DIR });
+    execSync(`${getAsarCmd()} pack "${EXTRACT_DIR}" "${tempAsar}"`, { cwd: WORKSPACE_DIR });
     log('打包成功。');
   } catch (e) {
     throw new Error('打包新 asar 失败: ' + e.message);
@@ -963,7 +995,9 @@ const server = http.createServer((req, res) => {
       hasBackup,
       isRunning,
       asarPath,
-      backupPath
+      backupPath,
+      platform: process.platform,
+      defaultUsername: getHostUsername()
     }));
   } 
   else if (req.url === '/api/localize' && req.method === 'POST') {
@@ -1013,8 +1047,9 @@ const server = http.createServer((req, res) => {
       try {
         const params = body ? JSON.parse(body) : {};
         const appDir = getAppDir(params.username, params.useDefault, params.customPath);
-        log(`正在尝试启动 Antigravity 2.0 (路径: ${appDir})...`);
-        const appPath = path.join(appDir, 'Antigravity.exe');
+        const exeName = process.platform === 'win32' ? 'Antigravity.exe' : 'antigravity';
+        const appPath = path.join(appDir, exeName);
+        log(`正在尝试启动 Antigravity 2.0 (路径: ${appPath})...`);
         if (fs.existsSync(appPath)) {
           spawn(appPath, [], { detached: true, stdio: 'ignore' }).unref();
           log('Antigravity 2.0 启动指令已发送。');
@@ -1052,7 +1087,7 @@ const server = http.createServer((req, res) => {
 });
 
 if (process.argv.includes('--now')) {
-  const defaultAppDir = getAppDir('11215', true, '');
+  const defaultAppDir = getAppDir(getHostUsername(), true, '');
   runLocalizationWorkflow(defaultAppDir)
     .then(() => {
       console.log('🎉 汉化打包部署成功！');

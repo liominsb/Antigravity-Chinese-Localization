@@ -613,6 +613,9 @@ electron_1.contextBridge.exposeInMainWorld('ide', ideAPI);
     return text.replace(trimmed, finalTranslated);
   }
 
+  // 用于模糊匹配类名中包含代码/预览/diff相关关键词的正则
+  const codeClassPattern = /(?:^|[\s_-])(code|diff|source|syntax|highlight|viewer|hljs|shiki|prism|monaco|codemirror|token|line-number|line-content|gutter|codeblock|code-block|code-view|code-preview|file-preview|file-content)(?:$|[\s_-])/i;
+
   function shouldSkipNode(node) {
     if (!node) return true;
     
@@ -621,7 +624,7 @@ electron_1.contextBridge.exposeInMainWorld('ide', ideAPI);
     if (!element) return false;
 
     // 1. 绝对不能翻译的脚本/样式/代码块标签
-    const skipTags = ['SCRIPT', 'STYLE', 'CODE', 'PRE', 'NOSCRIPT'];
+    const skipTags = ['SCRIPT', 'STYLE', 'CODE', 'PRE', 'NOSCRIPT', 'KBD', 'SAMP', 'VAR'];
     if (skipTags.includes(element.tagName)) {
       return true;
     }
@@ -633,12 +636,43 @@ electron_1.contextBridge.exposeInMainWorld('ide', ideAPI);
       }
     }
 
-    // 3. 向上递归检查祖先节点，判断是否处于富文本编辑区（contenteditable="true"）或代码编辑器中
+    // 3. 检查元素自身是否带有代码语言标记属性
+    if (element.getAttribute) {
+      if (element.getAttribute('data-language') || 
+          element.getAttribute('data-code') ||
+          element.getAttribute('data-line') ||
+          element.getAttribute('data-line-number')) {
+        return true;
+      }
+    }
+
+    // 4. 向上递归检查祖先节点
     let cur = element;
     while (cur) {
+      // 4a. contenteditable 区域
       if (cur.getAttribute && cur.getAttribute('contenteditable') === 'true') {
         return true;
       }
+
+      // 4b. 检查 data 属性（代码块语言标记等）
+      if (cur.getAttribute) {
+        if (cur.getAttribute('data-language') || 
+            cur.getAttribute('data-code') ||
+            cur.getAttribute('data-line') ||
+            cur.getAttribute('data-line-number')) {
+          return true;
+        }
+      }
+
+      // 4c. 检查 role 属性
+      if (cur.getAttribute) {
+        const role = cur.getAttribute('role');
+        if (role === 'code') {
+          return true;
+        }
+      }
+
+      // 4d. 精确类名匹配 — 已知的编辑器/输入区域
       if (cur.classList && (
         cur.classList.contains('monaco-editor') || 
         cur.classList.contains('editor-instance') ||
@@ -647,6 +681,25 @@ electron_1.contextBridge.exposeInMainWorld('ide', ideAPI);
       )) {
         return true;
       }
+
+      // 4e. 类名匹配 — 精确与模糊检测（高精度防御，防止 Tailwind 选择器如 [&_code] 引起的误杀）
+      if (cur.className && typeof cur.className === 'string') {
+        const lowerClass = cur.className.toLowerCase();
+        if (
+          lowerClass.includes('code-line') ||
+          lowerClass.includes('select-contain') ||
+          lowerClass.includes('font-mono') ||
+          codeClassPattern.test(cur.className)
+        ) {
+          return true;
+        }
+      }
+
+      // 4f. 检查 tagName: 如果在 PRE 或 CODE 结构内部也应跳过
+      if (cur.tagName === 'PRE' || cur.tagName === 'CODE') {
+        return true;
+      }
+
       cur = cur.parentElement;
     }
 
@@ -774,4 +827,6 @@ electron_1.contextBridge.exposeInMainWorld('ide', ideAPI);
   } else {
     startObserver();
   }
+
+
 })();

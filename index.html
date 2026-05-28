@@ -585,7 +585,7 @@
 
       <div class="input-row">
         <div class="input-group">
-          <label for="tgt-win-owner">Windows 系统账户名 (Host Account)</label>
+          <label for="tgt-win-owner" id="lbl-win-owner">Windows 系统账户名 (Host Account)</label>
           <!-- 采用 readonly 焦点激活防御 + new-password 声明 + 诱饵混淆，彻底终结任何密码管理器在失焦或鼠标移出时的强制篡改 -->
           <input type="text" id="tgt-win-owner" name="tgt-win-owner" placeholder="例如: 11215" 
                  autocomplete="new-password" autocorrect="off" autocapitalize="off" spellcheck="false" 
@@ -596,7 +596,7 @@
           <label class="custom-checkbox-container" style="margin-bottom: 0;">
             <input type="checkbox" id="chk-default-path" checked onchange="togglePathInput()">
             <span class="checkbox-checkmark"></span>
-            使用 Windows 默认安装路径
+            <span id="lbl-default-path">使用 Windows 默认安装路径</span>
           </label>
           <button class="sec-btn" id="btn-detect" onclick="manualDetectPath()" style="padding: 10px 18px; font-size: 0.85rem; margin-top: 0; white-space: nowrap; border-radius: 10px; background: rgba(124, 77, 255, 0.1); border-color: rgba(124, 77, 255, 0.2); transition: all 0.2s ease;">
             <svg style="width:14px; height:14px; fill:currentColor; vertical-align: middle; margin-right: 4px;" viewBox="0 0 24 24">
@@ -734,6 +734,27 @@
         const res = await fetch(`${API_BASE}/api/status${queryStr}`);
         if (!res.ok) throw new Error();
         const data = await res.json();
+        
+        const isWin = data.platform === 'win32';
+        const sysLabel = isWin ? 'Windows' : (data.platform === 'linux' ? 'Linux' : data.platform);
+        
+        document.getElementById('lbl-win-owner').textContent = `${sysLabel} 系统账户名 (Host Account)`;
+        document.getElementById('lbl-default-path').textContent = `使用 ${sysLabel} 默认安装路径`;
+        
+        if (data.defaultUsername) {
+          inputUsername.placeholder = `例如: ${data.defaultUsername}`;
+          
+          if (!localStorage.getItem('localizer_username') && !inputUsername.value) {
+            inputUsername.value = data.defaultUsername;
+            saveSettings();
+          }
+        }
+        
+        if (isWin) {
+          inputCustomPath.placeholder = "C:\\Users\\用户名\\AppData\\Local\\Programs\\antigravity";
+        } else {
+          inputCustomPath.placeholder = "/home/用户名/Antigravity/Antigravity-x64";
+        }
         
         // Installed status
         const insEl = document.getElementById('status-installed');

@@ -1,3 +1,29 @@
-# Force shell scripts to always use LF line endings,
-# even on Windows, to ensure compatibility with macOS/Linux.
+# Line ending policy:
+# - Text files are stored as LF in the repository.
+# - *.sh, *.js and other cross-platform text keep LF in the working tree
+#   even on Windows (avoids LF<->CRLF noise and silent mismatches).
+# - Windows-only batch files keep CRLF in the working tree.
+
 *.sh text eol=lf
+*.js text eol=lf
+*.mjs text eol=lf
+*.cjs text eol=lf
+*.ts text eol=lf
+*.json text eol=lf
+*.md text eol=lf
+*.html text eol=lf
+*.css text eol=lf
+*.map text eol=lf
+*.txt text eol=lf
+
+*.bat text eol=crlf
+
+*.png binary
+*.jpg binary
+*.jpeg binary
+*.gif binary
+*.ico binary
+*.zip binary
+*.asar binary
+*.exe binary
+*.dll binary

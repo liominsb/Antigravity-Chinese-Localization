@@ -23,6 +23,21 @@ if not exist "%TARGET_DIR%\app.asar.bak" (
   echo [2/3] 备份已存在，跳过备份。
 )
 
+if not exist "%~dp0app.asar.ready" (
+  if exist "%~dp0extracted" (
+    echo [提示] 未检测到预打包的 app.asar.ready，正在自动从 extracted 源码目录打包...
+    call npx -y @electron/asar pack "%~dp0extracted" "%~dp0app.asar.ready" --unpack-dir "**/chrome-devtools-mcp/**"
+  )
+)
+
+if not exist "%~dp0app.asar.ready" (
+  echo.
+  echo [错误] 未找到 app.asar.ready 汉化包，且未能自动生成。
+  echo 请先从 GitHub Releases 下载汉化包，或运行“双击运行汉化.bat”进行全自动汉化。
+  pause
+  exit /b 1
+)
+
 echo [3/3] 正在覆盖安装汉化包...
 copy /y "%~dp0app.asar.ready" "%TARGET_DIR%\app.asar" >nul
 

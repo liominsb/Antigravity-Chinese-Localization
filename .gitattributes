@@ -6,3 +6,5 @@
 # to prevent cmd.exe command parsing truncation and EOF issues.
 *.bat text eol=crlf
 *.cmd text eol=crlf
+*.yml text eol=lf
+*.yaml text eol=lf

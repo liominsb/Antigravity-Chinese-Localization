@@ -2,6 +2,47 @@
 
 本文件记录 Antigravity-Chinese-Localization 汉化项目的全部版本迭代与核心架构变动。
 
+## v2.21.0 (2026-10-07)
+
+### 1. 全面深度适配 Antigravity v2.21.0 架构与官方底座接口
+- **官方版本无缝平滑升级**：深度跟进官方 10月最新发布的 2.21.0 版本，同步升级应用版本定义至 `2.21.0`，全面适配主进程与渲染进程架构。
+- **官方底座接口桥接**：在 `preload.js` 中保留并桥接官方新增的 `getPathForFile: (file) => electron_1.webUtils.getPathForFile(file)` 接口，确保文件拖拽上传与文件系统绝对路径解析功能稳定运行。
+- **全套 TDD 自动化测试验证**：新增 Ticket-15（62 项断言）与 Ticket-16 专项测试套件，全量 14 套回归测试用例 100% 保持全绿通过 (ALL GREEN)。
+
+### 2. 深度汉化 2.21.0 新增界面文案与交互体验
+- **设置中心新版体验与 Token 明细**：深度汉化 Project 4K 体验模式选项（`Choose between the Default and Project 4K experience.` -> `在默认体验与 4K 项目体验之间切换。`）、自定义项（规则、技能、MCP）Token 消耗明细（`Show breakdown`）及动态计数。
+- **云端与智能体全生命周期状态**：汉化 `Creating Cloud Project`（正在创建云项目）、`Creating Chat Bot`（正在创建聊天机器人）、`Creating Sidecar`（正在创建 Sidecar）等创建与安装状态，以及 `Agent response`、`Undo to this point` 等聊天卡片交互。
+- **扩展市场与自动化 (Automations)**：汉化 `Automations`（自动化）、Google Docs / Sheets / Slides / Drive / Calendar 等官方插件生态、`Custom Agents`（自定义智能体）及启用工具动态计数。
+
+### 3. 分词防误伤保护规则与系统加固
+- **分词防误伤保护 (Anti-Corruption Protection)**：加固正则匹配分词规则，对代码文件路径（如 `tests/run-all-tests.js`）、kebab-case 标识符（如 `mcp-permission-authorization`）、内部 URL（如 `go/jetski-project-migration`）与打包产物名（如 `app.asar.ready`）实施严格物理隔离，杜绝误伤破坏。
+- **原生上下文菜单增强**：在 `ipcHandlers.js` 中扩充 Project options、View Usage、Duplicate、Archive、Clear History 等原生右键菜单词典映射。
+
+---
+
+## v2.19.1 (2026-10-01)
+
+### 1. 全面适配 Antigravity v2.19.1 核心架构
+- **官方版本无缝平滑升级**：升级应用版本定义至 `2.19.1`，保持与官方最新更新器与依赖架构的无缝兼容。
+- **全套 TDD 自动化测试验证**：新增 Ticket-14 专项测试套件（56 项断言全部通过），覆盖原生右键上下文菜单沙盒运行与核心文件完备性。
+
+### 2. 原生右键上下文菜单深度拦截与汉化
+- **IPC 上下文菜单翻译引擎**：拦截 `ipcHandlers.js` 中的 `window:show-context-menu` 通道，支持递归子菜单结构与动态 label 翻译。
+- **全量右键操作汉化**：汉化剪切、复制、粘贴、全选、撤销、重做、新建对话、派生对话、置顶/取消置顶、在文件资源管理器中显示、在访达中显示、在终端中打开等全部原生菜单项。
+
+---
+
+## v2.18.1 (2026-09-29)
+
+### 1. 全面适配 Antigravity v2.18.1 架构
+- **版本平滑升级**：升级应用版本定义至 `2.18.1`。
+- **全套 TDD 自动化测试验证**：新增 Ticket-13 专项测试套件，全量回归测试保持 100% 通过。
+
+### 2. 新版向导、Diff 控制栏与原生交互补全
+- **新版安装向导**：深度汉化 `wizardHtml.js` 欢迎与设置引导界面（`欢迎使用全新 Antigravity！`）。
+- **Diff 审查与控制栏**：补齐代码 Diff 审查栏操作、视图折叠与智能体计划审核策略。
+- **原生对话框与确认退出**：汉化检查更新提示框、当前已是最新版本弹窗、托盘智能体运行计数及确认退出交互。
+
 ---
 
 ## v2.17.0 (2026-09-24)

@@ -2,6 +2,47 @@
 
 This document tracks all version releases, core architecture adaptations, and feature updates for Antigravity-Chinese-Localization.
 
+## v2.21.0 (2026-10-07)
+
+### 1. Comprehensive Adaptation to Antigravity v2.21.0 Architecture & Upstream Bridge
+- **Version Metadata & Environment Seamless Upgrade**: Upgraded application definition to `2.21.0`, tracking Google official Oct 2026 build with full compatibility with main and renderer architectures.
+- **Upstream Bridge Interface Alignment**: Preserved and bridged official `getPathForFile: (file) => electron_1.webUtils.getPathForFile(file)` interface in `preload.js`, ensuring drag-and-drop file path resolution remains functional.
+- **Complete TDD Test Suite**: Added Ticket-15 (62 assertions) and Ticket-16 test suites, keeping all 14 regression test suites 100% green (ALL GREEN).
+
+### 2. Deep Localization of v2.21.0 New Features & Interactions
+- **Settings Experience & Token Breakdown**: Localized Project 4K experience options, token breakdown indicators (`Show breakdown`, `Hide breakdown`) for rules, skills, and MCP customizations, and dynamic count badges.
+- **Cloud & Agent Full Lifecycle States**: Localized `Creating Cloud Project`, `Creating Chat Bot`, `Creating Sidecar`, as well as `Agent response`, `Undo to this point`, and other chat card interactions.
+- **Marketplace & Automations**: Localized `Automations`, Google ecosystem extensions (Google Docs, Sheets, Slides, Drive, Calendar), `Custom Agents`, and dynamic enabled tools counters.
+
+### 3. Anti-Corruption Token Protection & Security Hardening
+- **Anti-Corruption Word Boundary Protection**: Strengthened regex token boundary guards to ensure file paths (e.g. `tests/run-all-tests.js`), kebab-case identifiers (e.g. `mcp-permission-authorization`), internal URLs (e.g. `go/jetski-project-migration`), and package artifacts (e.g. `app.asar.ready`) are strictly isolated from accidental partial translation.
+- **Native Context Menu Enhancements**: Expanded native context menu dictionaries in `ipcHandlers.js` covering Project options, View Usage, Duplicate, Archive, and Clear History.
+
+---
+
+## v2.19.1 (2026-10-01)
+
+### 1. Comprehensive Adaptation to Antigravity v2.19.1 Core Architecture
+- **Version Metadata Seamless Upgrade**: Upgraded application definition to `2.19.1`, maintaining full compatibility with the official updater and dependency structure.
+- **Complete TDD Test Suite**: Added Ticket-14 test suite (56 assertions passed), validating native context menu sandbox execution and core file integrity.
+
+### 2. Native Right-Click Context Menu Deep Interception & Localization
+- **IPC Context Menu Translation Engine**: Intercepted `ipcHandlers.js` `window:show-context-menu` channel, supporting recursive submenus and dynamic label translation.
+- **Full Coverage of Context Menu Actions**: Translated Cut, Copy, Paste, Select All, Undo, Redo, New Conversation, Fork Conversation, Pin/Unpin, Reveal in File Explorer, Reveal in Finder, and Open in Terminal.
+
+---
+
+## v2.18.1 (2026-09-29)
+
+### 1. Comprehensive Adaptation to Antigravity v2.18.1 Architecture
+- **Seamless Version Upgrade**: Upgraded application definition to `2.18.1`.
+- **Complete TDD Test Suite**: Added Ticket-13 test suite, passing all automated regression tests.
+
+### 2. Setup Wizard, Diff Review Bar & Native Dialog Localization
+- **Setup Wizard Static Templates**: Localized `wizardHtml.js` onboarding welcome and setup interface.
+- **Diff Review Bar & Settings**: Localized code review actions, view folding, and agent plan approval policies.
+- **Native Dialogs & Exit Confirmation**: Localized update check modals, up-to-date notifications, tray agent counters, and quit confirmation dialogs.
+
 ---
 
 ## v2.17.0 (2026-09-24)

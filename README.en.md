@@ -203,7 +203,9 @@ Detailed architectural designs, benchmarks (1.68M qps), and engineering practice
 
 ### Release Packaging (building default.zip)
 
-`app.asar.ready` is a build artifact excluded by the `app.asar*` rule in `.gitignore`, so no source archive ever contains it. Before publishing, make sure a freshly built `app.asar.ready` sits in the project root, then run:
+**On Windows you can simply double-click `打包发布.bat`**: it verifies the Node runtime, reads `CURRENT_VERSION` from `localize.js` to enforce a strict version match against the ready bundle, then invokes the packer. That bat is deliberately pure ASCII with all Chinese messages printed by Node — under `chcp 65001`, cmd.exe drops bytes when parsing lines with multi-byte characters, truncating `echo` output, and the failing line shifts as the script grows, so it cannot be worked around by adjusting punctuation.
+
+Command-line usage: `app.asar.ready` is a build artifact excluded by the `app.asar*` rule in `.gitignore`, so no source archive ever contains it. Before publishing, make sure a freshly built `app.asar.ready` sits in the project root, then run:
 
 ```bash
 # Read the version embedded in the ready bundle and write release-assets/default.zip

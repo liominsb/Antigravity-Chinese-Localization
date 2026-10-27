@@ -206,7 +206,9 @@ node localize.js --pack-only
 
 ### 发布打包（生成 default.zip）
 
-`app.asar.ready` 是构建产物，被 `.gitignore` 中的 `app.asar*` 规则排除，因此任何源码包都不会自带它。发布前请先确保项目根目录已存在构建好的 `app.asar.ready`，再执行：
+**Windows 用户可以直接双击 `打包发布.bat`**：脚本会检查 Node 环境、从 `localize.js` 读取 `CURRENT_VERSION` 对就绪包做版本强校验，再调用打包器。该 bat 刻意保持纯 ASCII、中文提示统一由 Node 输出——实测 cmd 在 `chcp 65001` 下解析含多字节字符的行会丢字节，导致 `echo` 输出被截断，且出错位置随脚本长度漂移，无法靠调整标点规避。
+
+命令行方式：`app.asar.ready` 是构建产物，被 `.gitignore` 中的 `app.asar*` 规则排除，因此任何源码包都不会自带它。发布前请先确保项目根目录已存在构建好的 `app.asar.ready`，再执行：
 
 ```bash
 # 自动读取 ready 包内版本号，输出 release-assets/default.zip

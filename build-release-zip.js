@@ -505,6 +505,10 @@ async function main() {
     console.log('预置缓存    : 已跳过（--no-cache）');
   }
   console.log('\n[成功] default.zip 已生成，解压后双击 bat 即可离线安装。');
+  console.log('');
+  console.log('下一步：把 release-assets/default.zip 上传到 GitHub Releases，');
+  console.log('        替换同名资产（不要新增副本），随后下载解压验证');
+  console.log('        控制中心「已下载版本」是否已列出该版本。');
   return 0;
 }
 

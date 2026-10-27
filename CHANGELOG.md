@@ -16,7 +16,14 @@
 - **修复 `.sh` 丢失可执行位**：历史发布包以 FAT 宿主（`version made by = 0x0014`）写入，`运行汉化.sh` 的 Unix mode 为 `0o0`，Linux/macOS 用户解压后执行 `./运行汉化.sh` 会直接 `Permission denied`。现改为 Unix 宿主（`0x031E`）并按扩展名写入权限：`.sh` 为 `0755`、普通文件 `0644`、目录 `0755`，解压即用，无需 `chmod +x`。
 - **新增跨平台自检闸门**：打包后强制校验条目路径为正斜杠、非绝对路径、`.sh` 带可执行位，任一不满足即构建失败。反斜杠路径在 Linux/macOS 上会被当作文件名的一部分（PowerShell `Compress-Archive` 的已知缺陷），绝对路径则存在解压越界风险，两者均被阻断。
 - **路径兼容性实测对比**：Windows 自带 `tar.exe`（bsdtar）打出的 zip 中文名为 GBK 裸存、不设 UTF-8 标志也无 `0x7075` 兜底；`Compress-Archive`（PS 5.1）中文名正确但路径使用反斜杠。两者均不满足跨平台要求，故放弃纯批处理方案，统一使用 Node 打包器（打包流程本身依赖 `npx asar pack`，Node 环境已是既存前提）。
-- **文档同步**：README 中英文版补充 `default.zip` 已内置 `app.asar.ready`，并说明源码包缺失该文件的原因与三种补救方式（改用 `default.zip`、单独下载该文件放入根目录、或 `node localize.js --now` 现场重新注入生成）。
+- **文档同步**：README 中英文版补充 `default.zip` 已内置 `app.asar.ready`，并说明源码包缺失该文件的原因与补救方式（改用 `default.zip`、单独下载该文件放入根目录、或从已汉化客户端的 `resources/app.asar` 复制一份）。
+
+### 3. 发布包预置下载缓存，「已下载版本」解压即用
+- **打包时预置缓存目录**：默认在包内生成 `downloads/release-<tag>-<releaseId>-<sha256>/`，内含 `app.asar.ready` 与 `download.json` 元数据。用户解压后打开控制中心，「已下载版本」列表直接列出该版本，可离线一键安装，无需再联网点「仅下载」。
+- **cacheId 复用单一实现**：缓存目录名必须与 `release-manager.js` 的命名规则完全一致，否则 `listFiles()` 会将其视为无关目录丢弃。打包器直接复用该模块导出的 `makeCacheId`，不另写一套规则，避免两处实现漂移。
+- **releaseId 使用真实值**：默认按 tag 从 GitHub API 查询（缓存目录名中的 ID 供「重新下载」入口使用，填占位值会让该入口指向不存在的发布），无网络时可用 `--release-id` 手动指定；`--no-cache` 可跳过预置。
+- **`release-manager.js` 增加导出**：新增 `makeCacheId`、`CACHE_ID_PATTERN`、`FILE_NAME` 三个导出，供打包器与测试复用。
+- **测试扩充至 39 项断言**：新增缓存目录命名、元数据字段完整性、缓存内 ready 字节一致性、路径规范等校验。
 
 ---
 

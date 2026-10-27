@@ -82,11 +82,11 @@ Antigravity 深度汉化与高性能本地化补丁程序
 ### 方式一：Windows 用户（脚本与控制中心）
 
 #### 1. 图形化控制中心（推荐）
-1. 下载 Release 发布的 `default.zip` 并解压（**包内已内置 `app.asar.ready`**，解压即具备离线一键安装能力）；
+1. 下载 Release 发布的 `default.zip` 并解压（**包内已内置 `app.asar.ready`，并预置了本版本的下载缓存**，解压即具备离线一键安装能力）；
 2. 双击运行目录下的 **`双击运行汉化.bat`**；
-3. 浏览器会自动打开可视化控制中心（`http://localhost:3388`），系统会自动检测安装状态；若检测到官方更新覆盖，会在首页顶部醒目提示并支持一键恢复。
+3. 浏览器会自动打开可视化控制中心（`http://localhost:3388`），系统会自动检测安装状态；**「已下载版本」列表里已经存在当前版本，无需联网，直接点安装即可**；若检测到官方更新覆盖，会在首页顶部醒目提示并支持一键恢复。
 
-> **注意**：`app.asar.ready` 是构建产物，不纳入 Git 版本管理。若你通过 `git clone` 或 GitHub 的 “Download ZIP” 获取源码，目录内不会包含该文件，`一键更新汉化.bat` 的免 Node 分支会提示缺少补丁。此时请改用 `default.zip`，或单独下载 Releases 中的 `app.asar.ready` 放到项目根目录，也可以执行 `node localize.js --now` 现场从官方客户端重新注入生成。
+> **注意**：`app.asar.ready` 是构建产物，不纳入 Git 版本管理。若你通过 `git clone` 或 GitHub 的 “Download ZIP” 获取源码，目录内不会包含该文件，`一键更新汉化.bat` 的免 Node 分支会提示缺少补丁。此时请改用 `default.zip`，或单独下载 Releases 中的 `app.asar.ready` 放到项目根目录。若要从本机已安装的客户端现取一份：先执行 `node localize.js --now` 完成注入，再把 `%LOCALAPPDATA%\Programs\antigravity\resources\app.asar` 复制到项目根目录并命名为 `app.asar.ready`（`localize.js` 只就地覆盖客户端文件，不会自己生成这个就绪包）。
 
 控制中心首页显示实际已安装的 `app.asar` 版本，可以直接读取 GitHub Releases，选择最新正式版或历史版本。“仅下载”将文件缓存到本项目的 `downloads/` 目录；“下载并安装”在下载和 SHA-256 校验后，确认安装到配置的目标路径。更新说明和已下载版本默认折叠；路径配置、本地脚本汉化、还原及日志可在“设置与维护”中展开。
 
@@ -215,9 +215,17 @@ node build-release-zip.js
 # 强制校验版本，版本不符直接失败，避免发错包
 node build-release-zip.js --version 2.26.0
 
+# 手动指定 GitHub Release ID（无网络或自动查询失败时使用）
+node build-release-zip.js --version 2.26.0 --release-id 422504512
+
+# 跳过预置下载缓存（"已下载版本"列表将为空，用户需自行点「仅下载」）
+node build-release-zip.js --version 2.26.0 --no-cache
+
 # 自定义输出路径
 node build-release-zip.js --out /tmp/default.zip
 ```
+
+**预置下载缓存**：默认会在包内生成 `downloads/release-<tag>-<releaseId>-<sha256>/` 目录，内含 `app.asar.ready` 与 `download.json` 元数据。用户解压后打开控制中心，「已下载版本」列表里便直接存在该版本，可离线一键安装，无需再联网点「仅下载」。缓存目录名必须与 `release-manager.js` 的命名规则严格一致，否则会被 `listFiles()` 当作无关目录丢弃，因此打包器的 cacheId 直接复用该模块导出的 `makeCacheId`，不另写一套实现。`releaseId` 默认通过 GitHub API 按 tag 自动查询（缓存目录名需带上真实 ID，供「重新下载」入口使用），无网络时用 `--release-id` 手动指定。
 
 打包器零第三方依赖（只用 Node 内置的 `zlib` 自行写出 ZIP），写入后会重新解析压缩包中央目录自检，任一项不满足即构建失败，不会产出半成品包：
 

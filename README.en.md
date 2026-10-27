@@ -80,11 +80,11 @@ No Node.js or build tools required:
 ### Method 1: Windows Users (Scripts & Dashboard)
 
 #### 1. Web Dashboard (Recommended)
-1. Download `default.zip` from Releases and extract (**`app.asar.ready` is bundled inside**, so one-click offline installation works immediately);
+1. Download `default.zip` from Releases and extract (**`app.asar.ready` is bundled inside along with a pre-seeded download cache**, so one-click offline installation works immediately);
 2. Double-click **`双击运行汉化.bat`**;
-3. The dashboard opens automatically (`http://localhost:3388`), auto-detects program status, and highlights automatic recovery if official updates have overwritten the localization.
+3. The dashboard opens automatically (`http://localhost:3388`), auto-detects program status, and highlights automatic recovery if official updates have overwritten the localization. **The current version is already listed under "已下载版本" (Downloaded Versions) — install it offline without downloading again.**
 
-> **Note**: `app.asar.ready` is a build artifact and is not tracked by Git. If you get the project via `git clone` or GitHub's "Download ZIP", the file will be missing and the Node-free branch of `一键更新汉化.bat` will report a missing patch. Use `default.zip` instead, download `app.asar.ready` from Releases into the project root, or run `node localize.js --now` to regenerate it from the installed official client.
+> **Note**: `app.asar.ready` is a build artifact and is not tracked by Git. If you get the project via `git clone` or GitHub's "Download ZIP", the file will be missing and the Node-free branch of `一键更新汉化.bat` will report a missing patch. Use `default.zip` instead, or download `app.asar.ready` from Releases into the project root. To capture one from your own installed client: run `node localize.js --now` first, then copy `%LOCALAPPDATA%\Programs\antigravity\resources\app.asar` to the project root as `app.asar.ready` (`localize.js` only overwrites the client in place and never produces this ready bundle itself).
 
 The dashboard shows the installed `app.asar` version and lets you select the latest stable, historical, or prerelease localization package from GitHub Releases. Use "仅下载" (Download Only) to cache a package, or "下载并安装" (Download and Install) to verify its SHA-256 and confirm installation. Release notes, downloaded packages, and settings/maintenance tools are collapsed by default.
 
@@ -212,9 +212,17 @@ node build-release-zip.js
 # Enforce an expected version; mismatches fail the build instead of shipping a wrong package
 node build-release-zip.js --version 2.26.0
 
+# Provide the GitHub Release ID manually (offline, or when auto-lookup fails)
+node build-release-zip.js --version 2.26.0 --release-id 422504512
+
+# Skip the pre-seeded download cache ("Downloaded Versions" will be empty)
+node build-release-zip.js --version 2.26.0 --no-cache
+
 # Custom output path
 node build-release-zip.js --out /tmp/default.zip
 ```
+
+**Pre-seeded download cache**: by default the archive contains `downloads/release-<tag>-<releaseId>-<sha256>/` with `app.asar.ready` and a `download.json` manifest. After extraction, the dashboard's "已下载版本" list already shows this version, so users install offline without clicking "Download Only" first. The cache directory name must match `release-manager.js` exactly or `listFiles()` discards it as unrelated — the packer therefore reuses the exported `makeCacheId` instead of reimplementing the rule. `releaseId` is looked up from the GitHub API by tag by default (the real ID is needed for the "re-download" entry point); pass `--release-id` when offline.
 
 The packer has zero third-party dependencies (it writes the ZIP itself with the built-in `zlib`) and re-parses the resulting central directory as a self-check. Any failed check aborts the build, so a half-finished archive is never produced:
 

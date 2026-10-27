@@ -4,6 +4,22 @@ This document tracks all version releases, core architecture adaptations, and fe
 
 ---
 
+## Unreleased
+
+### 1. Fixed: Release Archive Shipped Without the Ready Patch
+- **Root cause**: `app.asar.ready` is a build artifact excluded by the `app.asar*` rule in `.gitignore`, so both `git clone` and GitHub's "Download ZIP" never contain it. Historical `default.zip` builds did not include it either, so after extracting, `一键更新汉化.bat` reported "ready patch not found" in the Node-free branch, or exited with a failure code (`NO_PATCH_FOUND`) in the Node branch.
+- **New zero-dependency release packer `build-release-zip.js`**: bundles the root-level `app.asar.ready` into `default.zip` under `release-assets/`. Supports `--version` enforcement (fails the build on mismatch instead of shipping a wrong package) and `--out` for a custom destination.
+- **Post-build self-check**: re-parses the resulting central directory and verifies entry count, presence of `app.asar.ready`, byte-length agreement, and the UTF-8 filename flag (keeping Chinese script names such as `一键更新汉化.bat` intact after extraction). Any failed check aborts the build, so a half-finished archive is never produced.
+- **New TDD suite `tests/release-zip.test.js`**: covers CRC32 reference values, ZIP structure and content round-tripping, UTF-8 filename handling, directory entries, cross-platform paths and permissions, and rejection of incomplete/corrupt archives — 24 assertions, all passing.
+
+### 2. Cross-Platform Hardening of the Release Archive (Windows / Linux / macOS)
+- **Fixed missing executable bit on `.sh`**: previous archives were written with a FAT host (`version made by = 0x0014`), leaving `运行汉化.sh` at Unix mode `0o0` — Linux/macOS users hit `Permission denied` when running `./运行汉化.sh`. Entries are now written as Unix host (`0x031E`) with extension-based modes: `.sh` as `0755`, regular files `0644`, directories `0755`, so the script runs immediately without `chmod +x`.
+- **New cross-platform self-check gate**: after writing, the build verifies forward-slash paths, non-absolute paths, and the executable bit on `.sh` files; any failure aborts the build. Backslash paths are treated as part of the filename on Linux/macOS (a known `Compress-Archive` defect), and absolute paths carry extraction-escape risk — both are blocked.
+- **Measured comparison of path compatibility**: a zip produced by the bundled Windows `tar.exe` (bsdtar) stores Chinese names as raw GBK with neither the UTF-8 flag nor a `0x7075` fallback; `Compress-Archive` (PS 5.1) keeps names correct but uses backslashes in paths. Neither meets the cross-platform requirement, so the batch-only approach was dropped in favour of the Node packer (the release pipeline already requires `npx asar pack`, so Node is an existing prerequisite, not a new dependency).
+- **Documentation**: both READMEs now state that `default.zip` bundles `app.asar.ready`, and explain why source archives lack it plus three remedies (use `default.zip`, download the file separately into the project root, or regenerate it with `node localize.js --now`).
+
+---
+
 ## v2.26.0 (2026-10-24)
 
 ### 1. Comprehensive Adaptation to Antigravity v2.26.0 Architecture

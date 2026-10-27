@@ -80,9 +80,11 @@ No Node.js or build tools required:
 ### Method 1: Windows Users (Scripts & Dashboard)
 
 #### 1. Web Dashboard (Recommended)
-1. Download `default.zip` from Releases or clone repository, then extract;
+1. Download `default.zip` from Releases and extract (**`app.asar.ready` is bundled inside**, so one-click offline installation works immediately);
 2. Double-click **`双击运行汉化.bat`**;
 3. The dashboard opens automatically (`http://localhost:3388`), auto-detects program status, and highlights automatic recovery if official updates have overwritten the localization.
+
+> **Note**: `app.asar.ready` is a build artifact and is not tracked by Git. If you get the project via `git clone` or GitHub's "Download ZIP", the file will be missing and the Node-free branch of `一键更新汉化.bat` will report a missing patch. Use `default.zip` instead, download `app.asar.ready` from Releases into the project root, or run `node localize.js --now` to regenerate it from the installed official client.
 
 The dashboard shows the installed `app.asar` version and lets you select the latest stable, historical, or prerelease localization package from GitHub Releases. Use "仅下载" (Download Only) to cache a package, or "下载并安装" (Download and Install) to verify its SHA-256 and confirm installation. Release notes, downloaded packages, and settings/maintenance tools are collapsed by default.
 
@@ -93,7 +95,7 @@ When an official update overwrites localization with English defaults, double-cl
 - Auto-detects Node.js runtime and client version;
 - Performs strict version compatibility checks to prevent white-screen crashes;
 - Creates safe backups and atomically restores Chinese localization;
-- Gracefully falls back to pure batch script mode if Node.js is not installed.
+- Gracefully falls back to pure batch script mode if Node.js is not installed (this branch consumes the bundled `app.asar.ready`, so extract from `default.zip`).
 
 #### 3. Headless CLI Deployment & Silent Restore
 In your terminal, navigate to the folder and run:
@@ -198,6 +200,28 @@ Detailed architectural designs, benchmarks (1.68M qps), and engineering practice
 | :--- | :--- | :--- |
 | [architecture.md](docs/architecture.md) | 中文 | 基础算力层重构 ($O(1)$ Map 哈希与 ASCII 短路)、DOM 调度层优化 (联合流式正则与祖先剪枝)、`Ctrl+R` 重载生命周期自愈与 React 切片拼合、50,000 次压测基准数据、Shadow DOM 输入免疫与控制中心防篡改装甲 |
 | [architecture.en.md](docs/architecture.en.md) | English | Deep engineering breakdown: $O(1)$ precompiled Map lookups, ASCII short-circuit, unified regex stream scanning, DOM ancestor pruning, queueMicrotask frame aggregation, 1.68M qps benchmark, lifecycle healing & input physical immunity |
+
+### Release Packaging (building default.zip)
+
+`app.asar.ready` is a build artifact excluded by the `app.asar*` rule in `.gitignore`, so no source archive ever contains it. Before publishing, make sure a freshly built `app.asar.ready` sits in the project root, then run:
+
+```bash
+# Read the version embedded in the ready bundle and write release-assets/default.zip
+node build-release-zip.js
+
+# Enforce an expected version; mismatches fail the build instead of shipping a wrong package
+node build-release-zip.js --version 2.26.0
+
+# Custom output path
+node build-release-zip.js --out /tmp/default.zip
+```
+
+The packer has zero third-party dependencies (it writes the ZIP itself with the built-in `zlib`) and re-parses the resulting central directory as a self-check. Any failed check aborts the build, so a half-finished archive is never produced:
+
+- Entry count matches the manifest, and `app.asar.ready` is present with matching byte length;
+- Filenames carry the UTF-8 flag, so `一键更新汉化.bat` and `运行汉化.sh` survive extraction intact on Windows, Linux, and macOS;
+- All entry paths use forward slashes and are never absolute, preventing mangled names or out-of-tree writes on Linux/macOS;
+- `.sh` files get mode `0755`, regular files `0644`, and directories `0755`, so `./运行汉化.sh` runs right after extraction without an extra `chmod +x`.
 
 ---
 

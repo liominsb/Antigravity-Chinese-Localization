@@ -82,9 +82,11 @@ Antigravity 深度汉化与高性能本地化补丁程序
 ### 方式一：Windows 用户（脚本与控制中心）
 
 #### 1. 图形化控制中心（推荐）
-1. 下载 Release 发布的 `default.zip` 或仓库源码并解压；
+1. 下载 Release 发布的 `default.zip` 并解压（**包内已内置 `app.asar.ready`**，解压即具备离线一键安装能力）；
 2. 双击运行目录下的 **`双击运行汉化.bat`**；
 3. 浏览器会自动打开可视化控制中心（`http://localhost:3388`），系统会自动检测安装状态；若检测到官方更新覆盖，会在首页顶部醒目提示并支持一键恢复。
+
+> **注意**：`app.asar.ready` 是构建产物，不纳入 Git 版本管理。若你通过 `git clone` 或 GitHub 的 “Download ZIP” 获取源码，目录内不会包含该文件，`一键更新汉化.bat` 的免 Node 分支会提示缺少补丁。此时请改用 `default.zip`，或单独下载 Releases 中的 `app.asar.ready` 放到项目根目录，也可以执行 `node localize.js --now` 现场从官方客户端重新注入生成。
 
 控制中心首页显示实际已安装的 `app.asar` 版本，可以直接读取 GitHub Releases，选择最新正式版或历史版本。“仅下载”将文件缓存到本项目的 `downloads/` 目录；“下载并安装”在下载和 SHA-256 校验后，确认安装到配置的目标路径。更新说明和已下载版本默认折叠；路径配置、本地脚本汉化、还原及日志可在“设置与维护”中展开。
 
@@ -95,7 +97,7 @@ Antigravity 深度汉化与高性能本地化补丁程序
 - 自动检测 Node.js 环境与客户端实际版本；
 - 具备严格的版本兼容性校验（避免因跨版本强行覆盖造成客户端白屏）；
 - 自动备份原版并原子替换恢复汉化；
-- 若系统无 Node.js 环境，则自动降级为纯批处理保底流程。
+- 若系统无 Node.js 环境，则自动降级为纯批处理保底流程（直接使用目录内的 `app.asar.ready`，因此请确保从 `default.zip` 解压获得该文件）。
 
 #### 3. 命令行极速部署与静默恢复（免开浏览器）
 在终端中进入项目目录，执行以下命令：
@@ -201,6 +203,28 @@ node localize.js --pack-only
 | :--- | :--- | :--- |
 | [architecture.md](docs/architecture.md) | 中文 | 基础算力层重构 ($O(1)$ Map 哈希与 ASCII 短路)、DOM 调度层优化 (联合流式正则与祖先剪枝)、`Ctrl+R` 重载生命周期自愈与 React 切片拼合、50,000 次压测基准数据、Shadow DOM 输入免疫与控制中心防篡改装甲 |
 | [architecture.en.md](docs/architecture.en.md) | English | Deep engineering breakdown: $O(1)$ precompiled Map lookups, ASCII short-circuit, unified regex stream scanning, DOM ancestor pruning, queueMicrotask frame aggregation, 1.68M qps benchmark, lifecycle healing & input physical immunity |
+
+### 发布打包（生成 default.zip）
+
+`app.asar.ready` 是构建产物，被 `.gitignore` 中的 `app.asar*` 规则排除，因此任何源码包都不会自带它。发布前请先确保项目根目录已存在构建好的 `app.asar.ready`，再执行：
+
+```bash
+# 自动读取 ready 包内版本号，输出 release-assets/default.zip
+node build-release-zip.js
+
+# 强制校验版本，版本不符直接失败，避免发错包
+node build-release-zip.js --version 2.26.0
+
+# 自定义输出路径
+node build-release-zip.js --out /tmp/default.zip
+```
+
+打包器零第三方依赖（只用 Node 内置的 `zlib` 自行写出 ZIP），写入后会重新解析压缩包中央目录自检，任一项不满足即构建失败，不会产出半成品包：
+
+- 条目数量与清单一致，`app.asar.ready` 确实在包内且字节长度吻合；
+- 文件名带 UTF-8 标志位，`一键更新汉化.bat`、`运行汉化.sh` 等中文名在 Windows / Linux / macOS 解压均不丢字；
+- 条目路径一律使用正斜杠且非绝对路径，避免 Linux/macOS 解压后变成怪文件名或越界写入；
+- `.sh` 写入 `0755` 可执行位、普通文件 `0644`、目录 `0755`，Linux/macOS 解压后可直接 `./运行汉化.sh`，无需额外 `chmod +x`。
 
 ---
 

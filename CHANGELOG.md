@@ -4,6 +4,22 @@
 
 ---
 
+## 未发布 (Unreleased)
+
+### 1. 修复发布包缺失就绪补丁导致一键安装失败
+- **问题定位**：`app.asar.ready` 属于构建产物，被 `.gitignore` 的 `app.asar*` 规则排除，因此 `git clone` 与 GitHub “Download ZIP” 得到的源码包天然不含该文件；历史上 `default.zip` 打包时也未把它纳入，导致用户解压后运行 `一键更新汉化.bat`，在无 Node.js 环境下直接报“未找到就绪补丁”，在有 Node.js 环境下则返回 `NO_PATCH_FOUND` 并以失败码退出。
+- **新增零依赖发布打包器 `build-release-zip.js`**：打包时自动把根目录的 `app.asar.ready` 一并写入 `default.zip`，输出至 `release-assets/`。支持 `--version` 强校验（版本不符直接失败，避免发错包）与 `--out` 自定义输出路径。
+- **打包后自校验**：写入完成后重新解析 ZIP 中央目录，逐项核对条目数量、`app.asar.ready` 是否存在、字节长度是否一致、文件名是否带 UTF-8 标志位（保证 `一键更新汉化.bat` 等中文脚本名解压后不乱码），任一项不通过即构建失败，不产出半成品包。
+- **新增 TDD 测试 `tests/release-zip.test.js`**：覆盖 CRC32 标准校验值、ZIP 结构与内容一致性、中文文件名 UTF-8 往返、目录条目保留、跨平台路径与权限、缺件/损坏包拦截，24 项断言全部通过。
+
+### 2. 发布包跨平台兼容加固（Windows / Linux / macOS）
+- **修复 `.sh` 丢失可执行位**：历史发布包以 FAT 宿主（`version made by = 0x0014`）写入，`运行汉化.sh` 的 Unix mode 为 `0o0`，Linux/macOS 用户解压后执行 `./运行汉化.sh` 会直接 `Permission denied`。现改为 Unix 宿主（`0x031E`）并按扩展名写入权限：`.sh` 为 `0755`、普通文件 `0644`、目录 `0755`，解压即用，无需 `chmod +x`。
+- **新增跨平台自检闸门**：打包后强制校验条目路径为正斜杠、非绝对路径、`.sh` 带可执行位，任一不满足即构建失败。反斜杠路径在 Linux/macOS 上会被当作文件名的一部分（PowerShell `Compress-Archive` 的已知缺陷），绝对路径则存在解压越界风险，两者均被阻断。
+- **路径兼容性实测对比**：Windows 自带 `tar.exe`（bsdtar）打出的 zip 中文名为 GBK 裸存、不设 UTF-8 标志也无 `0x7075` 兜底；`Compress-Archive`（PS 5.1）中文名正确但路径使用反斜杠。两者均不满足跨平台要求，故放弃纯批处理方案，统一使用 Node 打包器（打包流程本身依赖 `npx asar pack`，Node 环境已是既存前提）。
+- **文档同步**：README 中英文版补充 `default.zip` 已内置 `app.asar.ready`，并说明源码包缺失该文件的原因与三种补救方式（改用 `default.zip`、单独下载该文件放入根目录、或 `node localize.js --now` 现场重新注入生成）。
+
+---
+
 ## v2.26.0 (2026-10-24)
 
 ### 1. 全面深度适配 Antigravity v2.26.0 官方最新架构

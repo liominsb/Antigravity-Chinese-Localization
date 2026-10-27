@@ -206,7 +206,7 @@ node localize.js --pack-only
 
 ### 发布打包（生成 default.zip）
 
-**Windows 用户可以直接双击 `打包发布.bat`**：脚本会检查 Node 环境、从 `localize.js` 读取 `CURRENT_VERSION` 对就绪包做版本强校验，再调用打包器。该 bat 刻意保持纯 ASCII、中文提示统一由 Node 输出——实测 cmd 在 `chcp 65001` 下解析含多字节字符的行会丢字节，导致 `echo` 输出被截断，且出错位置随脚本长度漂移，无法靠调整标点规避。
+**Windows 用户可以直接双击 `打包发布.bat`**：脚本会检查 Node 环境、确认根目录存在已构建的 `app.asar.ready`，再调用打包器。该 bat 刻意保持纯 ASCII、中文提示统一由 Node 输出——实测 cmd 在 `chcp 65001` 下解析含多字节字符的行会丢字节，导致 `echo` 输出被截断，且出错位置随脚本长度漂移，无法靠调整标点规避。
 
 命令行方式：`app.asar.ready` 是构建产物，被 `.gitignore` 中的 `app.asar*` 规则排除，因此任何源码包都不会自带它。发布前请先确保项目根目录已存在构建好的 `app.asar.ready`，再执行：
 
@@ -217,9 +217,6 @@ node build-release-zip.js
 # 强制校验版本，版本不符直接失败，避免发错包
 node build-release-zip.js --version 2.26.0
 
-# 手动指定 GitHub Release ID（无网络或自动查询失败时使用）
-node build-release-zip.js --version 2.26.0 --release-id 422504512
-
 # 跳过预置下载缓存（"已下载版本"列表将为空，用户需自行点「仅下载」）
 node build-release-zip.js --version 2.26.0 --no-cache
 
@@ -227,7 +224,7 @@ node build-release-zip.js --version 2.26.0 --no-cache
 node build-release-zip.js --out /tmp/default.zip
 ```
 
-**预置下载缓存**：默认会在包内生成 `downloads/release-<tag>-<releaseId>-<sha256>/` 目录，内含 `app.asar.ready` 与 `download.json` 元数据。用户解压后打开控制中心，「已下载版本」列表里便直接存在该版本，可离线一键安装，无需再联网点「仅下载」。缓存目录名必须与 `release-manager.js` 的命名规则严格一致，否则会被 `listFiles()` 当作无关目录丢弃，因此打包器的 cacheId 直接复用该模块导出的 `makeCacheId`，不另写一套实现。`releaseId` 默认通过 GitHub API 按 tag 自动查询（缓存目录名需带上真实 ID，供「重新下载」入口使用），无网络时用 `--release-id` 手动指定。
+**预置下载缓存**：默认会在包内生成 `downloads/release-<tag>-<sha256>/` 目录，内含 `app.asar.ready` 与 `download.json` 元数据。用户解压后打开控制中心，「已下载版本」列表里便直接存在该版本，可离线一键安装，无需再联网点「仅下载」。缓存目录名必须与 `release-manager.js` 的命名规则严格一致，否则会被 `listFiles()` 当作无关目录丢弃，因此打包器的 cacheId 直接复用该模块导出的 `makeCacheId`，不另写一套实现。目录名中的 releaseId 由打包器填入固定占位值——控制中心的安装流程只消费 cacheId 与 tag，releaseId 仅参与命名，因此打包过程完全不需要联网。
 
 打包器零第三方依赖（只用 Node 内置的 `zlib` 自行写出 ZIP），写入后会重新解析压缩包中央目录自检，任一项不满足即构建失败，不会产出半成品包：
 

@@ -141,18 +141,18 @@ check('压不动的文件 method 为 0 或 8 且可还原', readEntries(stored)[
 
 console.log('\n[6] 预置下载缓存（控制中心「已下载版本」）');
 const readySha = crypto.createHash('sha256').update(readyBytes).digest('hex');
-const cache = buildCacheEntries({ readyData: readyBytes, readySha256: readySha, tag: 'v2.26.0', releaseId: 422504512 });
+const cache = buildCacheEntries({ readyData: readyBytes, readySha256: readySha, tag: 'v2.26.0', releaseId: 1 });
 
 check('缓存条目数量为 4（根目录 + 缓存目录 + ready + 元数据）', cache.entries.length, 4);
-check('cacheId 符合控制中心命名规则', /^release-v2\.26\.0-422504512-[a-f0-9]{64}$/.test(cache.cacheId), true);
-check('cacheId 由 makeCacheId 规则生成', cache.cacheId, `release-v2.26.0-422504512-${readySha}`);
+check('cacheId 符合控制中心命名规则', /^release-v2\.26\.0-1-[a-f0-9]{64}$/.test(cache.cacheId), true);
+check('cacheId 由 makeCacheId 规则生成', cache.cacheId, `release-v2.26.0-1-${readySha}`);
 
 const metaEntry = cache.entries.find(e => e.name.endsWith('/download.json'));
 check('元数据条目存在', Boolean(metaEntry), true);
 const metaParsed = JSON.parse(metaEntry.data.toString('utf8'));
 check('元数据 format 为 1', metaParsed.format, 1);
 check('元数据 cacheId 与目录名一致', metaParsed.cacheId, cache.cacheId);
-check('元数据 releaseId 保留真实值', metaParsed.releaseId, 422504512);
+check('元数据 releaseId 与传入的占位值一致', metaParsed.releaseId, 1);
 check('元数据 tag 正确', metaParsed.tag, 'v2.26.0');
 check('元数据 filename 正确', metaParsed.filename, 'app.asar.ready');
 check('元数据 size 与内容一致', metaParsed.size, readyBytes.length);

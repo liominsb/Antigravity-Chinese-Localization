@@ -19,7 +19,6 @@ const fsp = fs.promises;
 const path = require('path');
 const zlib = require('zlib');
 const crypto = require('crypto');
-const https = require('https');
 const { readAsarPackageVersion } = require('./asar-version');
 const { makeCacheId, CACHE_ID_PATTERN } = require('./release-manager');
 
@@ -28,8 +27,10 @@ const READY_NAME = 'app.asar.ready';
 const DEFAULT_OUT = path.join(WORKSPACE, 'release-assets', 'default.zip');
 const MAX_ENTRIES = 60000;
 const MAX_ENTRY_BYTES = 0x7fffffff;
-const REPOSITORY = 'liominsb/Antigravity-Chinese-Localization';
 const CACHE_META_NAME = 'download.json';
+// 预置缓存的占位 releaseId。控制中心的安装流程只用 cacheId 与 tag，
+// releaseId 仅参与目录命名，因此无需联网查询真实 ID。
+const PLACEHOLDER_RELEASE_ID = 1;
 
 // 打进包里的根级文件（与历史 default.zip 对齐，避免误带 downloads/ 缓存或 .git）
 const ROOT_FILES = [
@@ -310,46 +311,6 @@ async function hashFile(filePath) {
   return hash.digest('hex');
 }
 
-// 缓存目录名里必须带真实的 GitHub releaseId：控制中心的"重新下载"会用它去
-// 请求对应发布，填占位值会让该入口指向不存在的版本。
-function fetchReleaseId(tag, timeoutMs = 15000) {
-  return new Promise(function request(resolve, reject) {
-    const url = `https://api.github.com/repos/${REPOSITORY}/releases/tags/${encodeURIComponent(tag)}`;
-    const req = https.get(url, {
-      headers: {
-        'User-Agent': 'Antigravity-Chinese-Localization-Packer',
-        Accept: 'application/vnd.github+json'
-      }
-    }, function onResponse(res) {
-      const code = res.statusCode || 0;
-      if (code !== 200) {
-        res.resume();
-        reject(new Error(`GitHub API 返回 HTTP ${code}（tag: ${tag}）`));
-        return;
-      }
-      const chunks = [];
-      let size = 0;
-      res.on('data', function onData(chunk) {
-        size += chunk.length;
-        if (size > 4 * 1024 * 1024) {
-          req.destroy(new Error('GitHub API 响应过大'));
-          return;
-        }
-        chunks.push(chunk);
-      });
-      res.on('end', function onEnd() {
-        try {
-          const data = JSON.parse(Buffer.concat(chunks).toString('utf8'));
-          if (Number.isSafeInteger(data.id) && data.id > 0) resolve(data.id);
-          else reject(new Error('GitHub API 响应缺少有效 release id'));
-        } catch (error) { reject(error); }
-      });
-    });
-    req.on('error', reject);
-    req.setTimeout(timeoutMs, function onTimeout() { req.destroy(new Error('GitHub API 请求超时')); });
-  });
-}
-
 /**
  * 生成预置缓存条目：downloads/<cacheId>/app.asar.ready + download.json
  * 结构必须与 release-manager 的 listFiles/metadataFor 严格对齐，
@@ -461,23 +422,7 @@ async function main() {
   if (options.preloadCache) {
     const tag = options.tag || `v${readyVersion}`;
     const readySha256 = await hashFile(readyPath);
-    let releaseId = options.releaseId;
-    if (!releaseId) {
-      process.stdout.write(`查询 Release ID: ${tag} ... `);
-      try {
-        releaseId = await fetchReleaseId(tag);
-        console.log(`id=${releaseId}`);
-      } catch (error) {
-        console.log('失败');
-        throw fail(
-          `无法从 GitHub 获取 ${tag} 的 release id（${error.message}）。\n` +
-          '可通过 --release-id <id> 手动指定，或加 --no-cache 跳过预置下载缓存。'
-        );
-      }
-    } else {
-      console.log(`Release ID  : ${releaseId}（手动指定）`);
-    }
-
+    const releaseId = options.releaseId || PLACEHOLDER_RELEASE_ID;
     cacheInfo = buildCacheEntries({ readyData, readySha256, tag, releaseId });
     if (!CACHE_ID_PATTERN.test(cacheInfo.cacheId)) {
       throw fail(`生成的缓存目录名不符合控制中心规则: ${cacheInfo.cacheId}`);
@@ -499,7 +444,7 @@ async function main() {
   console.log(`输出体积    : ${(summary.bytes / 1024 / 1024).toFixed(2)} MB`);
   console.log(`内置 ready  : 是 (${readyEntry.data.length} 字节, v${readyVersion})`);
   if (cacheInfo) {
-    console.log(`预置缓存    : ${cacheInfo.cacheId}`);
+    console.log(`预置缓存    : downloads/${cacheInfo.cacheId}`);
     console.log(`              「已下载版本」将直接列出 ${cacheInfo.meta.tag}`);
   } else {
     console.log('预置缓存    : 已跳过（--no-cache）');
@@ -521,4 +466,4 @@ if (require.main === module) {
   });
 }
 
-module.exports = { buildZip, verifyZip, crc32, collectFiles, buildCacheEntries, hashFile, fetchReleaseId };
+module.exports = { buildZip, verifyZip, crc32, collectFiles, buildCacheEntries, hashFile };

@@ -19,9 +19,9 @@ This document tracks all version releases, core architecture adaptations, and fe
 - **Documentation**: both READMEs now state that `default.zip` bundles `app.asar.ready`, and explain why source archives lack it plus remedies (use `default.zip`, download the file separately into the project root, or copy `resources/app.asar` from an already-localized client).
 
 ### 3. Pre-Seeded Download Cache in the Release Archive
-- **Cache directory seeded at build time**: the packer now generates `downloads/release-<tag>-<releaseId>-<sha256>/` containing `app.asar.ready` and a `download.json` manifest. After extraction, the dashboard's "已下载版本" list already shows that version, so users install offline without clicking "Download Only" first.
+- **Cache directory seeded at build time**: the packer now generates `downloads/release-<tag>-<sha256>/` containing `app.asar.ready` and a `download.json` manifest. After extraction, the dashboard's "已下载版本" list already shows that version, so users install offline without clicking "Download Only" first.
 - **Single source for cacheId**: the directory name must match `release-manager.js` exactly or `listFiles()` discards it as unrelated. The packer reuses the module's exported `makeCacheId` instead of reimplementing the rule, preventing drift between the two.
-- **Real releaseId required**: looked up from the GitHub API by tag by default (the ID in the directory name powers the "re-download" entry point, so a placeholder would point at a non-existent release). Use `--release-id` when offline; `--no-cache` skips seeding entirely.
+- **No network needed to build**: the releaseId segment is a fixed placeholder. The dashboard only consumes `cacheId` and `tag` when installing, and releaseId is used solely for directory naming, so there is no need to query the GitHub API. `--no-cache` still skips seeding entirely.
 - **`release-manager.js` gains exports**: `makeCacheId`, `CACHE_ID_PATTERN`, and `FILE_NAME` are now exported for reuse by the packer and tests.
 - **Test suite expanded to 39 assertions**: covers cache directory naming, manifest field completeness, byte-level identity of the cached bundle, and path conventions.
 

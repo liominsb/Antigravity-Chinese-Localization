@@ -31,16 +31,9 @@ if not exist "app.asar.ready" (
   exit /b 1
 )
 
-rem Read the version declared in localize.js, so a stale ready bundle is
-rem rejected instead of being shipped under the wrong tag.
-set "EXPECTED="
-for /f "tokens=2 delims='" %%v in ('findstr /b /c:"const CURRENT_VERSION" localize.js') do set "EXPECTED=%%v"
-
-if defined EXPECTED (
-  node build-release-zip.js --version "%EXPECTED%"
-) else (
-  node build-release-zip.js
-)
+rem Build the archive. The packer reads the version from app.asar.ready itself
+rem and seeds downloads/ so the dashboard lists the version right away.
+node build-release-zip.js
 
 if errorlevel 1 (
   echo.

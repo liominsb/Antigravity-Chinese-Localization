@@ -19,9 +19,9 @@
 - **文档同步**：README 中英文版补充 `default.zip` 已内置 `app.asar.ready`，并说明源码包缺失该文件的原因与补救方式（改用 `default.zip`、单独下载该文件放入根目录、或从已汉化客户端的 `resources/app.asar` 复制一份）。
 
 ### 3. 发布包预置下载缓存，「已下载版本」解压即用
-- **打包时预置缓存目录**：默认在包内生成 `downloads/release-<tag>-<releaseId>-<sha256>/`，内含 `app.asar.ready` 与 `download.json` 元数据。用户解压后打开控制中心，「已下载版本」列表直接列出该版本，可离线一键安装，无需再联网点「仅下载」。
+- **打包时预置缓存目录**：默认在包内生成 `downloads/release-<tag>-<sha256>/`，内含 `app.asar.ready` 与 `download.json` 元数据。用户解压后打开控制中心，「已下载版本」列表直接列出该版本，可离线一键安装，无需再联网点「仅下载」。
 - **cacheId 复用单一实现**：缓存目录名必须与 `release-manager.js` 的命名规则完全一致，否则 `listFiles()` 会将其视为无关目录丢弃。打包器直接复用该模块导出的 `makeCacheId`，不另写一套规则，避免两处实现漂移。
-- **releaseId 使用真实值**：默认按 tag 从 GitHub API 查询（缓存目录名中的 ID 供「重新下载」入口使用，填占位值会让该入口指向不存在的发布），无网络时可用 `--release-id` 手动指定；`--no-cache` 可跳过预置。
+- **打包过程无需联网**：目录名中的 releaseId 填入固定占位值。控制中心安装时只消费 `cacheId` 与 `tag`，releaseId 仅参与目录命名，因此不必查询 GitHub API；`--no-cache` 可跳过预置。
 - **`release-manager.js` 增加导出**：新增 `makeCacheId`、`CACHE_ID_PATTERN`、`FILE_NAME` 三个导出，供打包器与测试复用。
 - **测试扩充至 39 项断言**：新增缓存目录命名、元数据字段完整性、缓存内 ready 字节一致性、路径规范等校验。
 

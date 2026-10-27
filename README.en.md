@@ -203,7 +203,7 @@ Detailed architectural designs, benchmarks (1.68M qps), and engineering practice
 
 ### Release Packaging (building default.zip)
 
-**On Windows you can simply double-click `打包发布.bat`**: it verifies the Node runtime, reads `CURRENT_VERSION` from `localize.js` to enforce a strict version match against the ready bundle, then invokes the packer. That bat is deliberately pure ASCII with all Chinese messages printed by Node — under `chcp 65001`, cmd.exe drops bytes when parsing lines with multi-byte characters, truncating `echo` output, and the failing line shifts as the script grows, so it cannot be worked around by adjusting punctuation.
+**On Windows you can simply double-click `打包发布.bat`**: it verifies the Node runtime, confirms a built `app.asar.ready` exists in the project root, then invokes the packer. That bat is deliberately pure ASCII with all Chinese messages printed by Node — under `chcp 65001`, cmd.exe drops bytes when parsing lines with multi-byte characters, truncating `echo` output, and the failing line shifts as the script grows, so it cannot be worked around by adjusting punctuation.
 
 Command-line usage: `app.asar.ready` is a build artifact excluded by the `app.asar*` rule in `.gitignore`, so no source archive ever contains it. Before publishing, make sure a freshly built `app.asar.ready` sits in the project root, then run:
 
@@ -214,9 +214,6 @@ node build-release-zip.js
 # Enforce an expected version; mismatches fail the build instead of shipping a wrong package
 node build-release-zip.js --version 2.26.0
 
-# Provide the GitHub Release ID manually (offline, or when auto-lookup fails)
-node build-release-zip.js --version 2.26.0 --release-id 422504512
-
 # Skip the pre-seeded download cache ("Downloaded Versions" will be empty)
 node build-release-zip.js --version 2.26.0 --no-cache
 
@@ -224,7 +221,7 @@ node build-release-zip.js --version 2.26.0 --no-cache
 node build-release-zip.js --out /tmp/default.zip
 ```
 
-**Pre-seeded download cache**: by default the archive contains `downloads/release-<tag>-<releaseId>-<sha256>/` with `app.asar.ready` and a `download.json` manifest. After extraction, the dashboard's "已下载版本" list already shows this version, so users install offline without clicking "Download Only" first. The cache directory name must match `release-manager.js` exactly or `listFiles()` discards it as unrelated — the packer therefore reuses the exported `makeCacheId` instead of reimplementing the rule. `releaseId` is looked up from the GitHub API by tag by default (the real ID is needed for the "re-download" entry point); pass `--release-id` when offline.
+**Pre-seeded download cache**: by default the archive contains `downloads/release-<tag>-<sha256>/` with `app.asar.ready` and a `download.json` manifest. After extraction, the dashboard's "已下载版本" list already shows this version, so users install offline without clicking "Download Only" first. The cache directory name must match `release-manager.js` exactly or `listFiles()` discards it as unrelated — the packer therefore reuses the exported `makeCacheId` instead of reimplementing the rule. The releaseId segment is a fixed placeholder: the dashboard only consumes `cacheId` and `tag` when installing, and releaseId is used solely for directory naming, so packaging needs no network access at all.
 
 The packer has zero third-party dependencies (it writes the ZIP itself with the built-in `zlib`) and re-parses the resulting central directory as a self-check. Any failed check aborts the build, so a half-finished archive is never produced:
 

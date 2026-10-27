@@ -7,10 +7,25 @@
 // 本脚本在打包时把根目录已构建好的 app.asar.ready 一并塞进 default.zip，
 // 保证用户下载解压后，双击 bat 就能直接安装（含无 Node 的纯批处理分支）。
 //
+// 前置条件：项目根目录必须已有构建好的 app.asar.ready，且其内 package.json
+// 可读出合法版本号。仓库不含该文件，需先从已汉化的客户端
+// （resources/app.asar）复制一份过来。
+//
 // 用法：
-//   node build-release-zip.js                  # 自动读取 app.asar.ready 内版本号
-//   node build-release-zip.js --version 2.26.0 # 强校验版本，不一致直接失败
-//   node build-release-zip.js --out some.zip
+//   node build-release-zip.js                    # 从 ready 内读版本，输出 release-assets/default.zip
+//   node build-release-zip.js --version 2.26.0   # 强校验版本，与 ready 不一致直接失败
+//   node build-release-zip.js --tag v2.26.0      # 指定 Release 标签（默认取 v<ready 内版本>）
+//   node build-release-zip.js --release-id 123   # 覆盖预置缓存目录名里的 releaseId（默认占位值，一般不用给）
+//   node build-release-zip.js --no-cache         # 不预置 downloads/ 缓存
+//   node build-release-zip.js --out dist/a.zip   # 自定义输出路径
+//   node build-release-zip.js --help             # 打印参数说明
+//
+// 默认会在包内预置一个 downloads/<cacheId>/ 缓存目录（含 app.asar.ready 与
+// download.json），使控制中心「已下载版本」解压即列出该版本、可离线安装。
+// cacheId 复用 release-manager.js 的 makeCacheId，两处规则不会漂移。
+//
+// 打包后会自动重读压缩包中央目录自检（条目数、UTF-8 文件名标志、正斜杠路径、
+// 非绝对路径、.sh 可执行位），任一项不通过即抛错，不会留下半成品包。
 //
 // 零第三方依赖，只用 Node 内置模块。
 
@@ -79,7 +94,7 @@ function parseArgs(argv) {
     } else if (arg === '--release-id') {
       const raw = String(argv[++i] || '').trim();
       const parsed = Number(raw);
-      if (!Number.isSafeInteger(parsed) || parsed <= 0) throw fail('--release-id 需要指定正整数，例如 --release-id 422504512');
+      if (!Number.isSafeInteger(parsed) || parsed <= 0) throw fail('--release-id 需要指定正整数');
       options.releaseId = parsed;
     } else if (arg === '--no-cache') {
       // 不预置 downloads/ 缓存，"已下载版本"列表将为空
@@ -381,7 +396,20 @@ async function collectFiles() {
 async function main() {
   const options = parseArgs(process.argv.slice(2));
   if (options.help) {
-    console.log('用法: node build-release-zip.js [--version 2.26.0] [--tag v2.26.0] [--release-id 422504512] [--no-cache] [--out 路径]');
+    console.log([
+      '用法: node build-release-zip.js [选项]',
+      '',
+      '选项:',
+      '  --version <ver>    强校验版本，与 app.asar.ready 内版本不一致则失败',
+      '  --tag <tag>        指定 Release 标签，默认取 v<ready 内版本>',
+      '  --release-id <id>  覆盖预置缓存目录名中的 releaseId（默认占位值，一般无需指定）',
+      '  --no-cache         不预置 downloads/ 缓存，「已下载版本」列表将为空',
+      '  --out <path>       自定义输出路径，默认 release-assets/default.zip',
+      '  -h, --help         打印本说明',
+      '',
+      '前置条件: 项目根目录需已有构建好的 app.asar.ready',
+      ''
+    ].join('\n'));
     return 0;
   }
 

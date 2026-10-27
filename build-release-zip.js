@@ -18,13 +18,18 @@ const fs = require('fs');
 const fsp = fs.promises;
 const path = require('path');
 const zlib = require('zlib');
+const crypto = require('crypto');
+const https = require('https');
 const { readAsarPackageVersion } = require('./asar-version');
+const { makeCacheId, CACHE_ID_PATTERN } = require('./release-manager');
 
 const WORKSPACE = __dirname;
 const READY_NAME = 'app.asar.ready';
 const DEFAULT_OUT = path.join(WORKSPACE, 'release-assets', 'default.zip');
 const MAX_ENTRIES = 60000;
 const MAX_ENTRY_BYTES = 0x7fffffff;
+const REPOSITORY = 'liominsb/Antigravity-Chinese-Localization';
+const CACHE_META_NAME = 'download.json';
 
 // 打进包里的根级文件（与历史 default.zip 对齐，避免误带 downloads/ 缓存或 .git）
 const ROOT_FILES = [
@@ -61,12 +66,23 @@ function fail(message) {
 }
 
 function parseArgs(argv) {
-  const options = { version: '', out: DEFAULT_OUT };
+  const options = { version: '', out: DEFAULT_OUT, tag: '', releaseId: 0, preloadCache: true };
   for (let i = 0; i < argv.length; i++) {
     const arg = argv[i];
     if (arg === '--version') {
       options.version = String(argv[++i] || '').trim().replace(/^[vV]/, '');
       if (!options.version) throw fail('--version 需要指定版本号，例如 --version 2.26.0');
+    } else if (arg === '--tag') {
+      options.tag = String(argv[++i] || '').trim();
+      if (!options.tag) throw fail('--tag 需要指定 Release 标签，例如 --tag v2.26.0');
+    } else if (arg === '--release-id') {
+      const raw = String(argv[++i] || '').trim();
+      const parsed = Number(raw);
+      if (!Number.isSafeInteger(parsed) || parsed <= 0) throw fail('--release-id 需要指定正整数，例如 --release-id 422504512');
+      options.releaseId = parsed;
+    } else if (arg === '--no-cache') {
+      // 不预置 downloads/ 缓存，"已下载版本"列表将为空
+      options.preloadCache = false;
     } else if (arg === '--out') {
       const value = argv[++i];
       if (!value) throw fail('--out 需要指定输出路径');
@@ -286,6 +302,85 @@ function verifyZip(zipBuffer, expectations) {
   return { count, bytes: zipBuffer.length };
 }
 
+// ---------- 预置下载缓存（控制中心「已下载版本」列表的数据源） ----------
+
+async function hashFile(filePath) {
+  const hash = crypto.createHash('sha256');
+  for await (const chunk of fs.createReadStream(filePath)) hash.update(chunk);
+  return hash.digest('hex');
+}
+
+// 缓存目录名里必须带真实的 GitHub releaseId：控制中心的"重新下载"会用它去
+// 请求对应发布，填占位值会让该入口指向不存在的版本。
+function fetchReleaseId(tag, timeoutMs = 15000) {
+  return new Promise(function request(resolve, reject) {
+    const url = `https://api.github.com/repos/${REPOSITORY}/releases/tags/${encodeURIComponent(tag)}`;
+    const req = https.get(url, {
+      headers: {
+        'User-Agent': 'Antigravity-Chinese-Localization-Packer',
+        Accept: 'application/vnd.github+json'
+      }
+    }, function onResponse(res) {
+      const code = res.statusCode || 0;
+      if (code !== 200) {
+        res.resume();
+        reject(new Error(`GitHub API 返回 HTTP ${code}（tag: ${tag}）`));
+        return;
+      }
+      const chunks = [];
+      let size = 0;
+      res.on('data', function onData(chunk) {
+        size += chunk.length;
+        if (size > 4 * 1024 * 1024) {
+          req.destroy(new Error('GitHub API 响应过大'));
+          return;
+        }
+        chunks.push(chunk);
+      });
+      res.on('end', function onEnd() {
+        try {
+          const data = JSON.parse(Buffer.concat(chunks).toString('utf8'));
+          if (Number.isSafeInteger(data.id) && data.id > 0) resolve(data.id);
+          else reject(new Error('GitHub API 响应缺少有效 release id'));
+        } catch (error) { reject(error); }
+      });
+    });
+    req.on('error', reject);
+    req.setTimeout(timeoutMs, function onTimeout() { req.destroy(new Error('GitHub API 请求超时')); });
+  });
+}
+
+/**
+ * 生成预置缓存条目：downloads/<cacheId>/app.asar.ready + download.json
+ * 结构必须与 release-manager 的 listFiles/metadataFor 严格对齐，
+ * 否则控制中心会把目录当成无关垃圾直接丢弃。
+ */
+function buildCacheEntries({ readyData, readySha256, tag, releaseId }) {
+  const cacheId = makeCacheId(tag, releaseId, readySha256);
+  const directory = `downloads/${cacheId}`;
+  const meta = {
+    format: 1,
+    cacheId,
+    releaseId,
+    tag,
+    filename: READY_NAME,
+    size: readyData.length,
+    sha256: readySha256,
+    downloadedAt: new Date().toISOString()
+  };
+  const now = new Date();
+  return {
+    cacheId,
+    meta,
+    entries: [
+      { name: 'downloads/', isDir: true, data: Buffer.alloc(0), mtime: now },
+      { name: `${directory}/`, isDir: true, data: Buffer.alloc(0), mtime: now },
+      { name: `${directory}/${READY_NAME}`, isDir: false, data: readyData, mtime: now },
+      { name: `${directory}/${CACHE_META_NAME}`, isDir: false, data: Buffer.from(`${JSON.stringify(meta, null, 2)}\n`, 'utf8'), mtime: now }
+    ]
+  };
+}
+
 // ---------- 收集文件 ----------
 
 async function collectFiles() {
@@ -325,7 +420,7 @@ async function collectFiles() {
 async function main() {
   const options = parseArgs(process.argv.slice(2));
   if (options.help) {
-    console.log('用法: node build-release-zip.js [--version 2.26.0] [--out 路径]');
+    console.log('用法: node build-release-zip.js [--version 2.26.0] [--tag v2.26.0] [--release-id 422504512] [--no-cache] [--out 路径]');
     return 0;
   }
 
@@ -350,15 +445,45 @@ async function main() {
   console.log(`就绪包版本  : v${readyVersion}`);
   console.log(`就绪包体积  : ${(readyStat.size / 1024 / 1024).toFixed(2)} MB`);
 
+  const readyData = await fsp.readFile(readyPath);
   const files = await collectFiles();
 
   // 就绪包始终排在最后追加，保证清单里显式存在、且不会被排除规则漏掉
   files.push({
     name: READY_NAME,
     isDir: false,
-    data: await fsp.readFile(readyPath),
+    data: readyData,
     mtime: readyStat.mtime
   });
+
+  // 预置 downloads/ 缓存，让解压后控制中心的「已下载版本」直接列出本版本
+  let cacheInfo = null;
+  if (options.preloadCache) {
+    const tag = options.tag || `v${readyVersion}`;
+    const readySha256 = await hashFile(readyPath);
+    let releaseId = options.releaseId;
+    if (!releaseId) {
+      process.stdout.write(`查询 Release ID: ${tag} ... `);
+      try {
+        releaseId = await fetchReleaseId(tag);
+        console.log(`id=${releaseId}`);
+      } catch (error) {
+        console.log('失败');
+        throw fail(
+          `无法从 GitHub 获取 ${tag} 的 release id（${error.message}）。\n` +
+          '可通过 --release-id <id> 手动指定，或加 --no-cache 跳过预置下载缓存。'
+        );
+      }
+    } else {
+      console.log(`Release ID  : ${releaseId}（手动指定）`);
+    }
+
+    cacheInfo = buildCacheEntries({ readyData, readySha256, tag, releaseId });
+    if (!CACHE_ID_PATTERN.test(cacheInfo.cacheId)) {
+      throw fail(`生成的缓存目录名不符合控制中心规则: ${cacheInfo.cacheId}`);
+    }
+    files.push(...cacheInfo.entries);
+  }
 
   const zipBuffer = buildZip(files);
   const summary = verifyZip(zipBuffer, files);
@@ -373,6 +498,12 @@ async function main() {
   console.log(`输出路径    : ${options.out}`);
   console.log(`输出体积    : ${(summary.bytes / 1024 / 1024).toFixed(2)} MB`);
   console.log(`内置 ready  : 是 (${readyEntry.data.length} 字节, v${readyVersion})`);
+  if (cacheInfo) {
+    console.log(`预置缓存    : ${cacheInfo.cacheId}`);
+    console.log(`              「已下载版本」将直接列出 ${cacheInfo.meta.tag}`);
+  } else {
+    console.log('预置缓存    : 已跳过（--no-cache）');
+  }
   console.log('\n[成功] default.zip 已生成，解压后双击 bat 即可离线安装。');
   return 0;
 }
@@ -386,4 +517,4 @@ if (require.main === module) {
   });
 }
 
-module.exports = { buildZip, verifyZip, crc32, collectFiles };
+module.exports = { buildZip, verifyZip, crc32, collectFiles, buildCacheEntries, hashFile, fetchReleaseId };

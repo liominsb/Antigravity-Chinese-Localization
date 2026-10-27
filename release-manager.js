@@ -474,4 +474,7 @@ function createReleaseManager({ workspaceDir, request = https.request, requestTi
   return { handleRequest, withCachedFile, listFiles };
 }
 
-module.exports = { createReleaseManager };
+// 缓存目录命名规则。打包器预置缓存时必须产出完全一致的 cacheId，
+// 否则 listFiles/metadataFor 的复核会直接丢弃该目录，因此这里统一导出，
+// 避免两处各写一份实现后发生漂移。
+module.exports = { createReleaseManager, makeCacheId, CACHE_ID_PATTERN, FILE_NAME };

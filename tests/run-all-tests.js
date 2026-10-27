@@ -28,7 +28,8 @@ const tests = [
   'asar-version.test.js',
   'process-check.test.js',
   'package-installer.test.js',
-  'release-manager.test.js'
+  'release-manager.test.js',
+  'release-zip.test.js'
 ];
 
 console.log('================ 全套 TDD 回归测试套件 ================\n');

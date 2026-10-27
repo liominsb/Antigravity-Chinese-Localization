@@ -9,3 +9,6 @@ release-assets/
 # Local downloads and generated working files
 /downloads/
 /work/
+
+# AI 助手工作区数据（记忆、会话记录），不属于项目源码
+.workbuddy/

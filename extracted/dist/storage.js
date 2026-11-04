@@ -37,8 +37,8 @@ exports.StorageManager = void 0;
 const fs = __importStar(require("fs/promises"));
 const fs_1 = require("fs");
 const path = __importStar(require("path"));
-const electron_1 = require("electron");
 const events_1 = require("events");
+const utils_1 = require("./utils");
 /**
  * Manages persistent storage for the application.
  * Stores key-value pairs.
@@ -113,9 +113,11 @@ class StorageManager {
                 await fs.mkdir(dir, { recursive: true });
             }
             await fs.writeFile(this.storagePath, JSON.stringify(currentItems, null, 2), 'utf-8');
-            const windows = electron_1.BrowserWindow.getAllWindows();
-            for (const win of windows) {
-                win.webContents.send('storage:changed', changes);
+            for (const win of (0, utils_1.getHubWindows)()) {
+                const hubContents = (0, utils_1.getHubWebContents)(win);
+                if (hubContents && !hubContents.isDestroyed?.()) {
+                    hubContents.send('storage:changed', changes);
+                }
             }
             this.emitter.emit('changed', changes);
         }

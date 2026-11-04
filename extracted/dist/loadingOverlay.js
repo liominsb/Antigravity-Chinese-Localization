@@ -2,6 +2,7 @@
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.attachLoadingOverlay = attachLoadingOverlay;
 const electron_1 = require("electron");
+const utils_1 = require("./utils");
 /**
  * Generates the HTML content for the initial loading screen overlay.
  * This is injected into a WebContentsView and shown to the user before
@@ -73,18 +74,39 @@ function attachLoadingOverlay(win, foregroundColor, backgroundColor) {
     void view.webContents.loadURL(`data:text/html;charset=utf-8,${encodeURIComponent(html)}`);
     win.contentView.addChildView(view);
     const updateBounds = () => {
+        if (win.isDestroyed?.() || view.webContents?.isDestroyed?.()) {
+            return;
+        }
         const [width, height] = win.getContentSize();
         view.setBounds({ x: 0, y: 0, width, height });
     };
     updateBounds();
     win.on('resize', updateBounds);
-    win.webContents.once('did-finish-load', () => {
+    const hubContents = (0, utils_1.getHubWebContents)(win) ?? win.webContents;
+    let cleanedUp = false;
+    const cleanupOverlay = () => {
+        if (cleanedUp) {
+            return;
+        }
+        cleanedUp = true;
         try {
-            win.contentView.removeChildView(view);
+            if (!win.isDestroyed?.()) {
+                win.contentView.removeChildView(view);
+            }
         }
         catch (_) {
             // In case window was closed quickly
         }
-        win.off('resize', updateBounds);
+        if (!win.isDestroyed?.()) {
+            win.off?.('resize', updateBounds);
+        }
+    };
+    hubContents?.once('did-finish-load', cleanupOverlay);
+    win.once?.('closed', () => {
+        hubContents?.off?.('did-finish-load', cleanupOverlay);
+        cleanupOverlay();
+        if (!view.webContents?.isDestroyed?.()) {
+            view.webContents.close?.();
+        }
     });
 }

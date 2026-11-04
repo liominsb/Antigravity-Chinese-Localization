@@ -61,6 +61,7 @@ const beyondcorpPac_1 = require("./beyondcorpPac");
 const scriptJail_1 = require("./scriptJail");
 const webauthn_1 = require("./webauthn");
 const webviewBrowser_1 = require("./webviewBrowser");
+const windowState_1 = require("./windowState");
 const gotTheLock = electron_1.app.requestSingleInstanceLock();
 if (!gotTheLock) {
     electron_1.app.quit();
@@ -99,6 +100,9 @@ function resolveStartupWslDistro() {
         (0, wsl_1.readPersistedWslDistro)(path.join(electron_1.app.getPath('userData'), wsl_1.WSL_STATE_FILE)));
 }
 let WSL_DISTRO = resolveStartupWslDistro();
+if (!DEV_URL) {
+    (0, languageServer_1.prefetchShellEnv)();
+}
 /** True if `distro` is currently registered in WSL (false on wsl.exe errors). */
 async function wslDistroExists(distro) {
     try {
@@ -119,6 +123,16 @@ if (!electron_1.app.commandLine.hasSwitch('remote-debugging-port')) {
     electron_1.app.commandLine.appendSwitch('remote-debugging-port', '0');
 }
 electron_1.app.commandLine.appendSwitch('disable-blink-features', 'AutomationControlled');
+electron_1.app.commandLine.appendSwitch('disable-features', 'FedCm');
+if ((0, utils_1.isWcvBrowserWindowEnabled)()) {
+    // Hidden built-in browser tabs stay attached under an opaque curtain view
+    // (see WcvBrowserRegistry). Without these switches Chromium treats them as
+    // occluded, stops producing frames, and capturePage() returns nothing.
+    // `disable-features` keeps only its last value, so merge with any earlier one.
+    const disabledFeatures = electron_1.app.commandLine.getSwitchValue('disable-features');
+    electron_1.app.commandLine.appendSwitch('disable-features', [disabledFeatures, 'CalculateNativeWinOcclusion'].filter(Boolean).join(','));
+    electron_1.app.commandLine.appendSwitch('disable-backgrounding-occluded-windows');
+}
 // ---------------------------------------------------------------------------
 // Application Lifecycle
 // ---------------------------------------------------------------------------
@@ -133,10 +147,28 @@ function handleDeepLink(url) {
         wins[0].show();
         wins[0].focus();
         electron_1.app.focus({ steal: true });
-        wins[0].webContents.send('deep-link', url);
+        const hubContents = (0, utils_1.getHubWebContents)(wins[0]);
+        if (!hubContents ||
+            hubContents.isDestroyed?.() ||
+            hubContents.isLoadingMainFrame?.()) {
+            // The window is still loading (e.g. it was just created by
+            // `second-instance`), so the renderer has not subscribed to 'deep-link'
+            // yet and the IPC message would be dropped. Store the link instead; the
+            // renderer reads it via 'deep-link:get-stored' once it mounts.
+            pendingDeepLink = url;
+        }
+        else {
+            hubContents.send('deep-link', url);
+        }
     }
     else {
         pendingDeepLink = url;
+        // The app is running with no windows open (macOS, or "run in background"
+        // on other platforms). Open one so the stored link is picked up.
+        if (!HEADLESS && hasStartedMainApplication) {
+            (0, utils_1.createWindow)(DEV_URL ?? `${constants_1.WINDOW_ORIGIN}:${(0, languageServer_1.getLsPort)()}/`, storageManager);
+            electron_1.app.focus({ steal: true });
+        }
     }
 }
 const PROTOCOL = electron_1.app
@@ -144,8 +176,14 @@ const PROTOCOL = electron_1.app
     .toLowerCase()
     .replace(/[^a-z0-9]+/g, '-')
     .replace(/^-|-$/g, '');
-if (!electron_1.app.isDefaultProtocolClient(PROTOCOL)) {
-    electron_1.app.setAsDefaultProtocolClient(PROTOCOL);
+// When running unpackaged (`npm start` / `electron .`), process.execPath is
+// the stock Electron binary, so the app path must be registered too or the OS
+// would launch bare Electron for deep links. Only Windows uses these args.
+const protocolClientArgs = process.defaultApp && process.argv.length >= 2
+    ? [process.execPath, [path.resolve(process.argv[1])]]
+    : [];
+if (!electron_1.app.isDefaultProtocolClient(PROTOCOL, ...protocolClientArgs)) {
+    electron_1.app.setAsDefaultProtocolClient(PROTOCOL, ...protocolClientArgs);
 }
 electron_1.app.on('second-instance', (_event, commandLine) => {
     if (!HEADLESS && hasStartedMainApplication) {
@@ -209,11 +247,16 @@ electron_1.app
     });
     // Handle requests coming from custom schemes
     (0, customScheme_1.registerCustomSchemeHandlers)();
-    // Set About panel options with LS CL
-    const cl = await (0, languageServer_1.getLsCL)();
-    electron_1.app.setAboutPanelOptions({
-        applicationVersion: electron_1.app.getVersion(),
-        version: cl || undefined,
+    // Set About panel options with LS CL. Not awaited: `--stamp` runs the LS
+    // binary, which would otherwise delay the real LS spawn.
+    electron_1.app.setAboutPanelOptions({ applicationVersion: electron_1.app.getVersion() });
+    void (0, languageServer_1.getLsCL)().then((cl) => {
+        if (cl) {
+            electron_1.app.setAboutPanelOptions({
+                applicationVersion: electron_1.app.getVersion(),
+                version: cl,
+            });
+        }
     });
     // Pre-onboarding: check if we should offer to re-install the IDE.
     // This runs before the LS starts so we can show a standalone wizard.
@@ -375,7 +418,7 @@ electron_1.app
             const dockMenu = electron_1.Menu.buildFromTemplate([
                 {
                     label: '新建窗口',
-                    click: () => (0, utils_1.createWindow)(url, storageManager),
+                    click: () => (0, utils_1.createWindow)(url, storageManager, { cascade: true }),
                 },
             ]);
             electron_1.app.dock.setMenu(dockMenu);
@@ -464,8 +507,13 @@ electron_1.app.on('before-quit', async (event) => {
     if (!utils_1.showQuitConfirmation) {
         event.preventDefault();
         isQuitting = true;
+        // Persist the focused/open Hub window bounds and full-screen/maximized state
+        // before `win.destroy()`, which bypasses the normal `'close'` event.
+        (0, windowState_1.flushTrackedWindowState)((0, utils_1.getFocusedHubWindow)());
         // Destroy all windows to terminate renderers and release keep-alive sockets
-        const windows = electron_1.BrowserWindow.getAllWindows();
+        const windows = [
+            ...new Set([...(0, utils_1.getHubWindows)(), ...electron_1.BrowserWindow.getAllWindows()]),
+        ];
         for (const win of windows) {
             win.destroy();
         }
@@ -486,7 +534,7 @@ electron_1.app.on('before-quit', async (event) => {
     // Show a confirmation dialog before quitting
     event.preventDefault();
     const hubWindows = (0, utils_1.getHubWindows)();
-    const focusedWindow = electron_1.BrowserWindow.getFocusedWindow();
+    const focusedWindow = (0, utils_1.getFocusedHubWindow)() ?? electron_1.BrowserWindow.getFocusedWindow();
     const win = (focusedWindow && hubWindows.includes(focusedWindow)
         ? focusedWindow
         : undefined) || hubWindows[0];

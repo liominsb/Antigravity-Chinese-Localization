@@ -118,6 +118,10 @@ function resolveWindowFromWebAuthnFrame(frame) {
     if (!frameContents) {
         return null;
     }
+    const resolved = (0, utils_1.resolveHubWindowFromWebContents)(frameContents);
+    if (resolved) {
+        return resolved;
+    }
     const hostContents = frameContents.hostWebContents ?? frameContents;
     if (typeof electron_1.BrowserWindow?.fromWebContents === 'function') {
         return (electron_1.BrowserWindow.fromWebContents(hostContents) ??
@@ -136,16 +140,9 @@ function createWebAuthnSessionConfigurator(options) {
     const configuredSessions = new WeakSet();
     const isHeadless = options?.isHeadless ??
         (() => process.env.ELECTRON_OZONE_PLATFORM_HINT === 'headless');
-    const isNonPopupWindow = (w) => Boolean(w &&
-        !w
-            .__isWebviewPopupWindow);
     const getParentWindow = options?.getParentWindow ??
         (() => {
-            const focused = electron_1.BrowserWindow.getFocusedWindow();
-            if (isNonPopupWindow(focused)) {
-                return focused;
-            }
-            return (0, utils_1.getHubWindows)()[0] ?? null;
+            return (0, utils_1.getFocusedHubWindow)() ?? (0, utils_1.getHubWindows)()[0] ?? null;
         });
     const showMessageBox = options?.showMessageBox ??
         ((win, boxOptions) => electron_1.dialog.showMessageBox(win, boxOptions));

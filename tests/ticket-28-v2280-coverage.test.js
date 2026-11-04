@@ -144,7 +144,10 @@ const groupKeys = [];
   const dictLines = dictSrc.split(/\r\n|\n/);
   let inGroup = false;
   for (const ln of dictLines) {
+    // 进入本分组
     if (/===== 2\.28\.0 补充：/.test(ln)) { inGroup = true; continue; }
+    // 遇到下一个分组注释即结束本分组（避免把后续版本分组的词条算进来）
+    if (inGroup && /\/\/ ===== /.test(ln)) { inGroup = false; continue; }
     if (inGroup && /^ {4}"/.test(ln)) {
       const mk = ln.match(/^ {4}("(?:[^"\\]|\\.)*")\s*:/);
       if (mk) groupKeys.push(JSON.parse(mk[1]));

@@ -30,6 +30,7 @@ const tests = [
   'ticket-28-v2280-coverage.test.js',
   'ticket-29-v2281-features.test.js',
   'ticket-30-v2282-features.test.js',
+  'ticket-31-v2290-features.test.js',
   'check-injection-syntax.js',
   'asar-version.test.js',
   'process-check.test.js',

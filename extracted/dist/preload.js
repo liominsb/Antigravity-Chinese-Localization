@@ -73,6 +73,40 @@ const deepLinkAPI = {
 const agentAPI = {
     updateActiveAgentCount: (count) => electron_1.ipcRenderer.invoke('agent:update-active-count', count),
 };
+function subscribeIpcChannel(channel, callback) {
+    const handler = (_event, payload) => {
+        callback(payload);
+    };
+    electron_1.ipcRenderer.on(channel, handler);
+    return () => {
+        electron_1.ipcRenderer.removeListener(channel, handler);
+    };
+}
+const wcvBrowserAPI = {
+    acquire: (req) => electron_1.ipcRenderer.invoke('wcv:acquire', req),
+    show: (tabKey, boundsDip) => electron_1.ipcRenderer.invoke('wcv:show', tabKey, boundsDip),
+    hide: (tabKey) => electron_1.ipcRenderer.invoke('wcv:hide', tabKey),
+    setBounds: (tabKey, boundsDip) => electron_1.ipcRenderer.invoke('wcv:set-bounds', tabKey, boundsDip),
+    setThemeColor: (color) => electron_1.ipcRenderer.invoke('wcv:set-theme-color', color),
+    setPinned: (tabKey, pinned) => electron_1.ipcRenderer.invoke('wcv:set-pinned', tabKey, pinned),
+    setAgentControlling: (tabKey, active) => electron_1.ipcRenderer.invoke('wcv:set-agent-controlling', tabKey, active),
+    setOverlayActive: (tabKey, active) => electron_1.ipcRenderer.invoke('wcv:set-overlay-active', tabKey, active),
+    setPortalOverlayOpen: (open) => electron_1.ipcRenderer.invoke('wcv:set-portal-overlay-open', open),
+    elevate: (tabKey, reason, focusBrowser) => electron_1.ipcRenderer.invoke('wcv:elevate', tabKey, reason, focusBrowser),
+    setDragOver: (tabKey, active) => electron_1.ipcRenderer.invoke('wcv:set-drag-over', tabKey, active),
+    demote: (tabKey, reason) => electron_1.ipcRenderer.invoke('wcv:demote', tabKey, reason),
+    navigate: (tabKey, url) => electron_1.ipcRenderer.invoke('wcv:navigate', tabKey, url),
+    control: (tabKey, action) => electron_1.ipcRenderer.invoke('wcv:control', tabKey, action),
+    sendMouse: (tabKey, params) => electron_1.ipcRenderer.invoke('wcv:send-mouse', tabKey, params),
+    sendKey: (tabKey, params) => electron_1.ipcRenderer.invoke('wcv:send-key', tabKey, params),
+    insertText: (tabKey, text) => electron_1.ipcRenderer.invoke('wcv:insert-text', tabKey, text),
+    capturePage: (tabKey) => electron_1.ipcRenderer.invoke('wcv:capture-page', tabKey),
+    dispose: (tabKey) => electron_1.ipcRenderer.invoke('wcv:dispose', tabKey),
+    onGuestEvent: (cb) => subscribeIpcChannel('wcv:guest-event', cb),
+    onZOrderChanged: (cb) => subscribeIpcChannel('wcv:z-order-changed', cb),
+    onShortcutForwarded: (cb) => subscribeIpcChannel('wcv:shortcut-forwarded', cb),
+    onCursorChanged: (cb) => subscribeIpcChannel('wcv:cursor-changed', cb),
+};
 const electronNativeAPI = {
     getZoomLevel: () => electron_1.webFrame.getZoomFactor(),
     getPathForFile: (file) => electron_1.webUtils.getPathForFile(file),
@@ -94,6 +128,7 @@ const electronNativeAPI = {
     },
     openExternal: (url) => electron_1.ipcRenderer.invoke('shell:open-external', url),
     revealInFilePicker: (path) => electron_1.ipcRenderer.invoke('shell:reveal-in-file-picker', path),
+    getWebviewMemoryUsage: (webContentsIds) => electron_1.ipcRenderer.invoke('webview:get-memory-usage', webContentsIds),
     showContextMenu: (items) => electron_1.ipcRenderer.invoke('window:show-context-menu', items),
     closeContextMenu: () => electron_1.ipcRenderer.invoke('window:close-context-menu'),
     executeJavaScriptInIsolatedWorld: (wcId, worldId, code) => electron_1.ipcRenderer.invoke('webview:execute-js-isolated-world', wcId, worldId, code),
@@ -134,6 +169,7 @@ const electronNativeAPI = {
             electron_1.ipcRenderer.removeListener('webview:open-new-tab', handler);
         };
     },
+    setWebviewDownloadDirectory: (webContentsId, downloadDir) => electron_1.ipcRenderer.invoke('webview:set-download-dir', webContentsId, downloadDir),
     onWebviewFaviconUpdated: (callback) => {
         const handler = (_event, payload) => {
             callback(payload);
@@ -143,6 +179,19 @@ const electronNativeAPI = {
             electron_1.ipcRenderer.removeListener('webview:favicon-updated', handler);
         };
     },
+    onWebviewDownloadProgress: (callback) => {
+        const handler = (_event, payload) => {
+            callback(payload);
+        };
+        electron_1.ipcRenderer.on('webview:download-progress', handler);
+        return () => {
+            electron_1.ipcRenderer.removeListener('webview:download-progress', handler);
+        };
+    },
+    setWebviewDialogPolicy: (webContentsId, policy) => electron_1.ipcRenderer.invoke('webview:set-dialog-policy', webContentsId, policy),
+    handleWebviewDialog: (webContentsId, decision) => electron_1.ipcRenderer.invoke('webview:handle-javascript-dialog', webContentsId, decision),
+    onWebviewDialogOpening: (callback) => subscribeIpcChannel('webview:javascript-dialog-opening', callback),
+    wcvBrowser: wcvBrowserAPI,
 };
 electron_1.ipcRenderer.on('agy-script-jail:port', (event, payload) => {
     window.postMessage({
@@ -168,6 +217,97 @@ electron_1.contextBridge.exposeInMainWorld('agent', agentAPI);
 electron_1.contextBridge.exposeInMainWorld('electronNative', electronNativeAPI);
 electron_1.contextBridge.exposeInMainWorld('ide', ideAPI);
 electron_1.contextBridge.exposeInMainWorld('wsl', wslAPI);
+const HEX6_RE = /^#[0-9a-fA-F]{6}$/;
+const HEX3_RE = /^#([0-9a-fA-F])([0-9a-fA-F])([0-9a-fA-F])$/;
+const RGB_RE = /^rgba?\(\s*(\d{1,3})\s*(?:,|\s)\s*(\d{1,3})\s*(?:,|\s)\s*(\d{1,3})(?:\s*[,/]\s*([\d.]+%?))?\s*\)$/i;
+const CSS_VAR_RE = /^var\(\s*(--[^,\s)]+)(?:\s*,\s*(.+))?\)$/;
+function parseCssColorToHex6(raw) {
+    const s = raw.trim();
+    if (!s) {
+        return undefined;
+    }
+    if (HEX6_RE.test(s)) {
+        return s.toUpperCase();
+    }
+    const h3 = HEX3_RE.exec(s);
+    if (h3) {
+        return `#${h3[1]}${h3[1]}${h3[2]}${h3[2]}${h3[3]}${h3[3]}`.toUpperCase();
+    }
+    const rgb = RGB_RE.exec(s);
+    if (!rgb) {
+        return undefined;
+    }
+    if (rgb[4] !== undefined) {
+        const a = rgb[4].endsWith('%')
+            ? Number(rgb[4].slice(0, -1)) / 100
+            : Number(rgb[4]);
+        if (!Number.isFinite(a) || a < 1) {
+            return undefined;
+        }
+    }
+    const h2 = (v) => Math.max(0, Math.min(255, Math.round(Number(v))))
+        .toString(16)
+        .padStart(2, '0');
+    return `#${h2(rgb[1])}${h2(rgb[2])}${h2(rgb[3])}`.toUpperCase();
+}
+// TODO(yushis): Push `wcvBrowser.setThemeColor` directly from toolkit `themeProvider`
+// and remove this interim `:root` `--background` MutationObserver bridge.
+function installHubSurfaceThemeAutoSync() {
+    const g = globalThis;
+    if (!g.document ||
+        typeof g.getComputedStyle !== 'function' ||
+        (g.top && g.self && g.top !== g.self)) {
+        return;
+    }
+    let lastSyncedHex = '';
+    let observedRoot = null;
+    const syncNow = () => {
+        const rootEl = g.document?.documentElement;
+        if (!rootEl) {
+            return;
+        }
+        if (observedRoot !== rootEl && typeof g.MutationObserver === 'function') {
+            observedRoot = rootEl;
+            new g.MutationObserver(syncNow).observe(rootEl, {
+                attributes: true,
+                attributeFilter: ['style', 'class', 'data-theme'],
+            });
+        }
+        const style = g.getComputedStyle?.(rootEl);
+        let cur = style?.getPropertyValue?.('--background')?.trim() ?? '';
+        for (let depth = 0; depth < 3 && cur; depth++) {
+            const hex = parseCssColorToHex6(cur);
+            if (hex) {
+                cur = hex;
+                break;
+            }
+            const m = CSS_VAR_RE.exec(cur);
+            if (!m) {
+                break;
+            }
+            cur = style?.getPropertyValue?.(m[1])?.trim() || m[2]?.trim() || '';
+        }
+        const hex = parseCssColorToHex6(cur);
+        if (hex && hex !== lastSyncedHex) {
+            lastSyncedHex = hex;
+            void Promise.resolve(electron_1.ipcRenderer.invoke('wcv:set-theme-color', hex))
+                .then((applied) => {
+                if (applied === true) {
+                    return electron_1.ipcRenderer.invoke('storage:update-items', {
+                        hubSurfaceBackgroundColor: hex,
+                    });
+                }
+                return undefined;
+            })
+                .catch(() => undefined);
+        }
+    };
+    syncNow();
+    g.document.addEventListener?.('DOMContentLoaded', syncNow);
+    g.addEventListener?.('load', syncNow);
+}
+installHubSurfaceThemeAutoSync();
+
 
 
 // Antigravity 2.0 Chinese Localization Engine Enhanced
@@ -4666,6 +4806,111 @@ electron_1.contextBridge.exposeInMainWorld('wsl', wslAPI);
     "Zoom in (+)": "放大 (+)",
     "Zoom out (-)": "缩小 (-)",
     "main (or e.g., sc-dev, sc-release)": "main（例如 sc-dev、sc-release）",
+    // ===== 2.29.0 补充：语音模式、录音与无障碍 =====
+    "Accessibility": "无障碍",
+    "Delete all recordings?": "删除所有录音？",
+    "Files, folders, and repositories you connect are accessible to your agent in this project, including during background or scheduled runs.": "你连接的文件、文件夹和仓库，在此项目中可被你的智能体访问，包括在后台或计划运行期间。",
+    "Font": "字体",
+    "Input device for voice mode and dictation.": "语音模式与语音输入的输入设备。",
+    "Mute Voice Mic": "静音语音麦克风",
+    "Mute Voice Speaker": "静音语音扬声器",
+    "Optimize the interface and terminal output for screen readers.": "为屏幕阅读器优化界面与终端输出。",
+    "Recordings": "录音",
+    "Save audio recordings": "保存音频录音",
+    "Screen Reader Mode": "屏幕阅读器模式",
+    "Type a voice variant name, such as rev27.": "输入语音变体名称，例如 rev27。",
+    // ===== 2.29.0 补充：远程智能体、云端环境与用量配额 =====
+    "Browse MCP resources": "浏览 MCP 资源",
+    "Browse rules": "浏览规则",
+    "Browser Use": "浏览器使用",
+    "Connect GitHub": "连接 GitHub",
+    "Connect an account so the agent can run automations.": "连接账号，以便智能体运行自动化。",
+    "Context and Quota Indicator": "上下文与配额指示器",
+    "Controls permissions for remote conversations.": "控制远程对话的权限。",
+    "Conversation limit reached": "已达到对话数量上限",
+    "Daily conversation limit reached": "已达到每日对话数量上限",
+    "Daily environment time used": "已使用的每日环境时间",
+    "Failed to create remote project": "创建远程项目失败",
+    "Free": "免费",
+    "More cloud environments": "更多云端环境",
+    "Remote agents are busy": "远程智能体繁忙",
+    "Runs remotely": "在远程运行",
+    "Search connectors": "搜索连接器",
+    "Subscription": "订阅",
+    "Too many environments running": "运行中的环境过多",
+    "Your connection to this site is not fully secure": "你与此站点的连接并非完全安全",
+    // ===== 2.29.0 补充：内置浏览器、下载与站点信息 =====
+    "Attackers might be able to see the images you're looking at on this site and trick you by modifying them.": "攻击者可能会看到你在此站点上浏览的图片，并通过篡改它们来欺骗你。",
+    "Browsing History": "浏览历史",
+    "Cancel download": "取消下载",
+    "Download Location": "下载位置",
+    "Download this site as an app to get notified when the agent needs your attention or completes a task.": "将此站点下载为应用，以便在智能体需要你处理或完成任务时收到通知。",
+    "Downloads": "下载",
+    "Google Search": "Google 搜索",
+    "Remove from history (Shift+Delete)": "从历史记录中移除 (Shift+Delete)",
+    "Website": "网站",
+    "You're viewing a blank page": "你正在查看一个空白页面",
+    "You're viewing a local or shared file": "你正在查看本地或共享文件",
+    // ===== 2.29.0 补充：自动化调度、对话与任务 =====
+    "Attach terminal output": "附加终端输出",
+    "Author": "作者",
+    "Background tasks and terminals agents left running, across all conversations.": "所有对话中由智能体留下的后台任务和终端。",
+    "Change schedule": "更改调度",
+    "Chat": "聊天",
+    "Chat Input": "聊天输入框",
+    "Chat Width": "聊天宽度",
+    "Choose how much detail is shown during a conversation.": "选择对话过程中显示的详细程度。",
+    "Choose where terminal sessions appear.": "选择终端会话显示的位置。",
+    "CitC Workspace": "CitC 工作区",
+    "Cog Workspace": "Cog 工作区",
+    "Conversation Steps": "对话步骤",
+    "Conversation Unarchived": "对话已取消归档",
+    "Couldn't edit queued message": "无法编辑排队消息",
+    "Docs, Sheets, Slides, and folders": "文档、表格、幻灯片和文件夹",
+    "Every day": "每天",
+    "Every hour": "每小时",
+    "Every week": "每周",
+    "Every weekday": "每个工作日",
+    "Explore other marketplace customizations": "浏览其他市场自定义项",
+    "Failed to read file": "读取文件失败",
+    "For example: every morning, summarize new bugs assigned to me and anything that changed overnight.": "例如：每天早上汇总分配给我的新缺陷，以及夜间发生的任何变化。",
+    "Google Chat": "Google Chat",
+    "It was already sent or couldn't be removed from the queue.": "它已被发送，或无法从队列中移除。",
+    "Members": "成员",
+    "More Plugins": "更多插件",
+    "New Conversation Button": "新建对话按钮",
+    "New Workspace": "新建工作区",
+    "On a schedule": "按计划执行",
+    "Repository": "仓库",
+    "Search branches": "搜索分支",
+    "Show in folder": "在文件夹中显示",
+    "Terminal Placement": "终端布局",
+    "When something happens": "当有情况发生时",
+    "Which workspace the New Conversation button and keyboard shortcut start you in.": "新建对话按钮和快捷键将在哪个工作区中启动。",
+    // ===== 2.29.0 补充：侧边面板、界面布局与通用操作 =====
+    "Announcements and tips": "公告与提示",
+    "Change model": "更改模型",
+    "Close Tabs to the Left": "关闭左侧标签页",
+    "Enter to Send": "回车发送",
+    "Extension (Antigravity IDE)": "扩展 (Antigravity IDE)",
+    "Failed to send side question": "发送侧边提问失败",
+    "Failed to start side question": "启动侧边提问失败",
+    "For example: Morning bug summary": "例如：早间缺陷汇总",
+    "From": "来自",
+    "Instructions and tools": "指令与工具",
+    "Next Side Panel Tab": "下一个侧面板标签页",
+    "Only stored on your machine.": "仅存储在你的机器上。",
+    "Previous Side Panel Tab": "上一个侧面板标签页",
+    "Remove from list": "从列表中移除",
+    "Search Google Drive": "搜索 Google Drive",
+    "Send messages with the keyboard's Enter key instead of starting a new line.": "使用键盘的 Enter 键发送消息，而不是另起一行。",
+    "Toggle Maximize Side Panel": "切换最大化侧面板",
+    "Toggle Side Panel": "切换侧面板",
+    "Untitled": "未命名",
+    "What should it do?": "它应该做什么？",
+    "What should the agent do on each run?": "智能体每次运行时应该做什么？",
+    "When": "时间",
+    "Where": "位置",
   };
 
   const coreWords = {

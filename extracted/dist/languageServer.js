@@ -43,6 +43,7 @@ exports.getLsProcess = getLsProcess;
 exports.getLsPort = getLsPort;
 exports.clearLsProcess = clearLsProcess;
 exports.extractCrashStackTrace = extractCrashStackTrace;
+exports.prefetchShellEnv = prefetchShellEnv;
 exports.startLanguageServer = startLanguageServer;
 exports.setIntentionalTermination = setIntentionalTermination;
 exports.startAndMonitorLanguageServer = startAndMonitorLanguageServer;
@@ -189,6 +190,21 @@ function setupNodeModules(env, modules) {
         env[mod.envVar] = entryPoint;
     }
 }
+let prefetchedShellEnv;
+/**
+ * Starts loading the login-shell env (spawns an interactive shell, which can
+ * take seconds with heavy rc files) so it overlaps app startup instead of
+ * blocking the LS spawn. Consumed by the next startLanguageServer call; later
+ * calls (LS restarts) reload it so rc edits are still picked up.
+ */
+function prefetchShellEnv() {
+    prefetchedShellEnv ?? (prefetchedShellEnv = (0, shell_env_1.shellEnv)());
+}
+function takeShellEnv() {
+    const env = prefetchedShellEnv ?? (0, shell_env_1.shellEnv)();
+    prefetchedShellEnv = undefined;
+    return env;
+}
 /**
  * Spawn the language server and resolve with a LanguageServerHandle once
  * the LS reports its HTTP port. Rejects on timeout or unexpected exit
@@ -197,8 +213,9 @@ function setupNodeModules(env, modules) {
  * After resolving, callers should monitor `handle.exitPromise` to detect
  * crashes that occur after startup.
  */
-function startLanguageServer(port, csrf, options = {}) {
+async function startLanguageServer(port, csrf, options = {}) {
     const { headless, hostBridgeUrl, hostBridgeToken, wsl } = options;
+    const loginShellEnv = await takeShellEnv();
     return new Promise((resolve, reject) => {
         const logStream = fs.createWriteStream((0, paths_1.getLsLogPath)(), { flags: 'w' });
         // We need to pass the override flags because the LS is running in standalone mode
@@ -243,7 +260,7 @@ function startLanguageServer(port, csrf, options = {}) {
         }
         // Electron apps don't inherit shell environment variables when they are not launched through the terminal.
         // We need to load the shell env explicitly so the language server can discover tools in the user's environment.
-        const env = { ...process.env, ...(0, shell_env_1.shellEnvSync)() };
+        const env = { ...process.env, ...loginShellEnv };
         // We don't read the file to avoid adding start up latency.
         // LS will read when browser recording encoder is invoked.
         env['AGY_BROWSER_ACTIVE_PORT_FILE'] = (0, paths_1.getActivePortFilePath)();

@@ -1,6 +1,6 @@
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
-exports.webUtils = exports.webFrame = exports.webContents = exports.session = exports.ipcRenderer = exports.contextBridge = exports.shell = exports.Notification = exports.Menu = exports.MenuItem = exports.Tray = exports.nativeImage = exports.protocol = exports.ipcMain = exports.dialog = exports.MessageChannelMain = exports.WebContentsView = exports.BrowserWindow = exports.app = void 0;
+exports.webUtils = exports.screen = exports.webFrame = exports.webContents = exports.session = exports.ipcRenderer = exports.contextBridge = exports.shell = exports.Notification = exports.Menu = exports.MenuItem = exports.Tray = exports.nativeImage = exports.protocol = exports.ipcMain = exports.dialog = exports.MessageChannelMain = exports.WebContentsView = exports.View = exports.BrowserWindow = exports.BaseWindow = exports.app = void 0;
 /**
  * Shared Electron mock for all test files.
  *
@@ -29,6 +29,7 @@ exports.app = {
     getName: vitest_1.vi.fn().mockReturnValue('App'),
     commandLine: {
         appendSwitch: vitest_1.vi.fn(),
+        getSwitchValue: vitest_1.vi.fn().mockReturnValue(''),
         hasSwitch: vitest_1.vi.fn().mockReturnValue(false),
     },
     dock: {
@@ -50,12 +51,25 @@ const _mockBrowserWindowInstance = {
     close: vitest_1.vi.fn(),
     show: vitest_1.vi.fn(),
     focus: vitest_1.vi.fn(),
+    setTitle: vitest_1.vi.fn(),
     isMinimized: vitest_1.vi.fn().mockReturnValue(false),
+    isMaximized: vitest_1.vi.fn().mockReturnValue(false),
+    isFullScreen: vitest_1.vi.fn().mockReturnValue(false),
+    maximize: vitest_1.vi.fn(),
+    unmaximize: vitest_1.vi.fn(),
+    setFullScreen: vitest_1.vi.fn(),
     restore: vitest_1.vi.fn(),
     on: vitest_1.vi.fn(),
     off: vitest_1.vi.fn(),
     isDestroyed: vitest_1.vi.fn().mockReturnValue(false),
+    getBounds: vitest_1.vi
+        .fn()
+        .mockReturnValue({ x: 100, y: 100, width: 1400, height: 900 }),
+    getNormalBounds: vitest_1.vi
+        .fn()
+        .mockReturnValue({ x: 100, y: 100, width: 1400, height: 900 }),
     getContentSize: vitest_1.vi.fn().mockReturnValue([1000, 800]),
+    setBackgroundColor: vitest_1.vi.fn(),
     contentView: {
         addChildView: vitest_1.vi.fn(),
         removeChildView: vitest_1.vi.fn(),
@@ -64,37 +78,71 @@ const _mockBrowserWindowInstance = {
         id: 1,
         isDestroyed: vitest_1.vi.fn().mockReturnValue(false),
         getType: vitest_1.vi.fn().mockReturnValue('window'),
+        getURL: vitest_1.vi.fn().mockReturnValue('https://127.0.0.1:1234/'),
         send: vitest_1.vi.fn(),
         postMessage: vitest_1.vi.fn(),
         on: vitest_1.vi.fn(),
+        off: vitest_1.vi.fn(),
         once: vitest_1.vi.fn(),
         removeListener: vitest_1.vi.fn(),
         setWindowOpenHandler: vitest_1.vi.fn(),
+        isLoadingMainFrame: vitest_1.vi.fn().mockReturnValue(false),
     },
 };
+exports.BaseWindow = Object.assign(vitest_1.vi.fn().mockImplementation(function () {
+    return {
+        ..._mockBrowserWindowInstance,
+        contentView: {
+            addChildView: vitest_1.vi.fn(),
+            removeChildView: vitest_1.vi.fn(),
+        },
+    };
+}), {
+    getAllWindows: vitest_1.vi.fn().mockReturnValue([]),
+    getFocusedWindow: vitest_1.vi.fn().mockReturnValue(null),
+});
 exports.BrowserWindow = Object.assign(vitest_1.vi.fn().mockImplementation(function () {
     return _mockBrowserWindowInstance;
 }), {
     getAllWindows: vitest_1.vi.fn().mockReturnValue([_mockBrowserWindowInstance]),
     getFocusedWindow: vitest_1.vi.fn().mockReturnValue(_mockBrowserWindowInstance),
 });
+exports.View = vitest_1.vi.fn().mockImplementation(function () {
+    return {
+        setBounds: vitest_1.vi.fn(),
+        setBackgroundColor: vitest_1.vi.fn(),
+    };
+});
 exports.WebContentsView = vitest_1.vi.fn().mockImplementation(function () {
     return {
         webContents: {
+            id: 1,
             loadURL: vitest_1.vi.fn().mockResolvedValue(undefined),
+            insertCSS: vitest_1.vi.fn().mockResolvedValue('mock-css-key'),
+            removeInsertedCSS: vitest_1.vi.fn().mockResolvedValue(undefined),
             executeJavaScript: vitest_1.vi.fn().mockResolvedValue({ ok: true }),
             postMessage: vitest_1.vi.fn(),
+            send: vitest_1.vi.fn(),
             on: vitest_1.vi.fn(),
+            off: vitest_1.vi.fn(),
             once: vitest_1.vi.fn(),
             removeListener: vitest_1.vi.fn(),
+            getType: vitest_1.vi.fn().mockReturnValue('window'),
+            getURL: vitest_1.vi.fn().mockReturnValue('https://127.0.0.1:1234/'),
             setWebRTCIPHandlingPolicy: vitest_1.vi.fn(),
             setWindowOpenHandler: vitest_1.vi.fn(),
+            getZoomLevel: vitest_1.vi.fn().mockReturnValue(0),
+            setZoomLevel: vitest_1.vi.fn(),
+            getZoomFactor: vitest_1.vi.fn().mockReturnValue(1),
+            toggleDevTools: vitest_1.vi.fn(),
             getOSProcessId: vitest_1.vi.fn().mockReturnValue(12345),
             isDestroyed: vitest_1.vi.fn().mockReturnValue(false),
+            isLoadingMainFrame: vitest_1.vi.fn().mockReturnValue(false),
             close: vitest_1.vi.fn(),
             destroy: vitest_1.vi.fn(),
         },
         setBounds: vitest_1.vi.fn(),
+        setBackgroundColor: vitest_1.vi.fn(),
     };
 });
 exports.MessageChannelMain = vitest_1.vi.fn().mockImplementation(function () {
@@ -233,6 +281,18 @@ exports.webContents = {
 exports.webFrame = {
     executeJavaScript: vitest_1.vi.fn().mockResolvedValue(undefined),
     getZoomFactor: vitest_1.vi.fn().mockReturnValue(1),
+};
+const _mockDisplay = {
+    id: 1,
+    bounds: { x: 0, y: 0, width: 1920, height: 1080 },
+    workArea: { x: 0, y: 0, width: 1920, height: 1050 },
+    workAreaSize: { width: 1920, height: 1050 },
+    scaleFactor: 1,
+};
+exports.screen = {
+    getAllDisplays: vitest_1.vi.fn().mockReturnValue([_mockDisplay]),
+    getPrimaryDisplay: vitest_1.vi.fn().mockReturnValue(_mockDisplay),
+    getDisplayMatching: vitest_1.vi.fn().mockReturnValue(_mockDisplay),
 };
 exports.webUtils = {
     getPathForFile: vitest_1.vi.fn().mockReturnValue('/mock/file/path'),

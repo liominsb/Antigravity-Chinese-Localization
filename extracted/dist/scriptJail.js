@@ -127,10 +127,14 @@ function assertAuthorizedJailSender(sender, senderFrame) {
     if (senderFrame?.parent) {
         throw new Error('Unauthorized script-jail sender: subframe cannot invoke script jail');
     }
-    const matchingHubWindow = (0, utils_1.getHubWindows)().find((win) => win &&
-        !win.isDestroyed() &&
-        (win.webContents === sender ||
-            (typeof sender.id === 'number' && win.webContents?.id === sender.id)));
+    const matchingHubWindow = (0, utils_1.getHubWindows)().find((win) => {
+        if (!win || win.isDestroyed()) {
+            return false;
+        }
+        const hubContents = (0, utils_1.getHubWebContents)(win);
+        return (hubContents === sender ||
+            (typeof sender.id === 'number' && hubContents?.id === sender.id));
+    });
     if (!matchingHubWindow) {
         throw new Error('Unauthorized script-jail sender: WebContents is not an active Hub BrowserWindow');
     }

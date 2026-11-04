@@ -1,15 +1,18 @@
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
-exports.POPUP_USER_ACTIVATION_WINDOW_MS = exports.MIN_POPUP_INTERVAL_MS = exports.MAX_CONCURRENT_POPUPS_PER_WEBVIEW = exports.WEBVIEW_FAVICON_UPDATED_CHANNEL = exports.WEBVIEW_OPEN_NEW_TAB_CHANNEL = void 0;
+exports.POPUP_USER_ACTIVATION_WINDOW_MS = exports.MIN_POPUP_INTERVAL_MS = exports.MAX_CONCURRENT_POPUPS_PER_WEBVIEW = exports.WEBVIEW_DOWNLOAD_PROGRESS_CHANNEL = exports.WEBVIEW_FAVICON_UPDATED_CHANNEL = exports.WEBVIEW_OPEN_NEW_TAB_CHANNEL = void 0;
 exports.isExternalOnlyAuthUrl = isExternalOnlyAuthUrl;
 exports.validateWebviewNavigationUrl = validateWebviewNavigationUrl;
 exports.isPopupWindowRequest = isPopupWindowRequest;
 exports.parsePopupWindowDimensions = parsePopupWindowDimensions;
 exports.clearWebviewFaviconCacheForTesting = clearWebviewFaviconCacheForTesting;
+exports.isOwnedBrowserGuestWebContents = isOwnedBrowserGuestWebContents;
+exports.setGuestDownloadDirectory = setGuestDownloadDirectory;
 exports.configureWebviewBrowserContents = configureWebviewBrowserContents;
 const electron_1 = require("electron");
 const utils_1 = require("./utils");
 const webviewSecurityState_1 = require("./webviewSecurityState");
+const webviewDownloadRouting_1 = require("./webviewDownloadRouting");
 /** IPC channel sent to the host renderer when a `<webview>` requests a new tab. */
 exports.WEBVIEW_OPEN_NEW_TAB_CHANNEL = 'webview:open-new-tab';
 /** IPC channel sent to the host renderer when a `<webview>` guest's favicon updates. */
@@ -21,6 +24,8 @@ const MAX_FAVICON_CACHE_ENTRIES = 256;
 const MAX_FAVICON_REDIRECTS = 5;
 const FAVICON_ISOLATED_WORLD_ID = 9998;
 const ISOLATED_FAVICON_LINKS_SCRIPT = 'Array.from(document.querySelectorAll(\'link[rel~="icon" i]\')).map((el) => el.href).filter(Boolean)';
+/** IPC channel sent to the host renderer when a guest download progresses or finishes. */
+exports.WEBVIEW_DOWNLOAD_PROGRESS_CHANNEL = 'webview:download-progress';
 const DEFAULT_POPUP_WIDTH = 520;
 const DEFAULT_POPUP_HEIGHT = 680;
 const MIN_POPUP_WIDTH = 360;
@@ -33,20 +38,90 @@ exports.MAX_CONCURRENT_POPUPS_PER_WEBVIEW = 2;
 exports.MIN_POPUP_INTERVAL_MS = 500;
 /** Maximum age (ms) of a user input event on a `<webview>` to authorize a popup. */
 exports.POPUP_USER_ACTIVATION_WINDOW_MS = 5000;
-/**
- * Matches Google OAuth / Sign-In paths on `accounts.google.com` (with or
- * without an account-chooser prefix `/u/<index>`) that block embedded WebViews
- * and must be routed to the system browser via `shell.openExternal`.
- */
-const EXTERNAL_ONLY_OAUTH_PATH_RE = /^(?:\/u\/\d+)?\/(?:o\/oauth2|signin\/oauth)(?:\/|$)/;
+const GOOGLE_OAUTH_PATH_RE = /^(?:\/u\/\d+)?\/(?:o\/oauth2|signin\/oauth)(?:\/|$)/;
+const OOB_REDIRECT_URIS = new Set([
+    'oob',
+    'urn:ietf:wg:oauth:2.0:oob',
+    'urn:ietf:wg:oauth:2.0:oob:auto',
+]);
+const URI_SCHEME_RE = /^([a-z][a-z0-9+.-]*):/i;
+const NON_EXTERNAL_REDIRECT_SCHEMES = new Set([
+    'http',
+    'https',
+    'storagerelay',
+    'javascript',
+    'data',
+    'blob',
+    'file',
+    'about',
+]);
 const BLOCKED_METADATA_HOSTS = new Set([
     'metadata.google.internal',
     'metadata.goog',
 ]);
+function extractGoogleOAuthRedirectUri(parsed) {
+    const direct = parsed.searchParams.get('redirect_uri');
+    if (direct) {
+        return direct;
+    }
+    const continueParam = parsed.searchParams.get('continue');
+    if (!continueParam) {
+        return null;
+    }
+    try {
+        const nested = new URL(continueParam, parsed);
+        if ((nested.protocol === 'https:' || nested.protocol === 'http:') &&
+            normalizeHostname(nested.hostname) === 'accounts.google.com' &&
+            GOOGLE_OAUTH_PATH_RE.test(nested.pathname)) {
+            return nested.searchParams.get('redirect_uri');
+        }
+    }
+    catch {
+        // Ignore malformed continue URLs.
+    }
+    return null;
+}
+function isExternalOnlyRedirectUri(rawRedirectUri) {
+    const trimmed = rawRedirectUri.trim();
+    if (!trimmed) {
+        return false;
+    }
+    const lower = trimmed.toLowerCase();
+    if (OOB_REDIRECT_URIS.has(lower)) {
+        return true;
+    }
+    const schemeMatch = URI_SCHEME_RE.exec(trimmed);
+    if (!schemeMatch) {
+        return false;
+    }
+    const scheme = schemeMatch[1].toLowerCase();
+    if (!NON_EXTERNAL_REDIRECT_SCHEMES.has(scheme)) {
+        return true;
+    }
+    if (scheme !== 'http' && scheme !== 'https') {
+        return false;
+    }
+    try {
+        const redirectUrl = new URL(trimmed);
+        if (isLoopbackHost(redirectUrl.hostname)) {
+            return true;
+        }
+        if (redirectUrl.protocol === 'https:' &&
+            normalizeHostname(redirectUrl.hostname) === 'antigravity.google' &&
+            redirectUrl.pathname.replace(/\/+$/, '') === '/oauth-callback') {
+            return true;
+        }
+        return false;
+    }
+    catch {
+        return false;
+    }
+}
 /**
  * Returns `true` when `rawUrl` is a Google OAuth endpoint on
  * `accounts.google.com` (`/o/oauth2/...`, `/signin/oauth/...`, or `/u/N/...`)
- * that must open in the user's system browser via `shell.openExternal`.
+ * whose `redirect_uri` targets a native, loopback, out-of-band, or external
+ * callback rather than an in-session web callback.
  */
 function isExternalOnlyAuthUrl(rawUrl) {
     try {
@@ -54,10 +129,14 @@ function isExternalOnlyAuthUrl(rawUrl) {
         if (parsed.protocol !== 'https:' && parsed.protocol !== 'http:') {
             return false;
         }
-        if (parsed.hostname.toLowerCase() !== 'accounts.google.com') {
+        if (normalizeHostname(parsed.hostname) !== 'accounts.google.com') {
             return false;
         }
-        return EXTERNAL_ONLY_OAUTH_PATH_RE.test(parsed.pathname);
+        if (!GOOGLE_OAUTH_PATH_RE.test(parsed.pathname)) {
+            return false;
+        }
+        const redirectUri = extractGoogleOAuthRedirectUri(parsed);
+        return redirectUri !== null && isExternalOnlyRedirectUri(redirectUri);
     }
     catch {
         return false;
@@ -272,9 +351,10 @@ function validateWebviewNavigationUrl(rawUrl, openerOrigin) {
 }
 /**
  * Returns `true` when a `window.open()` request explicitly specifies popup
- * window features (`width=`, `height=`, `left=`, `top=`, or `popup`) rather
- * than a standard tab navigation (including Shift-click `new-window` without
- * popup features).
+ * window features (`width=`, `height=`, `left=`, `top=`, or `popup`) or opens
+ * a scriptable `about:blank` / empty-URL launcher without `noopener` /
+ * `noreferrer`, rather than a standard tab navigation (including Shift-click
+ * `new-window` without popup features).
  */
 function isPopupWindowRequest(details) {
     const features = details.features || '';
@@ -284,7 +364,15 @@ function isPopupWindowRequest(details) {
     if (/\bpopup\s*=\s*(?:0|no|false)\b/i.test(features)) {
         return false;
     }
-    return /\bpopup(?:\s*=\s*(?:1|yes|true))?\b/i.test(features);
+    if (/\bpopup(?:\s*=\s*(?:1|yes|true))?\b/i.test(features)) {
+        return true;
+    }
+    if (details.url !== undefined &&
+        isBlankPopupUrl(details.url) &&
+        !/\b(?:noopener|noreferrer)\b/i.test(features)) {
+        return true;
+    }
+    return false;
 }
 function clamp(value, min, max) {
     return Math.max(min, Math.min(max, value));
@@ -487,6 +575,78 @@ function isMainFrameNavigationEvent(event, isMainFrameArg) {
     }
     return true;
 }
+function extractOriginAndPathname(rawUrl) {
+    if (!rawUrl) {
+        return undefined;
+    }
+    try {
+        const parsed = new URL(rawUrl);
+        if (parsed.protocol === 'http:' || parsed.protocol === 'https:') {
+            const normalizedPath = parsed.pathname.replace(/\/+$/, '') || '/';
+            return `${parsed.origin}${normalizedPath}`;
+        }
+    }
+    catch {
+        // Fall through to undefined.
+    }
+    return undefined;
+}
+const hostNavigationMuxByHost = new WeakMap();
+/**
+ * Multiplexes `did-navigate` and `did-navigate-in-page` across all guest
+ * `<webview>` / `WebContentsView` instances sharing the same `host`
+ * (`hubWcv.webContents`) so `host` never holds more than one listener per event
+ * regardless of how many pooled browser tabs are open simultaneously.
+ */
+function subscribeHostNavigation(host, subscriber) {
+    if (!host || typeof host.on !== 'function') {
+        return () => undefined;
+    }
+    let mux = hostNavigationMuxByHost.get(host);
+    if (!mux) {
+        const subscribers = new Set();
+        const fanOut = (event, navigationUrl, isMainFrameArg) => {
+            for (const sub of [...subscribers]) {
+                sub(event, navigationUrl, isMainFrameArg);
+            }
+        };
+        const onNavigate = (event, navigationUrl, isMainFrameArg) => {
+            fanOut(event, navigationUrl, isMainFrameArg);
+        };
+        const onInPageNavigate = (event, navigationUrl, isMainFrameArg) => {
+            fanOut(event, navigationUrl, isMainFrameArg);
+        };
+        mux = { subscribers, onNavigate, onInPageNavigate };
+        hostNavigationMuxByHost.set(host, mux);
+        host.on('did-navigate', onNavigate);
+        host.on('did-navigate-in-page', onInPageNavigate);
+    }
+    mux.subscribers.add(subscriber);
+    let unsubscribed = false;
+    return () => {
+        if (unsubscribed) {
+            return;
+        }
+        unsubscribed = true;
+        const currentMux = hostNavigationMuxByHost.get(host);
+        if (!currentMux) {
+            return;
+        }
+        currentMux.subscribers.delete(subscriber);
+        if (currentMux.subscribers.size === 0) {
+            hostNavigationMuxByHost.delete(host);
+            if (!host.isDestroyed?.()) {
+                try {
+                    host.removeListener?.('did-navigate', currentMux.onNavigate);
+                    host.removeListener?.('did-navigate-in-page', currentMux.onInPageNavigate);
+                }
+                catch {
+                    // Ignore errors if host is already destroyed during window teardown.
+                }
+            }
+        }
+    };
+}
 function formatOriginPrefix(rawUrl) {
     if (!rawUrl) {
         return '[about:blank]';
@@ -514,26 +674,163 @@ function formatPopupWindowTitle(rawUrl, pageTitle) {
     return `${prefix} ${trimmedTitle}`;
 }
 const configuredWebviewContents = new WeakSet();
+const configuredDownloadSessions = new WeakSet();
+const hostByGuestContents = new WeakMap();
+let nextDownloadSequence = 0;
+/**
+ * Returns `true` when `wc` is a live browser guest (`<webview>` or configured
+ * `WebContentsView`) hosted by `senderId`.
+ */
+function isOwnedBrowserGuestWebContents(wc, senderId) {
+    if (!wc ||
+        typeof wc !== 'object' ||
+        typeof senderId !== 'number' ||
+        !Number.isInteger(senderId)) {
+        return false;
+    }
+    const candidate = wc;
+    if (candidate.isDestroyed?.()) {
+        return false;
+    }
+    if (configuredWebviewContents.has(candidate) &&
+        hostByGuestContents.get(candidate)?.id === senderId) {
+        return true;
+    }
+    return (candidate.getType?.() === 'webview' &&
+        candidate.hostWebContents?.id === senderId);
+}
+/** Arms or clears the sandbox download directory for a browser guest. */
+function setGuestDownloadDirectory(wc, downloadDir) {
+    return (0, webviewDownloadRouting_1.setGuestDownloadDirectoryForWc)(wc, downloadDir);
+}
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
+function ensureSessionDownloadListener(guestSession) {
+    if (!guestSession ||
+        typeof guestSession.on !== 'function' ||
+        configuredDownloadSessions.has(guestSession)) {
+        return;
+    }
+    configuredDownloadSessions.add(guestSession);
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    guestSession.on('will-download', (_ev, item, wc) => {
+        const isWcAlive = wc && typeof wc === 'object' && !wc.isDestroyed?.();
+        const rawWcId = isWcAlive ? (wc.id ?? 0) : 0;
+        const openerWc = (0, webviewDownloadRouting_1.resolveOpenerWebContents)(wc);
+        const openerWcId = openerWc && !openerWc.isDestroyed?.() ? (openerWc.id ?? 0) : 0;
+        const isConfiguredTopLevelGuest = Boolean(wc &&
+            typeof wc === 'object' &&
+            configuredWebviewContents.has(wc));
+        const webContentsId = openerWcId > 0 &&
+            (!isConfiguredTopLevelGuest ||
+                (!(0, webviewDownloadRouting_1.getArmedGuestDownloadDirectory)(rawWcId) &&
+                    Boolean((0, webviewDownloadRouting_1.getArmedGuestDownloadDirectory)(openerWcId))))
+            ? openerWcId
+            : rawWcId || openerWcId;
+        const host = (wc && typeof wc === 'object' ? hostByGuestContents.get(wc) : null) ??
+            (isWcAlive ? wc.hostWebContents : undefined) ??
+            (openerWc ? hostByGuestContents.get(openerWc) : null) ??
+            openerWc?.hostWebContents;
+        const closeInitialDownloadPopup = (0, webviewDownloadRouting_1.prepareChildPopupDownloadCleanup)(wc);
+        const id = `dl-${++nextDownloadSequence}`;
+        // Synchronously assign a validated destination path (or cancel on error) so
+        // Chromium never opens a modal OS save dialog.
+        const existingSavePath = item?.getSavePath?.() ?? '';
+        let resolvedSavePath = existingSavePath;
+        let releaseReservation;
+        if (!existingSavePath) {
+            const target = (0, webviewDownloadRouting_1.resolveSynchronousDownloadTarget)({
+                webContentsId: rawWcId,
+                openerWebContentsId: openerWcId,
+                rawFilename: item?.getFilename?.(),
+            });
+            if (!target) {
+                item?.cancel?.();
+                if (host && !host.isDestroyed()) {
+                    const cancelledPayload = {
+                        id,
+                        webContentsId,
+                        url: item?.getURL?.() ?? '',
+                        filename: item?.getFilename?.() ?? '',
+                        receivedBytes: item?.getReceivedBytes?.() ?? 0,
+                        totalBytes: item?.getTotalBytes?.() ?? 0,
+                        savePath: '',
+                        mimeType: item?.getMimeType?.() ?? '',
+                        state: 'cancelled',
+                    };
+                    if (openerWcId > 0) {
+                        cancelledPayload.openerWebContentsId = openerWcId;
+                    }
+                    host.send(exports.WEBVIEW_DOWNLOAD_PROGRESS_CHANNEL, cancelledPayload);
+                }
+                closeInitialDownloadPopup?.();
+                return;
+            }
+            resolvedSavePath = target.savePath;
+            releaseReservation = target.release;
+            item?.setSavePath?.(target.savePath);
+        }
+        const send = (state) => {
+            if (host && !host.isDestroyed()) {
+                const payload = {
+                    id,
+                    webContentsId,
+                    url: item?.getURL?.() ?? '',
+                    filename: item?.getFilename?.() ?? '',
+                    receivedBytes: item?.getReceivedBytes?.() ?? 0,
+                    totalBytes: item?.getTotalBytes?.() ?? 0,
+                    savePath: item?.getSavePath?.() || resolvedSavePath,
+                    mimeType: item?.getMimeType?.() ?? '',
+                    state,
+                };
+                if (openerWcId > 0) {
+                    payload.openerWebContentsId = openerWcId;
+                }
+                host.send(exports.WEBVIEW_DOWNLOAD_PROGRESS_CHANNEL, payload);
+            }
+        };
+        send('started');
+        item?.on?.('updated', (_e, state) => send(state === 'interrupted' ? 'interrupted' : 'progressing'));
+        item?.on?.('done', (_e, state) => {
+            releaseReservation?.();
+            send(state === 'completed'
+                ? 'completed'
+                : state === 'cancelled'
+                    ? 'cancelled'
+                    : 'interrupted');
+            closeInitialDownloadPopup?.();
+        });
+        if (typeof item?.on !== 'function') {
+            releaseReservation?.();
+            closeInitialDownloadPopup?.();
+        }
+    });
+}
 /**
  * Configures a `<webview>` guest `WebContents` to:
  * 1. Route external-only Google OAuth endpoints (`accounts.google.com/o/oauth2/*`
  *    and `/signin/oauth/*`) to the system browser via `shell.openExternal`.
- * 2. Open explicit popup windows (`window.open(..., 'width=...,height=...')`)
- *    in hardened child `BrowserWindow`s (preserving `window.opener`, enforcing
- *    user activation, rate limits, concurrency caps, origin-prefixed title
- *    bars, and private-network URL validation).
+ * 2. Open explicit popup windows (`window.open(..., 'width=...,height=...')` and
+ *    scriptable `about:blank` launchers) in hardened framed child `BrowserWindow`s
+ *    (preserving `window.opener`, enforcing user gesture activation, rate limits,
+ *    concurrency caps, native origin-prefixed title bars + close controls,
+ *    private-network URL validation, and automatic teardown on cross-origin
+ *    opener navigation, tab hide/release, or conversation switch).
  * 3. Route standard tab navigations (`target="_blank"`, Shift-click) to the
  *    built-in browser tab strip via `webview:open-new-tab`.
  */
 function configureWebviewBrowserContents(contents, options) {
     if (!contents ||
-        contents.getType() !== 'webview' ||
+        (contents.getType() !== 'webview' && !options?.allowWebContentsView) ||
         configuredWebviewContents.has(contents)) {
         return;
     }
     configuredWebviewContents.add(contents);
     const guestSession = contents.session;
-    const host = contents.hostWebContents;
+    const host = options?.hostWebContents ?? contents.hostWebContents;
+    if (host) {
+        hostByGuestContents.set(contents, host);
+    }
+    ensureSessionDownloadListener(guestSession);
     const webContentsId = contents.id;
     const openExternal = options?.openExternal ?? ((url) => electron_1.shell.openExternal(url));
     const now = options?.now ?? (() => Date.now());
@@ -551,34 +848,115 @@ function configureWebviewBrowserContents(contents, options) {
     let lastPopupOpenedMs = 0;
     let lastPopupInitialUrl = '';
     let lastPopupOpenerOrigin;
+    let lastPopupHostUrl;
+    let popupOpenedWhileUnmuted = false;
     let hasCommittedWebviewNavigation = false;
     let inFlightWebviewOrigin;
+    let popupVisibilityTimer = null;
     const activePopups = new Set();
-    contents.on?.('before-input-event', () => {
+    const isActivationInputType = (type) => !type ||
+        type === 'mouseDown' ||
+        type === 'mouseUp' ||
+        type === 'pointerDown' ||
+        type === 'pointerUp' ||
+        type === 'pointerCausedUaAction' ||
+        type === 'rawKeyDown' ||
+        type === 'keyDown' ||
+        type === 'char' ||
+        type === 'gestureTapDown' ||
+        type === 'gestureTap' ||
+        type === 'touchStart' ||
+        type === 'touchEnd';
+    const onBeforeInputEvent = () => {
         lastUserActivationMs = now();
-    });
-    contents.on?.('input-event', (_event, inputEvent) => {
-        const type = inputEvent?.type;
-        if (!type ||
-            type === 'mouseDown' ||
-            type === 'mouseUp' ||
-            type === 'rawKeyDown' ||
-            type === 'keyDown' ||
-            type === 'char' ||
-            type === 'gestureTap') {
+    };
+    const onInputEvent = (_event, inputEvent) => {
+        if (isActivationInputType(inputEvent?.type)) {
             lastUserActivationMs = now();
         }
-    });
-    contents.on?.('destroyed', () => {
-        for (const popup of activePopups) {
+    };
+    // Cross-origin out-of-process iframes (such as `accounts.google.com/gsi/button`)
+    // have their own RenderWidgetHost, so OS mouse clicks inside an OOPF do not
+    // emit `input-event` on the guest `<webview>` primary main frame's
+    // RenderWidgetHost. Listen to `before-mouse-event` and `before-input-event`
+    // (`PreHandleMouseEvent` / `PreHandleKeyboardEvent` on the guest
+    // `WebContentsDelegate`, which fire across all guest frames including OOPFs)
+    // without subscribing to `hostWebContents`, so typing or clicking in Hub
+    // chrome never grants popup activation to the guest.
+    contents.on?.('before-input-event', onBeforeInputEvent);
+    contents.on?.('before-mouse-event', onInputEvent);
+    contents.on?.('input-event', onInputEvent);
+    const stopPopupVisibilityTimer = () => {
+        if (popupVisibilityTimer !== null) {
+            clearInterval(popupVisibilityTimer);
+            popupVisibilityTimer = null;
+        }
+        lastPopupOpenerOrigin = undefined;
+        lastPopupHostUrl = undefined;
+        popupOpenedWhileUnmuted = false;
+    };
+    const closeActivePopups = () => {
+        stopPopupVisibilityTimer();
+        const toClose = [...activePopups];
+        activePopups.clear();
+        for (const popup of toClose) {
             try {
-                popup.close?.();
+                if (!popup.isDestroyed?.()) {
+                    popup.close?.();
+                }
             }
             catch {
                 // Ignore errors when closing already-destroyed child popups.
             }
         }
-        activePopups.clear();
+    };
+    const ensurePopupVisibilityTimer = () => {
+        if (popupVisibilityTimer !== null || activePopups.size === 0) {
+            return;
+        }
+        popupVisibilityTimer = setInterval(() => {
+            if (activePopups.size === 0) {
+                stopPopupVisibilityTimer();
+                return;
+            }
+            if (contents.isDestroyed?.() ||
+                (popupOpenedWhileUnmuted && contents.isAudioMuted?.() === true)) {
+                closeActivePopups();
+            }
+        }, 200);
+        popupVisibilityTimer.unref?.();
+    };
+    const closeActivePopupsIfCrossOrigin = (navigationUrl) => {
+        if (activePopups.size === 0) {
+            return;
+        }
+        const navOrigin = extractHttpOrigin(navigationUrl);
+        const openerHttpOrigin = extractHttpOrigin(lastPopupOpenerOrigin);
+        const isCrossOrigin = !navOrigin ||
+            lastPopupOpenerOrigin === 'null' ||
+            (openerHttpOrigin !== undefined && navOrigin !== openerHttpOrigin);
+        if (isCrossOrigin) {
+            closeActivePopups();
+        }
+    };
+    const onHostNavigate = (event, navigationUrl, isMainFrameArg) => {
+        if (!isMainFrameNavigationEvent(event, isMainFrameArg)) {
+            return;
+        }
+        if (activePopups.size === 0) {
+            return;
+        }
+        const nextHostRoute = extractOriginAndPathname(navigationUrl);
+        const popupHostRoute = extractOriginAndPathname(lastPopupHostUrl);
+        if (!popupHostRoute || !nextHostRoute || nextHostRoute !== popupHostRoute) {
+            closeActivePopups();
+        }
+    };
+    const unsubscribeHostNavigation = subscribeHostNavigation(host, onHostNavigate);
+    contents.on?.('render-process-gone', closeActivePopups);
+    contents.on?.('destroyed', () => {
+        unsubscribeHostNavigation();
+        closeActivePopups();
     });
     const getOpenerOrigin = (details) => {
         const frameOrigin = details?.frame?.origin;
@@ -659,12 +1037,15 @@ function configureWebviewBrowserContents(contents, options) {
         }
     };
     contents.on?.('did-start-navigation', (event, navigationUrl, _isInPlace, isMainFrameArg) => {
-        if (isMainFrameNavigationEvent(event, isMainFrameArg) &&
-            !inFlightWebviewOrigin) {
-            inFlightWebviewOrigin = extractHttpOrigin(navigationUrl);
+        if (isMainFrameNavigationEvent(event, isMainFrameArg)) {
+            closeActivePopupsIfCrossOrigin(navigationUrl);
+            if (!inFlightWebviewOrigin) {
+                inFlightWebviewOrigin = extractHttpOrigin(navigationUrl);
+            }
         }
     });
     contents.on?.('did-navigate', (_event, navigationUrl) => {
+        closeActivePopupsIfCrossOrigin(navigationUrl);
         inFlightWebviewOrigin = undefined;
         if (!isBlankPopupUrl(navigationUrl)) {
             hasCommittedWebviewNavigation = true;
@@ -768,6 +1149,7 @@ function configureWebviewBrowserContents(contents, options) {
             return;
         }
         if (isMainFrame) {
+            closeActivePopupsIfCrossOrigin(navigationUrl);
             inFlightWebviewOrigin = extractHttpOrigin(navigationUrl);
         }
     };
@@ -802,6 +1184,7 @@ function configureWebviewBrowserContents(contents, options) {
             lastPopupOpenedMs = currentTime;
             lastPopupInitialUrl = details.url;
             lastPopupOpenerOrigin = openerOrigin;
+            lastPopupHostUrl = host?.getURL?.();
             const { width, height } = parsePopupWindowDimensions(details.features || '');
             const parentWindow = getParentWindow() ?? undefined;
             let x;
@@ -833,7 +1216,7 @@ function configureWebviewBrowserContents(contents, options) {
                     titleBarStyle: 'default',
                     frame: true,
                     modal: false,
-                    show: true,
+                    show: !(0, webviewDownloadRouting_1.getArmedGuestDownloadDirectory)(webContentsId),
                     movable: true,
                     resizable: true,
                     maximizable: true,
@@ -874,8 +1257,15 @@ function configureWebviewBrowserContents(contents, options) {
     contents.on?.('did-create-window', (childWindow, details) => {
         (0, utils_1.markWebviewPopupWindow)(childWindow);
         activePopups.add(childWindow);
+        popupOpenedWhileUnmuted = contents.isAudioMuted?.() === false;
+        lastPopupOpenerOrigin = lastPopupOpenerOrigin ?? getOpenerOrigin();
+        lastPopupHostUrl = lastPopupHostUrl ?? host?.getURL?.();
+        ensurePopupVisibilityTimer();
         const cleanupPopup = () => {
             activePopups.delete(childWindow);
+            if (activePopups.size === 0) {
+                stopPopupVisibilityTimer();
+            }
         };
         const closePopupIfOpen = () => {
             if (!childWindow.isDestroyed?.()) {
@@ -891,14 +1281,19 @@ function configureWebviewBrowserContents(contents, options) {
         const initialPopupOrigin = extractHttpOrigin(initialRequestedUrl);
         let hasCommittedFirstNavigation = false;
         let currentPopupUrl = initialRequestedUrl;
+        let currentPageTitle;
         let inFlightMainFrameOrigin;
-        childWindow.setTitle?.(formatPopupWindowTitle(currentPopupUrl));
+        const updatePopupTitle = (rawUrl, pageTitle) => {
+            childWindow.setTitle?.(formatPopupWindowTitle(rawUrl, pageTitle));
+        };
+        updatePopupTitle(currentPopupUrl);
         childWindow.on?.('page-title-updated', (event, title) => {
             event.preventDefault();
+            currentPageTitle = title;
             const displayUrl = !isBlankPopupUrl(currentPopupUrl)
                 ? currentPopupUrl
                 : childWindow.webContents?.getURL?.() || currentPopupUrl;
-            childWindow.setTitle?.(formatPopupWindowTitle(displayUrl, title));
+            updatePopupTitle(displayUrl, title);
         });
         const getPopupBaseValidationOrigin = () => {
             if (hasCommittedFirstNavigation) {
@@ -948,17 +1343,18 @@ function configureWebviewBrowserContents(contents, options) {
             }
             inFlightMainFrameOrigin = undefined;
             currentPopupUrl = navigationUrl;
+            currentPageTitle = undefined;
             if (!isBlankPopupUrl(navigationUrl)) {
                 hasCommittedFirstNavigation = true;
             }
-            childWindow.setTitle?.(formatPopupWindowTitle(navigationUrl));
+            updatePopupTitle(navigationUrl);
         });
         childWindow.webContents?.on?.('did-navigate-in-page', (event, navigationUrl, isMainFrameArg) => {
             if (!isMainFrameNavigationEvent(event, isMainFrameArg)) {
                 return;
             }
             currentPopupUrl = navigationUrl;
-            childWindow.setTitle?.(formatPopupWindowTitle(navigationUrl));
+            updatePopupTitle(navigationUrl, currentPageTitle);
         });
         childWindow.webContents?.setWindowOpenHandler?.((nestedDetails) => {
             if (isExternalOnlyAuthUrl(nestedDetails.url)) {
@@ -971,6 +1367,12 @@ function configureWebviewBrowserContents(contents, options) {
                 forwardNewTabToHost(nestedDetails.url);
             }
             return { action: 'deny' };
+        });
+        (0, webviewDownloadRouting_1.trackChildPopupDownloadLifecycle)({
+            childWindow,
+            openerContents: contents,
+            isBlankPopupUrl,
+            hasCommittedNavigation: () => hasCommittedFirstNavigation,
         });
     });
 }

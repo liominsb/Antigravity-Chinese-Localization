@@ -3,7 +3,11 @@ Object.defineProperty(exports, "__esModule", { value: true });
 exports.registerKeybindings = registerKeybindings;
 const utils_1 = require("./utils");
 function registerKeybindings(win, actions) {
-    win.webContents.on('before-input-event', (event, input) => {
+    const hubContents = (0, utils_1.getHubWebContents)(win) ?? win.webContents;
+    const handleBeforeInput = (event, input) => {
+        if (win.isDestroyed?.()) {
+            return;
+        }
         if (input.type === 'keyDown') {
             const isCmdOrCtrl = (0, utils_1.isMacOS)() ? input.meta : input.control;
             if (isCmdOrCtrl && input.shift && input.key.toLowerCase() === 'n') {
@@ -15,5 +19,9 @@ function registerKeybindings(win, actions) {
                 event.preventDefault();
             }
         }
+    };
+    hubContents?.on('before-input-event', handleBeforeInput);
+    win.once?.('closed', () => {
+        hubContents?.off?.('before-input-event', handleBeforeInput);
     });
 }

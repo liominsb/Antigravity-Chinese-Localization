@@ -45,12 +45,17 @@ const main_1 = __importDefault(require("electron-log/main"));
 const fs = __importStar(require("fs/promises"));
 const customScheme_1 = require("./customScheme");
 const tray_1 = require("./tray");
+const webviewBrowser_1 = require("./webviewBrowser");
 const constants_1 = require("./ideInstall/constants");
 const url_1 = require("url");
 const wsl_1 = require("./wsl");
 const menu_1 = require("./menu");
 const scriptJail_1 = require("./scriptJail");
+const externalUrl_1 = require("./externalUrl");
 const utils_1 = require("./utils");
+const wcvBrowserRegistry_1 = require("./wcvBrowserRegistry");
+const wcvIpcHandlers_1 = require("./wcvIpcHandlers");
+const guestDialogController_1 = require("./guestDialogController");
 function buildContextMenuTemplate(items, onSelect) {
     return items.map((item) => {
         if (item.type === 'separator') {
@@ -83,13 +88,7 @@ function buildContextMenuTemplate(items, onSelect) {
  */
 function registerIpcHandlers(storageManager) {
     const getTargetHubWindow = () => {
-        const focused = electron_1.BrowserWindow.getFocusedWindow();
-        if (focused &&
-            !focused
-                .__isWebviewPopupWindow) {
-            return focused;
-        }
-        return (0, utils_1.getHubWindows)()[0];
+        return (0, utils_1.getFocusedHubWindow)() ?? (0, utils_1.getHubWindows)()[0];
     };
     // Dialog
     // In WSL mode, start the folder dialog in the distro's home directory.
@@ -368,11 +367,7 @@ function registerIpcHandlers(storageManager) {
     });
     // Safe external shell launch
     electron_1.ipcMain.handle('shell:open-external', async (_event, url) => {
-        if (url.startsWith('https://') ||
-            url.startsWith('http://') ||
-            url.startsWith('antigravity-ide://')) {
-            await electron_1.shell.openExternal(url);
-        }
+        await (0, externalUrl_1.openExternalSafely)(url, 'confirmed');
     });
     electron_1.ipcMain.handle('shell:reveal-in-file-picker', (_event, path) => {
         const distro = (0, wsl_1.getActiveWslDistro)();
@@ -382,6 +377,28 @@ function registerIpcHandlers(storageManager) {
             return;
         }
         electron_1.shell.showItemInFolder((0, url_1.fileURLToPath)(path));
+    });
+    electron_1.ipcMain.handle('webview:set-download-dir', (event, webContentsId, downloadDir) => {
+        if (typeof webContentsId !== 'number' ||
+            !Number.isInteger(webContentsId) ||
+            webContentsId <= 0) {
+            throw new Error(`Invalid webContentsId: ${String(webContentsId)}`);
+        }
+        if (downloadDir !== null && typeof downloadDir !== 'string') {
+            throw new Error('downloadDir must be a string or null');
+        }
+        if (event?.senderFrame?.parent) {
+            throw new Error('Unauthorized webview:set-download-dir sender: subframe cannot configure downloads');
+        }
+        const sender = event?.sender;
+        if (!sender || sender.isDestroyed?.()) {
+            throw new Error(`WebContents ${webContentsId} is not owned by the calling renderer`);
+        }
+        const wc = electron_1.webContents.fromId(webContentsId);
+        if (!(0, webviewBrowser_1.isOwnedBrowserGuestWebContents)(wc, sender.id)) {
+            throw new Error(`WebContents ${webContentsId} is not owned by the calling renderer`);
+        }
+        return (0, webviewBrowser_1.setGuestDownloadDirectory)(wc, downloadDir);
     });
     // IDE installation check
     electron_1.ipcMain.handle('ide:is-installed', async () => {
@@ -393,6 +410,63 @@ function registerIpcHandlers(storageManager) {
         catch {
             return false;
         }
+    });
+    // Per-guest renderer working-set memory in bytes for memory-budgeted LRU eviction.
+    electron_1.ipcMain.handle('webview:get-memory-usage', async (event, webContentsIds) => {
+        const sender = event?.sender;
+        if (!sender ||
+            sender.isDestroyed() ||
+            event?.senderFrame?.parent ||
+            (event?.senderFrame &&
+                sender.mainFrame &&
+                event.senderFrame !== sender.mainFrame) ||
+            !Array.isArray(webContentsIds) ||
+            webContentsIds.length === 0) {
+            return {};
+        }
+        const MAX_QUERIED_GUESTS = 64;
+        const seenIds = new Set();
+        const ownedGuests = [];
+        for (const rawId of webContentsIds) {
+            if (seenIds.size >= MAX_QUERIED_GUESTS) {
+                break;
+            }
+            if (typeof rawId !== 'number' ||
+                !Number.isInteger(rawId) ||
+                rawId <= 0 ||
+                seenIds.has(rawId)) {
+                continue;
+            }
+            seenIds.add(rawId);
+            const wc = electron_1.webContents.fromId(rawId);
+            const isWcv = wcvBrowserRegistry_1.wcvBrowserRegistry.isRegisteredWcv(rawId);
+            if (!wc || wc.isDestroyed() || (wc.getType() !== 'webview' && !isWcv)) {
+                continue;
+            }
+            const isOwned = isWcv
+                ? wcvBrowserRegistry_1.wcvBrowserRegistry.isOwnedBySender(rawId, sender.id)
+                : Boolean(sender.id !== undefined && wc.hostWebContents?.id === sender.id);
+            if (!isOwned) {
+                continue;
+            }
+            let pid;
+            try {
+                pid = wc.getOSProcessId?.();
+            }
+            catch {
+                pid = undefined;
+            }
+            ownedGuests.push({ webContentsId: rawId, pid });
+        }
+        if (ownedGuests.length === 0) {
+            return {};
+        }
+        const bytesByWcId = wcvBrowserRegistry_1.wcvBrowserRegistry.computeGuestMemoryBytes(ownedGuests);
+        const out = {};
+        for (const [id, bytes] of bytesByWcId.entries()) {
+            out[id] = bytes;
+        }
+        return out;
     });
     // WSL environment switching (Windows only). Lets the web UI (e.g. the
     // Settings page) discover WSL distros and relaunch the app into/out of one.
@@ -439,16 +513,71 @@ function registerIpcHandlers(storageManager) {
             throw new Error('code must be a string');
         }
         const wc = electron_1.webContents.fromId(webContentsId);
-        if (!wc || wc.isDestroyed() || wc.getType() !== 'webview') {
+        const isWcv = wcvBrowserRegistry_1.wcvBrowserRegistry.isRegisteredWcv(webContentsId);
+        if (!wc || wc.isDestroyed() || (wc.getType() !== 'webview' && !isWcv)) {
             throw new Error(`Invalid or non-webview webContents id: ${webContentsId}`);
         }
         const sender = event?.sender;
-        if (!sender ||
-            sender.isDestroyed() ||
-            wc.hostWebContents?.id !== sender.id) {
+        const isOwned = isWcv
+            ? wcvBrowserRegistry_1.wcvBrowserRegistry.isOwnedBySender(webContentsId, sender?.id)
+            : wc.hostWebContents?.id === sender?.id;
+        if (!sender || sender.isDestroyed() || !isOwned) {
             throw new Error(`WebContents ${webContentsId} is not owned by the calling renderer`);
         }
+        if (!event?.senderFrame ||
+            event.senderFrame !== sender.mainFrame ||
+            event.senderFrame.parent) {
+            throw new Error('webview:execute-js-isolated-world must be called from the main frame');
+        }
         return wc.executeJavaScriptInIsolatedWorld(worldId, [{ code }], false);
+    });
+    const resolveOwnedGuestWebContents = (event, webContentsId) => {
+        if (typeof webContentsId !== 'number' ||
+            !Number.isInteger(webContentsId) ||
+            webContentsId <= 0) {
+            throw new Error(`Invalid webContentsId: ${String(webContentsId)}`);
+        }
+        const wc = electron_1.webContents.fromId(webContentsId);
+        const isWcv = wcvBrowserRegistry_1.wcvBrowserRegistry.isRegisteredWcv(webContentsId);
+        if (!wc || wc.isDestroyed() || (wc.getType() !== 'webview' && !isWcv)) {
+            throw new Error(`Invalid or non-webview webContents id: ${webContentsId}`);
+        }
+        const sender = event?.sender;
+        const isOwned = isWcv
+            ? wcvBrowserRegistry_1.wcvBrowserRegistry.isOwnedBySender(webContentsId, sender?.id)
+            : wc.hostWebContents?.id === sender?.id;
+        if (!sender || sender.isDestroyed() || !isOwned) {
+            throw new Error(`WebContents ${webContentsId} is not owned by the calling renderer`);
+        }
+        return { wc, sender };
+    };
+    electron_1.ipcMain.handle('webview:set-dialog-policy', async (event, webContentsId, policy) => {
+        const { wc, sender } = resolveOwnedGuestWebContents(event, webContentsId);
+        const safePolicy = {
+            enabled: Boolean(policy?.enabled),
+            ...(policy?.action === 'accept' ||
+                policy?.action === 'dismiss' ||
+                policy?.action === 'manual'
+                ? { action: policy.action }
+                : {}),
+            ...(typeof policy?.promptText === 'string'
+                ? { promptText: policy.promptText }
+                : {}),
+            ...(typeof policy?.tabKey === 'string' ? { tabKey: policy.tabKey } : {}),
+        };
+        return guestDialogController_1.guestDialogController.setPolicy(wc, sender, safePolicy);
+    });
+    electron_1.ipcMain.handle('webview:handle-javascript-dialog', async (event, webContentsId, decision) => {
+        const { wc } = resolveOwnedGuestWebContents(event, webContentsId);
+        return guestDialogController_1.guestDialogController.handleDialog(wc, {
+            ...(typeof decision?.dialogId === 'string'
+                ? { dialogId: decision.dialogId }
+                : {}),
+            accept: Boolean(decision?.accept),
+            ...(typeof decision?.promptText === 'string'
+                ? { promptText: decision.promptText }
+                : {}),
+        });
     });
     // Execute an untrusted agent script inside a single-use, zero-egress
     // Electron script jail and transfer the paired MessagePort to the caller.
@@ -458,7 +587,9 @@ function registerIpcHandlers(storageManager) {
     electron_1.ipcMain.handle('script-jail:abort', (event, jailId) => {
         return (0, scriptJail_1.abortScriptInJail)(event?.sender, jailId, event?.senderFrame);
     });
+    (0, wcvIpcHandlers_1.registerWcvIpcHandlers)();
 }
+
 
 
 const contextMenuTranslationMap = {

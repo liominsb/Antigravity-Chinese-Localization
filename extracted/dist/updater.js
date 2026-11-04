@@ -48,6 +48,7 @@ const path = __importStar(require("path"));
 const types_1 = require("./types");
 const child_process_1 = require("child_process");
 const settingsService_1 = require("./services/settingsService");
+const utils_1 = require("./utils");
 var MenuUpdateStep;
 (function (MenuUpdateStep) {
     MenuUpdateStep["CheckForUpdates"] = "Check for Updates";
@@ -106,11 +107,14 @@ function setAutoUpdateChecking(enabled) {
 }
 // The last update state broadcast to renderers.
 let lastState = { type: types_1.UpdateState.Idle };
-/** Broadcast a state change to every open BrowserWindow. */
+/** Broadcast a state change to every open Hub window. */
 function broadcastState(state) {
     lastState = state;
-    for (const win of electron_1.BrowserWindow.getAllWindows()) {
-        win.webContents.send('updater:state-changed', state);
+    for (const win of (0, utils_1.getHubWindows)()) {
+        const hubContents = (0, utils_1.getHubWebContents)(win);
+        if (hubContents && !hubContents.isDestroyed?.()) {
+            hubContents.send('updater:state-changed', state);
+        }
     }
 }
 /**
@@ -181,7 +185,7 @@ function initAutoUpdater(isHeadless, settingsService) {
         broadcastState({ type: types_1.UpdateState.Idle });
         updateMenuState(MenuUpdateStep.CheckForUpdates);
         if (isManualCheck && !isHeadless) {
-            const win = electron_1.BrowserWindow.getFocusedWindow();
+            const win = (0, utils_1.getFocusedHubWindow)() ?? (0, utils_1.getHubWindows)()[0];
             const options = {
                 type: 'info',
                 title: '检查更新',

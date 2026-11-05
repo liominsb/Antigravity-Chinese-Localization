@@ -155,7 +155,12 @@ const SAMPLES = [
   ['Font', '字体'],
   ['Enter to Send', '回车发送'],
   ['CitC Workspace', 'CitC 工作区'],
-  ['Cog Workspace', 'Cog 工作区']
+  ['Cog Workspace', 'Cog 工作区'],
+  ['Voice mode', '语音模式'],
+  ['The voice used in Voice mode. Powered by Gemini Live.', '语音模式下使用的声音。由 Gemini Live 提供支持。'],
+  ["How loud Antigravity's voice is.", 'Antigravity 的语音音量大小。'],
+  ['Folder where files downloaded in the built-in browser are saved.', '在内置浏览器中下载的文件所保存的文件夹。'],
+  ['Clear visited URLs and autocomplete suggestions from the built-in browser.', '清除内置浏览器中访问过的网址与自动补全建议。']
 ];
 for (const [k, v] of SAMPLES) {
   const actual = dictionary[k] !== undefined ? dictionary[k] : coreWords[k];

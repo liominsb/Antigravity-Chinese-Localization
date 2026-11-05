@@ -23,7 +23,6 @@ const wizardAPI = {
 electron_1.contextBridge.exposeInMainWorld('wizardAPI', wizardAPI);
 
 
-
 // Antigravity 2.0 Chinese Localization Engine Enhanced
 (function() {
   const dictionary = {
@@ -4525,6 +4524,8 @@ electron_1.contextBridge.exposeInMainWorld('wizardAPI', wizardAPI);
     "Delete all recordings?": "删除所有录音？",
     "Files, folders, and repositories you connect are accessible to your agent in this project, including during background or scheduled runs.": "你连接的文件、文件夹和仓库，在此项目中可被你的智能体访问，包括在后台或计划运行期间。",
     "Font": "字体",
+    "How loud Antigravity's voice is.": "Antigravity 的语音音量大小。",
+    "How loud Antigravity's voice is": "Antigravity 的语音音量大小",
     "Input device for voice mode and dictation.": "语音模式与语音输入的输入设备。",
     "Mute Voice Mic": "静音语音麦克风",
     "Mute Voice Speaker": "静音语音扬声器",
@@ -4532,7 +4533,11 @@ electron_1.contextBridge.exposeInMainWorld('wizardAPI', wizardAPI);
     "Recordings": "录音",
     "Save audio recordings": "保存音频录音",
     "Screen Reader Mode": "屏幕阅读器模式",
+    "The voice used in Voice mode. Powered by Gemini Live.": "语音模式下使用的声音。由 Gemini Live 提供支持。",
+    "The voice used in Voice mode. Powered by Gemini Live": "语音模式下使用的声音。由 Gemini Live 提供支持",
     "Type a voice variant name, such as rev27.": "输入语音变体名称，例如 rev27。",
+    "Voice mode": "语音模式",
+    "Voice Mode": "语音模式",
     // ===== 2.29.0 补充：远程智能体、云端环境与用量配额 =====
     "Browse MCP resources": "浏览 MCP 资源",
     "Browse rules": "浏览规则",
@@ -4557,9 +4562,13 @@ electron_1.contextBridge.exposeInMainWorld('wizardAPI', wizardAPI);
     "Attackers might be able to see the images you're looking at on this site and trick you by modifying them.": "攻击者可能会看到你在此站点上浏览的图片，并通过篡改它们来欺骗你。",
     "Browsing History": "浏览历史",
     "Cancel download": "取消下载",
+    "Clear visited URLs and autocomplete suggestions from the built-in browser.": "清除内置浏览器中访问过的网址与自动补全建议。",
+    "Clear visited URLs and autocomplete suggestions from the built-in browser": "清除内置浏览器中访问过的网址与自动补全建议",
     "Download Location": "下载位置",
     "Download this site as an app to get notified when the agent needs your attention or completes a task.": "将此站点下载为应用，以便在智能体需要你处理或完成任务时收到通知。",
     "Downloads": "下载",
+    "Folder where files downloaded in the built-in browser are saved.": "在内置浏览器中下载的文件所保存的文件夹。",
+    "Folder where files downloaded in the built-in browser are saved": "在内置浏览器中下载的文件所保存的文件夹",
     "Google Search": "Google 搜索",
     "Remove from history (Shift+Delete)": "从历史记录中移除 (Shift+Delete)",
     "Website": "网站",

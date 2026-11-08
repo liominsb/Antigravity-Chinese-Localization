@@ -164,6 +164,25 @@ check('app.asar.ready 包含 Last Updated 汉化', asarSource.includes('最近�
 check('app.asar.ready 包含 Custom Order 汉化', asarSource.includes('自定义排序'), true);
 check('app.asar.ready 包含 Quote 汉化', asarSource.includes('引用'), true);
 
+// 6. 扩展市场分类货架与描述（Design, Creative / Productivity / Cloud Hosting / Developer Tools / Business）校验
+console.log('\n--- 6. 扩展市场分类货架与描述校验 ---');
+check('preload.js 包含 Design, Creative & Media 汉化', preloadSource.includes('设计、创意与媒体'), true);
+check('preload.js 包含 Productivity & Project Management 汉化', preloadSource.includes('生产力与项目管理'), true);
+check('preload.js 包含 Cloud Hosting & Deployment 汉化', preloadSource.includes('云托管与部署'), true);
+check('preload.js 包含 Developer Tools / Developer 工具 汉化', preloadSource.includes('Developer 工具') && preloadSource.includes('开发者工具'), true);
+check('preload.js 包含 Business 汉化', preloadSource.includes('商业与商务'), true);
+
+check('preload.js 包含 设计、创意与媒体工具 描述汉化', preloadSource.includes('设计、创意与媒体工具。'), true);
+check('preload.js 包含 生产力与项目管理 描述汉化', preloadSource.includes('规划工作、跟踪事务、签署文档并管理笔记与文件。'), true);
+check('preload.js 包含 云托管与部署 描述汉化', preloadSource.includes('部署并托管你的应用程序、网站及其后端服务。'), true);
+check('preload.js 包含 开发者工具 描述汉化', preloadSource.includes('用于构建、测试、保护和运行应用程序的 API、服务与工具。'), true);
+check('preload.js 包含 商业与商务 描述汉化', preloadSource.includes('支付、CRM、记账、数据、身份识别、客户支持、营销和工作流自动化。'), true);
+
+check('app.asar.ready 包含 设计、创意与媒体 汉化', asarSource.includes('设计、创意与媒体'), true);
+check('app.asar.ready 包含 生产力与项目管理 汉化', asarSource.includes('生产力与项目管理'), true);
+check('app.asar.ready 包含 云托管与部署 汉化', asarSource.includes('云托管与部署'), true);
+check('app.asar.ready 包含 商业与商务 汉化', asarSource.includes('商业与商务'), true);
+
 
 
 console.log(`\n测试汇总: 通过: ${passed}, 失败: ${total - passed}, 总计: ${total}`);

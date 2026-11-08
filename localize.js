@@ -4809,6 +4809,18 @@ const DOM_TRANSLATOR_INJECTION = `
     "Quote": "引用",
     "Quote Ctrl+L": "引用 Ctrl+L",
     "Quote Cmd+L": "引用 Cmd+L",
+        // ===== 2.29.1 扩展市场货架分类与描述深度汉化 =====
+    "Design, Creative & Media": "设计、创意与媒体",
+    "Design, creative, and media tools.": "设计、创意与媒体工具。",
+    "Productivity & Project Management": "生产力与项目管理",
+    "Plan work, track issues, sign documents, and manage your notes and files.": "规划工作、跟踪事务、签署文档并管理笔记与文件。",
+    "Cloud Hosting & Deployment": "云托管与部署",
+    "Deploy and host your apps, sites, and their backends.": "部署并托管你的应用程序、网站及其后端服务。",
+    "Developer Tools": "开发者工具",
+    "Developer 工具": "开发者工具",
+    "APIs, services, and tools to build, test, secure, and run your apps.": "用于构建、测试、保护和运行应用程序的 API、服务与工具。",
+    "Business": "商业与商务",
+    "Payments, CRM, accounting, data, identity, customer support, marketing, and workflow automation.": "支付、CRM、记账、数据、身份识别、客户支持、营销和工作流自动化。",
     // ===== 2.29.1 扩展市场全量插件、提示词与生态卡片汉化 (Marketplace & Plugins) =====
     "Split Conversation": "拆分对话",
     "Stop Agent": "停止智能体",
@@ -4997,6 +5009,67 @@ const DOM_TRANSLATOR_INJECTION = `
 
     if (/^(?:Custom Order|Custom order)$/i.test(trimmed)) {
       const fixed = '自定义排序';
+      if (stringCache.size < MAX_STRING_CACHE) stringCache.set(trimmed, fixed);
+      return text.replace(trimmed, fixed);
+    }
+
+        // ===== 2.29.1 扩展市场分类货架与描述动态双重保障 =====
+    if (/^Design,\s*Creative\s*&\s*Media$/i.test(trimmed)) {
+      const fixed = '设计、创意与媒体';
+      if (stringCache.size < MAX_STRING_CACHE) stringCache.set(trimmed, fixed);
+      return text.replace(trimmed, fixed);
+    }
+
+    if (/^Productivity\s*&\s*Project\s*Management$/i.test(trimmed)) {
+      const fixed = '生产力与项目管理';
+      if (stringCache.size < MAX_STRING_CACHE) stringCache.set(trimmed, fixed);
+      return text.replace(trimmed, fixed);
+    }
+
+    if (/^Cloud\s*Hosting\s*&\s*Deployment$/i.test(trimmed)) {
+      const fixed = '云托管与部署';
+      if (stringCache.size < MAX_STRING_CACHE) stringCache.set(trimmed, fixed);
+      return text.replace(trimmed, fixed);
+    }
+
+    if (/^Developer\s+(?:Tools|工具)$/i.test(trimmed)) {
+      const fixed = '开发者工具';
+      if (stringCache.size < MAX_STRING_CACHE) stringCache.set(trimmed, fixed);
+      return text.replace(trimmed, fixed);
+    }
+
+    if (/^Business$/i.test(trimmed)) {
+      const fixed = '商业与商务';
+      if (stringCache.size < MAX_STRING_CACHE) stringCache.set(trimmed, fixed);
+      return text.replace(trimmed, fixed);
+    }
+
+    if (/^Design,\s*creative,\s*and\s*media\s*tools[.。]?$/i.test(trimmed)) {
+      const fixed = '设计、创意与媒体工具。';
+      if (stringCache.size < MAX_STRING_CACHE) stringCache.set(trimmed, fixed);
+      return text.replace(trimmed, fixed);
+    }
+
+    if (/^Plan\s*work,\s*track\s*issues,\s*sign\s*documents,\s*and\s*manage\s*your\s*notes\s*and\s*files[.。]?$/i.test(trimmed)) {
+      const fixed = '规划工作、跟踪事务、签署文档并管理笔记与文件。';
+      if (stringCache.size < MAX_STRING_CACHE) stringCache.set(trimmed, fixed);
+      return text.replace(trimmed, fixed);
+    }
+
+    if (/^Deploy\s*and\s*host\s*your\s*apps,\s*sites,\s*and\s*their\s*backends[.。]?$/i.test(trimmed)) {
+      const fixed = '部署并托管你的应用程序、网站及其后端服务。';
+      if (stringCache.size < MAX_STRING_CACHE) stringCache.set(trimmed, fixed);
+      return text.replace(trimmed, fixed);
+    }
+
+    if (/^APIs,\s*services,\s*and\s*tools\s*to\s*build,\s*test,\s*secure,\s*and\s*run\s*your\s*apps[.。]?$/i.test(trimmed)) {
+      const fixed = '用于构建、测试、保护和运行应用程序的 API、服务与工具。';
+      if (stringCache.size < MAX_STRING_CACHE) stringCache.set(trimmed, fixed);
+      return text.replace(trimmed, fixed);
+    }
+
+    if (/^Payments,\s*CRM,\s*accounting,\s*data,\s*identity,\s*customer\s*support,\s*marketing,\s*and\s*workflow\s*automation[.。]?$/i.test(trimmed)) {
+      const fixed = '支付、CRM、记账、数据、身份识别、客户支持、营销和工作流自动化。';
       if (stringCache.size < MAX_STRING_CACHE) stringCache.set(trimmed, fixed);
       return text.replace(trimmed, fixed);
     }

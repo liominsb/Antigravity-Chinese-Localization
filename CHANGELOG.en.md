@@ -4,6 +4,16 @@ This document tracks all version releases, core architecture adaptations, and fe
 
 ---
 
+## v2.29.1 (2026-11-08)
+
+### 1. Comprehensive Adaptation for Antigravity v2.29.1
+- **Seamless Official Version Update**: Synchronized with the latest official 2.29.1 maintenance release on November 8; upgraded application version and project metadata to `2.29.1`.
+- **Native Patch & Dependency Verification**: Verified that all native injection points hit with 100% stability against 2.29.1 official unpacked files, with zero breaking dependency changes.
+- **Bundled app.asar.ready Pre-compiled Patch**: Packaged a ready-to-use 2.29.1 patch artifact (5.29 MB) for one-click installation and deployment.
+- **Automated Regression Test Suite**: Added Ticket-32 test suite, all TDD test suites 100% passed (ALL GREEN).
+
+---
+
 ## v2.29.0 (2026-11-05)
 
 ### 1. Comprehensive Adaptation to Antigravity v2.29.0

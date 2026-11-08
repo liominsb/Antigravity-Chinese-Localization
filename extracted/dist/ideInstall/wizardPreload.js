@@ -1321,7 +1321,7 @@ electron_1.contextBridge.exposeInMainWorld('wizardAPI', wizardAPI);
 
     // ===== 第4轮验证补充 (显示选项下拉菜单) =====
     "Group By": "分组方式",
-    "Last Updated": "最后更新",
+    "Last Updated": "最近更新",
     "Alphabetical (A-Z)": "字母顺序 (A-Z)",
     "Date Added": "添加日期",
     "Subtitles": "副标题",
@@ -4634,6 +4634,13 @@ electron_1.contextBridge.exposeInMainWorld('wizardAPI', wizardAPI);
     "What should the agent do on each run?": "智能体每次运行时应该做什么？",
     "When": "时间",
     "Where": "位置",
+        // ===== 2.29.1 置顶对话排序与选中文本引用气泡 =====
+    "Sort by": "排序方式",
+    "Last updated": "最近更新",
+    "Custom order": "自定义排序",
+    "Quote": "引用",
+    "Quote Ctrl+L": "引用 Ctrl+L",
+    "Quote Cmd+L": "引用 Cmd+L",
     // ===== 2.29.1 扩展市场全量插件、提示词与生态卡片汉化 (Marketplace & Plugins) =====
     "Split Conversation": "拆分对话",
     "Stop Agent": "停止智能体",
@@ -4796,6 +4803,34 @@ electron_1.contextBridge.exposeInMainWorld('wizardAPI', wizardAPI);
     // 0. 极速缓存查询（O(1) 命中瞬间返回）
     if (stringCache.has(trimmed)) {
       return text.replace(trimmed, stringCache.get(trimmed));
+    }
+
+        // ===== 2.29.1 对话区选中文本浮动引用按钮（自适应快捷键） =====
+    if (/^Quote(?:s+(Ctrl+[a-zA-Z0-9]+|Cmd+[a-zA-Z0-9]+))?$/i.test(trimmed)) {
+      const fixed = trimmed.replace(/^Quote(?:s+(Ctrl+[a-zA-Z0-9]+|Cmd+[a-zA-Z0-9]+))?$/i, (match, shortcut) => {
+        return shortcut ? ('引用 ' + shortcut.toUpperCase().replace('CTRL', 'Ctrl').replace('CMD', 'Cmd')) : '引用';
+      });
+      if (stringCache.size < MAX_STRING_CACHE) stringCache.set(trimmed, fixed);
+      return text.replace(trimmed, fixed);
+    }
+
+    // ===== 2.29.1 置顶对话排序菜单动态双重保障 =====
+    if (/^(?:Sort By|Sort by)$/i.test(trimmed)) {
+      const fixed = '排序方式';
+      if (stringCache.size < MAX_STRING_CACHE) stringCache.set(trimmed, fixed);
+      return text.replace(trimmed, fixed);
+    }
+
+    if (/^(?:Last Updated|Last updated)$/i.test(trimmed)) {
+      const fixed = '最近更新';
+      if (stringCache.size < MAX_STRING_CACHE) stringCache.set(trimmed, fixed);
+      return text.replace(trimmed, fixed);
+    }
+
+    if (/^(?:Custom Order|Custom order)$/i.test(trimmed)) {
+      const fixed = '自定义排序';
+      if (stringCache.size < MAX_STRING_CACHE) stringCache.set(trimmed, fixed);
+      return text.replace(trimmed, fixed);
     }
 
     // ===== 2.29.1 扩展市场通用模式匹配 =====
@@ -5950,6 +5985,12 @@ electron_1.contextBridge.exposeInMainWorld('wizardAPI', wizardAPI);
     // 3. 特殊特权放行：针对执行步骤的药丸标签（如 Ran, Explored, Edited, Viewed, Thought, Thinking, Working 等）
     // 无论其父级为 SPAN、CODE 还是 BUTTON，只要是系统执行药丸且不在用户提问气泡内，一律无条件放行汉化
     const textContent = (element.innerText || element.textContent || '').trim();
+        // 选中文本快捷引用气泡（Quote / Quote Ctrl+L / Quote Cmd+L）特权放行
+    if (/^Quote(?:s+(?:Ctrl|Cmd)+[a-zA-Z0-9]+)?$/i.test(textContent)) {
+      skipCache.set(element, false);
+      return false;
+    }
+
     const isActionPill = textContent.length <= 40 && /^(Explored|Exploring|Ran|Run|Running|Viewed|Viewing|Edited|Editing|Thought|Thinking|Working|Done|Analyzed|Analyzing|Created|Creating|Deleted|Deleting|Waiting|Rejected|Errored|Completed|Used)(\s+(command|commands|files?|tools?|artifacts?))?$/i.test(textContent);
     if (isActionPill) {
       let inUserInput = false;

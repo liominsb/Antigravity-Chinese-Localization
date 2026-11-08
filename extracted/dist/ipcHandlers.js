@@ -653,7 +653,16 @@ const contextMenuTranslationMap = {
   'Automations': '自动化',
   'Automation': '自动化',
   'Give Feedback': '提供反馈',
-  'Provide Feedback': '提供反馈'
+  'Provide Feedback': '提供反馈',
+  // 顶置对话与排序菜单
+  'Sort By': '排序方式',
+  'Sort by': '排序方式',
+  'Last Updated': '最近更新',
+  'Last Prompt': '最新提示词',
+  'Custom Order': '自定义排序',
+  'Quote': '引用',
+  'Quote Ctrl+L': '引用 Ctrl+L',
+  'Quote Cmd+L': '引用 Cmd+L',
 };
 function translateContextLabel(lbl) {
   if (!lbl) return '';

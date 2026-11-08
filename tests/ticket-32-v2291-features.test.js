@@ -146,6 +146,24 @@ check('app.asar.ready 包含 Copy Project Name 汉化', asarSource.includes('复
 check('app.asar.ready 包含 Project Settings 汉化', asarSource.includes('项目设置'), true);
 check('app.asar.ready 包含 Mark Unread 汉化', asarSource.includes('标为未读'), true);
 
+// 5. 置顶对话排序菜单与选中文本引用气泡（Quote Ctrl+L）校验
+console.log('\n--- 5. 置顶对话排序菜单与选中文本引用气泡（Quote Ctrl+L）校验 ---');
+check('ipcHandlers.js 包含 Sort By -> 排序方式', ipcSource.includes("'Sort By': '排序方式'"), true);
+check('ipcHandlers.js 包含 Last Updated -> 最近更新', ipcSource.includes("'Last Updated': '最近更新'"), true);
+check('ipcHandlers.js 包含 Last Prompt -> 最新提示词', ipcSource.includes("'Last Prompt': '最新提示词'"), true);
+check('ipcHandlers.js 包含 Custom Order -> 自定义排序', ipcSource.includes("'Custom Order': '自定义排序'"), true);
+check('ipcHandlers.js 包含 Quote -> 引用', ipcSource.includes("'Quote': '引用'"), true);
+check('ipcHandlers.js 包含 Quote Ctrl+L -> 引用 Ctrl+L', ipcSource.includes("'Quote Ctrl+L': '引用 Ctrl+L'"), true);
+
+check('preload.js 包含 Quote 浮动引用按钮动态正则规则', preloadSource.includes('选中文本浮动引用按钮') && preloadSource.includes('引用'), true);
+check('preload.js 包含 Quote 选区引用气泡特权放行', preloadSource.includes('选中文本快捷引用气泡') && preloadSource.includes('skipCache.set(element, false)'), true);
+check('preload.js 包含 置顶对话排序菜单动态双重保障', preloadSource.includes('置顶对话排序菜单动态双重保障'), true);
+
+check('app.asar.ready 包含 Sort By 汉化', asarSource.includes('排序方式'), true);
+check('app.asar.ready 包含 Last Updated 汉化', asarSource.includes('最近更新'), true);
+check('app.asar.ready 包含 Custom Order 汉化', asarSource.includes('自定义排序'), true);
+check('app.asar.ready 包含 Quote 汉化', asarSource.includes('引用'), true);
+
 
 
 console.log(`\n测试汇总: 通过: ${passed}, 失败: ${total - passed}, 总计: ${total}`);

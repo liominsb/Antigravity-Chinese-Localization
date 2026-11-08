@@ -131,6 +131,22 @@ check('app.asar.ready 包含 Notion 插件描述汉化', asarSource.includes('�
 check('app.asar.ready 包含 Stripe 插件描述汉化', asarSource.includes('接受在线付款并拓展业务。Stripe 官方 MCP 服务器让 AI 智能体能够管理客户'), true);
 check('app.asar.ready 包含 第三方开发者工具免责声明汉化', asarSource.includes('Google 不控制第三方开发者工具的可用性或功能'), true);
 
+// 4. 原生上下文菜单（项目文件夹与对话列表右键）校验
+console.log('\n--- 4. 原生上下文菜单（项目文件夹与对话列表右键）校验 ---');
+const ipcSource = fs.readFileSync(path.join(distDir, 'ipcHandlers.js'), 'utf-8');
+
+check('ipcHandlers.js 包含 Copy Project Name -> 复制项目名称', ipcSource.includes("'Copy Project Name': '复制项目名称'"), true);
+check('ipcHandlers.js 包含 Project Settings -> 项目设置', ipcSource.includes("'Project Settings': '项目设置'"), true);
+check('ipcHandlers.js 包含 Delete Project -> 删除项目', ipcSource.includes("'Delete Project': '删除项目'"), true);
+check('ipcHandlers.js 包含 Mark Unread -> 标为未读', ipcSource.includes("'Mark Unread': '标为未读'"), true);
+check('ipcHandlers.js 包含 Split -> 拆分', ipcSource.includes("'Split': '拆分'"), true);
+check('ipcHandlers.js 包含 Stop -> 停止', ipcSource.includes("'Stop': '停止'"), true);
+
+check('app.asar.ready 包含 Copy Project Name 汉化', asarSource.includes('复制项目名称'), true);
+check('app.asar.ready 包含 Project Settings 汉化', asarSource.includes('项目设置'), true);
+check('app.asar.ready 包含 Mark Unread 汉化', asarSource.includes('标为未读'), true);
+
+
 
 console.log(`\n测试汇总: 通过: ${passed}, 失败: ${total - passed}, 总计: ${total}`);
 if (passed === total) {

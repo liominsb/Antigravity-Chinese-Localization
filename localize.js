@@ -4803,6 +4803,8 @@ const DOM_TRANSLATOR_INJECTION = `
     "When": "时间",
     "Where": "位置",
     // ===== 2.29.1 扩展市场全量插件、提示词与生态卡片汉化 (Marketplace & Plugins) =====
+    "Split Conversation": "拆分对话",
+    "Stop Agent": "停止智能体",
     "Google does not control the availability or functionality of third party developer tools. Your data from third party developer tools connected to your Antigravity instance may be shared with Google. Google will protect any such data in accordance with the Google Privacy Policy, found here: https://policies.google.com/privacy": "Google 不控制第三方开发者工具的可用性或功能。连接到你的 Antigravity 实例的第三方开发者工具数据可能会与 Google 共享。Google 将根据 Google 隐私权政策保护此类数据，详情请参阅：https://policies.google.com/privacy",
     "Browse other marketplace customizations": "浏览其他市场自定义项",
     "What's included": "包含内容",
@@ -6817,6 +6819,7 @@ function translateMenu(menuItem) {
     // 2.19.1 新增：原生右键上下文菜单汉化注入
     const contextMenuInject = `
 const contextMenuTranslationMap = {
+  // 基础剪贴板与选择
   'Cut': '剪切',
   'Copy': '复制',
   'Paste': '粘贴',
@@ -6824,11 +6827,36 @@ const contextMenuTranslationMap = {
   'Undo': '撤销',
   'Redo': '重做',
   'Delete': '删除',
+
+  // 项目与工作区右键菜单（项目文件夹）
+  'Copy Project Name': '复制项目名称',
+  'Copy Project Path': '复制项目路径',
+  'Project Settings': '项目设置',
+  'Delete Project': '删除项目',
+  'Rename Project': '重命名项目',
+  'Open Project': '打开项目',
+  'Open Folder': '打开文件夹',
+  'New Folder': '新建文件夹',
+  'Remove Project': '移除项目',
+  'Remove from List': '从列表中移除',
+  'Project options': '项目选项',
+
+  // 对话列表右键菜单（对话条目）
   'New Conversation': '新建对话',
   'Fork Conversation': '派生对话',
   'Rename': '重命名',
   'Pin': '置顶',
   'Unpin': '取消置顶',
+  'Mark Unread': '标为未读',
+  'Mark Read': '标为已读',
+  'Mark as Unread': '标为未读',
+  'Mark as Read': '标为已读',
+  'Split': '拆分',
+  'Split Conversation': '拆分对话',
+  'Stop': '停止',
+  'Stop Agent': '停止智能体',
+  'Resume': '恢复',
+  'Restart': '重新启动',
   'Close': '关闭',
   'Close Others': '关闭其他',
   'Close All': '全部关闭',
@@ -6837,10 +6865,12 @@ const contextMenuTranslationMap = {
   'Reveal in File Explorer': '在文件资源管理器中显示',
   'Reveal in Finder': '在访达中显示',
   'Open in Terminal': '在终端中打开',
-  'Project options': '项目选项',
   'View Usage': '查看使用额度',
   'Duplicate': '创建副本',
   'Archive': '归档',
+  'Archive Conversation': '归档对话',
+  'Unarchive': '取消归档',
+  'Unarchive Conversation': '取消归档对话',
   'Share': '分享',
   'Copy Link': '复制链接',
   'Export': '导出',
@@ -6854,7 +6884,8 @@ const contextMenuTranslationMap = {
 };
 function translateContextLabel(lbl) {
   if (!lbl) return '';
-  return contextMenuTranslationMap[lbl] || lbl;
+  const trimmed = typeof lbl === 'string' ? lbl.trim() : '';
+  return contextMenuTranslationMap[lbl] || contextMenuTranslationMap[trimmed] || lbl;
 }
 `;
     injectOrUpdate(ipcPath, contextMenuInject, 'const contextMenuTranslationMap = {', '原生上下文菜单翻译映射');

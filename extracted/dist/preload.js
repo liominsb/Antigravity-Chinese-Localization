@@ -4921,6 +4921,8 @@ installHubSurfaceThemeAutoSync();
     "When": "时间",
     "Where": "位置",
     // ===== 2.29.1 扩展市场全量插件、提示词与生态卡片汉化 (Marketplace & Plugins) =====
+    "Split Conversation": "拆分对话",
+    "Stop Agent": "停止智能体",
     "Google does not control the availability or functionality of third party developer tools. Your data from third party developer tools connected to your Antigravity instance may be shared with Google. Google will protect any such data in accordance with the Google Privacy Policy, found here: https://policies.google.com/privacy": "Google 不控制第三方开发者工具的可用性或功能。连接到你的 Antigravity 实例的第三方开发者工具数据可能会与 Google 共享。Google 将根据 Google 隐私权政策保护此类数据，详情请参阅：https://policies.google.com/privacy",
     "Browse other marketplace customizations": "浏览其他市场自定义项",
     "What's included": "包含内容",

@@ -10,6 +10,10 @@
 - **官方版本无缝平滑升级**：深度跟进官方 11 月 8 日推送的 2.29.1 维护版本，同步升级应用版本定义与全工程元数据至 `2.29.1`。
 - **上游原生模块与核心文件 100% 兼容**：解包核验 2.29.1 官方原生架构与依赖库，确认原生模块架构及依赖项完全保持稳定，50 处原生补丁稳定命中 49 处。
 
+### 3. 原生右键上下文菜单深度补齐与体验优化
+- **项目文件夹右键菜单**：补全 `Copy Project Name` ➔ “复制项目名称”、`Project Settings` ➔ “项目设置”、`Delete Project` ➔ “删除项目”、`Copy Project Path` ➔ “复制项目路径”、`Rename Project` ➔ “重命名项目” 等。
+- **对话条目右键菜单**：补全 `Mark Unread` / `Mark as Unread` ➔ “标为未读”、`Mark Read` / `Mark as Read` ➔ “标为已读”、`Split` / `Split Conversation` ➔ “拆分 / 拆分对话”、`Stop` / `Stop Agent` ➔ “停止 / 停止智能体” 等原生菜单项。
+- **主进程 IPC 拦截增强**：强化 `ipcHandlers.js` 对原生上下文菜单标签的去除首尾空白与双向映射容错。
 ### 2. 重磅：扩展市场 (Marketplace) 全量插件生态与详情页深度汉化
 - **覆盖 71 款官方与合作伙伴插件全量卡片**：从插件市场本地元数据缓存中全面提取并专业汉化所有插件简介（包含 Notion、Stripe、Semrush、Intercom、Wispr Flow、Looker、invideo、Neo4j、Postman、Sentry、Supabase、Figma、Databricks、Datadog 等全部 71 款流行插件）。
 - **插件详情页与提示词建议 (Suggested Prompts)**：全量汉化插件详情页的示例提示词、安装说明、用途与包含内容（例如 Notion 实施计划提示词、周报生成提示词、OAuth 首次授权打开浏览器说明等）。

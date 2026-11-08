@@ -10,6 +10,10 @@ This document tracks all version releases, core architecture adaptations, and fe
 - **Seamless Official Version Update**: Synchronized with the latest official 2.29.1 maintenance release on November 8; upgraded application version and project metadata to `2.29.1`.
 - **Native Patch & Dependency Verification**: Verified that all native injection points hit with 100% stability against 2.29.1 official unpacked files, with zero breaking dependency changes.
 
+### 3. Deep Native Context Menu Localization for Projects and Conversations
+- **Project Folder Context Menu**: Added translations for `Copy Project Name`, `Project Settings`, `Delete Project`, `Copy Project Path`, and `Rename Project`.
+- **Conversation Context Menu**: Added translations for `Mark Unread` / `Mark as Unread`, `Mark Read` / `Mark as Read`, `Split` / `Split Conversation`, and `Stop` / `Stop Agent`.
+- **Main Process IPC Filter**: Enhanced `ipcHandlers.js` context menu label sanitizer with whitespace trimming and bidirectional fallback mapping.
 ### 2. Major: Complete Localization for Marketplace Plugin Ecosystem & Detail Views
 - **Full Coverage for 71 Official & Partner Plugins**: Extracted and localized all plugin card descriptions across all 71 official and partner plugins (including Notion, Stripe, Semrush, Intercom, Wispr Flow, Looker, invideo, Neo4j, Postman, Sentry, Supabase, Figma, Databricks, Datadog, etc.).
 - **Plugin Details & Suggested Prompts**: Localized detail pages, sample prompts, installation guidance, and included file breakdowns.

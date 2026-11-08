@@ -4939,6 +4939,13 @@ installHubSurfaceThemeAutoSync();
     "APIs, services, and tools to build, test, secure, and run your apps.": "用于构建、测试、保护和运行应用程序的 API、服务与工具。",
     "Business": "商业与商务",
     "Payments, CRM, accounting, data, identity, customer support, marketing, and workflow automation.": "支付、CRM、记账、数据、身份识别、客户支持、营销和工作流自动化。",
+        // ===== 2.29.1 扩展市场搜索框、第三方隐私声明与自动化空状态 =====
+    "No automations yet": "暂无自动化",
+    "No 自动化 yet": "暂无自动化",
+    "Run a prompt on a schedule, like a morning summary of yesterday's changes. Runs show up here.": "按计划定时运行提示词，例如每天早晨汇总昨天的更改。运行记录将显示在此处。",
+    "Runs show up here.": "运行记录将显示在此处。",
+    "Google does not control the availability or functionality of third party developer tools. Your data from third party developer tools connected to your Antigravity instance may be shared with Google. Google will protect any such data in accordance with the Google Privacy Policy, found here:": "Google 不控制第三方开发者工具的可用性或功能。连接到你的 Antigravity 实例的第三方开发者工具数据可能会与 Google 共享。Google 将根据 Google 隐私权政策保护此类数据，详情请参阅：",
+    "Google does not control the availability or functionality of third party developer tools. Your data from third party developer tools connected to your Antigravity instance may be shared with Google. Google will protect any such data in accordance with the Google Privacy Policy, found here": "Google 不控制第三方开发者工具的可用性或功能。连接到你的 Antigravity 实例的第三方开发者工具数据可能会与 Google 共享。Google 将根据 Google 隐私权政策保护此类数据，详情请参阅",
     // ===== 2.29.1 扩展市场全量插件、提示词与生态卡片汉化 (Marketplace & Plugins) =====
     "Split Conversation": "拆分对话",
     "Stop Agent": "停止智能体",
@@ -5188,6 +5195,25 @@ installHubSurfaceThemeAutoSync();
 
     if (/^Payments,s*CRM,s*accounting,s*data,s*identity,s*customers*support,s*marketing,s*ands*workflows*automation[.。]?$/i.test(trimmed)) {
       const fixed = '支付、CRM、记账、数据、身份识别、客户支持、营销和工作流自动化。';
+      if (stringCache.size < MAX_STRING_CACHE) stringCache.set(trimmed, fixed);
+      return text.replace(trimmed, fixed);
+    }
+
+        // ===== 2.29.1 自动化面板空状态与第三方免责声明动态双重保障 =====
+    if (/^Nos+(?:automations|自动化)s+yet$/i.test(trimmed)) {
+      const fixed = '暂无自动化';
+      if (stringCache.size < MAX_STRING_CACHE) stringCache.set(trimmed, fixed);
+      return text.replace(trimmed, fixed);
+    }
+
+    if (/^Run a prompt on a schedule, like a morning summary of yesterday's changes.s*Runs show up here[.。]?$/i.test(trimmed)) {
+      const fixed = '按计划定时运行提示词，例如每天早晨汇总昨天的更改。运行记录将显示在此处。';
+      if (stringCache.size < MAX_STRING_CACHE) stringCache.set(trimmed, fixed);
+      return text.replace(trimmed, fixed);
+    }
+
+    if (/^Google does not control the availability or functionality of third party developer tools..*found here:?$/i.test(trimmed)) {
+      const fixed = 'Google 不控制第三方开发者工具的可用性或功能。连接到你的 Antigravity 实例的第三方开发者工具数据可能会与 Google 共享。Google 将根据 Google 隐私权政策保护此类数据，详情请参阅：';
       if (stringCache.size < MAX_STRING_CACHE) stringCache.set(trimmed, fixed);
       return text.replace(trimmed, fixed);
     }
@@ -6581,6 +6607,23 @@ installHubSurfaceThemeAutoSync();
 
   function translateNode(node) {
     if (!node) return;
+
+    // 优先翻译元素自身的静态 UI 属性（如 input 的 placeholder、按钮的 title 与 aria-label）
+    // 必须在 shouldSkipNode 之前处理，因为 shouldSkipNode 会跳过 INPUT/TEXTAREA 的文本子节点与 value
+    if (node.nodeType === Node.ELEMENT_NODE) {
+      ['placeholder', 'title', 'aria-label'].forEach(attr => {
+        if (node.hasAttribute && node.hasAttribute(attr)) {
+          const original = node.getAttribute(attr);
+          if (original) {
+            const translated = translateString(original);
+            if (original !== translated) {
+              node.setAttribute(attr, translated);
+            }
+          }
+        }
+      });
+    }
+
     if (shouldSkipNode(node)) return;
 
     if (node.nodeType === Node.TEXT_NODE) {
@@ -6667,11 +6710,11 @@ installHubSurfaceThemeAutoSync();
       // 1. 批量处理属性变更
       if (pendingAttrNodes.size > 0) {
         for (const [target, attrs] of pendingAttrNodes) {
-          if (!shouldSkipNode(target)) {
-            for (const attrName of attrs) {
-              if (attrName === 'value' && (target.tagName === 'INPUT' || target.tagName === 'TEXTAREA')) {
-                continue;
-              }
+          for (const attrName of attrs) {
+            if (attrName === 'value' && (target.tagName === 'INPUT' || target.tagName === 'TEXTAREA')) {
+              continue;
+            }
+            if (attrName === 'placeholder' || attrName === 'title' || attrName === 'aria-label' || !shouldSkipNode(target)) {
               const original = target.getAttribute(attrName);
               if (original) {
                 const translated = translateString(original);

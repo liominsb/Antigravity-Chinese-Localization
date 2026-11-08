@@ -183,6 +183,17 @@ check('app.asar.ready 包含 生产力与项目管理 汉化', asarSource.includ
 check('app.asar.ready 包含 云托管与部署 汉化', asarSource.includes('云托管与部署'), true);
 check('app.asar.ready 包含 商业与商务 汉化', asarSource.includes('商业与商务'), true);
 
+// 7. 搜索框 placeholder、第三方隐私声明与自动化空状态校验
+console.log('\n--- 7. 搜索框 placeholder、第三方隐私声明与自动化空状态校验 ---');
+check('preload.js 包含 placeholder 属性前置放行翻译机制', preloadSource.includes("['placeholder', 'title', 'aria-label'].forEach(attr =>") && preloadSource.includes('shouldSkipNode(node)'), true);
+check('preload.js 包含 暂无自动化 (No automations yet) 汉化', preloadSource.includes('暂无自动化'), true);
+check('preload.js 包含 自动化空状态描述长句汉化', preloadSource.includes('按计划定时运行提示词，例如每天早晨汇总昨天的更改。运行记录将显示在此处。'), true);
+check('preload.js 包含 第三方免责声明前序句汉化', preloadSource.includes('Google 不控制第三方开发者工具的可用性或功能。连接到你的 Antigravity 实例的第三方开发者工具数据可能会与 Google 共享。Google 将根据 Google 隐私权政策保护此类数据，详情请参阅：'), true);
+
+check('app.asar.ready 包含 暂无自动化 汉化', asarSource.includes('暂无自动化'), true);
+check('app.asar.ready 包含 搜索自定义项... 汉化', asarSource.includes('搜索自定义项...'), true);
+check('app.asar.ready 包含 自动化空状态描述 汉化', asarSource.includes('按计划定时运行提示词，例如每天早晨汇总昨天的更改。运行记录将显示在此处。'), true);
+
 
 
 console.log(`\n测试汇总: 通过: ${passed}, 失败: ${total - passed}, 总计: ${total}`);

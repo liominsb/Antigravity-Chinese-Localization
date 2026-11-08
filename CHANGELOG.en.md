@@ -6,23 +6,26 @@ This document tracks all version releases, core architecture adaptations, and fe
 
 ## v2.29.1 (2026-11-08)
 
-### 1. Comprehensive Adaptation for Antigravity v2.29.1
-- **Seamless Official Version Update**: Synchronized with the latest official 2.29.1 maintenance release on November 8; upgraded application version and project metadata to `2.29.1`.
-- **Native Patch & Dependency Verification**: Verified that all native injection points hit with 100% stability against 2.29.1 official unpacked files, with zero breaking dependency changes.
+### 1. Full Deep Adaptation for Antigravity v2.29.1
+- **Official Version Smooth Upgrade**: Synchronized with the official 2.29.1 maintenance release pushed on November 8, upgrading package metadata and version definitions to `2.29.1`.
+- **100% Native Module Compatibility**: Verified official native architecture and dependencies; 49 of 50 native patch points hit cleanly.
 
-### 3. Deep Native Context Menu Localization for Projects and Conversations
-- **Project Folder Context Menu**: Added translations for `Copy Project Name`, `Project Settings`, `Delete Project`, `Copy Project Path`, and `Rename Project`.
-- **Conversation Context Menu**: Added translations for `Mark Unread` / `Mark as Unread`, `Mark Read` / `Mark as Read`, `Split` / `Split Conversation`, and `Stop` / `Stop Agent`.
-- **Main Process IPC Filter**: Enhanced `ipcHandlers.js` context menu label sanitizer with whitespace trimming and bidirectional fallback mapping.
-### 2. Major: Complete Localization for Marketplace Plugin Ecosystem & Detail Views
-- **Full Coverage for 71 Official & Partner Plugins**: Extracted and localized all plugin card descriptions across all 71 official and partner plugins (including Notion, Stripe, Semrush, Intercom, Wispr Flow, Looker, invideo, Neo4j, Postman, Sentry, Supabase, Figma, Databricks, Datadog, etc.).
-- **Plugin Details & Suggested Prompts**: Localized detail pages, sample prompts, installation guidance, and included file breakdowns.
-- **Marketplace Controls & Third-party Disclaimer**: Localized search placeholders (`Search customizations...`), Google third-party tool privacy disclaimers, and generic dynamic pattern matching.
-- **Zero Duplicate Keys**: Maintained dictionary health with zero new duplicate keys, zero empty translations, and zero untranslated leftovers.
+### 2. Major: Complete Marketplace Ecosystem & Plugin Details Localization
+- **Full Coverage of 71 Official & Partner Plugins**: Extracted and translated all plugin descriptions from local cache (including Notion, Stripe, Semrush, Intercom, Wispr Flow, Looker, invideo, Neo4j, Postman, Sentry, Supabase, Figma, Databricks, Datadog, etc.).
+- **Plugin Detail Pages & Suggested Prompts**: Translated implementation plan prompts, weekly update prompts, installation commands, and OAuth authorization notices.
+- **Full Alignment of 5 Marketplace Shelves**: Translated "Design, Creative & Media", "Productivity & Project Management", "Cloud Hosting & Deployment", "Developer Tools" (fixed tokenization defect), and "Business" along with all their descriptions.
+- **Input Placeholder Architecture Refactor & Disclaimer Penetration**: Refactored attribute translation in `translateNode` to enable `placeholder` translation (e.g., `Search customizations...` ➔ "搜索自定义项...") without risking user input values; penetrated composite disclaimer blocks containing external links.
+- **Zero Duplicate Key Additions**: Strictly maintained dictionary health below the upstream baseline.
 
-### 3. Artifacts and Test Assurance
-- **Bundled app.asar.ready Pre-compiled Patch**: Packaged a ready-to-use 2.29.1 patch artifact (5.33 MB, 5,590,067 bytes) for one-click installation and deployment.
-- **Automated Regression Test Suite**: Ticket-32 test suite updated with 52 comprehensive assertions, all 35 TDD test suites 100% passed (ALL GREEN).
+### 3. Native Context Menus & Interaction Refinements
+- **Pinned Conversations Sort Menu**: Added `Sort By` ➔ "排序方式", `Last Updated` ➔ "最近更新", `Last Prompt` ➔ "最新提示词", `Custom Order` ➔ "自定义排序".
+- **Selection Quote Tooltip (Quote Ctrl+L)**: Added bypass privilege in `shouldSkipNode` and adaptive regex matching for `Quote`, `Quote Ctrl+L`, and `Quote Cmd+L`.
+- **Project & Conversation Native Menus**: Completed project folder menus (Copy Project Name, Project Settings, Delete Project) and conversation menus (Mark Unread, Split Conversation, Stop Agent).
+- **Automations Empty State**: Fixed tokenization flaw to render standard "暂无自动化" and translated scheduling descriptions.
+
+### 4. Build Artifacts & Quality Assurance
+- **Instant Ready-to-Use Artifact**: Packed latest `app.asar.ready` (5.35 MB, 5,611,177 bytes) supporting zero-downtime hot replacement.
+- **100% TDD Regression Suite Pass**: Ticket-32 expanded to **95 assertions, all passing**; all 35 suites in the project remain **100% ALL GREEN**.
 
 ---
 

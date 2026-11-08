@@ -108,6 +108,30 @@ check('menu.js 包含 原生菜单翻译映射', menuSource.includes('const menu
 check('cablev2.js 包含 通行密钥 汉化', cableSource.includes('通行密钥'), true);
 check('webauthn.js 包含 选择通行密钥 汉化', webauthnSource.includes('选择通行密钥'), true);
 
+// 3. 2.29.1 扩展市场全量插件生态与详情页深度汉化校验
+console.log('\n--- 3. 2.29.1 扩展市场全量插件生态与详情页深度汉化校验 ---');
+const asarSource = fs.readFileSync(readyAsarPath, 'utf-8');
+
+check('localize.js 包含 2.29.1 扩展市场全量插件补充分组', localizeSource.includes('2.29.1 扩展市场全量插件、提示词与生态卡片汉化'), true);
+check('preload.js 包含 2.29.1 扩展市场全量插件补充分组', preloadSource.includes('2.29.1 扩展市场全量插件、提示词与生态卡片汉化'), true);
+check('preload.js 包含 Notion 插件描述汉化', preloadSource.includes('通过 Notion MCP 服务器将 Antigravity 连接到你的 Notion 工作区'), true);
+check('preload.js 包含 Notion 提示词配置汉化', preloadSource.includes('配置 Notion，以便你可以将我的工作区作为上下文使用'), true);
+check('preload.js 包含 Notion 提示词实施计划汉化', preloadSource.includes('将 Notion 中的这份规范转换为带有具体任务的实施计划'), true);
+check('preload.js 包含 Stripe 插件描述汉化', preloadSource.includes('接受在线付款并拓展业务。Stripe 官方 MCP 服务器让 AI 智能体能够管理客户'), true);
+check('preload.js 包含 Semrush 插件描述汉化', preloadSource.includes('基于实时 Semrush 数据的专业 SEO 工作流'), true);
+check('preload.js 包含 Wispr Flow 会议笔记描述汉化', preloadSource.includes('搜索并阅读你的 Wispr Flow 会议笔记、语音转写文本'), true);
+check('preload.js 包含 Looker 插件描述汉化', preloadSource.includes('连接到你的托管 Looker MCP 服务器以探索数据'), true);
+check('preload.js 包含 invideo 插件描述汉化', preloadSource.includes('将你的智能体连接到 invideo AI 原生视频编辑器'), true);
+check('preload.js 包含 Neo4j 插件描述汉化', preloadSource.includes('Neo4j 图数据库智能体技能——编写 Cypher 查询'), true);
+check('preload.js 包含 第三方开发者工具免责声明汉化', preloadSource.includes('Google 不控制第三方开发者工具的可用性或功能'), true);
+check('preload.js 包含 plugin for Antigravity 通用动态正则', preloadSource.includes('Antigravity 的 $1 插件'), true);
+check('preload.js 包含 OAuth 浏览器授权通用动态正则', preloadSource.includes('首次调用 $1 工具时会打开浏览器窗口以授权你的工作区。'), true);
+
+check('app.asar.ready 包含 Notion 插件描述汉化', asarSource.includes('通过 Notion MCP 服务器将 Antigravity 连接到你的 Notion 工作区'), true);
+check('app.asar.ready 包含 Stripe 插件描述汉化', asarSource.includes('接受在线付款并拓展业务。Stripe 官方 MCP 服务器让 AI 智能体能够管理客户'), true);
+check('app.asar.ready 包含 第三方开发者工具免责声明汉化', asarSource.includes('Google 不控制第三方开发者工具的可用性或功能'), true);
+
+
 console.log(`\n测试汇总: 通过: ${passed}, 失败: ${total - passed}, 总计: ${total}`);
 if (passed === total) {
   console.log('Ticket-32 校验全部通过！');

@@ -14,7 +14,7 @@ const {
   findAvailablePatch
 } = require('./auto-restore');
 
-const CURRENT_VERSION = '2.29.1';
+const CURRENT_VERSION = '2.30.0';
 
 function compareVersions(v1, v2) {
   const parse = (v) => (v || '').replace(/^[vV]/, '').split('.').map(n => parseInt(n, 10) || 0);
@@ -5021,25 +5021,25 @@ const DOM_TRANSLATOR_INJECTION = `
     }
 
         // ===== 2.29.1 扩展市场分类货架与描述动态双重保障 =====
-    if (/^Design,\s*Creative\s*&\s*Media$/i.test(trimmed)) {
+    if (/^Design,\\s*Creative\\s*&\\s*Media$/i.test(trimmed)) {
       const fixed = '设计、创意与媒体';
       if (stringCache.size < MAX_STRING_CACHE) stringCache.set(trimmed, fixed);
       return text.replace(trimmed, fixed);
     }
 
-    if (/^Productivity\s*&\s*Project\s*Management$/i.test(trimmed)) {
+    if (/^Productivity\\s*&\\s*Project\\s*Management$/i.test(trimmed)) {
       const fixed = '生产力与项目管理';
       if (stringCache.size < MAX_STRING_CACHE) stringCache.set(trimmed, fixed);
       return text.replace(trimmed, fixed);
     }
 
-    if (/^Cloud\s*Hosting\s*&\s*Deployment$/i.test(trimmed)) {
+    if (/^Cloud\\s*Hosting\\s*&\\s*Deployment$/i.test(trimmed)) {
       const fixed = '云托管与部署';
       if (stringCache.size < MAX_STRING_CACHE) stringCache.set(trimmed, fixed);
       return text.replace(trimmed, fixed);
     }
 
-    if (/^Developer\s+(?:Tools|工具)$/i.test(trimmed)) {
+    if (/^Developer\\s+(?:Tools|工具)$/i.test(trimmed)) {
       const fixed = '开发者工具';
       if (stringCache.size < MAX_STRING_CACHE) stringCache.set(trimmed, fixed);
       return text.replace(trimmed, fixed);
@@ -5051,51 +5051,58 @@ const DOM_TRANSLATOR_INJECTION = `
       return text.replace(trimmed, fixed);
     }
 
-    if (/^Design,\s*creative,\s*and\s*media\s*tools[.。]?$/i.test(trimmed)) {
+    if (/^Design,\\s*creative,\\s*and\\s*media\\s*tools[.。]?$/i.test(trimmed)) {
       const fixed = '设计、创意与媒体工具。';
       if (stringCache.size < MAX_STRING_CACHE) stringCache.set(trimmed, fixed);
       return text.replace(trimmed, fixed);
     }
 
-    if (/^Plan\s*work,\s*track\s*issues,\s*sign\s*documents,\s*and\s*manage\s*your\s*notes\s*and\s*files[.。]?$/i.test(trimmed)) {
+    if (/^Plan\\s*work,\\s*track\\s*issues,\\s*sign\\s*documents,\\s*and\\s*manage\\s*your\\s*notes\\s*and\\s*files[.。]?$/i.test(trimmed)) {
       const fixed = '规划工作、跟踪事务、签署文档并管理笔记与文件。';
       if (stringCache.size < MAX_STRING_CACHE) stringCache.set(trimmed, fixed);
       return text.replace(trimmed, fixed);
     }
 
-    if (/^Deploy\s*and\s*host\s*your\s*apps,\s*sites,\s*and\s*their\s*backends[.。]?$/i.test(trimmed)) {
+    if (/^Deploy\\s*and\\s*host\\s*your\\s*apps,\\s*sites,\\s*and\\s*their\\s*backends[.。]?$/i.test(trimmed)) {
       const fixed = '部署并托管你的应用程序、网站及其后端服务。';
       if (stringCache.size < MAX_STRING_CACHE) stringCache.set(trimmed, fixed);
       return text.replace(trimmed, fixed);
     }
 
-    if (/^APIs,\s*services,\s*and\s*tools\s*to\s*build,\s*test,\s*secure,\s*and\s*run\s*your\s*apps[.。]?$/i.test(trimmed)) {
+    if (/^APIs,\\s*services,\\s*and\\s*tools\\s*to\\s*build,\\s*test,\\s*secure,\\s*and\\s*run\\s*your\\s*apps[.。]?$/i.test(trimmed)) {
       const fixed = '用于构建、测试、保护和运行应用程序的 API、服务与工具。';
       if (stringCache.size < MAX_STRING_CACHE) stringCache.set(trimmed, fixed);
       return text.replace(trimmed, fixed);
     }
 
-    if (/^Payments,\s*CRM,\s*accounting,\s*data,\s*identity,\s*customer\s*support,\s*marketing,\s*and\s*workflow\s*automation[.。]?$/i.test(trimmed)) {
+    if (/^Payments,\\s*CRM,\\s*accounting,\\s*data,\\s*identity,\\s*customer\\s*support,\\s*marketing,\\s*and\\s*workflow\\s*automation[.。]?$/i.test(trimmed)) {
       const fixed = '支付、CRM、记账、数据、身份识别、客户支持、营销和工作流自动化。';
       if (stringCache.size < MAX_STRING_CACHE) stringCache.set(trimmed, fixed);
       return text.replace(trimmed, fixed);
     }
 
-        // ===== 2.29.1 自动化面板空状态与第三方免责声明动态双重保障 =====
-    if (/^No\s+(?:automations|自动化)\s+yet$/i.test(trimmed)) {
+        // ===== 2.29.1+ 自动化面板空状态与第三方免责声明动态双重保障 =====
+    if (/^No\\s+(?:automations?|自动化)\\s+yet$/i.test(trimmed)) {
       const fixed = '暂无自动化';
       if (stringCache.size < MAX_STRING_CACHE) stringCache.set(trimmed, fixed);
       return text.replace(trimmed, fixed);
     }
 
-    if (/^Run a prompt on a schedule, like a morning summary of yesterday's changes\.\s*Runs show up here[.。]?$/i.test(trimmed)) {
+    if (/^Run a prompt on a schedule, like a morning summary of yesterday's changes\\.\\s*Runs show up here[.。]?$/i.test(trimmed)) {
       const fixed = '按计划定时运行提示词，例如每天早晨汇总昨天的更改。运行记录将显示在此处。';
       if (stringCache.size < MAX_STRING_CACHE) stringCache.set(trimmed, fixed);
       return text.replace(trimmed, fixed);
     }
 
-    if (/^Google does not control the availability or functionality of third party developer tools\..*found here:?$/i.test(trimmed)) {
+    if (/^Google does not control the availability or functionality of third party developer tools\\./i.test(trimmed)) {
       const fixed = 'Google 不控制第三方开发者工具的可用性或功能。连接到你的 Antigravity 实例的第三方开发者工具数据可能会与 Google 共享。Google 将根据 Google 隐私权政策保护此类数据，详情请参阅：';
+      if (stringCache.size < MAX_STRING_CACHE) stringCache.set(trimmed, fixed);
+      return text.replace(trimmed, fixed);
+    }
+
+    // ===== 2.30.0 扩展市场搜索框占位符动态双重保障 =====
+    if (/^Search customizations\\.{0,3}$/i.test(trimmed)) {
+      const fixed = '搜索自定义项...';
       if (stringCache.size < MAX_STRING_CACHE) stringCache.set(trimmed, fixed);
       return text.replace(trimmed, fixed);
     }
@@ -7197,6 +7204,29 @@ function translateContextLabel(lbl) {
     );
     replaceInFile(wizardHtmlPath, '<span>Download the Antigravity IDE</span>', '<span>下载 Antigravity IDE</span>');
     replaceInFile(wizardHtmlPath, '<button class="btn-primary" id="btn-skip">Explore the new Antigravity</button>', '<button class="btn-primary" id="btn-skip">探索全新 Antigravity</button>');
+  }
+
+  // 12. Localize dist/deviceChooser.js (WebHID/WebUSB/WebSerial 设备选择原生弹窗, v2.30.0+)
+  const deviceChooserPath = path.join(EXTRACT_DIR, 'dist', 'deviceChooser.js');
+  if (fs.existsSync(deviceChooserPath)) {
+    replaceInFile(deviceChooserPath, "hid: 'HID device',", "hid: 'HID 设备',");
+    replaceInFile(deviceChooserPath, "usb: 'USB device',", "usb: 'USB 设备',");
+    replaceInFile(deviceChooserPath, "serial: 'serial port',", "serial: '串行端口',");
+    replaceInFile(deviceChooserPath, "title: 'Connect a device',", "title: '连接设备',");
+    replaceInFile(deviceChooserPath, "buttons: [...snapshot.map(({ label }) => label), 'Cancel'],", "buttons: [...snapshot.map(({ label }) => label), '取消'],");
+  }
+
+  // 13. Localize dist/webviewPopupSecurity.js (Webview 连接信息弹窗与原生安全指示, v2.30.0+)
+  const webviewSecurityPath = path.join(EXTRACT_DIR, 'dist', 'webviewPopupSecurity.js');
+  if (fs.existsSync(webviewSecurityPath)) {
+    replaceInFile(webviewSecurityPath, "insecure: 'Not secure',", "insecure: '不安全',");
+    replaceInFile(webviewSecurityPath, "dangerous: '⚠ Not secure',", "dangerous: '⚠ 不安全',");
+    replaceInFile(webviewSecurityPath, "'Your connection to this site is not secure',", "'您与此网站的连接不安全',");
+    replaceInFile(webviewSecurityPath, "'Connection is secure',", "'连接安全',");
+    replaceInFile(webviewSecurityPath, "'Connection security information is not available for this page'", "'无法获取此页面的连接安全信息'");
+    replaceInFile(webviewSecurityPath, "label: 'Connection info…',", "label: '连接信息…',");
+    replaceInFile(webviewSecurityPath, "title: 'Connection info',", "title: '连接信息',");
+    replaceInFile(webviewSecurityPath, "buttons: ['OK'],", "buttons: ['确定'],");
   }
 
 

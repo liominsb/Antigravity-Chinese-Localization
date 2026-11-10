@@ -1,6 +1,6 @@
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
-exports.webUtils = exports.screen = exports.webFrame = exports.webContents = exports.session = exports.ipcRenderer = exports.contextBridge = exports.shell = exports.Notification = exports.Menu = exports.MenuItem = exports.Tray = exports.nativeImage = exports.protocol = exports.ipcMain = exports.dialog = exports.MessageChannelMain = exports.WebContentsView = exports.View = exports.BrowserWindow = exports.BaseWindow = exports.app = void 0;
+exports.webUtils = exports.screen = exports.webFrame = exports.webContents = exports.session = exports.ipcRenderer = exports.contextBridge = exports.systemPreferences = exports.shell = exports.Notification = exports.Menu = exports.MenuItem = exports.Tray = exports.nativeImage = exports.protocol = exports.ipcMain = exports.dialog = exports.MessageChannelMain = exports.WebContentsView = exports.View = exports.BrowserWindow = exports.BaseWindow = exports.app = void 0;
 /**
  * Shared Electron mock for all test files.
  *
@@ -86,6 +86,10 @@ const _mockBrowserWindowInstance = {
         once: vitest_1.vi.fn(),
         removeListener: vitest_1.vi.fn(),
         setWindowOpenHandler: vitest_1.vi.fn(),
+        getZoomLevel: vitest_1.vi.fn().mockReturnValue(0),
+        setZoomLevel: vitest_1.vi.fn(),
+        getZoomFactor: vitest_1.vi.fn().mockReturnValue(1),
+        setVisualZoomLevelLimits: vitest_1.vi.fn().mockResolvedValue(undefined),
         isLoadingMainFrame: vitest_1.vi.fn().mockReturnValue(false),
     },
 };
@@ -106,6 +110,7 @@ exports.BrowserWindow = Object.assign(vitest_1.vi.fn().mockImplementation(functi
 }), {
     getAllWindows: vitest_1.vi.fn().mockReturnValue([_mockBrowserWindowInstance]),
     getFocusedWindow: vitest_1.vi.fn().mockReturnValue(_mockBrowserWindowInstance),
+    fromWebContents: vitest_1.vi.fn().mockReturnValue(null),
 });
 exports.View = vitest_1.vi.fn().mockImplementation(function () {
     return {
@@ -134,6 +139,7 @@ exports.WebContentsView = vitest_1.vi.fn().mockImplementation(function () {
             getZoomLevel: vitest_1.vi.fn().mockReturnValue(0),
             setZoomLevel: vitest_1.vi.fn(),
             getZoomFactor: vitest_1.vi.fn().mockReturnValue(1),
+            setVisualZoomLevelLimits: vitest_1.vi.fn().mockResolvedValue(undefined),
             toggleDevTools: vitest_1.vi.fn(),
             getOSProcessId: vitest_1.vi.fn().mockReturnValue(12345),
             isDestroyed: vitest_1.vi.fn().mockReturnValue(false),
@@ -166,10 +172,13 @@ exports.MessageChannelMain = vitest_1.vi.fn().mockImplementation(function () {
 exports.dialog = {
     showErrorBox: vitest_1.vi.fn(),
     showMessageBox: vitest_1.vi.fn(),
+    showOpenDialog: vitest_1.vi.fn().mockResolvedValue({ canceled: true, filePaths: [] }),
 };
 exports.ipcMain = {
     handle: vitest_1.vi.fn(),
     removeHandler: vitest_1.vi.fn(),
+    on: vitest_1.vi.fn(),
+    removeListener: vitest_1.vi.fn(),
 };
 exports.protocol = {
     registerSchemesAsPrivileged: vitest_1.vi.fn(),
@@ -228,14 +237,22 @@ exports.Notification = Object.assign(vitest_1.vi.fn().mockImplementation(functio
 });
 exports.shell = {
     openExternal: vitest_1.vi.fn().mockResolvedValue(undefined),
+    openPath: vitest_1.vi.fn().mockResolvedValue(''),
+    showItemInFolder: vitest_1.vi.fn(),
+};
+exports.systemPreferences = {
+    getMediaAccessStatus: vitest_1.vi.fn().mockReturnValue('granted'),
+    askForMediaAccess: vitest_1.vi.fn().mockResolvedValue(true),
 };
 exports.contextBridge = {
     exposeInMainWorld: vitest_1.vi.fn(),
 };
 exports.ipcRenderer = {
     invoke: vitest_1.vi.fn(),
+    send: vitest_1.vi.fn(),
     on: vitest_1.vi.fn(),
     removeListener: vitest_1.vi.fn(),
+    sendSync: vitest_1.vi.fn(),
 };
 exports.session = {
     defaultSession: {

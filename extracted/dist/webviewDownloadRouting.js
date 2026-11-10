@@ -33,8 +33,13 @@ var __importStar = (this && this.__importStar) || (function () {
     };
 })();
 Object.defineProperty(exports, "__esModule", { value: true });
-exports.AGENT_POPUP_REVEAL_GRACE_MS = exports.DEFAULT_DOWNLOAD_FILENAME = exports.MAX_DOWNLOAD_FILENAME_LENGTH = void 0;
+exports.AGENT_POPUP_REVEAL_GRACE_MS = exports.HUMAN_DOWNLOAD_DIR_STORAGE_KEY = exports.DEFAULT_DOWNLOAD_FILENAME = exports.MAX_DOWNLOAD_FILENAME_LENGTH = void 0;
 exports.sanitizeDownloadFilename = sanitizeDownloadFilename;
+exports.sanitizeHumanDownloadFilename = sanitizeHumanDownloadFilename;
+exports.isSafeExistingRegularFile = isSafeExistingRegularFile;
+exports.isExecutableDownloadPath = isExecutableDownloadPath;
+exports.isBlockedAgentDownloadFormat = isBlockedAgentDownloadFormat;
+exports.readConfiguredHumanDownloadsDir = readConfiguredHumanDownloadsDir;
 exports.validateBrainDownloadsDir = validateBrainDownloadsDir;
 exports.setGuestDownloadDirectoryForWc = setGuestDownloadDirectoryForWc;
 exports.getArmedGuestDownloadDirectory = getArmedGuestDownloadDirectory;
@@ -46,10 +51,13 @@ const electron_1 = require("electron");
 const fs = __importStar(require("fs"));
 const os = __importStar(require("os"));
 const path = __importStar(require("path"));
+const guestAgentControl_1 = require("./guestAgentControl");
 /** Maximum byte/character length of a sanitized download filename. */
 exports.MAX_DOWNLOAD_FILENAME_LENGTH = 128;
 /** Fallback filename used when a raw download name has no safe characters. */
 exports.DEFAULT_DOWNLOAD_FILENAME = 'download.bin';
+/** App storage key storing the user-configured built-in browser download folder. */
+exports.HUMAN_DOWNLOAD_DIR_STORAGE_KEY = 'builtinBrowserDownloadDir';
 /**
  * Grace window (ms) after `did-navigate` before revealing an agent-armed child
  * popup via `showInactive()`, so HTML-landing + JS/meta-refresh export popups
@@ -61,6 +69,104 @@ const MAX_COLLISION_ATTEMPTS = 1000;
 const SAFE_CASCADE_ID_RE = /^[A-Za-z0-9._-]+$/;
 const WINDOWS_RESERVED_STEM_RE = /^(CON|PRN|AUX|NUL|COM[1-9]|LPT[1-9])(\.|$)/i;
 const SAFE_EXTENSION_RE = /(\.[A-Za-z0-9]{1,16})$/;
+const EXECUTABLE_DOWNLOAD_EXTENSIONS = new Set([
+    '.app',
+    '.appimage',
+    '.applescript',
+    '.appx',
+    '.bash',
+    '.bat',
+    '.chm',
+    '.cmd',
+    '.com',
+    '.command',
+    '.cpl',
+    '.csh',
+    '.desktop',
+    '.dmg',
+    '.exe',
+    '.hta',
+    '.img',
+    '.iso',
+    '.jar',
+    '.js',
+    '.jse',
+    '.ksh',
+    '.lnk',
+    '.mpkg',
+    '.msc',
+    '.msi',
+    '.msix',
+    '.pif',
+    '.pkg',
+    '.ps1',
+    '.psm1',
+    '.reg',
+    '.run',
+    '.scpt',
+    '.scr',
+    '.sh',
+    '.terminal',
+    '.tool',
+    '.url',
+    '.vbe',
+    '.vbs',
+    '.vhd',
+    '.vhdx',
+    '.webloc',
+    '.workflow',
+    '.wsf',
+    '.wsh',
+    '.zsh',
+]);
+/**
+ * Extra native-code and script formats blocked for agent downloads on top of
+ * {@link EXECUTABLE_DOWNLOAD_EXTENSIONS}.
+ */
+const AGENT_BLOCKED_EXTRA_EXTENSIONS = new Set([
+    '.apk',
+    '.crx',
+    '.deb',
+    '.dll',
+    '.dylib',
+    '.ipa',
+    '.pl',
+    '.py',
+    '.rb',
+    '.rpm',
+    '.so',
+    '.wasm',
+]);
+/** Markup formats that run script when opened from local disk. */
+const ACTIVE_HTML_DOWNLOAD_EXTENSIONS = new Set([
+    '.htm',
+    '.html',
+    '.mht',
+    '.mhtml',
+    '.shtml',
+    '.svg',
+    '.svgz',
+    '.xhtml',
+    '.xml',
+    '.xsl',
+    '.xslt',
+]);
+/** MIME types identifying active markup or executables regardless of extension. */
+const AGENT_BLOCKED_DOWNLOAD_MIME_TYPES = new Set([
+    'application/java-archive',
+    'application/vnd.microsoft.portable-executable',
+    'application/x-apple-diskimage',
+    'application/x-executable',
+    'application/x-mach-binary',
+    'application/x-msdos-program',
+    'application/x-msdownload',
+    'application/x-sh',
+    'application/x-shellscript',
+    'application/xhtml+xml',
+    'image/svg+xml',
+    'multipart/related',
+    'text/html',
+]);
 const guestDownloadDirByWcId = new Map();
 const trackedDestroyListeners = new WeakSet();
 const inFlightReservedPaths = new Map();
@@ -100,8 +206,148 @@ function sanitizeDownloadFilename(rawFilename) {
     }
     return cleaned;
 }
-function buildCollisionFilename(safeFilename, attempt) {
-    const suffix = `_${attempt}`;
+function sliceUtf16Safe(input, maxUnits) {
+    if (maxUnits <= 0 || input.length <= maxUnits) {
+        return maxUnits <= 0 ? '' : input;
+    }
+    const sliced = input.slice(0, maxUnits);
+    const lastCode = sliced.charCodeAt(sliced.length - 1);
+    return lastCode >= 0xd800 && lastCode <= 0xdbff
+        ? sliced.slice(0, -1)
+        : sliced;
+}
+/**
+ * Sanitizes an untrusted human download filename while preserving readable
+ * spaces, parentheses, brackets, and Unicode characters. Strips path prefixes,
+ * control/bidi-override code points, Windows/POSIX illegal filename characters,
+ * leading/trailing dots or whitespace, and prefixes Windows reserved stems.
+ */
+function sanitizeHumanDownloadFilename(rawFilename) {
+    const trimmed = typeof rawFilename === 'string' ? rawFilename.trim() : '';
+    const lastSlashIdx = Math.max(trimmed.lastIndexOf('/'), trimmed.lastIndexOf('\\'));
+    const rawBase = lastSlashIdx >= 0 ? trimmed.slice(lastSlashIdx + 1) : trimmed;
+    let cleaned = rawBase
+        // eslint-disable-next-line no-control-regex
+        .replace(/[\x00-\x1f\x7f-\x9f\u202a-\u202e\u2066-\u2069]+/g, '')
+        .replace(/[<>:"/\\|?*]+/g, '_')
+        .replace(/\s+/g, ' ')
+        .replace(/^[.\s]+|[.\s]+$/g, '');
+    if (!cleaned) {
+        return exports.DEFAULT_DOWNLOAD_FILENAME;
+    }
+    const stemBeforeDot = cleaned.split('.')[0]?.trim() ?? '';
+    if (WINDOWS_RESERVED_STEM_RE.test(cleaned) ||
+        WINDOWS_RESERVED_STEM_RE.test(stemBeforeDot)) {
+        cleaned = `dl_${cleaned}`;
+    }
+    if (cleaned.length > exports.MAX_DOWNLOAD_FILENAME_LENGTH) {
+        const extMatch = SAFE_EXTENSION_RE.exec(cleaned);
+        const ext = extMatch && extMatch[1].length < exports.MAX_DOWNLOAD_FILENAME_LENGTH
+            ? extMatch[1]
+            : '';
+        const stemBudget = exports.MAX_DOWNLOAD_FILENAME_LENGTH - ext.length;
+        let stem = sliceUtf16Safe(cleaned, stemBudget).replace(/[.\s]+$/g, '');
+        const truncatedStemBeforeDot = stem.split('.')[0]?.trim() ?? '';
+        if (WINDOWS_RESERVED_STEM_RE.test(stem) ||
+            WINDOWS_RESERVED_STEM_RE.test(truncatedStemBeforeDot)) {
+            stem = sliceUtf16Safe(`dl_${stem}`, stemBudget).replace(/[.\s]+$/g, '');
+        }
+        cleaned = stem ? `${stem}${ext}` : exports.DEFAULT_DOWNLOAD_FILENAME;
+    }
+    return cleaned;
+}
+/**
+ * Returns `true` when `targetPath` is an absolute path to an existing regular
+ * non-symlink file on disk.
+ */
+function isSafeExistingRegularFile(targetPath) {
+    if (typeof targetPath !== 'string' ||
+        targetPath.length === 0 ||
+        targetPath.includes('\0') ||
+        !path.isAbsolute(targetPath)) {
+        return false;
+    }
+    try {
+        const st = fs.lstatSync(targetPath, { throwIfNoEntry: false });
+        return Boolean(st && !st.isSymbolicLink() && st.isFile());
+    }
+    catch {
+        return false;
+    }
+}
+/**
+ * Returns `true` when `targetPath` carries an OS executable, script, or
+ * shortcut extension that should be revealed in the file manager rather than
+ * launched directly via `shell.openPath`.
+ */
+function isExecutableDownloadPath(targetPath) {
+    if (typeof targetPath !== 'string' || targetPath.length === 0) {
+        return false;
+    }
+    const normalized = targetPath.trim().replace(/[.\s]+$/g, '');
+    const ext = path.extname(normalized).toLowerCase();
+    return EXECUTABLE_DOWNLOAD_EXTENSIONS.has(ext);
+}
+/**
+ * Returns `true` when an agent-initiated download must be refused because its
+ * filename extension or MIME type identifies an executable, script, installer,
+ * or active local markup (HTML/SVG/XML) format.
+ */
+function isBlockedAgentDownloadFormat(filename, mimeType) {
+    const base = (typeof filename === 'string' ? filename : '')
+        .trim()
+        .replace(/[.\s]+$/g, '')
+        .split(/[\\/]/)
+        .pop();
+    const ext = path.extname(base).toLowerCase();
+    if (EXECUTABLE_DOWNLOAD_EXTENSIONS.has(ext) ||
+        AGENT_BLOCKED_EXTRA_EXTENSIONS.has(ext) ||
+        ACTIVE_HTML_DOWNLOAD_EXTENSIONS.has(ext)) {
+        return true;
+    }
+    const mime = (typeof mimeType === 'string' ? mimeType : '')
+        .split(';')[0]
+        .trim()
+        .toLowerCase();
+    return AGENT_BLOCKED_DOWNLOAD_MIME_TYPES.has(mime);
+}
+/**
+ * Synchronously reads the user-configured human download directory from
+ * `<userData>/app_storage.json` (`builtinBrowserDownloadDir`), returning
+ * `undefined` when unset, empty, relative, or unreadable.
+ */
+function readConfiguredHumanDownloadsDir(userDataDir, platform = process.platform) {
+    try {
+        const resolvedUserData = userDataDir ?? electron_1.app.getPath('userData');
+        if (typeof resolvedUserData !== 'string' || resolvedUserData.length === 0) {
+            return undefined;
+        }
+        const raw = fs.readFileSync(path.join(resolvedUserData, 'app_storage.json'), 'utf8');
+        if (!raw || !raw.trim()) {
+            return undefined;
+        }
+        const parsed = JSON.parse(raw);
+        const configured = parsed?.[exports.HUMAN_DOWNLOAD_DIR_STORAGE_KEY];
+        if (typeof configured !== 'string') {
+            return undefined;
+        }
+        const trimmed = configured.trim();
+        const targetPath = platform === 'win32' ? path.win32 : path.posix;
+        if (!trimmed ||
+            trimmed.includes('\0') ||
+            (platform === 'win32' && /^[\\/](?![\\/])/.test(trimmed)) ||
+            !targetPath.isAbsolute(trimmed) ||
+            trimmed.split(/[\\/]+/).some((seg) => seg === '..')) {
+            return undefined;
+        }
+        return targetPath.resolve(trimmed);
+    }
+    catch {
+        return undefined;
+    }
+}
+function buildCollisionFilename(safeFilename, attempt, isAgentDownload) {
+    const suffix = isAgentDownload ? `_${attempt}` : ` (${attempt})`;
     const extMatch = SAFE_EXTENSION_RE.exec(safeFilename);
     const ext = extMatch &&
         extMatch[1].length + suffix.length < exports.MAX_DOWNLOAD_FILENAME_LENGTH
@@ -109,37 +355,59 @@ function buildCollisionFilename(safeFilename, attempt) {
         : '';
     const rawStem = ext ? safeFilename.slice(0, -ext.length) : safeFilename;
     const maxStemLen = Math.max(1, exports.MAX_DOWNLOAD_FILENAME_LENGTH - suffix.length - ext.length);
-    const stem = rawStem.slice(0, maxStemLen).replace(/[._-]+$/g, '') || 'dl';
+    const stem = sliceUtf16Safe(rawStem, maxStemLen).replace(isAgentDownload ? /[._-]+$/g : /[.\s]+$/g, '') || 'dl';
     return `${stem}${suffix}${ext}`;
 }
 function splitPathSegments(targetPath) {
     return targetPath.split(/[\\/]+/).filter(Boolean);
 }
-function assertTrailingSandboxSegments(targetPath, expectedCascadeId) {
+function assertTrailingSandboxSegments(targetPath, expected) {
     const segments = splitPathSegments(targetPath);
-    if (segments.length < 4) {
-        throw new Error(`Invalid brainDownloadsDir "${targetPath}": missing brain/<cascadeId>/browser_sandbox/downloads hierarchy`);
+    if (segments.length >= 4 &&
+        segments[segments.length - 4] === 'brain' &&
+        segments[segments.length - 2] === 'browser_sandbox' &&
+        segments[segments.length - 1] === 'downloads') {
+        const cascadeId = segments[segments.length - 3];
+        if (SAFE_CASCADE_ID_RE.test(cascadeId) &&
+            cascadeId !== '.' &&
+            cascadeId !== '..' &&
+            (!expected ||
+                (cascadeId === expected.cascadeId &&
+                    expected.kind === 'sandbox-downloads'))) {
+            const sandboxDir = path.dirname(targetPath);
+            const cascadeDir = path.dirname(sandboxDir);
+            const brainDir = path.dirname(cascadeDir);
+            return {
+                cascadeId,
+                kind: 'sandbox-downloads',
+                hierarchyDirs: [brainDir, cascadeDir, sandboxDir, targetPath],
+            };
+        }
     }
-    const brainIdx = segments.length - 4;
-    const brainSeg = segments[brainIdx];
-    const cascadeId = segments[brainIdx + 1];
-    const sandboxSeg = segments[brainIdx + 2];
-    const downloadsSeg = segments[brainIdx + 3];
-    if (brainSeg !== 'brain' ||
-        sandboxSeg !== 'browser_sandbox' ||
-        downloadsSeg !== 'downloads' ||
-        !SAFE_CASCADE_ID_RE.test(cascadeId) ||
-        cascadeId === '.' ||
-        cascadeId === '..' ||
-        (expectedCascadeId !== undefined && cascadeId !== expectedCascadeId)) {
-        throw new Error(`Invalid brainDownloadsDir "${targetPath}": path must end with brain/<cascadeId>/browser_sandbox/downloads`);
+    else if (segments.length >= 3 &&
+        segments[segments.length - 3] === 'brain' &&
+        segments[segments.length - 1] === 'scratch') {
+        const cascadeId = segments[segments.length - 2];
+        if (SAFE_CASCADE_ID_RE.test(cascadeId) &&
+            cascadeId !== '.' &&
+            cascadeId !== '..' &&
+            (!expected ||
+                (cascadeId === expected.cascadeId && expected.kind === 'scratch'))) {
+            const cascadeDir = path.dirname(targetPath);
+            const brainDir = path.dirname(cascadeDir);
+            return {
+                cascadeId,
+                kind: 'scratch',
+                hierarchyDirs: [brainDir, cascadeDir, targetPath],
+            };
+        }
     }
-    return cascadeId;
+    throw new Error(`Invalid brainDownloadsDir "${targetPath}": path must end with brain/<cascadeId>/browser_sandbox/downloads or brain/<cascadeId>/scratch`);
 }
 /**
  * Validates that `rawDir` is an absolute, non-traversal, non-symlinked
- * `.../brain/<cascadeId>/browser_sandbox/downloads` directory path and returns
- * its normalized path.
+ * `.../brain/<cascadeId>/browser_sandbox/downloads` or
+ * `.../brain/<cascadeId>/scratch` directory path and returns its normalized path.
  */
 function validateBrainDownloadsDir(rawDir) {
     if (typeof rawDir !== 'string' || rawDir.length === 0) {
@@ -156,12 +424,9 @@ function validateBrainDownloadsDir(rawDir) {
         throw new Error(`brainDownloadsDir must not contain relative traversal segments: "${rawDir}"`);
     }
     const normalized = path.resolve(rawDir);
-    assertTrailingSandboxSegments(normalized);
-    const sandboxDir = path.dirname(normalized);
-    const cascadeDir = path.dirname(sandboxDir);
-    const brainDir = path.dirname(cascadeDir);
-    // None of the four sandbox levels may be a symbolic link or a regular file.
-    for (const levelDir of [brainDir, cascadeDir, sandboxDir, normalized]) {
+    const { hierarchyDirs } = assertTrailingSandboxSegments(normalized);
+    // None of the brain hierarchy levels may be a symbolic link or a regular file.
+    for (const levelDir of hierarchyDirs) {
         const st = fs.lstatSync(levelDir, { throwIfNoEntry: false });
         if (st) {
             if (st.isSymbolicLink()) {
@@ -204,6 +469,7 @@ function setGuestDownloadDirectoryForWc(wc, downloadDir) {
 function getArmedGuestDownloadDirectory(webContentsId) {
     return guestDownloadDirByWcId.get(webContentsId);
 }
+(0, guestAgentControl_1.registerGuestAgentControlPredicate)((webContentsId) => Boolean(getArmedGuestDownloadDirectory(webContentsId)));
 function getTrackedChildPopupRecord(wc) {
     if (!wc || typeof wc !== 'object') {
         return undefined;
@@ -399,15 +665,17 @@ function pruneExpiredReservations(nowMs) {
         }
     }
 }
-function allocateCollisionFreeSavePath(targetDir, realTargetDir, rawFilename, nowMs) {
+function allocateCollisionFreeSavePath(targetDir, realTargetDir, rawFilename, nowMs, isAgentDownload) {
     pruneExpiredReservations(nowMs);
-    const safeBase = sanitizeDownloadFilename(rawFilename);
+    const safeBase = isAgentDownload
+        ? sanitizeDownloadFilename(rawFilename)
+        : sanitizeHumanDownloadFilename(rawFilename);
     for (let attempt = 0; attempt <= MAX_COLLISION_ATTEMPTS; attempt++) {
         const candidateName = attempt === 0
             ? safeBase
             : attempt < MAX_COLLISION_ATTEMPTS
-                ? buildCollisionFilename(safeBase, attempt)
-                : buildCollisionFilename(safeBase, nowMs);
+                ? buildCollisionFilename(safeBase, attempt, isAgentDownload)
+                : buildCollisionFilename(safeBase, nowMs, isAgentDownload);
         const savePath = path.join(targetDir, candidateName);
         const canonicalPath = path.join(realTargetDir, candidateName);
         // Ensure neither path escapes its directory root.
@@ -429,6 +697,7 @@ function allocateCollisionFreeSavePath(targetDir, realTargetDir, rawFilename, no
         let released = false;
         return {
             savePath,
+            isAgentDownload,
             release: () => {
                 if (!released) {
                     released = true;
@@ -443,27 +712,51 @@ function resolveArmedDownloadTarget(armedDir, rawFilename, nowMs) {
     try {
         // Re-validate at download time to defeat TOCTOU symlink swaps after arming.
         const validatedDir = validateBrainDownloadsDir(armedDir);
-        const expectedCascadeId = assertTrailingSandboxSegments(validatedDir);
+        const expected = assertTrailingSandboxSegments(validatedDir);
         fs.mkdirSync(validatedDir, { recursive: true });
         validateBrainDownloadsDir(validatedDir);
         const realTargetDir = fs.realpathSync(validatedDir);
-        assertTrailingSandboxSegments(realTargetDir, expectedCascadeId);
-        return allocateCollisionFreeSavePath(validatedDir, realTargetDir, rawFilename, nowMs);
+        assertTrailingSandboxSegments(realTargetDir, expected);
+        return allocateCollisionFreeSavePath(validatedDir, realTargetDir, rawFilename, nowMs, true);
     }
     catch {
         return null;
     }
 }
-function resolveDefaultDownloadTarget(rawFilename, getDefaultDownloadsDir, nowMs) {
+function resolveDefaultDownloadTarget(rawFilename, getDefaultDownloadsDir, getUserDataDir, nowMs) {
+    // mustExist marks the user-configured folder: it is used only if it already
+    // exists as a directory, so an unmounted volume path is never recreated on
+    // the root disk.
     const candidates = [];
-    try {
-        const primary = (getDefaultDownloadsDir ?? (() => electron_1.app.getPath('downloads')))();
-        if (typeof primary === 'string' && primary.length > 0) {
-            candidates.push({ dir: primary, isSharedTmpFallback: false });
+    if (getDefaultDownloadsDir) {
+        try {
+            const explicitDir = getDefaultDownloadsDir();
+            if (typeof explicitDir === 'string' && explicitDir.length > 0) {
+                candidates.push({ dir: explicitDir, isSharedTmpFallback: false });
+            }
+        }
+        catch {
+            // Fall through to fallbacks below.
         }
     }
-    catch {
-        // Fall through to os.tmpdir() fallback below.
+    else {
+        const configuredDir = readConfiguredHumanDownloadsDir(getUserDataDir?.());
+        if (configuredDir) {
+            candidates.push({
+                dir: configuredDir,
+                isSharedTmpFallback: false,
+                mustExist: true,
+            });
+        }
+        try {
+            const systemDownloads = electron_1.app.getPath('downloads');
+            if (typeof systemDownloads === 'string' && systemDownloads.length > 0) {
+                candidates.push({ dir: systemDownloads, isSharedTmpFallback: false });
+            }
+        }
+        catch {
+            // Fall through to os.tmpdir() fallback below.
+        }
     }
     try {
         const tmpBase = os.tmpdir();
@@ -478,7 +771,7 @@ function resolveDefaultDownloadTarget(rawFilename, getDefaultDownloadsDir, nowMs
     catch {
         // Ignore os.tmpdir() failure.
     }
-    for (const { dir: rawDir, isSharedTmpFallback } of candidates) {
+    for (const { dir: rawDir, isSharedTmpFallback, mustExist } of candidates) {
         if (rawDir.includes('\0') || !path.isAbsolute(rawDir)) {
             continue;
         }
@@ -501,14 +794,16 @@ function resolveDefaultDownloadTarget(rawFilename, getDefaultDownloadsDir, nowMs
                 }
             }
             else {
-                fs.mkdirSync(targetDir, { recursive: true });
+                if (!mustExist) {
+                    fs.mkdirSync(targetDir, { recursive: true });
+                }
                 const st = fs.statSync(targetDir, { throwIfNoEntry: false });
                 if (!st || !st.isDirectory()) {
                     continue;
                 }
             }
             const realTargetDir = fs.realpathSync(targetDir);
-            return allocateCollisionFreeSavePath(targetDir, realTargetDir, rawFilename, nowMs);
+            return allocateCollisionFreeSavePath(targetDir, realTargetDir, rawFilename, nowMs, false);
         }
         catch {
             continue;
@@ -530,9 +825,10 @@ function resolveSynchronousDownloadTarget(params) {
         : undefined) ??
         (params.openerWebContentsId && params.openerWebContentsId > 0
             ? guestDownloadDirByWcId.get(params.openerWebContentsId)
-            : undefined);
+            : undefined) ??
+        params.fallbackArmedDir;
     if (armedDir !== undefined) {
         return resolveArmedDownloadTarget(armedDir, params.rawFilename, nowMs);
     }
-    return resolveDefaultDownloadTarget(params.rawFilename, params.getDefaultDownloadsDir, nowMs);
+    return resolveDefaultDownloadTarget(params.rawFilename, params.getDefaultDownloadsDir, params.getUserDataDir, nowMs);
 }

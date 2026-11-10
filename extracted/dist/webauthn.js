@@ -34,6 +34,7 @@ var __importStar = (this && this.__importStar) || (function () {
 })();
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.configureSessionWebAuthn = exports.WEBVIEW_WEBAUTHN_PRELOAD_PATH = void 0;
+exports.stripElectronLogPreloadFromSession = stripElectronLogPreloadFromSession;
 exports.configurePlatformWebAuthn = configurePlatformWebAuthn;
 exports.attachWebviewWebAuthnUserActivationTracking = attachWebviewWebAuthnUserActivationTracking;
 exports.formatWebAuthnAccountLabel = formatWebAuthnAccountLabel;
@@ -44,6 +45,34 @@ const cablev2_1 = require("./cablev2");
 const utils_1 = require("./utils");
 /** Absolute path to the compiled `<webview>` WebAuthn frame preload script. */
 exports.WEBVIEW_WEBAUTHN_PRELOAD_PATH = path.join(__dirname, 'webviewWebAuthnPreload.js');
+const ELECTRON_LOG_PRELOAD_ID = 'electron-log-preload';
+const ELECTRON_LOG_PRELOAD_FILE_RE = /(?:^|[\\/])electron-log-preload\.js$/i;
+/**
+ * Removes any `electron-log` renderer preload script from a non-default
+ * `<webview>` session so `<webview>` frames do not expose `window.__electronLog`.
+ */
+function stripElectronLogPreloadFromSession(targetSession) {
+    if (!targetSession) {
+        return;
+    }
+    if (typeof targetSession.getPreloadScripts === 'function' &&
+        typeof targetSession.unregisterPreloadScript === 'function') {
+        for (const script of targetSession.getPreloadScripts()) {
+            if (script.id === ELECTRON_LOG_PRELOAD_ID ||
+                ELECTRON_LOG_PRELOAD_FILE_RE.test(script.filePath ?? '')) {
+                targetSession.unregisterPreloadScript(script.id);
+            }
+        }
+    }
+    else if (typeof targetSession.getPreloads === 'function' &&
+        typeof targetSession.setPreloads === 'function') {
+        const current = targetSession.getPreloads();
+        const filtered = current.filter((filePath) => !ELECTRON_LOG_PRELOAD_FILE_RE.test(filePath));
+        if (filtered.length !== current.length) {
+            targetSession.setPreloads(filtered);
+        }
+    }
+}
 /**
  * Configures macOS `caBLEv2` Hybrid Transport IPC handlers for WebAuthn
  * requests (`navigator.credentials.get`). No-op on non-macOS platforms.
@@ -147,15 +176,19 @@ function createWebAuthnSessionConfigurator(options) {
     const showMessageBox = options?.showMessageBox ??
         ((win, boxOptions) => electron_1.dialog.showMessageBox(win, boxOptions));
     return (targetSession) => {
-        if (!targetSession ||
-            typeof targetSession.on !== 'function' ||
-            configuredSessions.has(targetSession)) {
+        if (!targetSession || typeof targetSession.on !== 'function') {
             return;
         }
-        configuredSessions.add(targetSession);
         const resolvedDefaultSession = options?.defaultSession !== undefined
             ? options.defaultSession
             : electron_1.session?.defaultSession;
+        if (resolvedDefaultSession !== targetSession) {
+            stripElectronLogPreloadFromSession(targetSession);
+        }
+        if (configuredSessions.has(targetSession)) {
+            return;
+        }
+        configuredSessions.add(targetSession);
         if (resolvedDefaultSession !== targetSession &&
             typeof targetSession.registerPreloadScript === 'function') {
             try {

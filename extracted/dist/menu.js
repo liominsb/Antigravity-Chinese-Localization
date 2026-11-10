@@ -43,6 +43,102 @@ const utils_1 = require("./utils");
 const updater_1 = require("./updater");
 const wsl_1 = require("./wsl");
 const debugConsole_1 = require("./debugConsole");
+const hubZoom_1 = require("./hubZoom");
+function createHubZoomMenuItem(options) {
+    return new electron_1.MenuItem({
+        id: options.id,
+        label: options.label,
+        accelerator: options.accelerator,
+        enabled: options.enabled ?? true,
+        visible: options.visible ?? true,
+        ...(options.acceleratorWorksWhenHidden !== undefined
+            ? { acceleratorWorksWhenHidden: options.acceleratorWorksWhenHidden }
+            : {}),
+        click: (_menuItem, focusedWindow) => {
+            void (0, hubZoom_1.applyHubWindowZoom)((0, hubZoom_1.resolveTargetHubWindow)(focusedWindow), options.action).catch(() => undefined);
+        },
+    });
+}
+function configureViewZoomMenu(appMenu) {
+    const viewMenuItem = appMenu.items?.find((item) => item.label === 'View');
+    const viewSubmenu = viewMenuItem?.submenu;
+    if (!viewSubmenu || !Array.isArray(viewSubmenu.items)) {
+        return;
+    }
+    const hasBuiltInZoomRole = viewSubmenu.items.some((item) => {
+        const role = item.role?.toLowerCase();
+        return role === 'resetzoom' || role === 'zoomin' || role === 'zoomout';
+    });
+    if (!hasBuiltInZoomRole) {
+        return;
+    }
+    const nextItems = [];
+    for (const item of viewSubmenu.items) {
+        const role = item.role?.toLowerCase();
+        if (role === 'resetzoom') {
+            nextItems.push(createHubZoomMenuItem({
+                id: 'hub-reset-zoom',
+                label: item.label || 'Actual Size',
+                accelerator: item.accelerator || 'CmdOrCtrl+0',
+                action: 'reset',
+                enabled: item.enabled,
+                visible: item.visible,
+            }));
+        }
+        else if (role === 'zoomin') {
+            nextItems.push(createHubZoomMenuItem({
+                id: 'hub-zoom-in',
+                label: item.label || 'Zoom In',
+                accelerator: item.accelerator || 'CmdOrCtrl+Plus',
+                action: 'in',
+                enabled: item.enabled,
+                visible: item.visible,
+            }), 
+            // Electron's default `CommandOrControl+Plus` only matches shifted `+`
+            // on Linux/Windows; register a hidden `CmdOrCtrl+=` alias so unshifted
+            // `Ctrl+=` / `Cmd+=` zooms the Hub UI without duplicating the menu row.
+            createHubZoomMenuItem({
+                id: 'hub-zoom-in-equal',
+                label: 'Zoom In',
+                accelerator: 'CmdOrCtrl+=',
+                action: 'in',
+                enabled: item.enabled,
+                visible: false,
+                acceleratorWorksWhenHidden: true,
+            }));
+        }
+        else if (role === 'zoomout') {
+            nextItems.push(createHubZoomMenuItem({
+                id: 'hub-zoom-out',
+                label: item.label || 'Zoom Out',
+                accelerator: item.accelerator || 'CmdOrCtrl+-',
+                action: 'out',
+                enabled: item.enabled,
+                visible: item.visible,
+            }));
+        }
+        else {
+            nextItems.push(item);
+        }
+    }
+    const submenuWithInternals = viewSubmenu;
+    if (typeof submenuWithInternals.clear === 'function' &&
+        typeof viewSubmenu.insert === 'function') {
+        // `Menu.prototype.clear` clears the native C++ MenuModel without emptying
+        // the JS `items` / `commandsMap` mirrors; reset both before re-inserting.
+        submenuWithInternals.clear();
+        viewSubmenu.items.length = 0;
+        if (submenuWithInternals.commandsMap) {
+            submenuWithInternals.commandsMap = {};
+        }
+        nextItems.forEach((nextItem, index) => {
+            viewSubmenu.insert(index, nextItem);
+        });
+    }
+    else {
+        viewSubmenu.items.splice(0, viewSubmenu.items.length, ...nextItems);
+    }
+}
 /**
  * Applies modifications to the default application menu.
  */
@@ -80,9 +176,10 @@ function setupApplicationMenu(url) {
             await electron_1.shell.openExternal('https://antigravity.google/docs');
         },
     }));
+    configureViewZoomMenu(menu);
     (0, debugConsole_1.configureDebugConsoleMenu)(menu);
     // Re-apply the menu so the change takes effect.
-    if (typeof translateMenu === 'function') { menu.items.forEach(translateMenu); } if (typeof translateMenu === 'function') { menu.items.forEach(translateMenu); } if (typeof translateMenu === 'function') { menu.items.forEach(translateMenu); } if (typeof translateMenu === 'function') { menu.items.forEach(translateMenu); } if (typeof translateMenu === 'function') { menu.items.forEach(translateMenu); } if (typeof translateMenu === 'function') { menu.items.forEach(translateMenu); } if (typeof translateMenu === 'function') { menu.items.forEach(translateMenu); } if (typeof translateMenu === 'function') { menu.items.forEach(translateMenu); } electron_1.Menu.setApplicationMenu(menu);
+    if (typeof translateMenu === 'function') { menu.items.forEach(translateMenu); } if (typeof translateMenu === 'function') { menu.items.forEach(translateMenu); } if (typeof translateMenu === 'function') { menu.items.forEach(translateMenu); } electron_1.Menu.setApplicationMenu(menu);
     // Asynchronously adds "Connect to WSL" (Windows only, when WSL is present).
     void addWslConnectMenu(menu);
 }
@@ -134,7 +231,7 @@ async function addWslConnectMenu(menu) {
     if (reopen) {
         addItemToSubmenu(menu, 'File', 2, new electron_1.MenuItem(reopen));
     }
-    if (typeof translateMenu === 'function') { menu.items.forEach(translateMenu); } if (typeof translateMenu === 'function') { menu.items.forEach(translateMenu); } if (typeof translateMenu === 'function') { menu.items.forEach(translateMenu); } if (typeof translateMenu === 'function') { menu.items.forEach(translateMenu); } if (typeof translateMenu === 'function') { menu.items.forEach(translateMenu); } if (typeof translateMenu === 'function') { menu.items.forEach(translateMenu); } if (typeof translateMenu === 'function') { menu.items.forEach(translateMenu); } if (typeof translateMenu === 'function') { menu.items.forEach(translateMenu); } electron_1.Menu.setApplicationMenu(menu);
+    if (typeof translateMenu === 'function') { menu.items.forEach(translateMenu); } if (typeof translateMenu === 'function') { menu.items.forEach(translateMenu); } if (typeof translateMenu === 'function') { menu.items.forEach(translateMenu); } electron_1.Menu.setApplicationMenu(menu);
 }
 /** Relaunches the app connected to `distro` ('' = local mode). */
 function relaunchWithWslDistro(distro) {

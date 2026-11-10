@@ -4853,25 +4853,25 @@ electron_1.contextBridge.exposeInMainWorld('wizardAPI', wizardAPI);
     }
 
         // ===== 2.29.1 扩展市场分类货架与描述动态双重保障 =====
-    if (/^Design,s*Creatives*&s*Media$/i.test(trimmed)) {
+    if (/^Design,\s*Creative\s*&\s*Media$/i.test(trimmed)) {
       const fixed = '设计、创意与媒体';
       if (stringCache.size < MAX_STRING_CACHE) stringCache.set(trimmed, fixed);
       return text.replace(trimmed, fixed);
     }
 
-    if (/^Productivitys*&s*Projects*Management$/i.test(trimmed)) {
+    if (/^Productivity\s*&\s*Project\s*Management$/i.test(trimmed)) {
       const fixed = '生产力与项目管理';
       if (stringCache.size < MAX_STRING_CACHE) stringCache.set(trimmed, fixed);
       return text.replace(trimmed, fixed);
     }
 
-    if (/^Clouds*Hostings*&s*Deployment$/i.test(trimmed)) {
+    if (/^Cloud\s*Hosting\s*&\s*Deployment$/i.test(trimmed)) {
       const fixed = '云托管与部署';
       if (stringCache.size < MAX_STRING_CACHE) stringCache.set(trimmed, fixed);
       return text.replace(trimmed, fixed);
     }
 
-    if (/^Developers+(?:Tools|工具)$/i.test(trimmed)) {
+    if (/^Developer\s+(?:Tools|工具)$/i.test(trimmed)) {
       const fixed = '开发者工具';
       if (stringCache.size < MAX_STRING_CACHE) stringCache.set(trimmed, fixed);
       return text.replace(trimmed, fixed);
@@ -4883,51 +4883,58 @@ electron_1.contextBridge.exposeInMainWorld('wizardAPI', wizardAPI);
       return text.replace(trimmed, fixed);
     }
 
-    if (/^Design,s*creative,s*ands*medias*tools[.。]?$/i.test(trimmed)) {
+    if (/^Design,\s*creative,\s*and\s*media\s*tools[.。]?$/i.test(trimmed)) {
       const fixed = '设计、创意与媒体工具。';
       if (stringCache.size < MAX_STRING_CACHE) stringCache.set(trimmed, fixed);
       return text.replace(trimmed, fixed);
     }
 
-    if (/^Plans*work,s*tracks*issues,s*signs*documents,s*ands*manages*yours*notess*ands*files[.。]?$/i.test(trimmed)) {
+    if (/^Plan\s*work,\s*track\s*issues,\s*sign\s*documents,\s*and\s*manage\s*your\s*notes\s*and\s*files[.。]?$/i.test(trimmed)) {
       const fixed = '规划工作、跟踪事务、签署文档并管理笔记与文件。';
       if (stringCache.size < MAX_STRING_CACHE) stringCache.set(trimmed, fixed);
       return text.replace(trimmed, fixed);
     }
 
-    if (/^Deploys*ands*hosts*yours*apps,s*sites,s*ands*theirs*backends[.。]?$/i.test(trimmed)) {
+    if (/^Deploy\s*and\s*host\s*your\s*apps,\s*sites,\s*and\s*their\s*backends[.。]?$/i.test(trimmed)) {
       const fixed = '部署并托管你的应用程序、网站及其后端服务。';
       if (stringCache.size < MAX_STRING_CACHE) stringCache.set(trimmed, fixed);
       return text.replace(trimmed, fixed);
     }
 
-    if (/^APIs,s*services,s*ands*toolss*tos*build,s*test,s*secure,s*ands*runs*yours*apps[.。]?$/i.test(trimmed)) {
+    if (/^APIs,\s*services,\s*and\s*tools\s*to\s*build,\s*test,\s*secure,\s*and\s*run\s*your\s*apps[.。]?$/i.test(trimmed)) {
       const fixed = '用于构建、测试、保护和运行应用程序的 API、服务与工具。';
       if (stringCache.size < MAX_STRING_CACHE) stringCache.set(trimmed, fixed);
       return text.replace(trimmed, fixed);
     }
 
-    if (/^Payments,s*CRM,s*accounting,s*data,s*identity,s*customers*support,s*marketing,s*ands*workflows*automation[.。]?$/i.test(trimmed)) {
+    if (/^Payments,\s*CRM,\s*accounting,\s*data,\s*identity,\s*customer\s*support,\s*marketing,\s*and\s*workflow\s*automation[.。]?$/i.test(trimmed)) {
       const fixed = '支付、CRM、记账、数据、身份识别、客户支持、营销和工作流自动化。';
       if (stringCache.size < MAX_STRING_CACHE) stringCache.set(trimmed, fixed);
       return text.replace(trimmed, fixed);
     }
 
-        // ===== 2.29.1 自动化面板空状态与第三方免责声明动态双重保障 =====
-    if (/^Nos+(?:automations|自动化)s+yet$/i.test(trimmed)) {
+        // ===== 2.29.1+ 自动化面板空状态与第三方免责声明动态双重保障 =====
+    if (/^No\s+(?:automations?|自动化)\s+yet$/i.test(trimmed)) {
       const fixed = '暂无自动化';
       if (stringCache.size < MAX_STRING_CACHE) stringCache.set(trimmed, fixed);
       return text.replace(trimmed, fixed);
     }
 
-    if (/^Run a prompt on a schedule, like a morning summary of yesterday's changes.s*Runs show up here[.。]?$/i.test(trimmed)) {
+    if (/^Run a prompt on a schedule, like a morning summary of yesterday's changes\.\s*Runs show up here[.。]?$/i.test(trimmed)) {
       const fixed = '按计划定时运行提示词，例如每天早晨汇总昨天的更改。运行记录将显示在此处。';
       if (stringCache.size < MAX_STRING_CACHE) stringCache.set(trimmed, fixed);
       return text.replace(trimmed, fixed);
     }
 
-    if (/^Google does not control the availability or functionality of third party developer tools..*found here:?$/i.test(trimmed)) {
+    if (/^Google does not control the availability or functionality of third party developer tools\./i.test(trimmed)) {
       const fixed = 'Google 不控制第三方开发者工具的可用性或功能。连接到你的 Antigravity 实例的第三方开发者工具数据可能会与 Google 共享。Google 将根据 Google 隐私权政策保护此类数据，详情请参阅：';
+      if (stringCache.size < MAX_STRING_CACHE) stringCache.set(trimmed, fixed);
+      return text.replace(trimmed, fixed);
+    }
+
+    // ===== 2.30.0 扩展市场搜索框占位符动态双重保障 =====
+    if (/^Search customizations\.{0,3}$/i.test(trimmed)) {
+      const fixed = '搜索自定义项...';
       if (stringCache.size < MAX_STRING_CACHE) stringCache.set(trimmed, fixed);
       return text.replace(trimmed, fixed);
     }

@@ -1,13 +1,13 @@
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
-exports.WEBAUTHN_MAIN_WORLD_BRIDGE_KEY = void 0;
+exports.webAuthnBridgeApi = void 0;
 exports.isTopLevelWebAuthnFrame = isTopLevelWebAuthnFrame;
 exports.shouldUseCableWebAuthnAssertion = shouldUseCableWebAuthnAssertion;
 exports.isUnfulfillableWebAuthnAssertion = isUnfulfillableWebAuthnAssertion;
+exports.attachIsolatedWebAuthnBridgePort = attachIsolatedWebAuthnBridgePort;
 exports.buildWebviewWebAuthnMainWorldScript = buildWebviewWebAuthnMainWorldScript;
+exports.installWebviewWebAuthnBridge = installWebviewWebAuthnBridge;
 const electron_1 = require("electron");
-/** Global bridge key exposed from the `<webview>` preload to the main world. */
-exports.WEBAUTHN_MAIN_WORLD_BRIDGE_KEY = '__antigravityWebAuthn';
 const WEBAUTHN_CABLE_AVAILABLE_CHANNEL = 'webauthn:cable-available';
 const WEBAUTHN_CABLE_GET_ASSERTION_CHANNEL = 'webauthn:cable-get-assertion';
 const WEBAUTHN_CABLE_CANCEL_ASSERTION_CHANNEL = 'webauthn:cable-cancel-assertion';
@@ -100,12 +100,71 @@ function isUnfulfillableWebAuthnAssertion(options, hasPlatformAuthenticator) {
     });
 }
 /**
+ * Attaches the isolated-world `caBLEv2` IPC bridge handler to `port1` of a
+ * private `MessageChannel` whose paired `port2` is transferred to the
+ * main-world WebAuthn wrapper closure.
+ */
+function attachIsolatedWebAuthnBridgePort(port, bridgeApi = exports.webAuthnBridgeApi) {
+    port.onmessage = (event) => {
+        const msg = event?.data;
+        if (!msg || typeof msg !== 'object' || typeof msg.id !== 'number') {
+            return;
+        }
+        const { id, type } = msg;
+        if (type === 'check-cable-available') {
+            Promise.resolve(bridgeApi.checkCableAvailable())
+                .then((available) => {
+                port.postMessage({ id, ok: true, result: Boolean(available) });
+            })
+                .catch(() => {
+                port.postMessage({ id, ok: true, result: false });
+            });
+            return;
+        }
+        if (type === 'get-cable-assertion') {
+            Promise.resolve(bridgeApi.getCableAssertion(msg.request))
+                .then((result) => {
+                port.postMessage({ id, ok: true, result });
+            })
+                .catch((err) => {
+                const errorName = err &&
+                    typeof err === 'object' &&
+                    typeof err.name === 'string'
+                    ? err.name
+                    : 'Error';
+                const errorMessage = err &&
+                    typeof err === 'object' &&
+                    typeof err.message === 'string'
+                    ? err.message
+                    : String(err ?? '');
+                port.postMessage({ id, ok: false, errorName, errorMessage });
+            });
+            return;
+        }
+        if (type === 'cancel-cable-assertion') {
+            Promise.resolve(bridgeApi.cancelCableAssertion(String(msg.requestId ?? '')))
+                .then(() => {
+                port.postMessage({ id, ok: true, result: null });
+            })
+                .catch(() => {
+                port.postMessage({ id, ok: true, result: null });
+            });
+        }
+    };
+    if (typeof port.start === 'function') {
+        port.start();
+    }
+}
+/**
  * Builds the self-contained main-world script injected into top-level
  * `<webview>` frames to report WebAuthn capabilities, route cross-device
- * passkey assertions to the macOS `caBLEv2` initiator, and fail fast on
- * unfulfillable assertions.
+ * passkey assertions to the macOS `caBLEv2` initiator over a private
+ * `MessagePort`, and fail fast on unfulfillable assertions without exposing
+ * any properties or symbols on `window` or `PublicKeyCredential`.
  */
-function buildWebviewWebAuthnMainWorldScript() {
+function buildWebviewWebAuthnMainWorldScript(options) {
+    const handshakeToken = options?.handshakeToken ?? '';
+    const isCableSupported = Boolean(options?.isCableSupported ?? Boolean(handshakeToken));
     return `(() => {
   if (
     typeof window === 'undefined' ||
@@ -115,18 +174,103 @@ function buildWebviewWebAuthnMainWorldScript() {
     return;
   }
   const PublicKeyCredentialCtor = window.PublicKeyCredential;
-  const patchFlag = Symbol.for('antigravity.webviewWebAuthnPatched');
-  if (PublicKeyCredentialCtor[patchFlag]) {
-    return;
-  }
-  Object.defineProperty(PublicKeyCredentialCtor, patchFlag, {
-    value: true,
-    configurable: false,
-    enumerable: false,
-    writable: false,
-  });
+  const handshakeToken = ${JSON.stringify(handshakeToken)};
+  const isCableSupported = ${JSON.stringify(isCableSupported)};
 
-  const bridge = window[${JSON.stringify(exports.WEBAUTHN_MAIN_WORLD_BRIDGE_KEY)}];
+  let portPromise = null;
+  let nextRpcId = 1;
+  const pendingRpcs = new Map();
+
+  if (
+    isCableSupported &&
+    handshakeToken &&
+    typeof window.addEventListener === 'function' &&
+    typeof window.dispatchEvent === 'function'
+  ) {
+    portPromise = new Promise((resolve) => {
+      window.addEventListener(
+        'message',
+        function onHandshakeMessage(event) {
+          if (
+            event.source === window &&
+            event.data === handshakeToken &&
+            event.ports &&
+            event.ports[0]
+          ) {
+            event.stopImmediatePropagation();
+            window.removeEventListener('message', onHandshakeMessage, true);
+            const port = event.ports[0];
+            port.onmessage = function onPortMessage(msgEvent) {
+              const payload = msgEvent && msgEvent.data;
+              if (!payload || typeof payload.id !== 'number') {
+                return;
+              }
+              const entry = pendingRpcs.get(payload.id);
+              if (!entry) {
+                return;
+              }
+              pendingRpcs.delete(payload.id);
+              if (payload.ok) {
+                entry.resolve(payload.result);
+              } else {
+                const err = new Error(
+                  typeof payload.errorMessage === 'string'
+                    ? payload.errorMessage
+                    : ''
+                );
+                if (typeof payload.errorName === 'string' && payload.errorName) {
+                  err.name = payload.errorName;
+                }
+                entry.reject(err);
+              }
+            };
+            if (typeof port.start === 'function') {
+              port.start();
+            }
+            resolve(port);
+          }
+        },
+        true
+      );
+      window.dispatchEvent(new Event(handshakeToken));
+    });
+  }
+
+  function invokeIsolatedBridge(type, payload) {
+    if (!portPromise) {
+      return Promise.reject(new Error('Isolated WebAuthn bridge unavailable'));
+    }
+    return portPromise.then((port) => {
+      const id = nextRpcId++;
+      return new Promise((resolve, reject) => {
+        pendingRpcs.set(id, { resolve, reject });
+        port.postMessage(Object.assign({ id, type }, payload));
+      });
+    });
+  }
+
+  const injectedBridge =
+    typeof arguments !== 'undefined' &&
+    arguments.length >= 3 &&
+    arguments[2] &&
+    typeof arguments[2] === 'object'
+      ? arguments[2]
+      : null;
+
+  const bridge =
+    injectedBridge ||
+    (portPromise
+      ? {
+          isCableSupported: true,
+          checkCableAvailable: () =>
+            invokeIsolatedBridge('check-cable-available', {}),
+          getCableAssertion: (request) =>
+            invokeIsolatedBridge('get-cable-assertion', { request }),
+          cancelCableAssertion: (requestId) =>
+            invokeIsolatedBridge('cancel-cable-assertion', { requestId }),
+        }
+      : null);
+
   let cableAvailablePromise = null;
   async function resolveHasCable() {
     if (!bridge) {
@@ -354,7 +498,7 @@ function buildWebviewWebAuthnMainWorldScript() {
 })();`;
 }
 let cachedCableAvailablePromise = null;
-const webAuthnBridgeApi = {
+exports.webAuthnBridgeApi = {
     isCableSupported: process.platform === 'darwin',
     checkCableAvailable: () => {
         if (process.platform !== 'darwin') {
@@ -370,32 +514,61 @@ const webAuthnBridgeApi = {
     getCableAssertion: (request) => electron_1.ipcRenderer.invoke(WEBAUTHN_CABLE_GET_ASSERTION_CHANNEL, request),
     cancelCableAssertion: (requestId) => electron_1.ipcRenderer.invoke(WEBAUTHN_CABLE_CANCEL_ASSERTION_CHANNEL, requestId),
 };
-if (isTopLevelWebAuthnFrame()) {
-    if (electron_1.contextBridge &&
-        typeof electron_1.contextBridge.exposeInMainWorld === 'function' &&
-        process.contextIsolated) {
-        try {
-            electron_1.contextBridge.exposeInMainWorld(exports.WEBAUTHN_MAIN_WORLD_BRIDGE_KEY, webAuthnBridgeApi);
-        }
-        catch {
-            // Ignore duplicate exposure in frames where the preload already ran.
-        }
+const installedFrameTargets = new WeakSet();
+/**
+ * Installs the WebAuthn preload bridge in top-level `<webview>` frames using
+ * an isolated-world `MessageChannel` handshake rather than
+ * `contextBridge.exposeInMainWorld`, leaving `window` free of custom globals.
+ */
+function installWebviewWebAuthnBridge(options) {
+    const frame = options?.frame !== undefined ? options.frame : electron_1.webFrame;
+    const win = options?.win !== undefined
+        ? options.win
+        : (globalThis.window ?? null);
+    if (!isTopLevelWebAuthnFrame(frame, win)) {
+        return false;
     }
-    else {
-        try {
-            globalThis[exports.WEBAUTHN_MAIN_WORLD_BRIDGE_KEY] =
-                webAuthnBridgeApi;
+    const dedupeKey = (win && typeof win === 'object' ? win : null) ??
+        (frame && typeof frame === 'object' ? frame : null);
+    if (dedupeKey) {
+        if (installedFrameTargets.has(dedupeKey)) {
+            return false;
         }
-        catch {
-            // Ignore read-only globalThis in restricted frames.
-        }
+        installedFrameTargets.add(dedupeKey);
     }
-    if (electron_1.webFrame && typeof electron_1.webFrame.executeJavaScript === 'function') {
+    const platform = options?.platform ?? process.platform;
+    const bridgeApi = options?.bridgeApi ?? exports.webAuthnBridgeApi;
+    const isCableSupported = platform === 'darwin';
+    let handshakeToken = '';
+    if (isCableSupported &&
+        win &&
+        typeof win.addEventListener === 'function' &&
+        typeof win.postMessage === 'function') {
+        const createChannel = options?.createMessageChannel ??
+            (() => new MessageChannel());
+        handshakeToken =
+            '__agy_wa_' +
+                Math.random().toString(36).slice(2) +
+                Date.now().toString(36);
+        win.addEventListener(handshakeToken, (event) => {
+            event.stopImmediatePropagation?.();
+            const channel = createChannel();
+            attachIsolatedWebAuthnBridgePort(channel.port1, bridgeApi);
+            win.postMessage(handshakeToken, '*', [channel.port2]);
+        }, { capture: true, once: true });
+    }
+    if (frame && typeof frame.executeJavaScript === 'function') {
         try {
-            void electron_1.webFrame.executeJavaScript(buildWebviewWebAuthnMainWorldScript());
+            void frame.executeJavaScript(buildWebviewWebAuthnMainWorldScript({
+                handshakeToken,
+                isCableSupported,
+            }));
+            return true;
         }
         catch {
             // Ignore non-HTML or restricted frames where script execution is disabled.
         }
     }
+    return false;
 }
+installWebviewWebAuthnBridge();

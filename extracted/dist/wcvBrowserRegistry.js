@@ -1,12 +1,21 @@
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
-exports.wcvBrowserRegistry = exports.WcvBrowserRegistry = exports.NO_DRAG_USER_CSS = exports.WCV_GUEST_EVENT_CHANNEL = exports.DEFAULT_HIDDEN_WCV_BOUNDS = exports.FALLBACK_HIDDEN_WCV_MEMORY_BYTES = exports.DEFAULT_HIDDEN_WCV_MEMORY_BUDGET_BYTES = exports.DEFAULT_MIN_HIDDEN_WCV_TABS = exports.MAX_HIDDEN_WCV_TABS = void 0;
+exports.wcvBrowserRegistry = exports.WcvBrowserRegistry = exports.MAX_WCV_SELECTION_CONSOLE_MESSAGE_LENGTH = exports.MAX_WCV_CONSOLE_SOURCE_ID_LENGTH = exports.MAX_WCV_CONSOLE_MESSAGE_LENGTH = exports.NO_DRAG_USER_CSS = exports.WCV_GUEST_EVENT_CHANNEL = exports.DEFAULT_HIDDEN_WCV_BOUNDS = exports.FALLBACK_HIDDEN_WCV_MEMORY_BYTES = exports.DEFAULT_HIDDEN_WCV_MEMORY_BUDGET_BYTES = exports.DEFAULT_MIN_HIDDEN_WCV_TABS = exports.MAX_HIDDEN_WCV_TABS = void 0;
 exports.computeGuestMemoryBytesByWebContentsId = computeGuestMemoryBytesByWebContentsId;
+exports.normalizeWcvConsoleMessageEvent = normalizeWcvConsoleMessageEvent;
+exports.isWcvGuestAgentActive = isWcvGuestAgentActive;
 const electron_1 = require("electron");
+const deviceChooser_1 = require("./deviceChooser");
 const beyondcorpPac_1 = require("./beyondcorpPac");
 const utils_1 = require("./utils");
 const webauthn_1 = require("./webauthn");
+const guestDialogController_1 = require("./guestDialogController");
+const isolatedWorldExec_1 = require("./isolatedWorldExec");
+const guestAgentControl_1 = require("./guestAgentControl");
+const guestPromptController_1 = require("./guestPromptController");
+const guestWebMcpController_1 = require("./guestWebMcpController");
 const webviewBrowser_1 = require("./webviewBrowser");
+const guestNetworkController_1 = require("./guestNetworkController");
 exports.MAX_HIDDEN_WCV_TABS = 20;
 exports.DEFAULT_MIN_HIDDEN_WCV_TABS = 3;
 exports.DEFAULT_HIDDEN_WCV_MEMORY_BUDGET_BYTES = 2 * 1024 * 1024 * 1024;
@@ -69,9 +78,196 @@ exports.DEFAULT_HIDDEN_WCV_BOUNDS = {
 exports.WCV_GUEST_EVENT_CHANNEL = 'wcv:guest-event';
 exports.NO_DRAG_USER_CSS = '*, *::before, *::after { -webkit-app-region: no-drag !important; app-region: no-drag !important; }';
 const VALID_PARTITION_RE = /^persist:hub-browser-[a-zA-Z0-9_-]+$/;
+/** Maximum UTF-16 length of a forwarded guest `console-message` string. */
+exports.MAX_WCV_CONSOLE_MESSAGE_LENGTH = 512;
+/** Maximum UTF-16 length of a forwarded guest `console-message` `sourceId`. */
+exports.MAX_WCV_CONSOLE_SOURCE_ID_LENGTH = 256;
+/** Maximum UTF-16 length of an isolated-world selection watcher payload. */
+exports.MAX_WCV_SELECTION_CONSOLE_MESSAGE_LENGTH = 65536;
+const GUEST_SELECTION_CONSOLE_PREFIX = '__AGY_BROWSER_SELECTION__';
+function parseConsoleSeverity(rawLevel) {
+    if (typeof rawLevel === 'string') {
+        switch (rawLevel.toLowerCase()) {
+            case 'error':
+                return { level: 3, consoleLevel: 'error' };
+            case 'warning':
+            case 'warn':
+                return { level: 2, consoleLevel: 'warning' };
+            case 'debug':
+            case 'verbose':
+                return { level: 0, consoleLevel: 'debug' };
+            default:
+                return { level: 1, consoleLevel: 'info' };
+        }
+    }
+    if (typeof rawLevel === 'number' && Number.isFinite(rawLevel)) {
+        if (rawLevel >= 3) {
+            return { level: 3, consoleLevel: 'error' };
+        }
+        if (rawLevel === 2) {
+            return { level: 2, consoleLevel: 'warning' };
+        }
+        if (rawLevel <= 0) {
+            return { level: 0, consoleLevel: 'debug' };
+        }
+    }
+    return { level: 1, consoleLevel: 'info' };
+}
+/**
+ * Normalizes and bounds an Electron `WebContents` `'console-message'` event
+ * (supporting both Electron 35+/44 `Event<WebContentsConsoleMessageEventParams>`
+ * objects and legacy positional arguments) for safe IPC forwarding.
+ *
+ * Drops empty lines, internal Electron/DevTools bundle warnings, and high-rate
+ * `debug`/`info` guest log chatter (except isolated-world selection payloads),
+ * while truncating `warning`/`error` messages and `sourceId` at the IPC boundary.
+ */
+function normalizeWcvConsoleMessageEvent(details, legacyArgs = []) {
+    const obj = details && typeof details === 'object'
+        ? details
+        : undefined;
+    const hasEventObjectMessage = typeof obj?.message === 'string';
+    const rawMessage = hasEventObjectMessage
+        ? obj.message
+        : typeof legacyArgs[1] === 'string'
+            ? legacyArgs[1]
+            : '';
+    if (rawMessage.length === 0) {
+        return null;
+    }
+    const rawSourceId = typeof obj?.sourceId === 'string'
+        ? obj.sourceId
+        : typeof legacyArgs[3] === 'string'
+            ? legacyArgs[3]
+            : '';
+    if (rawSourceId.startsWith('node:electron/') ||
+        rawSourceId.startsWith('devtools://') ||
+        rawSourceId.startsWith('chrome-extension://')) {
+        return null;
+    }
+    const rawLevel = hasEventObjectMessage
+        ? (obj?.level ?? legacyArgs[0])
+        : legacyArgs[0];
+    const { level, consoleLevel } = parseConsoleSeverity(rawLevel);
+    const rawLine = hasEventObjectMessage
+        ? (obj?.lineNumber ?? obj?.line ?? legacyArgs[2])
+        : legacyArgs[2];
+    const lineNumber = typeof rawLine === 'number' && Number.isFinite(rawLine) && rawLine >= 0
+        ? Math.floor(rawLine)
+        : 0;
+    const sourceId = rawSourceId.length > exports.MAX_WCV_CONSOLE_SOURCE_ID_LENGTH
+        ? rawSourceId.slice(0, exports.MAX_WCV_CONSOLE_SOURCE_ID_LENGTH)
+        : rawSourceId;
+    if (rawMessage.startsWith(GUEST_SELECTION_CONSOLE_PREFIX)) {
+        if (rawMessage.length > exports.MAX_WCV_SELECTION_CONSOLE_MESSAGE_LENGTH) {
+            return null;
+        }
+        return {
+            level,
+            consoleLevel,
+            message: rawMessage,
+            line: lineNumber,
+            lineNumber,
+            sourceId,
+        };
+    }
+    if (level < 2) {
+        return null;
+    }
+    const message = rawMessage.length > exports.MAX_WCV_CONSOLE_MESSAGE_LENGTH
+        ? `${rawMessage.slice(0, exports.MAX_WCV_CONSOLE_MESSAGE_LENGTH - 1)}…`
+        : rawMessage;
+    return {
+        level,
+        consoleLevel,
+        message,
+        line: lineNumber,
+        lineNumber,
+        sourceId,
+    };
+}
+/**
+ * Drops history entries the guest may not navigate to (the same checks a fresh
+ * `loadURL` gets) and re-points `index` at the active entry. Returns undefined
+ * when the active entry itself is dropped, so the caller falls back to
+ * loading the last URL.
+ */
+function filterRestorableHistory(history) {
+    if (!history) {
+        return undefined;
+    }
+    const entries = [];
+    let index = -1;
+    history.entries.forEach((navEntry, i) => {
+        if ((0, webviewBrowser_1.isExternalOnlyAuthUrl)(navEntry.url) ||
+            !(0, webviewBrowser_1.validateWebviewNavigationUrl)(navEntry.url, 'http://127.0.0.1').allowed) {
+            return;
+        }
+        if (i === history.index) {
+            index = entries.length;
+        }
+        entries.push(navEntry);
+    });
+    return index >= 0 ? { entries, index } : undefined;
+}
+/** Captures a live guest's back/forward stack so eviction can restore it later. */
+function captureHistory(wc) {
+    if (wc.isDestroyed()) {
+        return undefined;
+    }
+    try {
+        const entries = wc.navigationHistory?.getAllEntries?.() ?? [];
+        const index = wc.navigationHistory?.getActiveIndex?.() ?? -1;
+        return entries.length > 0 && index >= 0 && index < entries.length
+            ? { entries, index }
+            : undefined;
+    }
+    catch {
+        return undefined;
+    }
+}
+function isCacheMissError(err) {
+    const { code, errno } = (err ?? {});
+    return code === 'ERR_CACHE_MISS' || errno === -10;
+}
+/** Restores a captured stack without re-posting form data. */
+async function restoreHistory(wc, history) {
+    if (!history || typeof wc.navigationHistory?.restore !== 'function') {
+        return 'not-restored';
+    }
+    try {
+        await wc.navigationHistory.restore(history);
+        return 'restored';
+    }
+    catch (err) {
+        // restore() also rejects when the active page fails to load (including
+        // ERR_ABORTED from a superseding navigation) after the stack is already in
+        // place; loading the last URL then would clobber it. The tab may also
+        // have been closed while restore() was pending.
+        if (wc.isDestroyed()) {
+            return 'not-restored';
+        }
+        let stackInPlace;
+        try {
+            stackInPlace = (wc.navigationHistory.getAllEntries?.().length ?? 0) > 0;
+        }
+        catch {
+            return 'not-restored';
+        }
+        if (!stackInPlace) {
+            return 'not-restored';
+        }
+        return isCacheMissError(err) ? 'cache-miss' : 'restored';
+    }
+}
 const contentViewOf = (win) => !win || win.isDestroyed?.()
     ? undefined
     : win.contentView;
+const sameRect = (a, b) => Boolean(a &&
+    a.x === b.x &&
+    a.y === b.y &&
+    a.width === b.width &&
+    a.height === b.height);
 /** Main-process registry managing built-in browser `WebContentsView` instances keyed by `tabKey`. */
 class WcvBrowserRegistry {
     constructor(options = {}) {
@@ -79,11 +275,22 @@ class WcvBrowserRegistry {
         this.entries = new Map();
         this.byWebContentsId = new Map();
         this.evicted = new Map();
+        this.rehydrating = new Map();
+        this.operationPins = new Map();
         this.activeRequestedTabByWindow = new WeakMap();
+        this.windowResetEpoch = new WeakMap();
         this.monitoredWindows = new WeakSet();
         this.userMutedTabs = new Set();
         this.bootstrappedBlankEntries = new WeakSet();
         this.externallyNavigatedEntries = new WeakSet();
+        this.htmlFullscreenListeners = new Set();
+    }
+    /** Registers a listener notified when a guest enters or exits HTML fullscreen. */
+    onHtmlFullscreenChanged(listener) {
+        this.htmlFullscreenListeners.add(listener);
+        return () => {
+            this.htmlFullscreenListeners.delete(listener);
+        };
     }
     now() {
         return this.options.now ? this.options.now() : Date.now();
@@ -105,6 +312,12 @@ class WcvBrowserRegistry {
             existing.parentWindow = parentWindow;
             existing.hubSender = hubSender;
             existing.lastShownAt = this.now();
+            if ((0, guestNetworkController_1.isNetworkTrackableContents)(existing.view.webContents)) {
+                guestNetworkController_1.guestNetworkController.trackGuest(existing.view.webContents, {
+                    ownerId: hubSender.id,
+                    sender: hubSender,
+                });
+            }
             return this.toSnapshot(existing);
         }
         const saved = this.evicted.get(request.tabKey);
@@ -120,21 +333,26 @@ class WcvBrowserRegistry {
             this.dispose(request.tabKey, false);
         }
         this.evicted.delete(request.tabKey);
+        const blinkWebMcp = guestWebMcpController_1.guestWebMcpController.isEnabled();
+        const webPreferences = {
+            sandbox: true,
+            contextIsolation: true,
+            nodeIntegration: false,
+            webviewTag: false,
+            navigateOnDragDrop: false,
+            focusOnNavigation: false,
+            backgroundThrottling: false,
+            partition: request.partition,
+            // Chromium fixes `enableBlinkFeatures` at view creation; `setEnabled(false)`
+            // disables CDP and settles calls on already-created tabs.
+            ...(blinkWebMcp ? { enableBlinkFeatures: 'WebMCP' } : {}),
+        };
         const view = this.options.createView
-            ? this.options.createView(request.partition)
-            : new electron_1.WebContentsView({
-                webPreferences: {
-                    sandbox: true,
-                    contextIsolation: true,
-                    nodeIntegration: false,
-                    webviewTag: false,
-                    navigateOnDragDrop: false,
-                    focusOnNavigation: false,
-                    backgroundThrottling: false,
-                    partition: request.partition,
-                },
-            });
+            ? this.options.createView(request.partition, webPreferences)
+            : new electron_1.WebContentsView({ webPreferences });
         const wc = view.webContents;
+        guestWebMcpController_1.guestWebMcpController.noteGuestCreated(wc.id, blinkWebMcp);
+        wc.setMaxListeners?.(32);
         const rawTargetUrl = preservedUrl && preservedUrl !== 'about:blank'
             ? preservedUrl
             : request.initialUrl || '';
@@ -156,18 +374,59 @@ class WcvBrowserRegistry {
         (0, utils_1.registerWindowWebContents)(parentWindow, wc);
         // eslint-disable-next-line @typescript-eslint/no-explicit-any
         (0, webauthn_1.configureSessionWebAuthn)(wc.session);
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
+        (0, guestPromptController_1.configureSessionPromptPreload)(wc.session);
         (0, webauthn_1.attachWebviewWebAuthnUserActivationTracking)(wc);
         (0, webviewBrowser_1.configureWebviewBrowserContents)(wc, {
             allowWebContentsView: true,
             hostWebContents: hubSender,
             getParentWindow: () => parentWindow,
             openExternal,
+            now: this.options.now,
+            isAgentControlled: () => Boolean(entry.isAgentStepActive),
         });
         wc.setAudioMuted?.(true);
+        wc.setZoomLevel?.(0);
+        void Promise.resolve(wc.setVisualZoomLevelLimits?.(1, 1)).catch(() => undefined);
+        wc.setIgnoreMenuShortcuts?.(true);
         this.attachGuestListeners(entry);
         if (!this.monitoredWindows.has(parentWindow)) {
             this.monitoredWindows.add(parentWindow);
+            const onResize = () => {
+                if (parentWindow.isDestroyed?.()) {
+                    return;
+                }
+                for (const e of this.entries.values()) {
+                    if (e.parentWindow !== parentWindow ||
+                        e.view.webContents.isDestroyed()) {
+                        continue;
+                    }
+                    if (e.visible && e.htmlFullscreen) {
+                        e.view.setBounds?.(this.resolveFullscreenBounds(e));
+                    }
+                }
+            };
+            const onLeaveWindowFullscreen = () => {
+                if (parentWindow.isDestroyed?.()) {
+                    return;
+                }
+                for (const e of this.entries.values()) {
+                    if (e.parentWindow === parentWindow && e.htmlFullscreen) {
+                        this.clearHtmlFullscreen(e, true);
+                    }
+                }
+            };
+            parentWindow.on?.('resize', onResize);
+            parentWindow.on?.('enter-full-screen', onResize);
+            parentWindow.on?.('enter-html-full-screen', onResize);
+            parentWindow.on?.('leave-full-screen', onLeaveWindowFullscreen);
+            parentWindow.on?.('leave-html-full-screen', onLeaveWindowFullscreen);
             parentWindow.once?.('closed', () => {
+                parentWindow.off?.('resize', onResize);
+                parentWindow.off?.('enter-full-screen', onResize);
+                parentWindow.off?.('enter-html-full-screen', onResize);
+                parentWindow.off?.('leave-full-screen', onLeaveWindowFullscreen);
+                parentWindow.off?.('leave-html-full-screen', onLeaveWindowFullscreen);
                 this.disposeForWindow(parentWindow);
             });
         }
@@ -193,7 +452,7 @@ class WcvBrowserRegistry {
             wcAny.removeListener?.('did-start-navigation', onPreProxyNav);
             wcAny.removeListener?.('will-navigate', onPreProxyNav);
         }
-        if (!wc.isDestroyed()) {
+        if (!wc.isDestroyed() && this.entries.get(entry.tabKey) === entry) {
             const currentLiveUrl = (wc.getURL?.() || '').trim();
             const hasConcurrentNavigation = guestNavigationStarted ||
                 this.externallyNavigatedEntries.has(entry) ||
@@ -205,14 +464,36 @@ class WcvBrowserRegistry {
                 void openExternal(rawTargetUrl);
             }
             if (!hasConcurrentNavigation) {
-                if (!isExternalAuth &&
-                    (0, webviewBrowser_1.validateWebviewNavigationUrl)(lastUrl, 'http://127.0.0.1').allowed) {
-                    await wc.loadURL(lastUrl).catch(() => undefined);
+                // A restored stack is the tab's real history, so it must skip the
+                // blank bootstrap whose first did-navigate clears history.
+                const restoreResult = isExternalAuth
+                    ? 'not-restored'
+                    : await restoreHistory(wc, filterRestorableHistory(saved?.history));
+                // restore() is async: the tab may have closed, been replaced, or been
+                // navigated elsewhere meanwhile, and none of those may be clobbered.
+                const superseded = wc.isDestroyed() ||
+                    this.entries.get(entry.tabKey) !== entry ||
+                    this.externallyNavigatedEntries.has(entry);
+                const lastUrlAllowed = !isExternalAuth &&
+                    (0, webviewBrowser_1.validateWebviewNavigationUrl)(lastUrl, 'http://127.0.0.1').allowed;
+                if (!superseded && restoreResult !== 'restored') {
+                    if (lastUrlAllowed) {
+                        // On a cache miss this reloads the POST result's URL with GET on
+                        // top of the restored back stack, instead of leaving Chromium's
+                        // form-resubmission page.
+                        await wc.loadURL(lastUrl).catch(() => undefined);
+                    }
+                    else if (restoreResult === 'not-restored') {
+                        this.bootstrappedBlankEntries.add(entry);
+                        await wc.loadURL('about:blank').catch(() => undefined);
+                    }
                 }
-                else {
-                    this.bootstrappedBlankEntries.add(entry);
-                    await wc.loadURL('about:blank').catch(() => undefined);
-                }
+            }
+            if ((0, guestNetworkController_1.isNetworkTrackableContents)(wc)) {
+                guestNetworkController_1.guestNetworkController.trackGuest(wc, {
+                    ownerId: hubSender.id,
+                    sender: hubSender,
+                });
             }
         }
         this.evictHiddenIfNeeded();
@@ -233,7 +514,6 @@ class WcvBrowserRegistry {
         entry.visible = true;
         entry.lastShownAt = this.now();
         entry.view.webContents.setAudioMuted?.(this.userMutedTabs.has(tabKey));
-        this.setBounds(tabKey, boundsDip);
         const contentView = contentViewOf(entry.parentWindow);
         const hubView = (0, utils_1.getHubView)(entry.parentWindow);
         const children = contentView?.children;
@@ -254,6 +534,11 @@ class WcvBrowserRegistry {
                 contentView?.addChildView?.(hubView);
             }
         }
+        // Apply bounds after `addChildView` so `views::View::SetBoundsRect` updates
+        // the attached native widget's screen origin (required for Blink `PagePopup`
+        // widgets such as `<input type="date">`); calling `setBounds` while detached
+        // caches `bounds_` at `(0, 0)` and causes subsequent same-rect calls to no-op.
+        this.setBounds(tabKey, boundsDip);
         this.detachVisibleSiblings(entry.parentWindow, entry);
         return this.toSnapshot(entry);
     }
@@ -267,23 +552,96 @@ class WcvBrowserRegistry {
         }
         return hubSenderId === undefined || saved.hubSenderId === hubSenderId;
     }
-    async rehydrateEvictedAndShow(parentWindow, hubSender, tabKey, boundsDip) {
+    /**
+     * Recreates an evicted tab as a parked hidden guest at its saved URL, so
+     * main-process agent operations (CDP input, `capturePage`) can reach it
+     * again. Concurrent callers share one in-flight rehydration and resolve once
+     * the guest has loaded. Returns null when `tabKey` is neither evicted by
+     * `hubSender` nor being rehydrated.
+     */
+    rehydrateEvicted(parentWindow, hubSender, tabKey) {
+        const inFlight = this.rehydrating.get(tabKey);
+        if (inFlight) {
+            return inFlight;
+        }
         const saved = this.evicted.get(tabKey);
         if (!saved || saved.hubSenderId !== hubSender.id) {
-            return null;
+            return Promise.resolve(null);
         }
-        this.activeRequestedTabByWindow.set(parentWindow, tabKey);
-        this.detachVisibleSiblings(parentWindow);
-        await this.acquire(parentWindow, hubSender, {
+        const pending = this.acquire(parentWindow, hubSender, {
             tabKey,
             partition: saved.partition,
             initialUrl: saved.url,
             title: saved.title,
+        }).finally(() => {
+            if (this.rehydrating.get(tabKey) === pending) {
+                this.rehydrating.delete(tabKey);
+            }
         });
-        if (parentWindow.isDestroyed?.() ||
-            this.activeRequestedTabByWindow.get(parentWindow) !== tabKey) {
-            if (parentWindow.isDestroyed?.()) {
-                this.dispose(tabKey);
+        this.rehydrating.set(tabKey, pending);
+        return pending;
+    }
+    /**
+     * Runs `op` with `tabKey` exempt from hidden-tab eviction, so a concurrent
+     * acquire cannot evict the tab mid-operation and rehydrating it for the
+     * operation does not evict another hidden tab. Releasing the pin does not
+     * evict; the next budget check (acquire, hide, or tab state change) does.
+     */
+    async withOperationPin(tabKey, op) {
+        this.operationPins.set(tabKey, (this.operationPins.get(tabKey) ?? 0) + 1);
+        try {
+            return await op();
+        }
+        finally {
+            const remaining = (this.operationPins.get(tabKey) ?? 1) - 1;
+            if (remaining > 0) {
+                this.operationPins.set(tabKey, remaining);
+            }
+            else {
+                this.operationPins.delete(tabKey);
+            }
+        }
+    }
+    /**
+     * Cancels any active or in-flight tab show request for `parentWindow` and
+     * parks currently visible tabs on that window below the curtain.
+     */
+    cancelWindowShowRequests(parentWindow) {
+        this.windowResetEpoch.set(parentWindow, (this.windowResetEpoch.get(parentWindow) ?? 0) + 1);
+        this.activeRequestedTabByWindow.delete(parentWindow);
+        const visibleKeys = [];
+        for (const entry of this.entries.values()) {
+            if (entry.parentWindow === parentWindow && entry.visible) {
+                visibleKeys.push(entry.tabKey);
+            }
+        }
+        for (const tabKey of visibleKeys) {
+            this.hide(tabKey);
+        }
+    }
+    async rehydrateEvictedAndShow(parentWindow, hubSender, tabKey, boundsDip) {
+        if (!this.hasEvicted(tabKey, hubSender.id)) {
+            return null;
+        }
+        const startEpoch = this.windowResetEpoch.get(parentWindow) ?? 0;
+        this.activeRequestedTabByWindow.set(parentWindow, tabKey);
+        this.detachVisibleSiblings(parentWindow);
+        const rehydrated = await this.rehydrateEvicted(parentWindow, hubSender, tabKey);
+        const current = rehydrated ? this.entries.get(tabKey) : undefined;
+        if (!rehydrated ||
+            !current ||
+            current.webContentsId !== rehydrated.webContentsId) {
+            return null;
+        }
+        if (parentWindow.isDestroyed?.() || hubSender.isDestroyed?.()) {
+            this.dispose(tabKey);
+            return null;
+        }
+        const epochChanged = (this.windowResetEpoch.get(parentWindow) ?? 0) !== startEpoch;
+        const activeTab = this.activeRequestedTabByWindow.get(parentWindow);
+        if (epochChanged || activeTab !== tabKey) {
+            if (activeTab !== tabKey) {
+                this.hide(tabKey);
             }
             return null;
         }
@@ -302,30 +660,92 @@ class WcvBrowserRegistry {
         if (!entry) {
             return;
         }
+        const collapsed = !(typeof bounds.width === 'number' && Math.round(bounds.width) > 0) ||
+            !(typeof bounds.height === 'number' && Math.round(bounds.height) > 0);
+        if (collapsed &&
+            !entry.htmlFullscreen &&
+            !entry.view.webContents.isDestroyed()) {
+            (0, isolatedWorldExec_1.dismissNativeGuestPopups)(entry.view.webContents, {
+                onlyPopupControls: false,
+                shouldStillDismiss: () => {
+                    const cur = entry.boundsDip;
+                    return !entry.visible || !cur || cur.width <= 0 || cur.height <= 0;
+                },
+            });
+        }
         const round = (value) => typeof value === 'number' && Number.isFinite(value)
             ? Math.round(value)
             : 0;
-        entry.boundsDip = {
+        const nextBounds = {
             x: round(bounds.x),
             y: round(bounds.y),
             width: Math.max(0, round(bounds.width)),
             height: Math.max(0, round(bounds.height)),
         };
-        if (entry.boundsDip.width > 0 && entry.boundsDip.height > 0) {
+        entry.boundsDip = nextBounds;
+        if (nextBounds.width > 0 && nextBounds.height > 0) {
             entry.lastNonZeroSize = {
-                width: entry.boundsDip.width,
-                height: entry.boundsDip.height,
+                width: nextBounds.width,
+                height: nextBounds.height,
             };
         }
         if (entry.visible && !entry.view.webContents.isDestroyed()) {
-            entry.view.setBounds(entry.boundsDip);
+            if (entry.htmlFullscreen) {
+                entry.appliedBoundsDip = undefined;
+                entry.view.setBounds(this.resolveFullscreenBounds(entry));
+            }
+            else if (!sameRect(entry.appliedBoundsDip, nextBounds)) {
+                entry.appliedBoundsDip = { ...nextBounds };
+                entry.view.setBounds(nextBounds);
+            }
         }
     }
     setPinned(tabKey, pinned) {
         this.mutate(tabKey, (entry) => (entry.pinned = pinned));
     }
     setAgentStepActive(tabKey, active) {
-        this.mutate(tabKey, (entry) => (entry.isAgentStepActive = active));
+        if (active) {
+            const entry = this.entries.get(tabKey);
+            if (entry) {
+                guestPromptController_1.guestPromptController.cancelForGuest(entry.webContentsId);
+            }
+        }
+        this.mutate(tabKey, (entry) => {
+            entry.isAgentStepActive = active;
+            if (active && entry.htmlFullscreen) {
+                this.clearHtmlFullscreen(entry, true);
+            }
+        });
+    }
+    /** Exits HTML fullscreen for `tabKey` and restores its split-pane bounds. */
+    exitHtmlFullscreen(tabKey) {
+        const entry = this.entries.get(tabKey);
+        if (entry?.htmlFullscreen) {
+            this.clearHtmlFullscreen(entry, true);
+        }
+    }
+    /**
+     * Resolves the owning Hub renderer and visibility state for `webContentsId`
+     * when it belongs to a live registered `WebContentsView` tab.
+     */
+    resolvePromptHostContext(webContentsId) {
+        const entry = this.byWebContentsId.get(webContentsId);
+        if (!entry || entry.view.webContents.isDestroyed()) {
+            return null;
+        }
+        return {
+            hostSender: entry.hubSender,
+            tabKey: entry.tabKey,
+            visible: Boolean(entry.visible),
+        };
+    }
+    /**
+     * Returns `true` when `webContentsId` belongs to a live registered
+     * `WebContentsView` tab currently undergoing an agent step.
+     */
+    isGuestAgentActive(webContentsId) {
+        const entry = this.byWebContentsId.get(webContentsId);
+        return Boolean(entry && entry.isAgentStepActive && !entry.view.webContents.isDestroyed());
     }
     setUserMuted(tabKey, muted) {
         if (muted) {
@@ -363,23 +783,42 @@ class WcvBrowserRegistry {
         }
     }
     dispose(tabKey, clearEvicted = true) {
+        const existingEntry = this.entries.get(tabKey);
+        this.rehydrating.delete(tabKey);
         if (clearEvicted) {
+            const ownerWindow = existingEntry?.parentWindow ?? this.evicted.get(tabKey)?.parentWindow;
+            if (ownerWindow &&
+                this.activeRequestedTabByWindow.get(ownerWindow) === tabKey) {
+                this.activeRequestedTabByWindow.delete(ownerWindow);
+            }
             this.evicted.delete(tabKey);
             this.userMutedTabs.delete(tabKey);
         }
-        const entry = this.entries.get(tabKey);
+        const entry = existingEntry;
         if (!entry) {
             return;
         }
+        if (entry.htmlFullscreen) {
+            this.clearHtmlFullscreen(entry, false);
+        }
         entry.visible = false;
+        guestPromptController_1.guestPromptController.cancelForGuest(entry.webContentsId);
+        (0, isolatedWorldExec_1.dismissNativeGuestPopups)(entry.view.webContents, {
+            onlyPopupControls: false,
+        });
+        (this.options.dialogController ?? guestDialogController_1.guestDialogController).disposeGuest(entry.view.webContents);
         contentViewOf(entry.parentWindow)?.removeChildView?.(entry.view);
         this.entries.delete(tabKey);
         this.byWebContentsId.delete(entry.webContentsId);
+        guestWebMcpController_1.guestWebMcpController.noteGuestDisposed(entry.webContentsId);
         if (!entry.view.webContents.isDestroyed()) {
             entry.view.webContents.close?.();
         }
+        deviceChooser_1.deviceChooserController.cancelForGuest(entry.webContentsId);
     }
     disposeForWindow(win) {
+        this.windowResetEpoch.set(win, (this.windowResetEpoch.get(win) ?? 0) + 1);
+        this.activeRequestedTabByWindow.delete(win);
         for (const [tabKey, entry] of this.entries.entries()) {
             if (entry.parentWindow === win) {
                 this.dispose(tabKey);
@@ -394,6 +833,15 @@ class WcvBrowserRegistry {
     }
     getEntry(tabKey) {
         return this.entries.get(tabKey);
+    }
+    getEntriesForWindow(win) {
+        const result = [];
+        for (const entry of this.entries.values()) {
+            if (entry.parentWindow === win) {
+                result.push(entry);
+            }
+        }
+        return result;
     }
     computeGuestMemoryBytes(guests, metrics) {
         let resolved = metrics;
@@ -411,6 +859,17 @@ class WcvBrowserRegistry {
         const entry = this.byWebContentsId.get(webContentsId);
         return Boolean(entry && !entry.view.webContents.isDestroyed());
     }
+    resolveDeviceChooserHost(webContentsId) {
+        const entry = this.byWebContentsId.get(webContentsId);
+        return entry && !entry.view.webContents.isDestroyed()
+            ? {
+                hostSender: entry.hubSender,
+                tabKey: entry.tabKey,
+                visible: Boolean(entry.visible),
+                isAgentStepActive: Boolean(entry.isAgentStepActive),
+            }
+            : null;
+    }
     isOwnedBySender(webContentsId, senderId) {
         const entry = this.byWebContentsId.get(webContentsId);
         return Boolean(senderId !== undefined &&
@@ -422,7 +881,54 @@ class WcvBrowserRegistry {
         const entry = this.entries.get(tabKey);
         if (entry) {
             fn(entry);
+            if (entry.isAgentStepActive) {
+                deviceChooser_1.deviceChooserController.cancelForGuest(entry.webContentsId);
+            }
             this.evictHiddenIfNeeded();
+        }
+    }
+    resolveFullscreenBounds(entry) {
+        const win = entry.parentWindow;
+        const contentSize = win?.getContentSize?.();
+        const winBounds = !contentSize ? win?.getBounds?.() : undefined;
+        const width = Math.max(1, Math.round(contentSize?.[0] ??
+            winBounds?.width ??
+            entry.lastNonZeroSize?.width ??
+            exports.DEFAULT_HIDDEN_WCV_BOUNDS.width));
+        const height = Math.max(1, Math.round(contentSize?.[1] ??
+            winBounds?.height ??
+            entry.lastNonZeroSize?.height ??
+            exports.DEFAULT_HIDDEN_WCV_BOUNDS.height));
+        return { x: 0, y: 0, width, height };
+    }
+    requestGuestExitDomFullscreen(wc) {
+        if (wc.isDestroyed?.() ||
+            typeof wc.executeJavaScriptInIsolatedWorld !== 'function') {
+            return;
+        }
+        void (0, isolatedWorldExec_1.executeJavaScriptInIsolatedWorldWhenReady)(wc, isolatedWorldExec_1.POPUP_GUARD_ISOLATED_WORLD_ID, [
+            {
+                code: 'if (document.fullscreenElement) { void document.exitFullscreen().catch(() => {}); }',
+            },
+        ]).catch(() => undefined);
+    }
+    clearHtmlFullscreen(entry, exitGuestDom) {
+        const wasFullscreen = Boolean(entry.htmlFullscreen);
+        entry.htmlFullscreen = false;
+        if (exitGuestDom) {
+            this.requestGuestExitDomFullscreen(entry.view.webContents);
+        }
+        if (!wasFullscreen) {
+            return;
+        }
+        if (entry.visible &&
+            entry.boundsDip &&
+            !entry.view.webContents.isDestroyed()) {
+            entry.appliedBoundsDip = { ...entry.boundsDip };
+            entry.view.setBounds(entry.boundsDip);
+        }
+        for (const listener of this.htmlFullscreenListeners) {
+            listener(entry, false);
         }
     }
     resolveHiddenBounds(entry) {
@@ -458,7 +964,9 @@ class WcvBrowserRegistry {
     }
     parkHiddenView(entry) {
         entry.visible = false;
+        entry.appliedBoundsDip = undefined;
         const contentView = contentViewOf(entry.parentWindow);
+        deviceChooser_1.deviceChooserController.cancelForGuest(entry.webContentsId);
         if (entry.view.webContents.isDestroyed()) {
             contentView?.removeChildView?.(entry.view);
             return;
@@ -468,14 +976,14 @@ class WcvBrowserRegistry {
             contentView?.removeChildView?.(entry.view);
             return;
         }
-        entry.view.setBounds?.(this.resolveHiddenBounds(entry));
         // Insert directly below the curtain (above older hidden tabs) so that
-        // stacked hidden tabs never occlude the most recently parked one. Index is
-        // computed as if `entry.view` were already removed from `children`.
+        // stacked hidden tabs never occlude the most recently parked one, and set
+        // bounds after `addChildView` so the attached view updates its native origin.
         const children = contentView?.children ?? [];
         const withoutEntry = children.filter((child) => child !== entry.view);
         const curtainIdx = withoutEntry.indexOf(curtainView);
         contentView?.addChildView?.(entry.view, Math.max(0, curtainIdx));
+        entry.view.setBounds?.(this.resolveHiddenBounds(entry));
     }
     detachVisibleSiblings(parentWindow, exceptEntry) {
         for (const sibling of this.entries.values()) {
@@ -487,7 +995,15 @@ class WcvBrowserRegistry {
         }
     }
     detachView(entry) {
+        guestPromptController_1.guestPromptController.cancelForGuest(entry.webContentsId);
+        if (entry.htmlFullscreen) {
+            this.clearHtmlFullscreen(entry, true);
+        }
         if (!entry.view.webContents.isDestroyed()) {
+            (0, isolatedWorldExec_1.dismissNativeGuestPopups)(entry.view.webContents, {
+                onlyPopupControls: false,
+                shouldStillDismiss: () => !entry.visible,
+            });
             entry.view.webContents.setAudioMuted?.(true);
         }
         this.parkHiddenView(entry);
@@ -498,7 +1014,10 @@ class WcvBrowserRegistry {
         const memoryBudget = this.options.memoryBudgetBytes ?? exports.DEFAULT_HIDDEN_WCV_MEMORY_BUDGET_BYTES;
         const fallbackBytes = this.options.fallbackGuestMemoryBytes ?? exports.FALLBACK_HIDDEN_WCV_MEMORY_BYTES;
         const idleHidden = [...this.entries.values()]
-            .filter((e) => !e.visible && !e.pinned && !e.isAgentStepActive)
+            .filter((e) => !e.visible &&
+            !e.pinned &&
+            !e.isAgentStepActive &&
+            !this.operationPins.has(e.tabKey))
             .sort((a, b) => a.lastShownAt - b.lastShownAt);
         if (idleHidden.length === 0) {
             return;
@@ -533,6 +1052,7 @@ class WcvBrowserRegistry {
                 partition: victim.partition,
                 hubSenderId: victim.hubSender.id,
                 parentWindow: victim.parentWindow,
+                history: captureHistory(victim.view.webContents),
             });
             this.dispose(victim.tabKey, false);
         }
@@ -584,12 +1104,29 @@ class WcvBrowserRegistry {
                 isMainFrame: true,
             });
         });
+        const enforceGuestZoomLock = () => {
+            if (!wc.isDestroyed()) {
+                if (typeof wc.getZoomLevel !== 'function' || wc.getZoomLevel() !== 0) {
+                    wc.setZoomLevel?.(0);
+                }
+            }
+        };
         forwardNavEvent('will-navigate');
         forwardNavEvent('did-start-navigation', true);
         forwardNavEvent('did-redirect-navigation');
+        on('zoom-changed', (event) => {
+            event?.preventDefault?.();
+            if (!wc.isDestroyed()) {
+                wc.setZoomLevel?.(0);
+            }
+        });
         on('dom-ready', () => {
+            enforceGuestZoomLock();
             injectNoDragCss();
             emit('dom-ready');
+        });
+        on('did-finish-load', () => {
+            enforceGuestZoomLock();
         });
         on('did-start-loading', () => emit('did-start-loading'));
         on('did-stop-loading', () => emit('did-stop-loading'));
@@ -608,6 +1145,11 @@ class WcvBrowserRegistry {
                     }
                 }
             }
+            if (entry.htmlFullscreen) {
+                this.clearHtmlFullscreen(entry, false);
+            }
+            enforceGuestZoomLock();
+            void Promise.resolve(wc.setVisualZoomLevelLimits?.(1, 1)).catch(() => undefined);
             injectNoDragCss();
             emit('did-navigate', {
                 url,
@@ -630,7 +1172,30 @@ class WcvBrowserRegistry {
             emit('page-title-updated', { title });
         });
         on('page-favicon-updated', (_event, favicons) => emit('page-favicon-updated', { favicons }));
+        on('enter-html-full-screen', () => {
+            if (!entry.visible || entry.isAgentStepActive) {
+                this.clearHtmlFullscreen(entry, true);
+                return;
+            }
+            entry.htmlFullscreen = true;
+            for (const listener of this.htmlFullscreenListeners) {
+                listener(entry, true);
+            }
+            if (entry.htmlFullscreen && entry.visible && !wc.isDestroyed()) {
+                entry.appliedBoundsDip = undefined;
+                entry.view.setBounds(this.resolveFullscreenBounds(entry));
+            }
+        });
+        on('leave-html-full-screen', () => {
+            this.clearHtmlFullscreen(entry, false);
+        });
         on('context-menu', (_event, params) => emit('context-menu', { params }));
+        on('console-message', (details, ...legacyArgs) => {
+            const normalized = normalizeWcvConsoleMessageEvent(details, legacyArgs);
+            if (normalized) {
+                emit('console-message', normalized);
+            }
+        });
         on('did-fail-load', (_e, errorCode, errorDescription, validatedURL, isMainFrame = true) => {
             if (isMainFrame && errorCode !== -3) {
                 if (validatedURL &&
@@ -649,6 +1214,7 @@ class WcvBrowserRegistry {
             emit('render-process-gone', { reason: details?.reason ?? 'crashed' });
         });
         wc.once?.('destroyed', () => {
+            guestWebMcpController_1.guestWebMcpController.noteGuestDisposed(entry.webContentsId);
             this.byWebContentsId.delete(entry.webContentsId);
             if (this.entries.get(entry.tabKey) === entry) {
                 this.entries.delete(entry.tabKey);
@@ -682,3 +1248,12 @@ class WcvBrowserRegistry {
 }
 exports.WcvBrowserRegistry = WcvBrowserRegistry;
 exports.wcvBrowserRegistry = new WcvBrowserRegistry();
+/**
+ * Returns `true` when `webContentsId` belongs to a live `WebContentsView` tab
+ * in the default registry with an active agent step.
+ */
+function isWcvGuestAgentActive(webContentsId) {
+    return exports.wcvBrowserRegistry.isGuestAgentActive(webContentsId);
+}
+(0, guestAgentControl_1.registerGuestAgentControlPredicate)(isWcvGuestAgentActive);
+guestPromptController_1.guestPromptController.setHostResolver((guest) => exports.wcvBrowserRegistry.resolvePromptHostContext(guest.id));

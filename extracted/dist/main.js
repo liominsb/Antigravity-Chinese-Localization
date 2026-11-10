@@ -39,6 +39,8 @@ Object.defineProperty(exports, "__esModule", { value: true });
 const electron_1 = require("electron");
 const main_1 = __importDefault(require("electron-log/main"));
 const ipcHandlers_1 = require("./ipcHandlers");
+const cablev2_1 = require("./cablev2");
+const wcvBrowserRegistry_1 = require("./wcvBrowserRegistry");
 const fs = __importStar(require("fs"));
 const crypto = __importStar(require("crypto"));
 const readline = __importStar(require("readline"));
@@ -49,6 +51,7 @@ const hostBridgeServer_1 = require("./hostBridgeServer");
 const constants_1 = require("./constants");
 const tray_1 = require("./tray");
 const storage_1 = require("./storage");
+const deviceChooser_1 = require("./deviceChooser");
 const paths_1 = require("./paths");
 const menu_1 = require("./menu");
 const customScheme_1 = require("./customScheme");
@@ -60,8 +63,10 @@ const wsl_1 = require("./wsl");
 const beyondcorpPac_1 = require("./beyondcorpPac");
 const scriptJail_1 = require("./scriptJail");
 const webauthn_1 = require("./webauthn");
+const guestPromptController_1 = require("./guestPromptController");
 const webviewBrowser_1 = require("./webviewBrowser");
 const windowState_1 = require("./windowState");
+const browserEngine_1 = require("./browserEngine/browserEngine");
 const gotTheLock = electron_1.app.requestSingleInstanceLock();
 if (!gotTheLock) {
     electron_1.app.quit();
@@ -124,15 +129,15 @@ if (!electron_1.app.commandLine.hasSwitch('remote-debugging-port')) {
 }
 electron_1.app.commandLine.appendSwitch('disable-blink-features', 'AutomationControlled');
 electron_1.app.commandLine.appendSwitch('disable-features', 'FedCm');
-if ((0, utils_1.isWcvBrowserWindowEnabled)()) {
-    // Hidden built-in browser tabs stay attached under an opaque curtain view
-    // (see WcvBrowserRegistry). Without these switches Chromium treats them as
-    // occluded, stops producing frames, and capturePage() returns nothing.
-    // `disable-features` keeps only its last value, so merge with any earlier one.
-    const disabledFeatures = electron_1.app.commandLine.getSwitchValue('disable-features');
-    electron_1.app.commandLine.appendSwitch('disable-features', [disabledFeatures, 'CalculateNativeWinOcclusion'].filter(Boolean).join(','));
-    electron_1.app.commandLine.appendSwitch('disable-backgrounding-occluded-windows');
-}
+// Hidden built-in browser tabs stay attached under an opaque curtain view
+// (see WcvBrowserRegistry). Without these switches Chromium treats them as
+// occluded, stops producing frames, and capturePage() returns nothing. They are
+// unconditional because the renderer may switch to the WebContentsView browser
+// at any time, after these startup-only switches can no longer be changed.
+// `disable-features` keeps only its last value, so merge with any earlier one.
+const disabledFeatures = electron_1.app.commandLine.getSwitchValue('disable-features');
+electron_1.app.commandLine.appendSwitch('disable-features', [disabledFeatures, 'CalculateNativeWinOcclusion'].filter(Boolean).join(','));
+electron_1.app.commandLine.appendSwitch('disable-backgrounding-occluded-windows');
 // ---------------------------------------------------------------------------
 // Application Lifecycle
 // ---------------------------------------------------------------------------
@@ -205,12 +210,15 @@ electron_1.app.on('session-created', (targetSession) => {
         return;
     }
     (0, webauthn_1.configureSessionWebAuthn)(targetSession);
+    (0, guestPromptController_1.configureSessionPromptPreload)(targetSession);
 });
 electron_1.app.on('web-contents-created', (_event, contents) => {
     if ((0, scriptJail_1.isScriptJailSession)(contents.session)) {
         return;
     }
+    (0, deviceChooser_1.configureSessionDeviceChooser)(contents.session);
     (0, webauthn_1.configureSessionWebAuthn)(contents.session);
+    (0, guestPromptController_1.configureSessionPromptPreload)(contents.session);
     if (contents.getType() !== 'webview') {
         return;
     }
@@ -226,9 +234,14 @@ electron_1.app.on('web-contents-created', (_event, contents) => {
 electron_1.app
     .whenReady()
     .then(async () => {
-    // Initialize electron-log and override console
-    main_1.default.initialize();
+    // Initialize electron-log on the default window session only so browser
+    // <webview> partitions do not inherit the electron-log-preload script.
+    main_1.default.initialize({
+        includeFutureSession: false,
+        includeFutureSessions: false,
+    });
     Object.assign(console, main_1.default.functions);
+    (0, paths_1.tightenActivePortPermissions)(electron_1.app.getPath('userData'), (0, paths_1.getActivePortFilePath)());
     const storagePath = (0, paths_1.getAppStoragePath)();
     storageManager = new storage_1.StorageManager(storagePath, settingsService_1.DEFAULTS);
     settingsService = new settingsService_1.SettingsService(storageManager);
@@ -270,7 +283,11 @@ electron_1.app
     // Configure macOS caBLEv2 WebAuthn IPC handlers and attach the WebAuthn
     // account chooser to the default session before any BrowserWindow or
     // <webview> is created.
-    (0, webauthn_1.configurePlatformWebAuthn)();
+    (0, webauthn_1.configurePlatformWebAuthn)({
+        registerCableIpc: () => (0, cablev2_1.registerCableWebAuthnIpcHandlers)({
+            resolveWcvTab: (id) => wcvBrowserRegistry_1.wcvBrowserRegistry.resolveDeviceChooserHost(id),
+        }),
+    });
     (0, webauthn_1.configureSessionWebAuthn)(electron_1.session.defaultSession);
     if (DEV_URL) {
         console.log('Starting in dev mode with URL:', DEV_URL);
@@ -523,6 +540,9 @@ electron_1.app.on('before-quit', async (event) => {
                 console.error('Failed to close session connections:', err);
             }),
             (0, languageServer_1.killLanguageServer)(),
+            (0, browserEngine_1.closeAllBrowserSessions)().catch((err) => {
+                console.error('Failed to close browser sessions:', err);
+            }),
         ]);
         // The host bridge server comes down last, in reverse order of startup: the
         // language server is its only client, so closing it first would just drop

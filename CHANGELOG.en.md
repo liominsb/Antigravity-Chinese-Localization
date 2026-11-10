@@ -4,6 +4,27 @@ This document tracks all version releases, core architecture adaptations, and fe
 
 ---
 
+## v2.30.0 (2026-11-10)
+
+### 1. Comprehensive Deep Adaptation for Antigravity v2.30.0 Official Major Release
+- **Seamless Official Version Upgrade**: Closely tracks official release 2.30.0 pushed on Nov 10, updating all project version metadata to `2.30.0`.
+- **Native Deep Integration for 20 New Subsystems**: Fully adapts 20 new upstream modules including built-in browser engine (`browserEngine/`), CDP pipe communication (`cdpPipe.js`), Chrome auto-discovery (`chromeDiscovery.js`), guest Web MCP controller (`guestWebMcpController.js`), and file chooser controller (`guestFileChooserController.js`).
+- **Native Security & Device Chooser Patch Injections**:
+  - Added native dialog localization for `dist/deviceChooser.js` (HID, USB, and Serial port selection and cancellation prompts).
+  - Added native dialog localization for `dist/webviewPopupSecurity.js` (connection info, certificate details, and security level indicators).
+
+### 2. UI & Interaction Polish
+- **Marketplace Shelf Alignment**: Thoroughly translated all shelf titles and descriptions ("Design, Creative & Media", "Productivity & Project Management", "Cloud Hosting & Deployment", "Developer Tools", and "Business").
+- **Search Input Placeholder Adaptation**: Matched `Search customizations...` with placeholder attribute pass-through.
+- **Project & Pinned Chat Menus**: Completed native right-click menus for projects and sorting options for pinned chats.
+- **Automation Empty State**: Intercepted single/plural variations (`No automation yet` / `No automations yet` / `No 自动化 yet` ➔ "暂无自动化").
+
+### 3. Build & Test Guarantee
+- **Latest Precompiled Asar**: Packaged `app.asar.ready` for instant hot-reload and atomic replacement on v2.30.0.
+- **100% Green TDD Test Suite**: Added Ticket-33 suite; all 36 test suites pass with zero failures.
+
+---
+
 ## v2.29.1 (2026-11-08)
 
 ### 1. Full Deep Adaptation for Antigravity v2.29.1

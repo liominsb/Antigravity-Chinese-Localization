@@ -43,19 +43,53 @@ const types_1 = require("./types");
 const updater_1 = require("./updater");
 const main_1 = __importDefault(require("electron-log/main"));
 const fs = __importStar(require("fs/promises"));
+const fsSync = __importStar(require("fs"));
+const path = __importStar(require("path"));
+const paths_1 = require("./paths");
+const debugConsole_1 = require("./debugConsole");
 const customScheme_1 = require("./customScheme");
 const tray_1 = require("./tray");
 const webviewBrowser_1 = require("./webviewBrowser");
 const constants_1 = require("./ideInstall/constants");
+const deviceChooser_1 = require("./deviceChooser");
 const url_1 = require("url");
 const wsl_1 = require("./wsl");
 const menu_1 = require("./menu");
 const scriptJail_1 = require("./scriptJail");
 const externalUrl_1 = require("./externalUrl");
 const utils_1 = require("./utils");
+const hubZoom_1 = require("./hubZoom");
 const wcvBrowserRegistry_1 = require("./wcvBrowserRegistry");
 const wcvIpcHandlers_1 = require("./wcvIpcHandlers");
 const guestDialogController_1 = require("./guestDialogController");
+const guestFileChooserController_1 = require("./guestFileChooserController");
+const guestPromptController_1 = require("./guestPromptController");
+const webviewPromptPreload_1 = require("./webviewPromptPreload");
+const isolatedWorldExec_1 = require("./isolatedWorldExec");
+const guestFrameBridge_1 = require("./guestFrameBridge");
+const guestNetworkController_1 = require("./guestNetworkController");
+const guestWebMcpController_1 = require("./guestWebMcpController");
+function isMainFramePromptCaller(event) {
+    const s = event?.sender;
+    return Boolean(s &&
+        !s.isDestroyed?.() &&
+        !event?.senderFrame?.parent &&
+        (!event?.senderFrame || !s.mainFrame || event.senderFrame === s.mainFrame));
+}
+const onHumanPromptSync = (event, rawJson) => {
+    guestPromptController_1.guestPromptController.handleSyncPrompt(event, rawJson);
+};
+const onHumanPromptSubscriberState = (event, subscribed) => {
+    if (isMainFramePromptCaller(event)) {
+        guestPromptController_1.guestPromptController.setHostSubscribed(event.sender, Boolean(subscribed));
+    }
+};
+deviceChooser_1.deviceChooserController.setHostResolver((webContentsId) => wcvBrowserRegistry_1.wcvBrowserRegistry.resolveDeviceChooserHost(webContentsId));
+function onDeviceChooserSubscriberState(event, subscribed) {
+    if ((0, wcvIpcHandlers_1.isAuthorizedHubMainFrameEvent)(event)) {
+        deviceChooser_1.deviceChooserController.setHostSubscribed(event.sender, Boolean(subscribed));
+    }
+}
 function buildContextMenuTemplate(items, onSelect) {
     return items.map((item) => {
         if (item.type === 'separator') {
@@ -86,7 +120,9 @@ function buildContextMenuTemplate(items, onSelect) {
 /**
  * Registers all IPC handlers for the main process.
  */
+const SAFE_UPLOAD_CONVERSATION_ID_RE = /^[A-Za-z0-9._-]+$/;
 function registerIpcHandlers(storageManager) {
+    (0, hubZoom_1.setHubZoomStorageManager)(storageManager);
     const getTargetHubWindow = () => {
         return (0, utils_1.getFocusedHubWindow)() ?? (0, utils_1.getHubWindows)()[0];
     };
@@ -135,6 +171,31 @@ function registerIpcHandlers(storageManager) {
             return undefined;
         }
         return mapPickedPath(result.filePaths[0]);
+    });
+    electron_1.ipcMain.handle('dialog:get-default-download-dir', (event) => {
+        const sender = event?.sender;
+        if (!sender ||
+            sender.isDestroyed?.() ||
+            event?.senderFrame?.parent ||
+            (event?.senderFrame &&
+                sender.mainFrame &&
+                event.senderFrame !== sender.mainFrame) ||
+            sender.getType?.() === 'webview' ||
+            (typeof sender.id === 'number' &&
+                wcvBrowserRegistry_1.wcvBrowserRegistry.isRegisteredWcv(sender.id))) {
+            throw new Error('Unauthorized dialog:get-default-download-dir sender');
+        }
+        try {
+            const downloadsDir = electron_1.app.getPath('downloads');
+            if (typeof downloadsDir !== 'string' || downloadsDir.includes('\0')) {
+                return null;
+            }
+            const trimmed = downloadsDir.trim();
+            return trimmed.length > 0 ? trimmed : null;
+        }
+        catch {
+            return null;
+        }
     });
     // Like 'dialog:open-workspace' but allows selecting multiple folders,
     // returning an array of paths (empty if cancelled).
@@ -216,7 +277,81 @@ function registerIpcHandlers(storageManager) {
             }
         }
     });
+    const readOsMicAccessStatus = () => {
+        try {
+            return electron_1.systemPreferences.getMediaAccessStatus('microphone');
+        }
+        catch {
+            return 'unknown';
+        }
+    };
+    electron_1.ipcMain.handle('mic:get-access-status', (event) => {
+        if (!(0, wcvIpcHandlers_1.isAuthorizedHubMainFrameEvent)(event)) {
+            return 'unknown';
+        }
+        if (process.platform === 'darwin' || process.platform === 'win32') {
+            return readOsMicAccessStatus();
+        }
+        return 'unknown';
+    });
+    let pendingMicAccessRequest = null;
+    electron_1.ipcMain.handle('mic:request-access', async (event) => {
+        if (!(0, wcvIpcHandlers_1.isAuthorizedHubMainFrameEvent)(event)) {
+            return 'unknown';
+        }
+        if (process.platform === 'darwin') {
+            const status = readOsMicAccessStatus();
+            if (status !== 'not-determined') {
+                return status;
+            }
+            if (!pendingMicAccessRequest) {
+                pendingMicAccessRequest =
+                    (async () => {
+                        try {
+                            const granted = await electron_1.systemPreferences.askForMediaAccess('microphone');
+                            if (granted) {
+                                return 'granted';
+                            }
+                            const after = readOsMicAccessStatus();
+                            return after === 'not-determined' ? 'denied' : after;
+                        }
+                        catch {
+                            return 'unknown';
+                        }
+                        finally {
+                            pendingMicAccessRequest = null;
+                        }
+                    })();
+            }
+            return pendingMicAccessRequest;
+        }
+        if (process.platform === 'win32') {
+            return readOsMicAccessStatus();
+        }
+        return 'unknown';
+    });
+    electron_1.ipcMain.handle('mic:open-system-preferences', async (event) => {
+        if (!(0, wcvIpcHandlers_1.isAuthorizedHubMainFrameEvent)(event)) {
+            return;
+        }
+        if (process.platform === 'darwin') {
+            await (0, externalUrl_1.openExternalSafely)('x-apple.systempreferences:com.apple.preference.security?Privacy_Microphone', 'confirmed');
+        }
+        else if (process.platform === 'win32') {
+            await (0, externalUrl_1.openExternalSafely)('ms-settings:privacy-microphone', 'confirmed');
+        }
+    });
     // Storage
+    electron_1.ipcMain.removeAllListeners?.('storage:get-items-sync');
+    electron_1.ipcMain.on('storage:get-items-sync', (event) => {
+        const s = event?.sender;
+        const trusted = Boolean(s) &&
+            !s.isDestroyed?.() &&
+            s.getType?.() !== 'webview' &&
+            !event.senderFrame?.parent &&
+            (0, utils_1.getHubWindows)().some((w) => (0, utils_1.getHubWebContents)(w) === s);
+        event.returnValue = trusted ? storageManager.getItemsSync() : null;
+    });
     electron_1.ipcMain.handle('storage:get-items', async () => {
         return storageManager.getItems();
     });
@@ -284,11 +419,42 @@ function registerIpcHandlers(storageManager) {
             win.close();
         }
     });
-    electron_1.ipcMain.handle('window:toggle-devtools', async () => {
+    electron_1.ipcMain.handle('window:toggle-devtools', async (event) => {
+        if (!(0, debugConsole_1.isDebugConsoleEnabled)() || !(0, wcvIpcHandlers_1.isAuthorizedHubMainFrameEvent)(event)) {
+            return;
+        }
         const win = getTargetHubWindow();
         if (win) {
             win.webContents.toggleDevTools();
         }
+    });
+    electron_1.ipcMain.removeListener?.(deviceChooser_1.WEBVIEW_DEVICE_CHOOSER_SUBSCRIBER_STATE_CHANNEL, onDeviceChooserSubscriberState);
+    electron_1.ipcMain.on?.(deviceChooser_1.WEBVIEW_DEVICE_CHOOSER_SUBSCRIBER_STATE_CHANNEL, onDeviceChooserSubscriberState);
+    electron_1.ipcMain.handle(deviceChooser_1.WEBVIEW_DEVICE_CHOOSER_RESPONSE_CHANNEL, async (event, requestId, resolution) => {
+        if (!(0, wcvIpcHandlers_1.isAuthorizedHubMainFrameEvent)(event)) {
+            throw new Error('Unauthorized webview:device-chooser-response sender');
+        }
+        if (typeof requestId !== 'string' ||
+            requestId.length === 0 ||
+            !resolution ||
+            typeof resolution !== 'object') {
+            return false;
+        }
+        const { action, deviceId } = resolution;
+        if (action === 'claim' || action === 'unclaimed' || action === 'cancel') {
+            return deviceChooser_1.deviceChooserController.respond(event.sender, requestId, {
+                action,
+            });
+        }
+        if (action === 'select' &&
+            typeof deviceId === 'string' &&
+            deviceId.length > 0) {
+            return deviceChooser_1.deviceChooserController.respond(event.sender, requestId, {
+                action: 'select',
+                deviceId,
+            });
+        }
+        return false;
     });
     let activeContextMenu = null;
     electron_1.ipcMain.handle('window:show-context-menu', async (_event, items) => {
@@ -332,34 +498,14 @@ function registerIpcHandlers(storageManager) {
     // Zoom — main-process source of truth so the level is reliably persisted
     // across restarts on all platforms (works around a Chromium quirk on Windows
     // where renderer-only webFrame.setZoomLevel changes aren't cached).
-    const ZOOM_LEVEL_KEY = 'zoomLevel';
-    const ZOOM_STEP = 0.5;
     electron_1.ipcMain.handle('window:zoom-in', async () => {
-        const win = getTargetHubWindow();
-        if (win) {
-            const newLevel = win.webContents.getZoomLevel() + ZOOM_STEP;
-            win.webContents.setZoomLevel(newLevel);
-            await storageManager.updateItems({
-                [ZOOM_LEVEL_KEY]: String(newLevel),
-            });
-        }
+        await (0, hubZoom_1.applyHubWindowZoom)(getTargetHubWindow(), 'in');
     });
     electron_1.ipcMain.handle('window:zoom-out', async () => {
-        const win = getTargetHubWindow();
-        if (win) {
-            const newLevel = win.webContents.getZoomLevel() - ZOOM_STEP;
-            win.webContents.setZoomLevel(newLevel);
-            await storageManager.updateItems({
-                [ZOOM_LEVEL_KEY]: String(newLevel),
-            });
-        }
+        await (0, hubZoom_1.applyHubWindowZoom)(getTargetHubWindow(), 'out');
     });
     electron_1.ipcMain.handle('window:reset-zoom', async () => {
-        const win = getTargetHubWindow();
-        if (win) {
-            win.webContents.setZoomLevel(0);
-            await storageManager.updateItems({ [ZOOM_LEVEL_KEY]: String(0) });
-        }
+        await (0, hubZoom_1.applyHubWindowZoom)(getTargetHubWindow(), 'reset');
     });
     // Auto-updater manual check
     electron_1.ipcMain.handle('updater:check-for-updates', () => {
@@ -399,6 +545,81 @@ function registerIpcHandlers(storageManager) {
             throw new Error(`WebContents ${webContentsId} is not owned by the calling renderer`);
         }
         return (0, webviewBrowser_1.setGuestDownloadDirectory)(wc, downloadDir);
+    });
+    const assertTopLevelSenderId = (event, channel) => {
+        if (event?.senderFrame?.parent) {
+            throw new Error(`Unauthorized ${channel} sender: subframe cannot invoke ${channel}`);
+        }
+        const sender = event?.sender;
+        if (!sender ||
+            sender.isDestroyed?.() ||
+            typeof sender.id !== 'number' ||
+            !Number.isInteger(sender.id)) {
+            throw new Error(`Unauthorized ${channel} sender`);
+        }
+        return sender.id;
+    };
+    electron_1.ipcMain.handle('webview:open-download', async (event, downloadId) => {
+        const senderId = assertTopLevelSenderId(event, 'webview:open-download');
+        if (typeof downloadId !== 'string') {
+            throw new Error('downloadId must be a string');
+        }
+        return (0, webviewBrowser_1.openTrackedWebviewDownload)(senderId, downloadId);
+    });
+    electron_1.ipcMain.handle('webview:show-download-in-folder', (event, downloadId) => {
+        const senderId = assertTopLevelSenderId(event, 'webview:show-download-in-folder');
+        if (typeof downloadId !== 'string') {
+            throw new Error('downloadId must be a string');
+        }
+        return (0, webviewBrowser_1.showTrackedWebviewDownloadInFolder)(senderId, downloadId);
+    });
+    electron_1.ipcMain.handle('webview:cancel-download', (event, downloadId) => {
+        const senderId = assertTopLevelSenderId(event, 'webview:cancel-download');
+        if (typeof downloadId !== 'string') {
+            throw new Error('downloadId must be a string');
+        }
+        return (0, webviewBrowser_1.cancelTrackedWebviewDownload)(senderId, downloadId);
+    });
+    electron_1.ipcMain.handle('dialog:select-download-dir', async (event, defaultPath) => {
+        assertTopLevelSenderId(event, 'dialog:select-download-dir');
+        let resolvedDefaultPath;
+        if (typeof defaultPath === 'string' &&
+            defaultPath.trim().length > 0 &&
+            !defaultPath.includes('\0')) {
+            resolvedDefaultPath = defaultPath.trim();
+        }
+        else {
+            try {
+                resolvedDefaultPath = electron_1.app.getPath('downloads');
+            }
+            catch {
+                resolvedDefaultPath = undefined;
+            }
+        }
+        const options = {
+            properties: ['openDirectory', 'createDirectory'],
+            title: 'Select Download Folder',
+            defaultPath: resolvedDefaultPath,
+        };
+        const owner = electron_1.BrowserWindow.fromWebContents(event.sender);
+        const result = owner
+            ? await electron_1.dialog.showOpenDialog(owner, options)
+            : await electron_1.dialog.showOpenDialog(options);
+        if (result.canceled || result.filePaths.length === 0) {
+            return null;
+        }
+        const picked = result.filePaths[0];
+        if (typeof picked !== 'string' ||
+            picked.includes('\0') ||
+            !path.isAbsolute(picked)) {
+            return null;
+        }
+        try {
+            return (await fs.stat(picked)).isDirectory() ? picked : null;
+        }
+        catch {
+            return null;
+        }
     });
     // IDE installation check
     electron_1.ipcMain.handle('ide:is-installed', async () => {
@@ -529,7 +750,7 @@ function registerIpcHandlers(storageManager) {
             event.senderFrame.parent) {
             throw new Error('webview:execute-js-isolated-world must be called from the main frame');
         }
-        return wc.executeJavaScriptInIsolatedWorld(worldId, [{ code }], false);
+        return (0, isolatedWorldExec_1.executeJavaScriptInIsolatedWorldWhenReady)(wc, worldId, [{ code }], false);
     });
     const resolveOwnedGuestWebContents = (event, webContentsId) => {
         if (typeof webContentsId !== 'number' ||
@@ -551,20 +772,68 @@ function registerIpcHandlers(storageManager) {
         }
         return { wc, sender };
     };
+    electron_1.ipcMain.handle('webview:get-network-requests', (event, webContentsId) => {
+        const { wc, sender } = resolveOwnedGuestWebContents(event, webContentsId);
+        if (!event?.senderFrame ||
+            (sender.mainFrame && event.senderFrame !== sender.mainFrame) ||
+            event.senderFrame.parent) {
+            throw new Error('webview:get-network-requests must be called from the main frame');
+        }
+        return guestNetworkController_1.guestNetworkController.getRequests(wc.id);
+    });
+    electron_1.ipcMain.handle('webview:clear-network-requests', (event, webContentsId) => {
+        const { wc, sender } = resolveOwnedGuestWebContents(event, webContentsId);
+        if (!event?.senderFrame ||
+            (sender.mainFrame && event.senderFrame !== sender.mainFrame) ||
+            event.senderFrame.parent) {
+            throw new Error('webview:clear-network-requests must be called from the main frame');
+        }
+        return guestNetworkController_1.guestNetworkController.clearRequests(wc.id);
+    });
+    const guestOf = (e, id) => {
+        const { wc, sender } = resolveOwnedGuestWebContents(e, id);
+        const f = e?.senderFrame;
+        if (!f || f.parent || (sender.mainFrame && f !== sender.mainFrame)) {
+            throw new Error('WebMCP IPC must be called from the main frame');
+        }
+        return { wc, sender };
+    };
+    electron_1.ipcMain.handle('webview:webmcp-set-enabled', (event, enabled) => {
+        if (!(0, wcvIpcHandlers_1.isAuthorizedHubMainFrameEvent)(event) || typeof enabled !== 'boolean') {
+            throw new Error('Invalid webview:webmcp-set-enabled call');
+        }
+        guestWebMcpController_1.guestWebMcpController.setEnabled(enabled);
+        return guestWebMcpController_1.guestWebMcpController.isEnabled();
+    });
+    electron_1.ipcMain.handle('webview:webmcp-list-tools', (event, webContentsId, origin) => guestWebMcpController_1.guestWebMcpController.listTools(guestOf(event, webContentsId).wc, origin));
+    electron_1.ipcMain.handle('webview:webmcp-call-tool', (event, webContentsId, origin, params) => {
+        const { wc, sender } = guestOf(event, webContentsId);
+        return guestWebMcpController_1.guestWebMcpController.callTool(wc, sender, origin, params);
+    });
+    electron_1.ipcMain.handle('webview:webmcp-cancel-tool-call', (event, webContentsId, callId) => guestWebMcpController_1.guestWebMcpController.cancelToolCall(webContentsId, callId, guestOf(event, webContentsId).sender.id));
     electron_1.ipcMain.handle('webview:set-dialog-policy', async (event, webContentsId, policy) => {
         const { wc, sender } = resolveOwnedGuestWebContents(event, webContentsId);
         const safePolicy = {
             enabled: Boolean(policy?.enabled),
-            ...(policy?.action === 'accept' ||
-                policy?.action === 'dismiss' ||
-                policy?.action === 'manual'
-                ? { action: policy.action }
-                : {}),
-            ...(typeof policy?.promptText === 'string'
-                ? { promptText: policy.promptText }
-                : {}),
-            ...(typeof policy?.tabKey === 'string' ? { tabKey: policy.tabKey } : {}),
         };
+        if (policy?.action === 'accept' ||
+            policy?.action === 'dismiss' ||
+            policy?.action === 'manual') {
+            safePolicy.action = policy.action;
+        }
+        if (typeof policy?.promptText === 'string') {
+            safePolicy.promptText = policy.promptText;
+        }
+        if (typeof policy?.tabKey === 'string') {
+            safePolicy.tabKey = policy.tabKey;
+        }
+        if (policy?.fallbackAction === 'accept' ||
+            policy?.fallbackAction === 'dismiss') {
+            safePolicy.fallbackAction = policy.fallbackAction;
+        }
+        if (typeof policy?.fallbackPromptText === 'string') {
+            safePolicy.fallbackPromptText = policy.fallbackPromptText;
+        }
         return guestDialogController_1.guestDialogController.setPolicy(wc, sender, safePolicy);
     });
     electron_1.ipcMain.handle('webview:handle-javascript-dialog', async (event, webContentsId, decision) => {
@@ -579,6 +848,86 @@ function registerIpcHandlers(storageManager) {
                 : {}),
         });
     });
+    electron_1.ipcMain.removeListener?.(webviewPromptPreload_1.HUMAN_PROMPT_SYNC_CHANNEL, onHumanPromptSync);
+    electron_1.ipcMain.on?.(webviewPromptPreload_1.HUMAN_PROMPT_SYNC_CHANNEL, onHumanPromptSync);
+    electron_1.ipcMain.removeListener?.(guestPromptController_1.WEBVIEW_PROMPT_SUBSCRIBER_STATE_CHANNEL, onHumanPromptSubscriberState);
+    electron_1.ipcMain.on?.(guestPromptController_1.WEBVIEW_PROMPT_SUBSCRIBER_STATE_CHANNEL, onHumanPromptSubscriberState);
+    electron_1.ipcMain.handle(guestPromptController_1.WEBVIEW_PROMPT_RESPONSE_CHANNEL, (event, promptId, value) => {
+        if (!isMainFramePromptCaller(event)) {
+            throw new Error('webview:prompt-response must be called from the main frame');
+        }
+        return guestPromptController_1.guestPromptController.respondPrompt(event.sender.id, promptId, typeof value === 'string' ? value : null);
+    });
+    const assertMainFrameSender = (event, channel) => {
+        const sender = event?.sender;
+        if (!sender ||
+            sender.isDestroyed() ||
+            !event?.senderFrame ||
+            event.senderFrame !== sender.mainFrame ||
+            event.senderFrame.parent) {
+            throw new Error(`${channel} must be called from the main frame`);
+        }
+    };
+    // The renderer only names a conversation; the uploads root itself is always
+    // derived here from the app data dir the Language Server was started with.
+    const pinUploadsRoot = (conversationId) => {
+        if (typeof conversationId !== 'string' ||
+            !SAFE_UPLOAD_CONVERSATION_ID_RE.test(conversationId) ||
+            /^\.+$/.test(conversationId)) {
+            return '';
+        }
+        let appDataDir = (0, paths_1.getAppDataDir)();
+        try {
+            appDataDir = fsSync.realpathSync(appDataDir);
+        }
+        catch {
+            // Upload validation reports the missing directory.
+        }
+        return path.join(appDataDir, 'brain', conversationId, 'browser_sandbox', 'uploads');
+    };
+    const resolveMainFrameOwnedGuest = (event, webContentsId, channel) => {
+        const { wc, sender } = resolveOwnedGuestWebContents(event, webContentsId);
+        assertMainFrameSender(event, channel);
+        return { wc, sender };
+    };
+    electron_1.ipcMain.handle('webview:set-file-chooser-policy', async (event, webContentsId, policy) => {
+        const { wc, sender } = resolveMainFrameOwnedGuest(event, webContentsId, 'webview:set-file-chooser-policy');
+        return guestFileChooserController_1.guestFileChooserController.setPolicy(wc, sender, {
+            enabled: Boolean(policy?.enabled),
+            ...(typeof policy?.tabKey === 'string' ? { tabKey: policy.tabKey } : {}),
+        });
+    });
+    electron_1.ipcMain.handle('webview:handle-file-chooser', async (event, webContentsId, decision) => {
+        const { wc } = resolveMainFrameOwnedGuest(event, webContentsId, 'webview:handle-file-chooser');
+        const pinned = {
+            ...(decision ?? { chooserId: '' }),
+        };
+        if (Array.isArray(pinned.files) && pinned.files.length > 0) {
+            pinned.allowedUploadsDir = pinUploadsRoot(pinned.expectedConversationId);
+        }
+        return guestFileChooserController_1.guestFileChooserController.handleFileChooser(wc, pinned);
+    });
+    electron_1.ipcMain.handle('webview:set-input-files', async (event, webContentsId, request) => {
+        const { wc } = resolveMainFrameOwnedGuest(event, webContentsId, 'webview:set-input-files');
+        return guestFileChooserController_1.guestFileChooserController.setInputFiles(wc, {
+            ...request,
+            allowedUploadsDir: pinUploadsRoot(request?.expectedConversationId),
+        });
+    });
+    electron_1.ipcMain.handle('webview:resolve-upload-files', (event, req) => {
+        assertMainFrameSender(event, 'webview:resolve-upload-files');
+        return (0, guestFileChooserController_1.resolveGuestUploadFiles)(req && {
+            ...req,
+            uploadsRoot: pinUploadsRoot(req.expectedConversationId),
+        });
+    });
+    const assertMainFrameGuestCaller = (event, webContentsId, channel) => resolveMainFrameOwnedGuest(event, webContentsId, channel).wc;
+    electron_1.ipcMain.handle('webview:list-frames', async (event, wcId) => guestFrameBridge_1.guestFrameBridge.listFrames(assertMainFrameGuestCaller(event, wcId, 'webview:list-frames')));
+    electron_1.ipcMain.handle('webview:execute-js-frame-isolated-world', async (event, wcId, frameId, code, expectedOrigin) => {
+        const channel = 'webview:execute-js-frame-isolated-world';
+        const wc = assertMainFrameGuestCaller(event, wcId, channel);
+        return guestFrameBridge_1.guestFrameBridge.executeInFrameIsolatedWorld(wc, frameId, code, expectedOrigin);
+    });
     // Execute an untrusted agent script inside a single-use, zero-egress
     // Electron script jail and transfer the paired MessagePort to the caller.
     electron_1.ipcMain.handle('script-jail:run', async (event, req) => {
@@ -587,7 +936,10 @@ function registerIpcHandlers(storageManager) {
     electron_1.ipcMain.handle('script-jail:abort', (event, jailId) => {
         return (0, scriptJail_1.abortScriptInJail)(event?.sender, jailId, event?.senderFrame);
     });
-    (0, wcvIpcHandlers_1.registerWcvIpcHandlers)();
+    electron_1.ipcMain.handle('script-jail:warm', async (event) => {
+        return (0, scriptJail_1.warmScriptJail)(event?.sender, event?.senderFrame);
+    });
+    (0, wcvIpcHandlers_1.registerWcvIpcHandlers)(undefined, undefined, storageManager);
 }
 
 

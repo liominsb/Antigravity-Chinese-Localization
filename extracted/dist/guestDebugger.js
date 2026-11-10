@@ -1,6 +1,19 @@
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
+exports.CDP_NETWORK_ENABLE_PARAMS = void 0;
 exports.ensureGuestDebuggerAttached = ensureGuestDebuggerAttached;
+/**
+ * Shared CDP `Network.enable` buffer parameters across all main-process CDP
+ * clients sharing a guest `webContents.debugger` session (`webviewSecurityState`
+ * and `guestNetworkController`), keeping a bounded 4 MiB per-guest / 256 KiB
+ * per-resource response buffer so `Network.getResponseBody` can read small
+ * `4xx/5xx` and `xhr`/`fetch` diagnostic bodies without zeroing out another
+ * client's buffer.
+ */
+exports.CDP_NETWORK_ENABLE_PARAMS = {
+    maxTotalBufferSize: 4 * 1024 * 1024,
+    maxResourceBufferSize: 256 * 1024,
+};
 /**
  * Attaches a guest's `webContents.debugger` unless it is already attached, and
  * returns whether it is attached afterwards.

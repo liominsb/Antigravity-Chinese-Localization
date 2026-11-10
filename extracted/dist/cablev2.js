@@ -68,6 +68,7 @@ const fs = __importStar(require("fs"));
 const https = __importStar(require("https"));
 const path = __importStar(require("path"));
 const qrEncoder_1 = require("./qrEncoder");
+const utils_1 = require("./utils");
 /** IPC channel invoked by `<webview>` guests to query whether `caBLEv2` is available. */
 exports.WEBAUTHN_CABLE_AVAILABLE_CHANNEL = 'webauthn:cable-available';
 /** IPC channel invoked by `<webview>` guests to perform a `caBLEv2` assertion. */
@@ -79,7 +80,10 @@ exports.MAX_WEBSOCKET_MESSAGE_BYTES = 1024 * 1024;
 const MAX_CBOR_DEPTH = 16;
 const MAX_CBOR_COLLECTION_ITEMS = 1024;
 const MIN_WEBAUTHN_CHALLENGE_BYTES = 16;
-const MAX_WEBAUTHN_CHALLENGE_BYTES = 1024;
+// The challenge is only hashed into `clientDataHash`, so the authenticator never
+// sees its length. Google sign-in sends challenges of over 12 KB; this bound only
+// limits the work done on a pathological challenge after it arrives over IPC.
+const MAX_WEBAUTHN_CHALLENGE_BYTES = 64 * 1024;
 const MIN_AUTHENTICATOR_DATA_BYTES = 37;
 const AUTH_DATA_FLAG_UP = 0x01;
 const AUTH_DATA_FLAG_UV = 0x04;
@@ -1916,6 +1920,19 @@ async function performCableGetAssertion(request, origin, deps) {
 }
 let cableIpcRegistered = false;
 /**
+ * Returns `'webview'` for `<webview>` guests, the tab state for registered
+ * `WebContentsView` tabs, or `null` for senders that may not use `caBLEv2`.
+ */
+function resolveCableBrowserGuest(sender, resolveWcvTab) {
+    if (!sender || typeof sender.getType !== 'function') {
+        return null;
+    }
+    if (sender.getType() === 'webview') {
+        return 'webview';
+    }
+    return resolveWcvTab?.(sender.id) ?? null;
+}
+/**
  * Registers main-process IPC handlers for `<webview>` `caBLEv2` WebAuthn
  * assertions. Safe to call multiple times (idempotent).
  */
@@ -1926,7 +1943,11 @@ function registerCableWebAuthnIpcHandlers(options) {
     cableIpcRegistered = true;
     const checkScannerAvailable = options?.isScannerAvailable ?? isCableBleScannerAvailable;
     const runAssertion = options?.performAssertion ?? performCableGetAssertion;
-    electron_1.ipcMain.handle(exports.WEBAUTHN_CABLE_AVAILABLE_CHANNEL, () => checkScannerAvailable({ platform: options?.platform }));
+    // Report caBLE as unavailable to senders the assertion handler would reject,
+    // so the guest preload falls back to native WebAuthn instead of failing.
+    electron_1.ipcMain.handle(exports.WEBAUTHN_CABLE_AVAILABLE_CHANNEL, (event) => resolveCableBrowserGuest(event?.sender, options?.resolveWcvTab)
+        ? checkScannerAvailable({ platform: options?.platform })
+        : false);
     electron_1.ipcMain.handle(exports.WEBAUTHN_CABLE_GET_ASSERTION_CHANNEL, async (event, request) => {
         const platform = options?.platform ?? process.platform;
         if (platform !== 'darwin') {
@@ -1942,9 +1963,9 @@ function registerCableWebAuthnIpcHandlers(options) {
             (typeof sender.isDestroyed === 'function' && sender.isDestroyed())) {
             throw new Error('[NotAllowedError] Sender WebContents is destroyed');
         }
-        if (typeof sender.getType !== 'function' ||
-            sender.getType() !== 'webview') {
-            throw new Error('[SecurityError] WebAuthn caBLEv2 IPC is restricted to <webview> guests');
+        const browserGuest = resolveCableBrowserGuest(sender, options?.resolveWcvTab);
+        if (!browserGuest) {
+            throw new Error('[SecurityError] WebAuthn caBLEv2 IPC is restricted to built-in browser guests');
         }
         const senderFrame = event.senderFrame;
         if (!senderFrame || senderFrame !== sender.mainFrame) {
@@ -1961,6 +1982,13 @@ function registerCableWebAuthnIpcHandlers(options) {
         if (typeof sender.getVisibilityState === 'function' &&
             sender.getVisibilityState() === 'hidden') {
             throw new Error('[NotAllowedError] WebAuthn caBLEv2 requires a visible <webview>');
+        }
+        // Parked `WebContentsView` tabs stay attached and report `visible`, so
+        // consult the registry: a hidden or agent-driven tab must not open a QR
+        // prompt over the tab the user is looking at.
+        if (browserGuest !== 'webview' &&
+            (!browserGuest.visible || browserGuest.isAgentStepActive)) {
+            throw new Error('[NotAllowedError] WebAuthn caBLEv2 requires the visible, user-controlled browser tab');
         }
         const isFocused = typeof sender.isFocused === 'function' ? sender.isFocused() : true;
         const lastInputAt = lastInputTimestampBySender.get(sender.id) ?? 0;
@@ -1995,15 +2023,12 @@ function registerCableWebAuthnIpcHandlers(options) {
             const fromHost = typeof electron_1.BrowserWindow.fromWebContents === 'function'
                 ? electron_1.BrowserWindow.fromWebContents(hostContents)
                 : null;
-            const focusedWin = typeof electron_1.BrowserWindow.getFocusedWindow === 'function'
-                ? electron_1.BrowserWindow.getFocusedWindow()
-                : null;
-            const nonPopupWindows = typeof electron_1.BrowserWindow.getAllWindows === 'function'
-                ? electron_1.BrowserWindow.getAllWindows().filter((w) => !isPopupWindow(w))
-                : [];
+            // Static `BrowserWindow` focus/list lookups never return the Hub's
+            // `BaseWindow`, so fall back through the Hub window registry.
             const parentWindow = (fromHost && !isPopupWindow(fromHost) ? fromHost : null) ??
-                (focusedWin && !isPopupWindow(focusedWin) ? focusedWin : null) ??
-                nonPopupWindows[0] ??
+                (0, utils_1.resolveHubWindowFromWebContents)(sender) ??
+                (0, utils_1.getFocusedHubWindow)() ??
+                (0, utils_1.getHubWindows)()[0] ??
                 null;
             let webviewOffsetInParent = null;
             if (sender.hostWebContents &&

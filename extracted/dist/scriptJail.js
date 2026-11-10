@@ -33,24 +33,34 @@ var __importStar = (this && this.__importStar) || (function () {
     };
 })();
 Object.defineProperty(exports, "__esModule", { value: true });
-exports.SCRIPT_JAIL_PRELOAD_PATH = exports.MAX_SCRIPT_JAIL_ERROR_MESSAGE_LENGTH = exports.MAX_SCRIPT_JAIL_RESULT_BYTES = exports.SCRIPT_JAIL_RSS_POLL_INTERVAL_MS = exports.MAX_SCRIPT_JAIL_RSS_KB = exports.MAX_CONCURRENT_JAILS_GLOBAL = exports.MAX_CONCURRENT_JAILS_PER_SENDER = exports.MIN_SCRIPT_JAIL_TIMEOUT_MS = exports.MAX_SCRIPT_JAIL_TIMEOUT_MS = exports.DEFAULT_SCRIPT_JAIL_TIMEOUT_MS = exports.SCRIPT_JAIL_BLACKHOLE_PROXY_BYPASS_RULES = exports.SCRIPT_JAIL_BLACKHOLE_PROXY_RULES = exports.SCRIPT_JAIL_PARTITION = exports.SCRIPT_JAIL_PORT_MESSAGE_TYPE = exports.SCRIPT_JAIL_PORT_CHANNEL = void 0;
+exports.SCRIPT_JAIL_PRELOAD_PATH = exports.MAX_SCRIPT_JAIL_ERROR_MESSAGE_LENGTH = exports.MAX_SCRIPT_JAIL_RESULT_BYTES = exports.SCRIPT_JAIL_RSS_POLL_INTERVAL_MS = exports.MAX_SCRIPT_JAIL_RSS_KB = exports.MAX_CONSECUTIVE_IDLE_DEATHS = exports.SCRIPT_JAIL_POOL_TARGET_IDLE = exports.MAX_QUEUED_JAILS_GLOBAL = exports.MAX_QUEUED_JAILS_PER_SENDER = exports.MAX_CONCURRENT_JAILS_GLOBAL = exports.MAX_CONCURRENT_JAILS_PER_SENDER = exports.SCRIPT_JAIL_ACQUIRE_TIMEOUT_MS = exports.MIN_SCRIPT_JAIL_TIMEOUT_MS = exports.MAX_SCRIPT_JAIL_TIMEOUT_MS = exports.DEFAULT_SCRIPT_JAIL_TIMEOUT_MS = exports.SCRIPT_JAIL_BLACKHOLE_PROXY_BYPASS_RULES = exports.SCRIPT_JAIL_BLACKHOLE_PROXY_RULES = exports.SCRIPT_JAIL_PARTITION = exports.SCRIPT_JAIL_PORT_MESSAGE_TYPE = exports.SCRIPT_JAIL_PORT_CHANNEL = exports.SCRIPT_JAIL_PROTOCOL_VERSION = void 0;
 exports.isScriptJailSession = isScriptJailSession;
+exports.getScriptJailPoolSnapshot = getScriptJailPoolSnapshot;
+exports.waitForScriptJailPoolIdle = waitForScriptJailPoolIdle;
+exports.resetScriptJailStateForTests = resetScriptJailStateForTests;
 exports.resolveScriptJailTimeoutMs = resolveScriptJailTimeoutMs;
 exports.assertAuthorizedJailSender = assertAuthorizedJailSender;
 exports.hardenScriptJailSession = hardenScriptJailSession;
 exports.hardenScriptJailWebContents = hardenScriptJailWebContents;
 exports.buildScriptJailWorkerCode = buildScriptJailWorkerCode;
 exports.buildScriptJailBootstrapCode = buildScriptJailBootstrapCode;
+exports.warmScriptJail = warmScriptJail;
 exports.abortScriptInJail = abortScriptInJail;
 exports.runScriptInJail = runScriptInJail;
 /**
- * Ephemeral, zero-egress Electron Script Jail (`runScriptInJail` / `abortScriptInJail`).
+ * Ephemeral, zero-egress Electron Script Jail (`runScriptInJail` / `abortScriptInJail` / `warmScriptJail`).
  *
- * Security & Consumer Contract (for AUIT `CL_0` callers):
- * 1. **Port handoff (`window.addEventListener('message', onPort)`)**:
- *    - Register the `message` listener BEFORE calling `electronNative.runScriptInJail(...)`,
- *      because the `MessagePort` arrives via `agy-script-jail:port` before `runScriptInJail`
- *      resolves.
+ * Security & Consumer Contract (for AUIT `CL_0` callers, `scriptJailProtocol === 2`):
+ * 1. **Hub-side global FIFO admission & Port-as-admission (`window.addEventListener('message', onPort)`)**:
+ *    - Register the `message` listener BEFORE calling `electronNative.runScriptInJail(...)`.
+ *    - `runScriptInJail` accepts requests into a main-process global FIFO queue (`QUEUED` state,
+ *      bounded at `MAX_QUEUED_JAILS_PER_SENDER = 8` / `MAX_QUEUED_JAILS_GLOBAL = 32`) when the
+ *      running caps (`MAX_CONCURRENT_JAILS_PER_SENDER = 4` / `MAX_CONCURRENT_JAILS_GLOBAL = 8`)
+ *      are full, and only delivers the `MessagePort` on `agy-script-jail:port` once a jail is
+ *      actually assigned (`RUNNING` state).
+ *    - The per-script `timeoutMs` clock and `512 MB` RSS watchdog start at jail assignment,
+ *      not while waiting in the queue. Callers should start their execution budget, capture
+ *      page baselines, and mark active actuation upon receiving the `agy-script-jail-port` event.
  *    - Always verify `event.source === window`, `event.data?.type === 'agy-script-jail-port'`,
  *      `event.data?.jailId === jailId`, and `event.ports[0]` so embedded subframes cannot
  *      spoof the port handoff.
@@ -70,6 +80,8 @@ const electron_1 = require("electron");
 const crypto = __importStar(require("crypto"));
 const path = __importStar(require("path"));
 const utils_1 = require("./utils");
+const isolatedWorldExec_1 = require("./isolatedWorldExec");
+exports.SCRIPT_JAIL_PROTOCOL_VERSION = 2;
 exports.SCRIPT_JAIL_PORT_CHANNEL = 'agy-script-jail:port';
 exports.SCRIPT_JAIL_PORT_MESSAGE_TYPE = 'agy-script-jail-port';
 /** Random per-process non-persistent partition so no `<webview partition="...">` can guess it. */
@@ -77,11 +89,17 @@ exports.SCRIPT_JAIL_PARTITION = `agy-script-jail-${crypto.randomUUID()}`;
 /** Blackhole proxy routing all proxyable traffic to dead loopback port 9 without localhost bypass. */
 exports.SCRIPT_JAIL_BLACKHOLE_PROXY_RULES = 'http://127.0.0.1:9';
 exports.SCRIPT_JAIL_BLACKHOLE_PROXY_BYPASS_RULES = '<-loopback>';
-exports.DEFAULT_SCRIPT_JAIL_TIMEOUT_MS = 15000;
+// Matches the agent browser's 30 s per-script budget.
+exports.DEFAULT_SCRIPT_JAIL_TIMEOUT_MS = 30000;
 exports.MAX_SCRIPT_JAIL_TIMEOUT_MS = 30000;
 exports.MIN_SCRIPT_JAIL_TIMEOUT_MS = 50;
+exports.SCRIPT_JAIL_ACQUIRE_TIMEOUT_MS = 10000;
 exports.MAX_CONCURRENT_JAILS_PER_SENDER = 4;
 exports.MAX_CONCURRENT_JAILS_GLOBAL = 8;
+exports.MAX_QUEUED_JAILS_PER_SENDER = 8;
+exports.MAX_QUEUED_JAILS_GLOBAL = 32;
+exports.SCRIPT_JAIL_POOL_TARGET_IDLE = 2;
+exports.MAX_CONSECUTIVE_IDLE_DEATHS = 3;
 exports.MAX_SCRIPT_JAIL_RSS_KB = 512 * 1024;
 exports.SCRIPT_JAIL_RSS_POLL_INTERVAL_MS = 200;
 exports.MAX_SCRIPT_JAIL_RESULT_BYTES = 1024 * 1024;
@@ -93,11 +111,80 @@ const WORKER_ERROR_CODES = new Set([
     'RUNTIME_ERROR',
     'SERIALIZATION_ERROR',
 ]);
+class JailSpawnError extends Error {
+}
+const queuedJails = new Map();
 const activeJails = new Map();
+const senderWatchers = new Map();
+const idleWarmJails = [];
+const inFlightWarmups = new Set();
+/**
+ * Strong reference anchor for every live detached `WebContentsView` (warming, idle,
+ * running, or orphaned acquire). Because jail views are never attached to a window,
+ * dropping the JS `WebContentsView` reference while `webContents` is in use allows V8
+ * GC to finalize the C++ view and destroy its `webContents` mid-run.
+ */
+const liveJailViews = new Set();
+let poolActivated = false;
+let consecutiveIdleDeaths = 0;
+let preloadEpoch = 0;
 let jailSessionInstance = null;
 /** Returns `true` if `targetSession` is the dedicated script-jail session. */
 function isScriptJailSession(targetSession) {
     return Boolean(targetSession && targetSession === jailSessionInstance);
+}
+/** Returns a read-only snapshot of the script-jail pool and admission queue. */
+function getScriptJailPoolSnapshot() {
+    const liveWarmIds = [];
+    for (const entry of idleWarmJails) {
+        if (!entry.jailContents.isDestroyed()) {
+            liveWarmIds.push(entry.jailContents.id);
+        }
+    }
+    return {
+        poolActivated,
+        idleWarmJails: liveWarmIds.length,
+        idleWarmWebContentsIds: liveWarmIds,
+        warmingJails: inFlightWarmups.size,
+        runningJails: activeJails.size,
+        runningIds: [...activeJails.keys()],
+        queuedJails: queuedJails.size,
+        queuedIds: [...queuedJails.keys()],
+    };
+}
+/** Waits for all in-flight background pool warmup tasks to settle. */
+async function waitForScriptJailPoolIdle() {
+    while (inFlightWarmups.size > 0) {
+        await Promise.allSettled([...inFlightWarmups]);
+    }
+    return getScriptJailPoolSnapshot();
+}
+function closeJailView(jailView, jailContents) {
+    if (jailView) {
+        liveJailViews.delete(jailView);
+    }
+    if (jailContents && !jailContents.isDestroyed()) {
+        jailContents.close();
+    }
+}
+function closeAllIdleWarmJails() {
+    while (idleWarmJails.length > 0) {
+        const entry = idleWarmJails.shift();
+        entry.detachIdleListeners();
+        closeJailView(entry.jailView, entry.jailContents);
+    }
+}
+/** Resets pool and queue state (closing any idle warm jails). Intended for shutdown and unit tests. */
+function resetScriptJailStateForTests() {
+    poolActivated = false;
+    consecutiveIdleDeaths = 0;
+    preloadEpoch = 0;
+    closeAllIdleWarmJails();
+    liveJailViews.clear();
+    for (const entry of [...queuedJails.values()]) {
+        entry.settleQueued(failResult('SCRIPT_ABORTED', 'Script jail state reset'));
+    }
+    queuedJails.clear();
 }
 function failResult(errorCode, errorMessage) {
     return {
@@ -115,6 +202,66 @@ function resolveScriptJailTimeoutMs(req) {
 }
 function isValidJailId(rawJailId) {
     return (typeof rawJailId === 'string' && /^[A-Za-z0-9._:-]{1,128}$/.test(rawJailId));
+}
+function getRunningCountForSender(senderId) {
+    let count = 0;
+    for (const entry of activeJails.values()) {
+        if (entry.senderId === senderId) {
+            count++;
+        }
+    }
+    return count;
+}
+function getQueuedCountForSender(senderId) {
+    let count = 0;
+    for (const entry of queuedJails.values()) {
+        if (entry.senderId === senderId) {
+            count++;
+        }
+    }
+    return count;
+}
+function registerSenderAbortCallback(sender, cb) {
+    let watcher = senderWatchers.get(sender);
+    if (!watcher) {
+        const callbacks = new Set();
+        const fireAll = (res) => {
+            for (const fn of [...callbacks]) {
+                fn(res);
+            }
+        };
+        const onDestroyed = () => fireAll(failResult('SCRIPT_ABORTED', 'Requesting sender WebContents was destroyed'));
+        const onGone = () => fireAll(failResult('SCRIPT_ABORTED', 'Requesting sender renderer process exited'));
+        const onNavigate = (details) => {
+            if (details?.isMainFrame && !details.isSameDocument) {
+                fireAll(failResult('SCRIPT_ABORTED', 'Requesting sender WebContents navigated'));
+            }
+        };
+        sender.on('destroyed', onDestroyed);
+        sender.on('render-process-gone', onGone);
+        sender.on('did-start-navigation', onNavigate);
+        watcher = { sender, callbacks, onDestroyed, onGone, onNavigate };
+        senderWatchers.set(sender, watcher);
+    }
+    watcher.callbacks.add(cb);
+    let removed = false;
+    return () => {
+        if (removed) {
+            return;
+        }
+        removed = true;
+        const current = senderWatchers.get(sender);
+        if (!current) {
+            return;
+        }
+        current.callbacks.delete(cb);
+        if (current.callbacks.size === 0) {
+            senderWatchers.delete(sender);
+            sender.removeListener('destroyed', current.onDestroyed);
+            sender.removeListener('render-process-gone', current.onGone);
+            sender.removeListener('did-start-navigation', current.onNavigate);
+        }
+    };
 }
 /** Verifies `sender` belongs to the main frame of an active Hub `BrowserWindow`. */
 function assertAuthorizedJailSender(sender, senderFrame) {
@@ -139,23 +286,17 @@ function assertAuthorizedJailSender(sender, senderFrame) {
         throw new Error('Unauthorized script-jail sender: WebContents is not an active Hub BrowserWindow');
     }
 }
-/**
- * Re-asserts full fail-closed hardening on the script-jail `Session` before each run.
- *
- * Actively strips any session-level preload scripts (such as `electron-log-preload`
- * injected by `electron-log`'s `app.on('session-created')` listener via
- * `registerPreloadScript`, or legacy `setPreloads` entries) so only
- * `SCRIPT_JAIL_PRELOAD_PATH` runs in the jail, then asserts zero session preloads
- * remain (failing closed if removal did not stick).
- */
-async function hardenScriptJailSession(jailSession) {
-    for (const script of jailSession.getPreloadScripts()) {
+function scrubAndAssertZeroSessionPreloads(jailSession) {
+    const modernPreloads = jailSession.getPreloadScripts();
+    for (const script of modernPreloads) {
         jailSession.unregisterPreloadScript(script.id);
     }
     const legacySession = jailSession;
-    if (typeof legacySession.getPreloads === 'function' &&
-        typeof legacySession.setPreloads === 'function' &&
-        legacySession.getPreloads().length > 0) {
+    const legacyPreloadCount = typeof legacySession.getPreloads === 'function'
+        ? legacySession.getPreloads().length
+        : 0;
+    if (legacyPreloadCount > 0 &&
+        typeof legacySession.setPreloads === 'function') {
         legacySession.setPreloads([]);
     }
     const remainingModern = jailSession.getPreloadScripts().length;
@@ -165,6 +306,24 @@ async function hardenScriptJailSession(jailSession) {
     if (remainingModern !== 0 || remainingLegacy !== 0) {
         throw new Error('Script jail session has unexpected preload scripts registered');
     }
+    const removedCount = modernPreloads.length + legacyPreloadCount;
+    if (removedCount > 0) {
+        preloadEpoch++;
+        closeAllIdleWarmJails();
+    }
+    return removedCount;
+}
+/**
+ * Re-asserts full fail-closed hardening on the script-jail `Session` before each run.
+ *
+ * Actively strips any session-level preload scripts (such as `electron-log-preload`
+ * injected by `electron-log`'s `app.on('session-created')` listener via
+ * `registerPreloadScript`, or legacy `setPreloads` entries) so only
+ * `SCRIPT_JAIL_PRELOAD_PATH` runs in the jail, then asserts zero session preloads
+ * remain (failing closed if removal did not stick). Returns the number of preloads removed.
+ */
+async function hardenScriptJailSession(jailSession) {
+    const removedCount = scrubAndAssertZeroSessionPreloads(jailSession);
     jailSession.webRequest.onBeforeRequest((_details, callback) => {
         callback({ cancel: true });
     });
@@ -177,6 +336,10 @@ async function hardenScriptJailSession(jailSession) {
         proxyRules: exports.SCRIPT_JAIL_BLACKHOLE_PROXY_RULES,
         proxyBypassRules: exports.SCRIPT_JAIL_BLACKHOLE_PROXY_BYPASS_RULES,
     });
+    if (removedCount > 0 && poolActivated) {
+        schedulePoolRefill();
+    }
+    return removedCount;
 }
 function hardenScriptJailWebContents(jailContents) {
     jailContents.setWebRTCIPHandlingPolicy('disable_non_proxied_udp');
@@ -295,7 +458,7 @@ function buildScriptJailWorkerCode() {
   };
 })()`;
 }
-/** Builds the main-world bootstrap that spawns the Worker and enforces result/error size caps. */
+/** Builds the main-world bootstrap that spawns the dedicated Worker and enforces result/error size caps. */
 function buildScriptJailBootstrapCode(params) {
     const serializedParams = JSON.stringify({
         pageFacadeBundle: params.pageFacadeBundle,
@@ -384,20 +547,367 @@ function buildScriptJailBootstrapCode(params) {
   });
 })()`;
 }
-/** Aborts an active script-jail execution owned by `sender`. */
+/**
+ * Spawns and initializes a single hardened `WebContentsView` (`about:blank`) for either the
+ * warm pool or an on-demand cold start. Closes the view on any initialization failure or timeout.
+ */
+async function spawnJail() {
+    jailSessionInstance ?? (jailSessionInstance = electron_1.session.fromPartition(exports.SCRIPT_JAIL_PARTITION, {
+        cache: false,
+    }));
+    scrubAndAssertZeroSessionPreloads(jailSessionInstance);
+    const spawnEpoch = preloadEpoch;
+    const jailView = new electron_1.WebContentsView({
+        webPreferences: {
+            sandbox: true,
+            contextIsolation: true,
+            navigateOnDragDrop: false,
+            partition: exports.SCRIPT_JAIL_PARTITION,
+            preload: exports.SCRIPT_JAIL_PRELOAD_PATH,
+        },
+    });
+    liveJailViews.add(jailView);
+    const jailContents = jailView.webContents;
+    jailContents.once('destroyed', () => {
+        liveJailViews.delete(jailView);
+    });
+    hardenScriptJailWebContents(jailContents);
+    let timer;
+    let onDead;
+    try {
+        await Promise.race([
+            jailContents.loadURL('about:blank'),
+            new Promise((_, reject) => {
+                onDead = () => reject(new JailSpawnError('Script jail renderer exited during initialization'));
+                jailContents.once('render-process-gone', onDead);
+                jailContents.once('destroyed', onDead);
+                timer = setTimeout(() => reject(new JailSpawnError(`Script jail initialization timed out after ${exports.SCRIPT_JAIL_ACQUIRE_TIMEOUT_MS}ms`)), exports.SCRIPT_JAIL_ACQUIRE_TIMEOUT_MS);
+            }),
+        ]);
+        if (jailContents.isDestroyed()) {
+            throw new JailSpawnError('Script jail WebContents was destroyed during initialization');
+        }
+        return { jailView, jailContents, spawnEpoch };
+    }
+    catch (err) {
+        closeJailView(jailView, jailContents);
+        throw err instanceof JailSpawnError
+            ? err
+            : new JailSpawnError(err instanceof Error ? err.message : String(err));
+    }
+    finally {
+        if (timer !== undefined) {
+            clearTimeout(timer);
+        }
+        if (onDead) {
+            jailContents.removeListener('render-process-gone', onDead);
+            jailContents.removeListener('destroyed', onDead);
+        }
+    }
+}
+async function createWarmJailEntry(attempt = 0) {
+    try {
+        const { jailView, jailContents, spawnEpoch } = await spawnJail();
+        if (!poolActivated ||
+            preloadEpoch !== spawnEpoch ||
+            jailContents.isDestroyed()) {
+            closeJailView(jailView, jailContents);
+            return poolActivated && preloadEpoch !== spawnEpoch && attempt < 2
+                ? createWarmJailEntry(attempt + 1)
+                : null;
+        }
+        const onIdleDead = () => {
+            const idx = idleWarmJails.indexOf(entryRef);
+            if (idx !== -1) {
+                idleWarmJails.splice(idx, 1);
+            }
+            entryRef.detachIdleListeners();
+            closeJailView(jailView, jailContents);
+            consecutiveIdleDeaths++;
+            schedulePoolRefill();
+        };
+        const detachIdleListeners = () => {
+            jailContents.removeListener('render-process-gone', onIdleDead);
+            jailContents.removeListener('destroyed', onIdleDead);
+        };
+        const entryRef = {
+            jailView,
+            jailContents,
+            detachIdleListeners,
+        };
+        jailContents.once('render-process-gone', onIdleDead);
+        jailContents.once('destroyed', onIdleDead);
+        return entryRef;
+    }
+    catch {
+        return null;
+    }
+}
+function schedulePoolRefill() {
+    if (!poolActivated || consecutiveIdleDeaths > exports.MAX_CONSECUTIVE_IDLE_DEATHS) {
+        return;
+    }
+    while (idleWarmJails.length + inFlightWarmups.size <
+        exports.SCRIPT_JAIL_POOL_TARGET_IDLE) {
+        const taskPromise = createWarmJailEntry()
+            .then((entry) => {
+            if (!entry) {
+                return;
+            }
+            if (poolActivated &&
+                idleWarmJails.length < exports.SCRIPT_JAIL_POOL_TARGET_IDLE &&
+                !entry.jailContents.isDestroyed()) {
+                idleWarmJails.push(entry);
+            }
+            else {
+                entry.detachIdleListeners();
+                closeJailView(entry.jailView, entry.jailContents);
+            }
+        })
+            .finally(() => {
+            inFlightWarmups.delete(taskPromise);
+        });
+        inFlightWarmups.add(taskPromise);
+    }
+}
+async function ensurePoolReady() {
+    jailSessionInstance ?? (jailSessionInstance = electron_1.session.fromPartition(exports.SCRIPT_JAIL_PARTITION, {
+        cache: false,
+    }));
+    await hardenScriptJailSession(jailSessionInstance);
+    poolActivated = true;
+    consecutiveIdleDeaths = 0;
+}
+async function acquireJailForRun() {
+    await ensurePoolReady();
+    while (idleWarmJails.length > 0) {
+        const warm = idleWarmJails.shift();
+        warm.detachIdleListeners();
+        if (!warm.jailContents.isDestroyed()) {
+            schedulePoolRefill();
+            return { jailView: warm.jailView, jailContents: warm.jailContents };
+        }
+        liveJailViews.delete(warm.jailView);
+    }
+    try {
+        const { jailView, jailContents } = await spawnJail();
+        return { jailView, jailContents };
+    }
+    finally {
+        schedulePoolRefill();
+    }
+}
+/**
+ * Activates and pre-warms the disposable script-jail pool (`SCRIPT_JAIL_POOL_TARGET_IDLE = 2`).
+ *
+ * The pool is NOT warmed at Hub startup so flag-off users pay zero memory or process cost.
+ * Once activated via `warmScriptJail` or the first `runScriptInJail` call, the pool maintains
+ * 2 idle pre-warmed jails (with `about:blank` loaded) and refills asynchronously as jails are consumed.
+ */
+async function warmScriptJail(sender, senderFrame) {
+    assertAuthorizedJailSender(sender, senderFrame);
+    if (electron_1.app.commandLine.hasSwitch('no-sandbox')) {
+        return false;
+    }
+    try {
+        await ensurePoolReady();
+        schedulePoolRefill();
+        await waitForScriptJailPoolIdle();
+        return idleWarmJails.length > 0;
+    }
+    catch {
+        return false;
+    }
+}
+/** Aborts a queued or running script-jail execution owned by `sender`. */
 function abortScriptInJail(sender, jailId, senderFrame) {
     assertAuthorizedJailSender(sender, senderFrame);
     if (!isValidJailId(jailId)) {
         return false;
     }
+    const queued = queuedJails.get(jailId);
+    if (queued) {
+        if (queued.senderId !== sender.id) {
+            return false;
+        }
+        queued.settleQueued(failResult('SCRIPT_ABORTED', 'Script aborted by host'));
+        return true;
+    }
     const active = activeJails.get(jailId);
     if (!active || active.senderId !== sender.id) {
         return false;
     }
-    active.abort();
+    active.abort(failResult('SCRIPT_ABORTED', 'Script aborted by host'));
     return true;
 }
-/** Executes an untrusted agent script inside a fresh, single-use, zero-egress `WebContentsView`. */
+function pumpJailQueue() {
+    while (activeJails.size < exports.MAX_CONCURRENT_JAILS_GLOBAL) {
+        let nextEntry;
+        for (const entry of queuedJails.values()) {
+            if (getRunningCountForSender(entry.senderId) <
+                exports.MAX_CONCURRENT_JAILS_PER_SENDER) {
+                nextEntry = entry;
+                break;
+            }
+        }
+        if (!nextEntry) {
+            break;
+        }
+        queuedJails.delete(nextEntry.jailId);
+        admitAndRunJailEntry(nextEntry);
+    }
+}
+function admitAndRunJailEntry(entry) {
+    const { jailId, sender: authorizedSender, req, timeoutMs, resolveRun } = entry;
+    let earlyResult;
+    let resolveEarlyResult;
+    const earlyExitPromise = new Promise((resolve) => {
+        resolveEarlyResult = (res) => {
+            earlyResult ?? (earlyResult = res);
+            resolve(earlyResult);
+        };
+    });
+    entry.detachQueuedWatcher();
+    const unregisterRunningSenderAbort = registerSenderAbortCallback(authorizedSender, (res) => resolveEarlyResult(res));
+    activeJails.set(jailId, {
+        senderId: authorizedSender.id,
+        abort: (res) => resolveEarlyResult(res ?? failResult('SCRIPT_ABORTED', 'Script aborted by host')),
+    });
+    void (async () => {
+        // Keep jailView anchored in the run closure (in addition to liveJailViews)
+        // so V8 GC cannot finalize the detached WebContentsView while webContents is executing.
+        let jailView;
+        let jailContents;
+        let port1;
+        let port2;
+        let timeoutHandle;
+        let rssWatchdogHandle;
+        try {
+            let acquireTimeoutHandle;
+            const acquirePromise = acquireJailForRun();
+            const closeOrphanAcquire = () => {
+                void acquirePromise.then((j) => {
+                    closeJailView(j.jailView, j.jailContents);
+                }, () => { });
+            };
+            try {
+                const acquiredOrEarly = await Promise.race([
+                    acquirePromise.then((jail) => ({ kind: 'acquired', jail })),
+                    earlyExitPromise.then((res) => ({ kind: 'early', res })),
+                    new Promise((_, reject) => {
+                        acquireTimeoutHandle = setTimeout(() => reject(new JailSpawnError(`Script jail acquisition timed out after ${exports.SCRIPT_JAIL_ACQUIRE_TIMEOUT_MS}ms`)), exports.SCRIPT_JAIL_ACQUIRE_TIMEOUT_MS);
+                    }),
+                ]);
+                if (acquiredOrEarly.kind === 'early') {
+                    closeOrphanAcquire();
+                    return acquiredOrEarly.res;
+                }
+                ({ jailView, jailContents } = acquiredOrEarly.jail);
+            }
+            catch (acquireErr) {
+                closeOrphanAcquire();
+                throw acquireErr;
+            }
+            finally {
+                if (acquireTimeoutHandle !== undefined) {
+                    clearTimeout(acquireTimeoutHandle);
+                }
+            }
+            if (earlyResult) {
+                return earlyResult;
+            }
+            // Start execution timeout at jail assignment (not while queued or acquiring a jail).
+            timeoutHandle = setTimeout(() => {
+                resolveEarlyResult(failResult('TIMEOUT', `Script execution timed out after ${timeoutMs}ms`));
+            }, timeoutMs);
+            ({ port1, port2 } = new electron_1.MessageChannelMain());
+            const bootstrapCode = buildScriptJailBootstrapCode({
+                pageFacadeBundle: req.pageFacadeBundle,
+                modelScript: req.modelScript,
+            });
+            jailContents.once('render-process-gone', (_event, details) => {
+                resolveEarlyResult(failResult('JAIL_CRASHED', `Script jail renderer process exited (${details?.reason ?? 'unknown'})`));
+            });
+            jailContents.once('destroyed', () => {
+                resolveEarlyResult(failResult('JAIL_CRASHED', 'Script jail WebContents was destroyed'));
+            });
+            rssWatchdogHandle = setInterval(() => {
+                if (!jailContents || jailContents.isDestroyed()) {
+                    return;
+                }
+                const pid = jailContents.getOSProcessId();
+                if (typeof pid !== 'number' || pid <= 0) {
+                    return;
+                }
+                const rssKB = electron_1.app.getAppMetrics().find((m) => m.pid === pid)?.memory
+                    ?.workingSetSize ?? 0;
+                if (rssKB > exports.MAX_SCRIPT_JAIL_RSS_KB) {
+                    resolveEarlyResult(failResult('RESOURCE_LIMIT', `Script jail exceeded memory limit (${exports.MAX_SCRIPT_JAIL_RSS_KB / 1024} MB)`));
+                    try {
+                        process.kill(pid, 'SIGKILL');
+                    }
+                    catch {
+                        // Ignore if process already exited.
+                    }
+                }
+            }, exports.SCRIPT_JAIL_RSS_POLL_INTERVAL_MS);
+            const execPromise = (0, isolatedWorldExec_1.executeJavaScriptWhenReady)(jailContents, bootstrapCode, false).then((rawOutcome) => {
+                if (!rawOutcome || typeof rawOutcome !== 'object') {
+                    return failResult('JAIL_CRASHED', 'Script jail returned an invalid bootstrap response');
+                }
+                const outcome = rawOutcome;
+                if (outcome.ok === true) {
+                    return outcome.value === undefined
+                        ? { ok: true }
+                        : { ok: true, value: outcome.value };
+                }
+                const mappedErrorCode = typeof outcome.errorCode === 'string' &&
+                    WORKER_ERROR_CODES.has(outcome.errorCode)
+                    ? outcome.errorCode
+                    : 'RUNTIME_ERROR';
+                return failResult(mappedErrorCode, typeof outcome.errorMessage === 'string' && outcome.errorMessage
+                    ? outcome.errorMessage
+                    : 'Script execution failed');
+            }, (err) => failResult('JAIL_CRASHED', err instanceof Error ? err.message : String(err)));
+            // Port-as-admission: deliver port2 to the requesting renderer ONLY when
+            // a jail has been assigned and started.
+            authorizedSender.postMessage(exports.SCRIPT_JAIL_PORT_CHANNEL, { jailId }, [port2]);
+            jailContents.postMessage(exports.SCRIPT_JAIL_PORT_CHANNEL, null, [port1]);
+            return await Promise.race([execPromise, earlyExitPromise]);
+        }
+        catch (err) {
+            if (earlyResult) {
+                return earlyResult;
+            }
+            const code = err instanceof JailSpawnError ? 'JAIL_CRASHED' : 'INTERNAL_ERROR';
+            return failResult(code, err instanceof Error ? err.message : String(err));
+        }
+        finally {
+            activeJails.delete(jailId);
+            unregisterRunningSenderAbort();
+            if (timeoutHandle !== undefined) {
+                clearTimeout(timeoutHandle);
+            }
+            if (rssWatchdogHandle !== undefined) {
+                clearInterval(rssWatchdogHandle);
+            }
+            try {
+                port1?.close();
+                port2?.close();
+                closeJailView(jailView, jailContents);
+            }
+            finally {
+                // A throwing teardown step must not stall the queue or the warm pool.
+                pumpJailQueue();
+                schedulePoolRefill();
+            }
+        }
+    })().then(resolveRun, (err) => resolveRun(failResult('INTERNAL_ERROR', err instanceof Error ? err.message : String(err))));
+}
+/**
+ * Enqueues or admits an untrusted agent script for execution inside a single-use,
+ * zero-egress `WebContentsView` from the pre-warmed pool (or cold-started on demand).
+ */
 async function runScriptInJail(sender, req, senderFrame) {
     assertAuthorizedJailSender(sender, senderFrame);
     const authorizedSender = sender;
@@ -411,20 +921,8 @@ async function runScriptInJail(sender, req, senderFrame) {
         return failResult('INVALID_REQUEST', 'jailId must be a valid non-empty identifier');
     }
     const jailId = req.jailId;
-    if (activeJails.has(jailId)) {
+    if (activeJails.has(jailId) || queuedJails.has(jailId)) {
         return failResult('INVALID_REQUEST', `Duplicate active jailId: ${jailId}`);
-    }
-    if (activeJails.size >= exports.MAX_CONCURRENT_JAILS_GLOBAL) {
-        return failResult('RESOURCE_LIMIT', `Too many concurrent script jails globally (max ${exports.MAX_CONCURRENT_JAILS_GLOBAL})`);
-    }
-    let senderActiveCount = 0;
-    for (const entry of activeJails.values()) {
-        if (entry.senderId === authorizedSender.id) {
-            senderActiveCount++;
-        }
-    }
-    if (senderActiveCount >= exports.MAX_CONCURRENT_JAILS_PER_SENDER) {
-        return failResult('RESOURCE_LIMIT', `Too many concurrent script jails for sender (max ${exports.MAX_CONCURRENT_JAILS_PER_SENDER})`);
     }
     if (typeof req.pageFacadeBundle !== 'string' ||
         req.pageFacadeBundle.trim() === '') {
@@ -433,131 +931,38 @@ async function runScriptInJail(sender, req, senderFrame) {
     if (typeof req.modelScript !== 'string') {
         return failResult('INVALID_REQUEST', 'modelScript must be a string');
     }
+    const senderId = authorizedSender.id;
+    const canAdmitImmediately = activeJails.size < exports.MAX_CONCURRENT_JAILS_GLOBAL &&
+        getRunningCountForSender(senderId) < exports.MAX_CONCURRENT_JAILS_PER_SENDER &&
+        getQueuedCountForSender(senderId) === 0;
+    if (!canAdmitImmediately) {
+        if (getQueuedCountForSender(senderId) >= exports.MAX_QUEUED_JAILS_PER_SENDER) {
+            return failResult('RESOURCE_LIMIT', `Too many queued script jails for sender (max ${exports.MAX_QUEUED_JAILS_PER_SENDER})`);
+        }
+        if (queuedJails.size >= exports.MAX_QUEUED_JAILS_GLOBAL) {
+            return failResult('RESOURCE_LIMIT', `Too many queued script jails globally (max ${exports.MAX_QUEUED_JAILS_GLOBAL})`);
+        }
+    }
     const timeoutMs = resolveScriptJailTimeoutMs(req);
-    let earlyResult;
-    let resolveEarlyResult;
-    const earlyExitPromise = new Promise((resolve) => {
-        resolveEarlyResult = (res) => {
-            earlyResult ?? (earlyResult = res);
-            resolve(earlyResult);
-        };
-    });
-    const onSenderDestroyed = () => resolveEarlyResult(failResult('SCRIPT_ABORTED', 'Requesting sender WebContents was destroyed'));
-    const onSenderGone = () => resolveEarlyResult(failResult('SCRIPT_ABORTED', 'Requesting sender renderer process exited'));
-    const onSenderNavigate = (details) => {
-        if (details?.isMainFrame && !details.isSameDocument) {
-            resolveEarlyResult(failResult('SCRIPT_ABORTED', 'Requesting sender WebContents navigated'));
-        }
-    };
-    let jailView;
-    let jailContents;
-    let port1;
-    let port2;
-    let timeoutHandle;
-    let rssWatchdogHandle;
-    activeJails.set(jailId, {
-        senderId: authorizedSender.id,
-        abort: () => resolveEarlyResult(failResult('SCRIPT_ABORTED', 'Script aborted by host')),
-    });
-    try {
-        authorizedSender.on('destroyed', onSenderDestroyed);
-        authorizedSender.on('render-process-gone', onSenderGone);
-        authorizedSender.on('did-start-navigation', onSenderNavigate);
-        ({ port1, port2 } = new electron_1.MessageChannelMain());
-        jailSessionInstance ?? (jailSessionInstance = electron_1.session.fromPartition(exports.SCRIPT_JAIL_PARTITION, {
-            cache: false,
-        }));
-        await hardenScriptJailSession(jailSessionInstance);
-        jailView = new electron_1.WebContentsView({
-            webPreferences: {
-                sandbox: true,
-                contextIsolation: true,
-                navigateOnDragDrop: false,
-                partition: exports.SCRIPT_JAIL_PARTITION,
-                preload: exports.SCRIPT_JAIL_PRELOAD_PATH,
+    return new Promise((resolveRun) => {
+        const detachQueuedWatcher = registerSenderAbortCallback(authorizedSender, (res) => entry.settleQueued(res));
+        const entry = {
+            jailId,
+            sender: authorizedSender,
+            senderId,
+            req,
+            timeoutMs,
+            resolveRun,
+            detachQueuedWatcher,
+            settleQueued: (res) => {
+                if (!queuedJails.delete(jailId)) {
+                    return;
+                }
+                detachQueuedWatcher();
+                resolveRun(res);
             },
-        });
-        jailContents = jailView.webContents;
-        hardenScriptJailWebContents(jailContents);
-        await jailContents.loadURL('about:blank');
-        const bootstrapCode = buildScriptJailBootstrapCode({
-            pageFacadeBundle: req.pageFacadeBundle,
-            modelScript: req.modelScript,
-        });
-        jailContents.once('render-process-gone', (_event, details) => {
-            resolveEarlyResult(failResult('JAIL_CRASHED', `Script jail renderer process exited (${details?.reason ?? 'unknown'})`));
-        });
-        jailContents.once('destroyed', () => {
-            resolveEarlyResult(failResult('JAIL_CRASHED', 'Script jail WebContents was destroyed'));
-        });
-        timeoutHandle = setTimeout(() => {
-            resolveEarlyResult(failResult('TIMEOUT', `Script execution timed out after ${timeoutMs}ms`));
-        }, timeoutMs);
-        rssWatchdogHandle = setInterval(() => {
-            if (!jailContents || jailContents.isDestroyed()) {
-                return;
-            }
-            const pid = jailContents.getOSProcessId();
-            if (typeof pid !== 'number' || pid <= 0) {
-                return;
-            }
-            const rssKB = electron_1.app.getAppMetrics().find((m) => m.pid === pid)?.memory
-                ?.workingSetSize ?? 0;
-            if (rssKB > exports.MAX_SCRIPT_JAIL_RSS_KB) {
-                resolveEarlyResult(failResult('RESOURCE_LIMIT', `Script jail exceeded memory limit (${exports.MAX_SCRIPT_JAIL_RSS_KB / 1024} MB)`));
-                try {
-                    process.kill(pid, 'SIGKILL');
-                }
-                catch {
-                    // Ignore if process already exited.
-                }
-            }
-        }, exports.SCRIPT_JAIL_RSS_POLL_INTERVAL_MS);
-        const execPromise = jailContents
-            .executeJavaScript(bootstrapCode, false)
-            .then((rawOutcome) => {
-            if (!rawOutcome || typeof rawOutcome !== 'object') {
-                return failResult('JAIL_CRASHED', 'Script jail returned an invalid bootstrap response');
-            }
-            const outcome = rawOutcome;
-            if (outcome.ok === true) {
-                return outcome.value === undefined
-                    ? { ok: true }
-                    : { ok: true, value: outcome.value };
-            }
-            const mappedErrorCode = typeof outcome.errorCode === 'string' &&
-                WORKER_ERROR_CODES.has(outcome.errorCode)
-                ? outcome.errorCode
-                : 'RUNTIME_ERROR';
-            return failResult(mappedErrorCode, typeof outcome.errorMessage === 'string' && outcome.errorMessage
-                ? outcome.errorMessage
-                : 'Script execution failed');
-        }, (err) => failResult('JAIL_CRASHED', err instanceof Error ? err.message : String(err)));
-        authorizedSender.postMessage(exports.SCRIPT_JAIL_PORT_CHANNEL, { jailId }, [port2]);
-        jailContents.postMessage(exports.SCRIPT_JAIL_PORT_CHANNEL, null, [port1]);
-        return await Promise.race([execPromise, earlyExitPromise]);
-    }
-    catch (err) {
-        return (earlyResult ??
-            failResult('INTERNAL_ERROR', err instanceof Error ? err.message : String(err)));
-    }
-    finally {
-        activeJails.delete(jailId);
-        authorizedSender.removeListener('destroyed', onSenderDestroyed);
-        authorizedSender.removeListener('render-process-gone', onSenderGone);
-        authorizedSender.removeListener('did-start-navigation', onSenderNavigate);
-        if (timeoutHandle !== undefined) {
-            clearTimeout(timeoutHandle);
-        }
-        if (rssWatchdogHandle !== undefined) {
-            clearInterval(rssWatchdogHandle);
-        }
-        port1?.close();
-        port2?.close();
-        if (jailContents && !jailContents.isDestroyed()) {
-            jailContents.close();
-        }
-        void jailView;
-        jailView = undefined;
-    }
+        };
+        queuedJails.set(jailId, entry);
+        pumpJailQueue();
+    });
 }

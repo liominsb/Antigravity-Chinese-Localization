@@ -122,8 +122,13 @@ check('preload.js 包含 铺满 (Fill) 汉化', preloadSource.includes('铺满')
 check('preload.js 包含 搜索快捷键... 汉化', preloadSource.includes('搜索快捷键...'), true);
 check('preload.js 包含 搜索快捷键正则保障', preloadSource.includes('(?:Search|搜索)\\s+shortcuts'), true);
 check('preload.js 包含 浏览器操作控制规则描述汉化', preloadSource.includes('配置浏览器子智能体（通过 /browser 调用）允许和拒绝访问的 URL。需要 Google Chrome。'), true);
+check('preload.js 包含 自动置顶 (Auto Pin) 汉化', preloadSource.includes('自动置顶'), true);
+check('preload.js 包含 选择 Antigravity 的声音 汉化', preloadSource.includes('选择 Antigravity 的声音'), true);
+check('preload.js 包含 清晰友好 声音特性描述汉化', preloadSource.includes('清晰友好'), true);
+check('preload.js 包含 使用声音按钮 (Use <Voice>) 动态正则', preloadSource.includes('Use\\s+([A-Za-z0-9_-]+)'), true);
 
 const ipcSource = fs.readFileSync(path.join(distDir, 'ipcHandlers.js'), 'utf-8');
+check('ipcHandlers.js 包含 Auto Pin -> 自动置顶', ipcSource.includes("'Auto Pin': '自动置顶'"), true);
 check('ipcHandlers.js 包含 Copy Project Name -> 复制项目名称', ipcSource.includes("'Copy Project Name': '复制项目名称'"), true);
 check('ipcHandlers.js 包含 Project Settings -> 项目设置', ipcSource.includes("'Project Settings': '项目设置'"), true);
 check('ipcHandlers.js 包含 Delete Project -> 删除项目', ipcSource.includes("'Delete Project': '删除项目'"), true);
@@ -152,6 +157,9 @@ check('app.asar.ready 包含 对话布局', asarSource.includes('对话布局'),
 check('app.asar.ready 包含 铺满', asarSource.includes('铺满'), true);
 check('app.asar.ready 包含 搜索快捷键...', asarSource.includes('搜索快捷键...'), true);
 check('app.asar.ready 包含 浏览器操作控制规则描述', asarSource.includes('配置浏览器子智能体（通过 /browser 调用）允许和拒绝访问的 URL。需要 Google Chrome。'), true);
+check('app.asar.ready 包含 自动置顶', asarSource.includes('自动置顶'), true);
+check('app.asar.ready 包含 选择 Antigravity 的声音', asarSource.includes('选择 Antigravity 的声音'), true);
+check('app.asar.ready 包含 清晰友好', asarSource.includes('清晰友好'), true);
 
 console.log(`\n测试汇总: 通过: ${passed}, 失败: ${total - passed}, 总计: ${total}`);
 if (passed === total) {

@@ -20,6 +20,7 @@
 - **自动化空状态文案彻底修复**：重构自动化空状态动态拦截机制，精准匹配单复数与混合分词（`No automation yet` / `No automations yet` / `No 自动化 yet` ➔ “暂无自动化”），并汉化定时任务运行说明。
 - **设置面板界面布局与模式全面汉化**：全量精准汉化「界面布局」(Interface Layout)、「知识工作」(Knowledge Work) 与日常任务精简界面说明、「软件工程」(Software Engineering) 与完整工程开发界面说明。
 - **高级设置与快捷键深度补全**：汉化「对话布局」(Chat Layout) 标题及「铺满」(Fill) 宽度选项；彻底消除快捷键搜索框“搜索 shortcuts...”半英半中残留（自适应转换为“搜索快捷键...”）。
+- **侧边栏过滤菜单与语音选择器深度汉化**：补全项目过滤菜单中的「自动置顶」(Auto Pin) 选项；深度适配 Gemini Live 声音选择模态框，全量汉化标题「选择 Antigravity 的声音」(Choose Antigravity's Voice)、通用确认按钮「使用 <声音名>」(Use <VoiceName>)，并修复因单词 Clear 误中导致的“清除 and friendly”翻译缺陷，标准化为「清晰友好」及全套声音特性描述。
 - **浏览器子智能体操作规则汉化**：自适应拦截并全量汉化「浏览器操作控制规则」官方长句说明（`Configure allowed and denied URLs for the browser subagent (invoked with /browser). Requires Google Chrome.` ➔ “配置浏览器子智能体（通过 /browser 调用）允许和拒绝访问的 URL。需要 Google Chrome。”）。
 
 ### 3. 产物与测试保障

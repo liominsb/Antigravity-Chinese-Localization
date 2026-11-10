@@ -4852,6 +4852,29 @@ const DOM_TRANSLATOR_INJECTION = `
     "Configure allowed and denied URLs for the browser subagent (invoked with /browser).": "配置浏览器子智能体（通过 /browser 调用）允许和拒绝访问的 URL。",
     "Requires Google Chrome.": "需要 Google Chrome。",
     "Requires Google Chrome": "需要 Google Chrome",
+    // ===== 2.30.0 语音模式选择与左侧过滤菜单 =====
+    "Auto Pin": "自动置顶",
+    "Auto pin": "自动置顶",
+    "auto pin": "自动置顶",
+    "Choose Antigravity's Voice": "选择 Antigravity 的声音",
+    "Choose Antigravity's voice": "选择 Antigravity 的声音",
+    "Choose Antigravity Voice": "选择 Antigravity 的声音",
+    "Clear and friendly": "清晰友好",
+    "Clear and friendly.": "清晰友好。",
+    "清除 and friendly": "清晰友好",
+    "清除 and friendly.": "清晰友好。",
+    "Calm and gentle": "沉稳温和",
+    "Warm and expressive": "温暖生动",
+    "Bright and clear": "明朗清晰",
+    "Deep and resonant": "深沉浑厚",
+    "Soft and soothing": "柔和舒缓",
+    "Engaged and lively": "专注生动",
+    "Energetic and upbeat": "元气活力",
+    "Smooth and easygoing": "流畅自然",
+    "Calm, mid-range": "沉稳，中频音色",
+    "Calm, mid-range voice": "沉稳，中频音色",
+    "Engaged, deeper voice": "专注，低沉音色",
+    "Engaged, mid-range voice": "专注，中频音色",
     "Google does not control the availability or functionality of third party developer tools. Your data from third party developer tools connected to your Antigravity instance may be shared with Google. Google will protect any such data in accordance with the Google Privacy Policy, found here: https://policies.google.com/privacy": "Google 不控制第三方开发者工具的可用性或功能。连接到你的 Antigravity 实例的第三方开发者工具数据可能会与 Google 共享。Google 将根据 Google 隐私权政策保护此类数据，详情请参阅：https://policies.google.com/privacy",
     "Browse other marketplace customizations": "浏览其他市场自定义项",
     "What's included": "包含内容",
@@ -5181,6 +5204,31 @@ const DOM_TRANSLATOR_INJECTION = `
       const fixed = trimmed.includes('Google Chrome')
         ? '配置浏览器子智能体（通过 /browser 调用）允许和拒绝访问的 URL。需要 Google Chrome。'
         : '配置浏览器子智能体（通过 /browser 调用）允许和拒绝访问的 URL。需要 ';
+      if (stringCache.size < MAX_STRING_CACHE) stringCache.set(trimmed, fixed);
+      return text.replace(trimmed, fixed);
+    }
+
+    // ===== 2.30.0 语音选择器与过滤菜单动态保障 =====
+    if (/^Auto\\s+Pin$/i.test(trimmed)) {
+      const fixed = '自动置顶';
+      if (stringCache.size < MAX_STRING_CACHE) stringCache.set(trimmed, fixed);
+      return text.replace(trimmed, fixed);
+    }
+
+    if (/^Choose\\s+Antigravity(?:'s)?\\s+Voice$/i.test(trimmed)) {
+      const fixed = '选择 Antigravity 的声音';
+      if (stringCache.size < MAX_STRING_CACHE) stringCache.set(trimmed, fixed);
+      return text.replace(trimmed, fixed);
+    }
+
+    if (/^Use\\s+([A-Za-z0-9_-]+)$/i.test(trimmed)) {
+      const fixed = trimmed.replace(/^Use\\s+([A-Za-z0-9_-]+)$/i, '使用 $1');
+      if (stringCache.size < MAX_STRING_CACHE) stringCache.set(trimmed, fixed);
+      return text.replace(trimmed, fixed);
+    }
+
+    if (/^(?:Clear|清除)\\s+and\\s+friendly[.。]?$/i.test(trimmed)) {
+      const fixed = '清晰友好';
       if (stringCache.size < MAX_STRING_CACHE) stringCache.set(trimmed, fixed);
       return text.replace(trimmed, fixed);
     }
@@ -7098,6 +7146,7 @@ const contextMenuTranslationMap = {
   'Rename': '重命名',
   'Pin': '置顶',
   'Unpin': '取消置顶',
+  'Auto Pin': '自动置顶',
   'Mark Unread': '标为未读',
   'Mark Read': '标为已读',
   'Mark as Unread': '标为未读',

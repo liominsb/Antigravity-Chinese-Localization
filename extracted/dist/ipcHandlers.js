@@ -972,6 +972,7 @@ const contextMenuTranslationMap = {
   'Rename': '重命名',
   'Pin': '置顶',
   'Unpin': '取消置顶',
+  'Auto Pin': '自动置顶',
   'Mark Unread': '标为未读',
   'Mark Read': '标为已读',
   'Mark as Unread': '标为未读',

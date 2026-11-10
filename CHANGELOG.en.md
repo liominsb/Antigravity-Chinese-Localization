@@ -20,6 +20,7 @@ This document tracks all version releases, core architecture adaptations, and fe
 - **Automation Empty State**: Intercepted single/plural variations (`No automation yet` / `No automations yet` / `No 自动化 yet` ➔ "暂无自动化").
 - **Settings Layout & Presets Localization**: Fully translated "Interface Layout", "Knowledge Work" with simplified interface description, and "Software Engineering" with full developer tools description.
 - **Advanced Settings & Shortcut Search**: Translated "Chat Layout" title and "Fill" width option; completely resolved hybrid text in shortcut search placeholder ("Search shortcuts..." ➔ "搜索快捷键...").
+- **Sidebar Filter Menu & Voice Chooser Localization**: Added translation for "Auto Pin" in the project filter menu; comprehensively localized Gemini Live's "Choose Antigravity's Voice" modal, dynamic "Use <VoiceName>" buttons, and fixed tone description Chinglish issues ("Clear and friendly" ➔ "清晰友好").
 - **Browser Subagent URL Rules Description**: Seamlessly translated official actuation rules description (`Configure allowed and denied URLs for the browser subagent (invoked with /browser). Requires Google Chrome.`).
 
 ### 3. Build & Test Guarantee

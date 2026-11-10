@@ -7,12 +7,17 @@ const guestAgentControl_1 = require("./guestAgentControl");
 /**
  * Permissions denied to built-in browser guests while they are under active
  * agent control. Fullscreen lets a page cover the Hub chrome (tab strip, URL
- * bar, agent overlay) so the model and the user lose the trusted UI; see
- * go/browser-use-agent-security.
+ * bar, agent overlay) so the model and the user lose the trusted UI; pointer
+ * lock and keyboard lock complete that spoof by hiding the real cursor and
+ * swallowing Escape and system shortcuts; see go/browser-use-agent-security.
+ * All of them reach the session permission request handler (Electron
+ * `WebContentsPermissionHelper::Request{Fullscreen,PointerLock,KeyboardLock}Permission`).
  */
 exports.AGENT_DENIED_PERMISSIONS = new Set([
     'fullscreen',
     'automatic-fullscreen',
+    'pointerLock',
+    'keyboardLock',
 ]);
 const configuredPermissionSessions = new WeakSet();
 /**
@@ -35,8 +40,9 @@ function shouldDenyGuestPermission(webContents, permission) {
  * requesting `WebContents` because user and agent tabs share a partition.
  *
  * No permission check handler is installed on purpose: Electron only consults
- * the request handler for fullscreen, and installing a check handler changes
- * defaults for unrelated permissions (e.g. File System Access grants).
+ * the request handler for fullscreen, pointer lock and keyboard lock, and
+ * installing a check handler changes defaults for unrelated permissions (e.g.
+ * File System Access grants).
  */
 function configureSessionAgentPermissionPolicy(targetSession) {
     if (!targetSession ||

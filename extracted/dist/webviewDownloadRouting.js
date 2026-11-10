@@ -33,7 +33,7 @@ var __importStar = (this && this.__importStar) || (function () {
     };
 })();
 Object.defineProperty(exports, "__esModule", { value: true });
-exports.AGENT_POPUP_REVEAL_GRACE_MS = exports.HUMAN_DOWNLOAD_DIR_STORAGE_KEY = exports.DEFAULT_DOWNLOAD_FILENAME = exports.MAX_DOWNLOAD_FILENAME_LENGTH = void 0;
+exports.AGENT_CONTROL_TOMBSTONE_TTL_MS = exports.IN_FLIGHT_RESERVATION_TTL_MS = exports.AGENT_DOWNLOAD_APPROVAL_TIMEOUT_MS = exports.AGENT_POPUP_REVEAL_GRACE_MS = exports.HUMAN_DOWNLOAD_DIR_STORAGE_KEY = exports.DEFAULT_DOWNLOAD_FILENAME = exports.MAX_DOWNLOAD_FILENAME_LENGTH = void 0;
 exports.sanitizeDownloadFilename = sanitizeDownloadFilename;
 exports.sanitizeHumanDownloadFilename = sanitizeHumanDownloadFilename;
 exports.isSafeExistingRegularFile = isSafeExistingRegularFile;
@@ -42,6 +42,13 @@ exports.isBlockedAgentDownloadFormat = isBlockedAgentDownloadFormat;
 exports.readConfiguredHumanDownloadsDir = readConfiguredHumanDownloadsDir;
 exports.validateBrainDownloadsDir = validateBrainDownloadsDir;
 exports.setGuestDownloadDirectoryForWc = setGuestDownloadDirectoryForWc;
+exports.recordAgentControlTombstone = recordAgentControlTombstone;
+exports.hasRecentAgentControlTombstone = hasRecentAgentControlTombstone;
+exports.getAgentControlReleasedAtMs = getAgentControlReleasedAtMs;
+exports.clearAgentControlTombstonesForTesting = clearAgentControlTombstonesForTesting;
+exports.setGuestAgentControlledForWc = setGuestAgentControlledForWc;
+exports.isGuestMarkedAgentControlled = isGuestMarkedAgentControlled;
+exports.clearAgentControlledGuestsForTesting = clearAgentControlledGuestsForTesting;
 exports.getArmedGuestDownloadDirectory = getArmedGuestDownloadDirectory;
 exports.trackChildPopupDownloadLifecycle = trackChildPopupDownloadLifecycle;
 exports.prepareChildPopupDownloadCleanup = prepareChildPopupDownloadCleanup;
@@ -64,7 +71,23 @@ exports.HUMAN_DOWNLOAD_DIR_STORAGE_KEY = 'builtinBrowserDownloadDir';
  * trigger `will-download` without ever flashing on screen.
  */
 exports.AGENT_POPUP_REVEAL_GRACE_MS = 750;
-const IN_FLIGHT_RESERVATION_TTL_MS = 5 * 60000;
+/**
+ * How long an agent download may wait for the user's approval before it is
+ * cancelled (fail closed). Re-exported by `webviewBrowser`.
+ */
+exports.AGENT_DOWNLOAD_APPROVAL_TIMEOUT_MS = 10 * 60 * 1000;
+/**
+ * How long a reserved save path stays reserved before Chromium creates the
+ * file. It outlives the approval wait so a second download cannot pick the
+ * same path while the first is paused awaiting approval.
+ */
+exports.IN_FLIGHT_RESERVATION_TTL_MS = exports.AGENT_DOWNLOAD_APPROVAL_TIMEOUT_MS + 5 * 60000;
+/**
+ * How long a guest stays treated as agent-associated after it was disarmed
+ * or destroyed, so late `will-download` events never fall back to the
+ * default downloads folder.
+ */
+exports.AGENT_CONTROL_TOMBSTONE_TTL_MS = 60000;
 const MAX_COLLISION_ATTEMPTS = 1000;
 const SAFE_CASCADE_ID_RE = /^[A-Za-z0-9._-]+$/;
 const WINDOWS_RESERVED_STEM_RE = /^(CON|PRN|AUX|NUL|COM[1-9]|LPT[1-9])(\.|$)/i;
@@ -451,7 +474,9 @@ function setGuestDownloadDirectoryForWc(wc, downloadDir) {
         throw new Error('Invalid guest WebContents for download directory');
     }
     if (downloadDir === null) {
-        guestDownloadDirByWcId.delete(wc.id);
+        if (guestDownloadDirByWcId.delete(wc.id)) {
+            recordAgentControlTombstone(wc.id);
+        }
         return null;
     }
     const validated = validateBrainDownloadsDir(downloadDir);
@@ -460,11 +485,95 @@ function setGuestDownloadDirectoryForWc(wc, downloadDir) {
     if (typeof wc.once === 'function' && !trackedDestroyListeners.has(wc)) {
         trackedDestroyListeners.add(wc);
         wc.once('destroyed', () => {
-            guestDownloadDirByWcId.delete(wcId);
+            if (guestDownloadDirByWcId.delete(wcId)) {
+                recordAgentControlTombstone(wcId);
+            }
         });
     }
     return validated;
 }
+const agentControlTombstoneUntilByWcId = new Map();
+/**
+ * Remembers for {@link AGENT_CONTROL_TOMBSTONE_TTL_MS} that `webContentsId`
+ * was armed or agent-controlled (called on disarm and on destruction).
+ */
+function recordAgentControlTombstone(webContentsId, nowMs = Date.now()) {
+    if (!Number.isInteger(webContentsId) || webContentsId <= 0) {
+        return;
+    }
+    agentControlTombstoneUntilByWcId.set(webContentsId, nowMs + exports.AGENT_CONTROL_TOMBSTONE_TTL_MS);
+}
+/** Whether `webContentsId` was armed/agent-controlled within the last 60s. */
+function hasRecentAgentControlTombstone(webContentsId, nowMs = Date.now()) {
+    for (const [id, until] of agentControlTombstoneUntilByWcId) {
+        if (until <= nowMs) {
+            agentControlTombstoneUntilByWcId.delete(id);
+        }
+    }
+    return agentControlTombstoneUntilByWcId.has(webContentsId);
+}
+/**
+ * When `webContentsId` last stopped being armed/agent-controlled, if that was
+ * within the last {@link AGENT_CONTROL_TOMBSTONE_TTL_MS}.
+ */
+function getAgentControlReleasedAtMs(webContentsId, nowMs = Date.now()) {
+    if (!hasRecentAgentControlTombstone(webContentsId, nowMs)) {
+        return undefined;
+    }
+    return (agentControlTombstoneUntilByWcId.get(webContentsId) -
+        exports.AGENT_CONTROL_TOMBSTONE_TTL_MS);
+}
+/** Clears agent-control tombstones for hermetic unit tests. */
+function clearAgentControlTombstonesForTesting() {
+    agentControlTombstoneUntilByWcId.clear();
+}
+/**
+ * Guests the host renderer reported as under agent control (e.g. legacy
+ * `<webview>` tabs driven by JSON actions that never arm a download dir).
+ */
+const agentControlledGuestIds = new Set();
+const trackedAgentControlDestroyListeners = new WeakSet();
+/**
+ * Marks guest `wc` as agent-controlled (`active = true`) or not. Clearing an
+ * active mark, or destroying a marked guest, records a 60s agent-control
+ * tombstone so late downloads never fall back to the default folder.
+ */
+function setGuestAgentControlledForWc(wc, active) {
+    if (!wc ||
+        typeof wc.id !== 'number' ||
+        !Number.isInteger(wc.id) ||
+        wc.id <= 0 ||
+        typeof active !== 'boolean') {
+        return false;
+    }
+    const wcId = wc.id;
+    if (!active) {
+        if (agentControlledGuestIds.delete(wcId)) {
+            recordAgentControlTombstone(wcId);
+        }
+        return true;
+    }
+    agentControlledGuestIds.add(wcId);
+    if (typeof wc.once === 'function' &&
+        !trackedAgentControlDestroyListeners.has(wc)) {
+        trackedAgentControlDestroyListeners.add(wc);
+        wc.once('destroyed', () => {
+            if (agentControlledGuestIds.delete(wcId)) {
+                recordAgentControlTombstone(wcId);
+            }
+        });
+    }
+    return true;
+}
+/** Whether the host renderer marked `webContentsId` as agent-controlled. */
+function isGuestMarkedAgentControlled(webContentsId) {
+    return agentControlledGuestIds.has(webContentsId);
+}
+/** Clears renderer-reported agent-control marks for hermetic unit tests. */
+function clearAgentControlledGuestsForTesting() {
+    agentControlledGuestIds.clear();
+}
+(0, guestAgentControl_1.registerGuestAgentControlPredicate)(isGuestMarkedAgentControlled);
 /** Returns the currently armed download directory for `webContentsId`, if any. */
 function getArmedGuestDownloadDirectory(webContentsId) {
     return guestDownloadDirByWcId.get(webContentsId);
@@ -693,7 +802,7 @@ function allocateCollisionFreeSavePath(targetDir, realTargetDir, rawFilename, no
         // Chromium creates the destination file asynchronously after will-download
         // returns; reserve the canonical path so back-to-back downloads do not
         // select the same filename before the first file appears on disk.
-        inFlightReservedPaths.set(canonicalPath, nowMs + IN_FLIGHT_RESERVATION_TTL_MS);
+        inFlightReservedPaths.set(canonicalPath, nowMs + exports.IN_FLIGHT_RESERVATION_TTL_MS);
         let released = false;
         return {
             savePath,

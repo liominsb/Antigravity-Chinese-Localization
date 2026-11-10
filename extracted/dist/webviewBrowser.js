@@ -1,6 +1,6 @@
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
-exports.MAX_INLINE_PDF_DOWNLOAD_BYTES = exports.EXTERNAL_LAUNCH_DEDUPE_WINDOW_MS = exports.MIN_EXTERNAL_LAUNCH_INTERVAL_MS = exports.POPUP_USER_ACTIVATION_WINDOW_MS = exports.MIN_POPUP_INTERVAL_MS = exports.MAX_CONCURRENT_POPUPS_PER_WEBVIEW = exports.WEBVIEW_DOWNLOAD_PROGRESS_CHANNEL = exports.WEBVIEW_FAVICON_UPDATED_CHANNEL = exports.WEBVIEW_OPEN_NEW_TAB_CHANNEL = void 0;
+exports.MAX_INLINE_PDF_DOWNLOAD_BYTES = exports.APPROVED_REDOWNLOAD_TOKEN_TTL_MS = exports.HUMAN_DOWNLOAD_AFTER_RELEASE_ACTIVATION_WINDOW_MS = exports.EXTERNAL_LAUNCH_DEDUPE_WINDOW_MS = exports.MIN_EXTERNAL_LAUNCH_INTERVAL_MS = exports.POPUP_USER_ACTIVATION_WINDOW_MS = exports.MIN_POPUP_INTERVAL_MS = exports.MAX_CONCURRENT_POPUPS_PER_WEBVIEW = exports.MAX_PENDING_APPROVALS_PER_GUEST = exports.MAX_DOWNLOAD_URL_CHAIN_ENTRY_LENGTH = exports.MAX_DOWNLOAD_URL_CHAIN_ENTRIES = exports.WEBVIEW_DOWNLOAD_PROGRESS_CHANNEL = exports.WEBVIEW_FAVICON_UPDATED_CHANNEL = exports.WEBVIEW_OPEN_NEW_TAB_CHANNEL = exports.AGENT_DOWNLOAD_APPROVAL_TIMEOUT_MS = void 0;
 exports.isExternalOnlyAuthUrl = isExternalOnlyAuthUrl;
 exports.isOAuthPopupUrl = isOAuthPopupUrl;
 exports.validateWebviewNavigationUrl = validateWebviewNavigationUrl;
@@ -12,6 +12,8 @@ exports.clearTrackedWebviewDownloadsForTesting = clearTrackedWebviewDownloadsFor
 exports.openTrackedWebviewDownload = openTrackedWebviewDownload;
 exports.showTrackedWebviewDownloadInFolder = showTrackedWebviewDownloadInFolder;
 exports.cancelTrackedWebviewDownload = cancelTrackedWebviewDownload;
+exports.resolveTrackedWebviewDownload = resolveTrackedWebviewDownload;
+exports.setGuestAgentControlled = setGuestAgentControlled;
 exports.setGuestDownloadDirectory = setGuestDownloadDirectory;
 exports.configureWebviewBrowserContents = configureWebviewBrowserContents;
 const electron_1 = require("electron");
@@ -20,6 +22,8 @@ const faviconStore_1 = require("./faviconStore");
 const webviewSecurityState_1 = require("./webviewSecurityState");
 const guestNetworkController_1 = require("./guestNetworkController");
 const webviewDownloadRouting_1 = require("./webviewDownloadRouting");
+Object.defineProperty(exports, "AGENT_DOWNLOAD_APPROVAL_TIMEOUT_MS", { enumerable: true, get: function () { return webviewDownloadRouting_1.AGENT_DOWNLOAD_APPROVAL_TIMEOUT_MS; } });
+const crypto_1 = require("crypto");
 /** IPC channel sent to the host renderer when a `<webview>` requests a new tab. */
 exports.WEBVIEW_OPEN_NEW_TAB_CHANNEL = 'webview:open-new-tab';
 /** IPC channel sent to the host renderer when a `<webview>` guest's favicon updates. */
@@ -34,6 +38,34 @@ const FAVICON_ISOLATED_WORLD_ID = 9998;
 const ISOLATED_FAVICON_LINKS_SCRIPT = 'Array.from(document.querySelectorAll(\'link[rel~="icon" i]\')).map((el) => el.href).filter(Boolean)';
 /** IPC channel sent to the host renderer when a guest download progresses or finishes. */
 exports.WEBVIEW_DOWNLOAD_PROGRESS_CHANNEL = 'webview:download-progress';
+/**
+ * Maximum number of `urlChain` entries sent. Chains of up to 32 URLs are sent
+ * whole; a longer chain is sent as its first 33 entries (the head, so hop 0
+ * is always kept), letting the receiver detect it and cancel the download.
+ */
+exports.MAX_DOWNLOAD_URL_CHAIN_ENTRIES = 33;
+/** Maximum length of each `urlChain` entry. */
+exports.MAX_DOWNLOAD_URL_CHAIN_ENTRY_LENGTH = 2048;
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
+function getDownloadUrlChain(item, url) {
+    let chain;
+    try {
+        chain = item?.getURLChain?.();
+    }
+    catch {
+        chain = undefined;
+    }
+    const entries = (Array.isArray(chain) ? chain : [url]).filter((u) => typeof u === 'string');
+    // Keep the head, never the tail, so the initial URL is always reported.
+    return entries
+        .slice(0, exports.MAX_DOWNLOAD_URL_CHAIN_ENTRIES)
+        .map((u) => u.slice(0, exports.MAX_DOWNLOAD_URL_CHAIN_ENTRY_LENGTH));
+}
+/**
+ * Maximum number of agent downloads one guest may have awaiting approval at
+ * once; further agent downloads from that guest are cancelled immediately.
+ */
+exports.MAX_PENDING_APPROVALS_PER_GUEST = 8;
 const DEFAULT_POPUP_WIDTH = 520;
 const DEFAULT_POPUP_HEIGHT = 680;
 const MIN_POPUP_WIDTH = 360;
@@ -789,11 +821,25 @@ function formatPopupWindowTitle(rawUrl, pageTitle, securityLabel) {
 const configuredWebviewContents = new WeakSet();
 const configuredWebviewById = new Map();
 const configuredWebviewInitialOriginById = new Map();
+/**
+ * Consume-once getter for a guest's in-flight armed main-frame directory.
+ * Passing `peek = true` reports the directory without consuming it.
+ */
 const configuredWebviewInFlightArmedDirById = new Map();
+/** Per-guest agent-control predicates (including `options.isAgentControlled`). */
+const configuredWebviewAgentControlledById = new Map();
+/** Per-guest time of the last real input activation (never consumed). */
+const configuredWebviewLastInputActivationMsById = new Map();
+/**
+ * A download from a guest that stopped being agent-controlled less than a
+ * minute ago is still treated as the agent's, unless the user clicked or
+ * typed in that guest after it was released and within this window before
+ * the download started (e.g. a human download right after Take over).
+ */
+exports.HUMAN_DOWNLOAD_AFTER_RELEASE_ACTIVATION_WINDOW_MS = 10000;
 const configuredDownloadSessions = new WeakSet();
 const inFlightInlinePdfDownloads = new Map();
 const hostByGuestContents = new WeakMap();
-let nextDownloadSequence = 0;
 /**
  * Returns `true` when `wc` is a live browser guest (`<webview>` or configured
  * `WebContentsView`) hosted by `senderId`.
@@ -817,8 +863,112 @@ function isOwnedBrowserGuestWebContents(wc, senderId) {
         candidate.hostWebContents?.id === senderId);
 }
 const MAX_TRACKED_DOWNLOADS = 256;
-const DOWNLOAD_ID_RE = /^dl-\d+$/;
+const DOWNLOAD_ID_RE = /^dl-[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/;
 const trackedDownloadsById = new Map();
+/** Agent downloads awaiting approval, keyed by owning guest webContents id. */
+const pendingApprovalCountByGuestWcId = new Map();
+/**
+ * How long an approved agent download may take to come back through
+ * `will-download` after Hub re-requests it with `downloadURL()`.
+ */
+exports.APPROVED_REDOWNLOAD_TOKEN_TTL_MS = 30000;
+const approvedRedownloadTokens = new Set();
+/** Removes and returns the token matching this download, if any. */
+function takeApprovedRedownloadToken(guestSession, rawWcId, openerWcId, 
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
+item) {
+    if (approvedRedownloadTokens.size === 0) {
+        return undefined;
+    }
+    const urls = collectItemCandidateUrls(item);
+    for (const token of approvedRedownloadTokens) {
+        const sameGuest = token.guestWcId === rawWcId ||
+            token.guestWcId === openerWcId ||
+            (rawWcId <= 0 && openerWcId <= 0);
+        if (token.guestSession === guestSession &&
+            sameGuest &&
+            urls.has(token.url)) {
+            approvedRedownloadTokens.delete(token);
+            return token;
+        }
+    }
+    return undefined;
+}
+/**
+ * Site key a download URL is approved for: the host for http(s), the
+ * creator origin for blob:, and the scheme otherwise (e.g. `data:`).
+ */
+function downloadUrlSiteKey(rawUrl) {
+    try {
+        const parsed = new URL(rawUrl);
+        if (parsed.protocol === 'http:' || parsed.protocol === 'https:') {
+            return `${parsed.protocol}//${parsed.host.toLowerCase()}`;
+        }
+        if (parsed.protocol === 'blob:') {
+            return `blob:${parsed.origin}`;
+        }
+        return parsed.protocol;
+    }
+    catch {
+        return '';
+    }
+}
+/**
+ * URLs of Hub-started inline-PDF re-fetches whose agent owner went away (or
+ * whose entry expired) before Chromium reported the download. A late
+ * `will-download` for one of them is cancelled instead of being saved to the
+ * default downloads folder.
+ */
+const droppedInlinePdfUrlTombstones = new Map();
+/**
+ * Per-webContents callbacks run once when it is destroyed. A single
+ * `destroyed` listener is attached per webContents no matter how many pending
+ * agent downloads it owns, so many downloads cannot trip max-listener limits.
+ */
+const destroyedCallbacksByContents = new WeakMap();
+/**
+ * Runs `callback` when `contents` is destroyed (immediately if it already is).
+ * Returns a function that unregisters the callback.
+ */
+function onContentsDestroyed(contents, callback) {
+    if (!contents || typeof contents !== 'object') {
+        return () => { };
+    }
+    const source = contents;
+    if (source.isDestroyed?.()) {
+        callback();
+        return () => { };
+    }
+    let callbacks = destroyedCallbacksByContents.get(contents);
+    if (!callbacks) {
+        const created = new Set();
+        callbacks = created;
+        destroyedCallbacksByContents.set(contents, created);
+        const runAll = () => {
+            const pending = Array.from(created);
+            created.clear();
+            for (const cb of pending) {
+                try {
+                    cb();
+                }
+                catch {
+                    // Keep running the remaining callbacks.
+                }
+            }
+        };
+        if (typeof source.once === 'function') {
+            source.once('destroyed', runAll);
+        }
+        else {
+            source.on?.('destroyed', runAll);
+        }
+    }
+    callbacks.add(callback);
+    const registered = callbacks;
+    return () => {
+        registered.delete(callback);
+    };
+}
 function isTerminalDownloadState(state) {
     return (state === 'completed' || state === 'cancelled' || state === 'interrupted');
 }
@@ -836,7 +986,20 @@ function upsertTrackedDownload(record) {
             victimId = trackedDownloadsById.keys().next().value;
         }
         if (victimId !== undefined) {
+            const victim = trackedDownloadsById.get(victimId);
             trackedDownloadsById.delete(victimId);
+            // An untracked in-flight download could never be resolved or cancelled
+            // through IPC again, so cancel it rather than leave it running/paused.
+            if (victim && !isTerminalDownloadState(victim.state)) {
+                const cancelFn = victim.cancel;
+                victim.cancel = undefined;
+                try {
+                    cancelFn?.();
+                }
+                catch {
+                    // Chromium reports the outcome through `done`.
+                }
+            }
         }
     }
     trackedDownloadsById.set(record.id, record);
@@ -844,6 +1007,11 @@ function upsertTrackedDownload(record) {
 /** Clears tracked main-process download records for hermetic unit tests. */
 function clearTrackedWebviewDownloadsForTesting() {
     trackedDownloadsById.clear();
+    pendingApprovalCountByGuestWcId.clear();
+    approvedRedownloadTokens.clear();
+    (0, webviewDownloadRouting_1.clearAgentControlTombstonesForTesting)();
+    (0, webviewDownloadRouting_1.clearAgentControlledGuestsForTesting)();
+    droppedInlinePdfUrlTombstones.clear();
 }
 /**
  * Opens a completed download identified by `downloadId` when owned by
@@ -942,6 +1110,34 @@ function cancelTrackedWebviewDownload(callerHostWcId, downloadId) {
     catch {
         return false;
     }
+}
+/**
+ * Approves (resumes) or denies (cancels) an agent download that is paused in
+ * the `awaiting_approval` state, when owned by `callerHostWcId`. Returns false
+ * for invalid arguments, unknown or foreign-owned ids, and downloads that are
+ * not (or no longer) awaiting approval, so each download resolves at most once.
+ */
+function resolveTrackedWebviewDownload(callerHostWcId, downloadId, approve) {
+    if (typeof callerHostWcId !== 'number' ||
+        !Number.isInteger(callerHostWcId) ||
+        typeof downloadId !== 'string' ||
+        !DOWNLOAD_ID_RE.test(downloadId) ||
+        typeof approve !== 'boolean') {
+        return false;
+    }
+    const record = trackedDownloadsById.get(downloadId);
+    if (!record ||
+        record.ownerHostWcId === undefined ||
+        record.ownerHostWcId !== callerHostWcId ||
+        record.state !== 'awaiting_approval' ||
+        typeof record.resolveApproval !== 'function') {
+        return false;
+    }
+    return record.resolveApproval(approve);
+}
+/** Marks or clears agent control of a browser guest (see routing module). */
+function setGuestAgentControlled(wc, active) {
+    return (0, webviewDownloadRouting_1.setGuestAgentControlledForWc)(wc, active);
 }
 /** Arms or clears the sandbox download directory for a browser guest. */
 function setGuestDownloadDirectory(wc, downloadDir) {
@@ -1074,8 +1270,82 @@ function clearInlinePdfDedupeForOwner(ownerWcId) {
         if (key.startsWith(prefix)) {
             clearTimeout(entry.timer);
             inFlightInlinePdfDownloads.delete(key);
+            recordDroppedInlinePdfTombstone(entry);
         }
     }
+}
+/**
+ * Remembers an inline-PDF re-fetch that was dropped before its download
+ * started, so a late null-webContents `will-download` for it fails closed.
+ */
+function recordDroppedInlinePdfTombstone(entry) {
+    if (entry.consumed) {
+        return;
+    }
+    droppedInlinePdfUrlTombstones.set(entry.targetUrl, {
+        guestSession: entry.guestSession,
+        expiresAtMs: Date.now() + webviewDownloadRouting_1.AGENT_CONTROL_TOMBSTONE_TTL_MS,
+    });
+}
+function consumeDroppedInlinePdfTombstone(guestSession, 
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
+item) {
+    const nowMs = Date.now();
+    for (const [url, tombstone] of droppedInlinePdfUrlTombstones) {
+        if (tombstone.expiresAtMs <= nowMs) {
+            droppedInlinePdfUrlTombstones.delete(url);
+        }
+    }
+    for (const url of collectItemCandidateUrls(item)) {
+        const tombstone = droppedInlinePdfUrlTombstones.get(url);
+        if (tombstone && tombstone.guestSession === guestSession) {
+            droppedInlinePdfUrlTombstones.delete(url);
+            return true;
+        }
+    }
+    return false;
+}
+/**
+ * Whether guest `webContentsId` is, or within the last minute was, under agent
+ * control (armed, agent-controlled, or mid armed main-frame navigation).
+ */
+function isAgentAssociatedGuest(webContentsId) {
+    if (!Number.isInteger(webContentsId) || webContentsId <= 0) {
+        return false;
+    }
+    if ((0, guestAgentControl_1.isGuestAgentControlled)(webContentsId)) {
+        return true;
+    }
+    try {
+        if (configuredWebviewAgentControlledById.get(webContentsId)?.() ||
+            configuredWebviewInFlightArmedDirById.get(webContentsId)?.(true)) {
+            return true;
+        }
+    }
+    catch {
+        // Fall through to the tombstone check.
+    }
+    const releasedAtMs = (0, webviewDownloadRouting_1.getAgentControlReleasedAtMs)(webContentsId);
+    if (releasedAtMs === undefined) {
+        return false;
+    }
+    // Recently released (agent step ended, or the user took over). Main cannot
+    // tell those apart, so only real input the user gave the guest after the
+    // release, shortly before this download, marks it as a human download.
+    // Input from before the release may have been the agent's.
+    let lastInputMs = 0;
+    try {
+        lastInputMs =
+            configuredWebviewLastInputActivationMsById.get(webContentsId)?.() ?? 0;
+    }
+    catch {
+        lastInputMs = 0;
+    }
+    const nowMs = Date.now();
+    const isHumanAfterRelease = lastInputMs > releasedAtMs &&
+        nowMs >= lastInputMs &&
+        nowMs - lastInputMs <= exports.HUMAN_DOWNLOAD_AFTER_RELEASE_ACTIVATION_WINDOW_MS;
+    return !isHumanAfterRelease;
 }
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
 function ensureSessionDownloadListener(guestSession) {
@@ -1174,7 +1444,11 @@ function ensureSessionDownloadListener(guestSession) {
                 return;
             }
             const ttlTimer = setTimeout(() => {
+                const expired = inFlightInlinePdfDownloads.get(inlineKey);
                 inFlightInlinePdfDownloads.delete(inlineKey);
+                if (expired) {
+                    recordDroppedInlinePdfTombstone(expired);
+                }
             }, INLINE_PDF_DEDUPE_TTL_MS);
             ttlTimer.unref?.();
             inFlightInlinePdfDownloads.set(inlineKey, {
@@ -1189,7 +1463,11 @@ function ensureSessionDownloadListener(guestSession) {
             setImmediate(() => {
                 if (wc.isDestroyed?.()) {
                     clearTimeout(ttlTimer);
+                    const dropped = inFlightInlinePdfDownloads.get(inlineKey);
                     inFlightInlinePdfDownloads.delete(inlineKey);
+                    if (dropped) {
+                        recordDroppedInlinePdfTombstone(dropped);
+                    }
                     return;
                 }
                 try {
@@ -1203,11 +1481,18 @@ function ensureSessionDownloadListener(guestSession) {
         });
     }
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    guestSession.on('will-download', (_ev, item, wc) => {
+    guestSession.on('will-download', (ev, item, wc) => {
         const isWcAlive = wc && typeof wc === 'object' && !wc.isDestroyed?.();
         const rawWcId = isWcAlive ? (wc.id ?? 0) : 0;
         const openerWc = (0, webviewDownloadRouting_1.resolveOpenerWebContents)(wc);
         const openerWcId = openerWc && !openerWc.isDestroyed?.() ? (openerWc.id ?? 0) : 0;
+        // The re-download Hub started for an approved agent download is allowed
+        // once, without another prompt, and reported under the original id.
+        const approvedToken = takeApprovedRedownloadToken(guestSession, rawWcId, openerWcId, item);
+        if (approvedToken) {
+            approvedToken.start(item, ev);
+            return;
+        }
         const liveRawArmedDir = rawWcId > 0 ? (0, webviewDownloadRouting_1.getArmedGuestDownloadDirectory)(rawWcId) : undefined;
         const liveOpenerArmedDir = openerWcId > 0 ? (0, webviewDownloadRouting_1.getArmedGuestDownloadDirectory)(openerWcId) : undefined;
         const inlinePdfMatch = consumeInFlightInlinePdfArmedDir(guestSession, rawWcId, openerWcId, item);
@@ -1233,13 +1518,63 @@ function ensureSessionDownloadListener(guestSession) {
             (inlineOwnerWc ? hostByGuestContents.get(inlineOwnerWc) : null) ??
             inlineOwnerWc?.hostWebContents;
         const closeInitialDownloadPopup = (0, webviewDownloadRouting_1.prepareChildPopupDownloadCleanup)(wc);
-        const id = `dl-${++nextDownloadSequence}`;
+        const id = `dl-${(0, crypto_1.randomUUID)()}`;
+        const buildPayload = (state, savePath, agent) => {
+            const url = item?.getURL?.() ?? '';
+            const payload = {
+                id,
+                webContentsId,
+                url,
+                urlChain: getDownloadUrlChain(item, url),
+                filename: item?.getFilename?.() ?? '',
+                receivedBytes: item?.getReceivedBytes?.() ?? 0,
+                totalBytes: item?.getTotalBytes?.() ?? 0,
+                savePath,
+                mimeType: item?.getMimeType?.() ?? '',
+                isAgentDownload: agent,
+                state,
+            };
+            if (openerWcId > 0) {
+                payload.openerWebContentsId = openerWcId;
+            }
+            return payload;
+        };
+        /** Cancels before any tracking and reports `cancelled` to the host. */
+        const cancelImmediately = (agent) => {
+            clearInlinePdfDedupeForItem(guestSession, rawWcId, openerWcId, item, inlinePdfMatch?.inlineKey);
+            try {
+                item?.cancel?.();
+            }
+            catch {
+                // Still report the download as cancelled.
+            }
+            if (host && !host.isDestroyed()) {
+                host.send(exports.WEBVIEW_DOWNLOAD_PROGRESS_CHANNEL, buildPayload('cancelled', '', agent));
+            }
+            closeInitialDownloadPopup?.();
+        };
+        // A download from an agent-controlled (or recently armed/agent-controlled)
+        // guest that has no live armed sandbox directory must never fall back to
+        // the default downloads folder without asking: cancel it.
+        if (!isArmedGuestOrOpener &&
+            (isAgentAssociatedGuest(rawWcId) ||
+                isAgentAssociatedGuest(openerWcId) ||
+                (rawWcId <= 0 &&
+                    openerWcId <= 0 &&
+                    consumeDroppedInlinePdfTombstone(guestSession, item)))) {
+            cancelImmediately(true);
+            return;
+        }
         // Synchronously assign a validated destination path (or cancel on error) so
         // Chromium never opens a modal OS save dialog.
         const existingSavePath = item?.getSavePath?.() ?? '';
         let resolvedSavePath = existingSavePath;
         let isAgentDownload = isArmedGuestOrOpener;
         let releaseReservation;
+        // Agent downloads need the user's approval (b/581957522). Inline-PDF
+        // re-fetches that Hub itself starts for a PDF the agent is already
+        // viewing are size-capped and sandboxed, so they are not gated.
+        let requiresApproval = isAgentDownload && inlinePdfMatch === undefined;
         if (!existingSavePath) {
             const target = (0, webviewDownloadRouting_1.resolveSynchronousDownloadTarget)({
                 webContentsId: rawWcId,
@@ -1254,39 +1589,311 @@ function ensureSessionDownloadListener(guestSession) {
             if (!target || isBlockedAgentFormat) {
                 target?.release();
                 isAgentDownload = target?.isAgentDownload ?? isAgentDownload;
-                clearInlinePdfDedupeForItem(guestSession, rawWcId, openerWcId, item, inlinePdfMatch?.inlineKey);
-                item?.cancel?.();
-                if (host && !host.isDestroyed()) {
-                    const cancelledPayload = {
-                        id,
-                        webContentsId,
-                        url: item?.getURL?.() ?? '',
-                        filename: item?.getFilename?.() ?? '',
-                        receivedBytes: item?.getReceivedBytes?.() ?? 0,
-                        totalBytes: item?.getTotalBytes?.() ?? 0,
-                        savePath: '',
-                        mimeType: item?.getMimeType?.() ?? '',
-                        isAgentDownload,
-                        state: 'cancelled',
-                    };
-                    if (openerWcId > 0) {
-                        cancelledPayload.openerWebContentsId = openerWcId;
-                    }
-                    host.send(exports.WEBVIEW_DOWNLOAD_PROGRESS_CHANNEL, cancelledPayload);
-                }
-                closeInitialDownloadPopup?.();
+                cancelImmediately(isAgentDownload);
                 return;
             }
             resolvedSavePath = target.savePath;
             isAgentDownload = target.isAgentDownload;
             releaseReservation = target.release;
-            item?.setSavePath?.(target.savePath);
+            requiresApproval = isAgentDownload && inlinePdfMatch === undefined;
+            if (!requiresApproval) {
+                item?.setSavePath?.(target.savePath);
+            }
+        }
+        const ownerHostWcId = host && typeof host.id === 'number' && Number.isInteger(host.id)
+            ? host.id
+            : undefined;
+        if (requiresApproval) {
+            // Zero bytes on disk before approval: capture what the prompt needs,
+            // then cancel before Chromium picks a target file. preventDefault() and
+            // cancel() inside will-download both leave nothing on disk (no partial
+            // or .crdownload file), whereas pause() does not stop a small download
+            // from finishing. On approval Hub downloads the URL again.
+            const snapshotUrl = item?.getURL?.() ?? '';
+            let rawChain = [];
+            try {
+                const chain = item?.getURLChain?.();
+                rawChain = Array.isArray(chain)
+                    ? chain.filter((u) => typeof u === 'string')
+                    : [];
+            }
+            catch {
+                rawChain = [];
+            }
+            const snapshot = {
+                url: snapshotUrl,
+                urlChain: getDownloadUrlChain(item, snapshotUrl),
+                filename: item?.getFilename?.() ?? '',
+                mimeType: item?.getMimeType?.() ?? '',
+                totalBytes: item?.getTotalBytes?.() ?? 0,
+            };
+            const approvedSiteKeys = new Set([...rawChain, snapshotUrl].map(downloadUrlSiteKey).filter(Boolean));
+            const ownerGuestWc = webContentsId > 0 && webContentsId === openerWcId
+                ? openerWc
+                : webContentsId > 0 && webContentsId === rawWcId
+                    ? wc
+                    : inlineOwnerWc;
+            let referrer;
+            try {
+                const pageUrl = ownerGuestWc?.getURL?.();
+                referrer =
+                    typeof pageUrl === 'string' && /^https?:/i.test(pageUrl)
+                        ? pageUrl
+                        : undefined;
+            }
+            catch {
+                referrer = undefined;
+            }
+            try {
+                ev?.preventDefault?.();
+            }
+            catch {
+                // cancel() below still stops the download.
+            }
+            try {
+                item?.cancel?.();
+            }
+            catch {
+                // Nothing was assigned a path, so nothing can be written.
+            }
+            const gatedRecord = {
+                id,
+                ownerHostWcId,
+                savePath: resolvedSavePath,
+                state: 'started',
+                isAgentDownload: true,
+            };
+            upsertTrackedDownload(gatedRecord);
+            // eslint-disable-next-line @typescript-eslint/no-explicit-any
+            let activeItem;
+            let pending = false;
+            let finished = false;
+            let approvalTimer;
+            let token;
+            let tokenTimer;
+            const watcherDisposers = [];
+            const pendingCountKey = webContentsId;
+            const sendGated = (state) => {
+                gatedRecord.state = state;
+                if (isTerminalDownloadState(state)) {
+                    gatedRecord.cancel = undefined;
+                }
+                if (host && !host.isDestroyed()) {
+                    const payload = {
+                        id,
+                        webContentsId,
+                        url: snapshot.url,
+                        urlChain: snapshot.urlChain,
+                        filename: snapshot.filename,
+                        receivedBytes: activeItem?.getReceivedBytes?.() ?? 0,
+                        totalBytes: activeItem?.getTotalBytes?.() || snapshot.totalBytes,
+                        savePath: resolvedSavePath,
+                        mimeType: snapshot.mimeType,
+                        isAgentDownload: true,
+                        state,
+                    };
+                    if (openerWcId > 0) {
+                        payload.openerWebContentsId = openerWcId;
+                    }
+                    host.send(exports.WEBVIEW_DOWNLOAD_PROGRESS_CHANNEL, payload);
+                }
+            };
+            /** Ends the wait for the user's decision (idempotent). */
+            const settlePending = () => {
+                if (!pending) {
+                    return;
+                }
+                pending = false;
+                gatedRecord.resolveApproval = undefined;
+                const remaining = (pendingApprovalCountByGuestWcId.get(pendingCountKey) ?? 1) - 1;
+                if (remaining > 0) {
+                    pendingApprovalCountByGuestWcId.set(pendingCountKey, remaining);
+                }
+                else {
+                    pendingApprovalCountByGuestWcId.delete(pendingCountKey);
+                }
+                if (approvalTimer !== undefined) {
+                    clearTimeout(approvalTimer);
+                    approvalTimer = undefined;
+                }
+                for (const dispose of watcherDisposers.splice(0)) {
+                    dispose();
+                }
+            };
+            const dropToken = () => {
+                if (token) {
+                    approvedRedownloadTokens.delete(token);
+                    token = undefined;
+                }
+                if (tokenTimer !== undefined) {
+                    clearTimeout(tokenTimer);
+                    tokenTimer = undefined;
+                }
+            };
+            /** Reports the final state exactly once and frees everything held. */
+            const finish = (state) => {
+                if (finished) {
+                    return;
+                }
+                finished = true;
+                settlePending();
+                dropToken();
+                releaseReservation?.();
+                sendGated(state);
+                // A download-only popup closes once its downloads are over, as for
+                // ungated downloads.
+                closeInitialDownloadPopup?.();
+            };
+            const cancelPending = () => {
+                if (pending) {
+                    finish('cancelled');
+                }
+            };
+            // eslint-disable-next-line @typescript-eslint/no-explicit-any
+            const refuse = (redownload, redownloadEvent) => {
+                try {
+                    redownloadEvent?.preventDefault?.();
+                }
+                catch {
+                    // cancel() below still stops it.
+                }
+                try {
+                    redownload?.cancel?.();
+                }
+                catch {
+                    // Already stopped.
+                }
+            };
+            // eslint-disable-next-line @typescript-eslint/no-explicit-any
+            const startApproved = (redownload, redownloadEvent) => {
+                token = undefined;
+                if (tokenTimer !== undefined) {
+                    clearTimeout(tokenTimer);
+                    tokenTimer = undefined;
+                }
+                if (finished) {
+                    refuse(redownload, redownloadEvent);
+                    return;
+                }
+                // Fail closed if the re-download reaches a site the user did not
+                // approve, or now serves a blocked format; the agent can retry and
+                // get a new prompt.
+                const reachesUnapprovedSite = [
+                    ...collectItemCandidateUrls(redownload),
+                ].some((u) => !approvedSiteKeys.has(downloadUrlSiteKey(u)));
+                if (reachesUnapprovedSite ||
+                    (0, webviewDownloadRouting_1.isBlockedAgentDownloadFormat)(redownload?.getFilename?.(), redownload?.getMimeType?.())) {
+                    refuse(redownload, redownloadEvent);
+                    finish('cancelled');
+                    return;
+                }
+                activeItem = redownload;
+                redownload?.setSavePath?.(resolvedSavePath);
+                gatedRecord.cancel =
+                    typeof redownload?.cancel === 'function'
+                        ? () => {
+                            redownload.cancel();
+                        }
+                        : undefined;
+                redownload?.on?.('updated', (_e, state) => {
+                    if (!finished) {
+                        sendGated(state === 'interrupted' ? 'interrupted' : 'progressing');
+                    }
+                });
+                redownload?.on?.('done', (_e, state) => {
+                    finish(state === 'completed'
+                        ? 'completed'
+                        : state === 'cancelled'
+                            ? 'cancelled'
+                            : 'interrupted');
+                });
+                sendGated('progressing');
+            };
+            sendGated('started');
+            if (ownerHostWcId === undefined || !host || host.isDestroyed?.()) {
+                // No host can ask the user, so fail closed right away.
+                finish('cancelled');
+                return;
+            }
+            if ((pendingApprovalCountByGuestWcId.get(pendingCountKey) ?? 0) >=
+                exports.MAX_PENDING_APPROVALS_PER_GUEST) {
+                // Too many prompts from one guest: refuse instead of queueing.
+                finish('cancelled');
+                return;
+            }
+            pending = true;
+            pendingApprovalCountByGuestWcId.set(pendingCountKey, (pendingApprovalCountByGuestWcId.get(pendingCountKey) ?? 0) + 1);
+            // Before approval there is nothing to stop but the record itself.
+            gatedRecord.cancel = () => {
+                if (activeItem) {
+                    activeItem.cancel?.();
+                }
+                else {
+                    finish('cancelled');
+                }
+            };
+            gatedRecord.resolveApproval = (approve) => {
+                if (!pending) {
+                    return false;
+                }
+                settlePending();
+                if (!approve) {
+                    finish('cancelled');
+                    return true;
+                }
+                const guest = ownerGuestWc;
+                if (!guest ||
+                    guest.isDestroyed?.() ||
+                    typeof guest.downloadURL !== 'function' ||
+                    !snapshot.url) {
+                    finish('cancelled');
+                    return false;
+                }
+                gatedRecord.state = 'progressing';
+                token = {
+                    guestWcId: webContentsId,
+                    guestSession,
+                    url: snapshot.url,
+                    start: startApproved,
+                };
+                approvedRedownloadTokens.add(token);
+                tokenTimer = setTimeout(() => {
+                    tokenTimer = undefined;
+                    if (token) {
+                        // The re-download never arrived.
+                        finish('interrupted');
+                    }
+                }, exports.APPROVED_REDOWNLOAD_TOKEN_TTL_MS);
+                tokenTimer.unref?.();
+                try {
+                    // Same guest, so the same session and cookies as the original.
+                    if (referrer) {
+                        guest.downloadURL(snapshot.url, { headers: { Referer: referrer } });
+                    }
+                    else {
+                        guest.downloadURL(snapshot.url);
+                    }
+                }
+                catch {
+                    finish('interrupted');
+                    return false;
+                }
+                return true;
+            };
+            approvalTimer = setTimeout(cancelPending, webviewDownloadRouting_1.AGENT_DOWNLOAD_APPROVAL_TIMEOUT_MS);
+            approvalTimer.unref?.();
+            watcherDisposers.push(onContentsDestroyed(host, cancelPending));
+            if (pending && ownerGuestWc) {
+                watcherDisposers.push(onContentsDestroyed(ownerGuestWc, cancelPending));
+            }
+            if (pending) {
+                sendGated('awaiting_approval');
+            }
+            return;
         }
         const trackedRecord = {
             id,
-            ownerHostWcId: host && typeof host.id === 'number' && Number.isInteger(host.id)
-                ? host.id
-                : undefined,
+            ownerHostWcId,
             savePath: resolvedSavePath,
             state: 'started',
             isAgentDownload,
@@ -1305,22 +1912,7 @@ function ensureSessionDownloadListener(guestSession) {
                 trackedRecord.cancel = undefined;
             }
             if (host && !host.isDestroyed()) {
-                const payload = {
-                    id,
-                    webContentsId,
-                    url: item?.getURL?.() ?? '',
-                    filename: item?.getFilename?.() ?? '',
-                    receivedBytes: item?.getReceivedBytes?.() ?? 0,
-                    totalBytes: item?.getTotalBytes?.() ?? 0,
-                    savePath: latestSavePath,
-                    mimeType: item?.getMimeType?.() ?? '',
-                    isAgentDownload,
-                    state,
-                };
-                if (openerWcId > 0) {
-                    payload.openerWebContentsId = openerWcId;
-                }
-                host.send(exports.WEBVIEW_DOWNLOAD_PROGRESS_CHANNEL, payload);
+                host.send(exports.WEBVIEW_DOWNLOAD_PROGRESS_CHANNEL, buildPayload(state, latestSavePath, isAgentDownload));
             }
         };
         // The inline PDF re-fetch is started by Hub rather than the page, so cap
@@ -1374,9 +1966,11 @@ function isActivationInputType(type) {
 }
 function attachGuestUserActivationTracker(targetContents, now) {
     let lastUserActivationMs = 0;
+    let lastActivationInputMs = 0;
     const onInputEvent = (_event, inputEvent) => {
         if (isActivationInputType(inputEvent?.type)) {
             lastUserActivationMs = now();
+            lastActivationInputMs = lastUserActivationMs;
         }
     };
     // Cross-origin out-of-process iframes have their own RenderWidgetHost, so OS
@@ -1396,6 +1990,7 @@ function attachGuestUserActivationTracker(targetContents, now) {
         clear: () => {
             lastUserActivationMs = 0;
         },
+        lastInputMs: () => lastActivationInputMs,
     };
 }
 function isCrossDocumentNavigationStart(event, isInPlaceArg) {
@@ -1641,10 +2236,22 @@ function configureWebviewBrowserContents(contents, options) {
     });
     contents.on?.('destroyed', () => {
         if (trackedId > 0) {
+            let wasAgentControlled = false;
+            try {
+                wasAgentControlled = isOpenerCurrentlyAgentControlled();
+            }
+            catch {
+                wasAgentControlled = false;
+            }
+            if (wasAgentControlled) {
+                (0, webviewDownloadRouting_1.recordAgentControlTombstone)(trackedId);
+            }
             if (configuredWebviewById.get(trackedId) === contents) {
                 configuredWebviewById.delete(trackedId);
                 configuredWebviewInitialOriginById.delete(trackedId);
                 configuredWebviewInFlightArmedDirById.delete(trackedId);
+                configuredWebviewAgentControlledById.delete(trackedId);
+                configuredWebviewLastInputActivationMsById.delete(trackedId);
             }
             clearInlinePdfDedupeForOwner(trackedId);
         }
@@ -1758,7 +2365,7 @@ function configureWebviewBrowserContents(contents, options) {
         configuredWebviewInitialOriginById.set(webContentsId, () => !hasCommittedWebviewNavigation && getOpenerOrigin() === undefined
             ? initialUncommittedOrigin
             : undefined);
-        configuredWebviewInFlightArmedDirById.set(webContentsId, () => {
+        configuredWebviewInFlightArmedDirById.set(webContentsId, (peek) => {
             if (!inFlightMainFrameArmedDir) {
                 return undefined;
             }
@@ -1768,9 +2375,13 @@ function configureWebviewBrowserContents(contents, options) {
                 return undefined;
             }
             const dir = inFlightMainFrameArmedDir.dir;
-            inFlightMainFrameArmedDir = undefined;
+            if (!peek) {
+                inFlightMainFrameArmedDir = undefined;
+            }
             return dir;
         });
+        configuredWebviewLastInputActivationMsById.set(webContentsId, guestUserActivation.lastInputMs);
+        configuredWebviewAgentControlledById.set(webContentsId, isOpenerCurrentlyAgentControlled);
     }
     contents.on?.('did-start-navigation', (event, navigationUrl, isInPlaceArg, isMainFrameArg) => {
         if (!isMainFrameNavigationEvent(event, isMainFrameArg)) {

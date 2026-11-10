@@ -203,9 +203,11 @@ const electronNativeAPI = {
         };
     },
     setWebviewDownloadDirectory: (webContentsId, downloadDir) => electron_1.ipcRenderer.invoke('webview:set-download-dir', webContentsId, downloadDir),
+    setWebviewAgentControlled: (webContentsId, active) => electron_1.ipcRenderer.invoke('webview:set-agent-controlled', webContentsId, active),
     openWebviewDownload: (downloadId) => electron_1.ipcRenderer.invoke('webview:open-download', downloadId),
     showWebviewDownloadInFolder: (downloadId) => electron_1.ipcRenderer.invoke('webview:show-download-in-folder', downloadId),
     cancelWebviewDownload: (downloadId) => electron_1.ipcRenderer.invoke('webview:cancel-download', downloadId),
+    resolveWebviewDownload: (downloadId, approve) => electron_1.ipcRenderer.invoke('webview:resolve-download', downloadId, approve),
     selectDownloadDirectory: (defaultPath) => electron_1.ipcRenderer.invoke('dialog:select-download-dir', defaultPath),
     onWebviewFaviconUpdated: (callback) => {
         const handler = (_event, payload) => {

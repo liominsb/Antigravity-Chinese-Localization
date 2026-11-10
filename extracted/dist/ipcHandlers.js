@@ -546,6 +546,28 @@ function registerIpcHandlers(storageManager) {
         }
         return (0, webviewBrowser_1.setGuestDownloadDirectory)(wc, downloadDir);
     });
+    electron_1.ipcMain.handle('webview:set-agent-controlled', (event, webContentsId, active) => {
+        // Same sender/ownership rules as webview:set-download-dir, but reject
+        // with `false` instead of throwing.
+        if (typeof webContentsId !== 'number' ||
+            !Number.isInteger(webContentsId) ||
+            webContentsId <= 0 ||
+            typeof active !== 'boolean') {
+            return false;
+        }
+        if (event?.senderFrame?.parent) {
+            return false;
+        }
+        const sender = event?.sender;
+        if (!sender || sender.isDestroyed?.()) {
+            return false;
+        }
+        const wc = electron_1.webContents.fromId(webContentsId);
+        if (!wc || !(0, webviewBrowser_1.isOwnedBrowserGuestWebContents)(wc, sender.id)) {
+            return false;
+        }
+        return (0, webviewBrowser_1.setGuestAgentControlled)(wc, active);
+    });
     const assertTopLevelSenderId = (event, channel) => {
         if (event?.senderFrame?.parent) {
             throw new Error(`Unauthorized ${channel} sender: subframe cannot invoke ${channel}`);
@@ -579,6 +601,21 @@ function registerIpcHandlers(storageManager) {
             throw new Error('downloadId must be a string');
         }
         return (0, webviewBrowser_1.cancelTrackedWebviewDownload)(senderId, downloadId);
+    });
+    electron_1.ipcMain.handle('webview:resolve-download', (event, downloadId, approve) => {
+        // Approving resumes a paused agent download, so reject (return false)
+        // anything other than the owning host's main frame with valid args.
+        let senderId;
+        try {
+            senderId = assertTopLevelSenderId(event, 'webview:resolve-download');
+        }
+        catch {
+            return false;
+        }
+        if (typeof downloadId !== 'string' || typeof approve !== 'boolean') {
+            return false;
+        }
+        return (0, webviewBrowser_1.resolveTrackedWebviewDownload)(senderId, downloadId, approve);
     });
     electron_1.ipcMain.handle('dialog:select-download-dir', async (event, defaultPath) => {
         assertTopLevelSenderId(event, 'dialog:select-download-dir');

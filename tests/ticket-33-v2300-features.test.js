@@ -111,6 +111,18 @@ check('preload.js 包含 云托管与部署 货架分类', preloadSource.include
 check('preload.js 包含 开发者工具 货架分类（防分词）', preloadSource.includes('Developer 工具') && preloadSource.includes('开发者工具'), true);
 check('preload.js 包含 商业与商务 货架分类', preloadSource.includes('商业与商务'), true);
 
+// 4.1 设置面板新增界面布局、对话布局、快捷键搜索与浏览器规则校验
+check('preload.js 包含 界面布局 汉化', preloadSource.includes('界面布局'), true);
+check('preload.js 包含 知识工作 汉化', preloadSource.includes('知识工作'), true);
+check('preload.js 包含 专为调研、写作和日常任务打造的精简界面 汉化', preloadSource.includes('专为调研、写作和日常任务打造的精简界面。'), true);
+check('preload.js 包含 软件工程 汉化', preloadSource.includes('软件工程'), true);
+check('preload.js 包含 涵盖编程、开发者工具与智能体管理的完整界面 汉化', preloadSource.includes('涵盖编程、开发者工具与智能体管理的完整界面。'), true);
+check('preload.js 包含 对话布局 (Chat Layout) 汉化', preloadSource.includes('对话布局'), true);
+check('preload.js 包含 铺满 (Fill) 汉化', preloadSource.includes('铺满'), true);
+check('preload.js 包含 搜索快捷键... 汉化', preloadSource.includes('搜索快捷键...'), true);
+check('preload.js 包含 搜索快捷键正则保障', preloadSource.includes('(?:Search|搜索)\\s+shortcuts'), true);
+check('preload.js 包含 浏览器操作控制规则描述汉化', preloadSource.includes('配置浏览器子智能体（通过 /browser 调用）允许和拒绝访问的 URL。需要 Google Chrome。'), true);
+
 const ipcSource = fs.readFileSync(path.join(distDir, 'ipcHandlers.js'), 'utf-8');
 check('ipcHandlers.js 包含 Copy Project Name -> 复制项目名称', ipcSource.includes("'Copy Project Name': '复制项目名称'"), true);
 check('ipcHandlers.js 包含 Project Settings -> 项目设置', ipcSource.includes("'Project Settings': '项目设置'"), true);
@@ -135,6 +147,11 @@ check('app.asar.ready 包含 删除项目', asarSource.includes('删除项目'),
 check('app.asar.ready 包含 排序方式', asarSource.includes('排序方式'), true);
 check('app.asar.ready 包含 最近更新', asarSource.includes('最近更新'), true);
 check('app.asar.ready 包含 自定义排序', asarSource.includes('自定义排序'), true);
+check('app.asar.ready 包含 界面布局', asarSource.includes('界面布局'), true);
+check('app.asar.ready 包含 对话布局', asarSource.includes('对话布局'), true);
+check('app.asar.ready 包含 铺满', asarSource.includes('铺满'), true);
+check('app.asar.ready 包含 搜索快捷键...', asarSource.includes('搜索快捷键...'), true);
+check('app.asar.ready 包含 浏览器操作控制规则描述', asarSource.includes('配置浏览器子智能体（通过 /browser 调用）允许和拒绝访问的 URL。需要 Google Chrome。'), true);
 
 console.log(`\n测试汇总: 通过: ${passed}, 失败: ${total - passed}, 总计: ${total}`);
 if (passed === total) {

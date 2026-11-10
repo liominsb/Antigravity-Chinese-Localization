@@ -18,6 +18,9 @@ This document tracks all version releases, core architecture adaptations, and fe
 - **Search Input Placeholder Adaptation**: Matched `Search customizations...` with placeholder attribute pass-through.
 - **Project & Pinned Chat Menus**: Completed native right-click menus for projects and sorting options for pinned chats.
 - **Automation Empty State**: Intercepted single/plural variations (`No automation yet` / `No automations yet` / `No 自动化 yet` ➔ "暂无自动化").
+- **Settings Layout & Presets Localization**: Fully translated "Interface Layout", "Knowledge Work" with simplified interface description, and "Software Engineering" with full developer tools description.
+- **Advanced Settings & Shortcut Search**: Translated "Chat Layout" title and "Fill" width option; completely resolved hybrid text in shortcut search placeholder ("Search shortcuts..." ➔ "搜索快捷键...").
+- **Browser Subagent URL Rules Description**: Seamlessly translated official actuation rules description (`Configure allowed and denied URLs for the browser subagent (invoked with /browser). Requires Google Chrome.`).
 
 ### 3. Build & Test Guarantee
 - **Latest Precompiled Asar**: Packaged `app.asar.ready` for instant hot-reload and atomic replacement on v2.30.0.

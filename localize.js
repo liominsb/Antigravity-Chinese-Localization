@@ -4831,6 +4831,27 @@ const DOM_TRANSLATOR_INJECTION = `
     // ===== 2.29.1 扩展市场全量插件、提示词与生态卡片汉化 (Marketplace & Plugins) =====
     "Split Conversation": "拆分对话",
     "Stop Agent": "停止智能体",
+    // ===== 2.30.0 设置面板新增界面布局、对话布局、快捷键搜索与浏览器规则 =====
+    "Interface Layout": "界面布局",
+    "Knowledge Work": "知识工作",
+    "Simplified interface for research, writing, and everyday tasks.": "专为调研、写作和日常任务打造的精简界面。",
+    "Software Engineering": "软件工程",
+    "Full interface for coding, developer tools, and managing agents.": "涵盖编程、开发者工具与智能体管理的完整界面。",
+    "Chat Layout": "对话布局",
+    "Fill": "铺满",
+    "Search shortcuts...": "搜索快捷键...",
+    "Search shortcuts": "搜索快捷键",
+    "search shortcuts...": "搜索快捷键...",
+    "search shortcuts": "搜索快捷键",
+    "搜索 shortcuts...": "搜索快捷键...",
+    "搜索 shortcuts": "搜索快捷键",
+    "Configure allowed and denied URLs for the browser subagent (invoked with /browser). Requires Google Chrome.": "配置浏览器子智能体（通过 /browser 调用）允许和拒绝访问的 URL。需要 Google Chrome。",
+    "Configure allowed and denied URLs for the browser subagent (invoked with /browser). Requires Google Chrome": "配置浏览器子智能体（通过 /browser 调用）允许和拒绝访问的 URL。需要 Google Chrome",
+    "Configure allowed and denied URLs for the browser subagent (invoked with /browser). Requires ": "配置浏览器子智能体（通过 /browser 调用）允许和拒绝访问的 URL。需要 ",
+    "Configure allowed and denied URLs for the browser subagent (invoked with /browser). Requires": "配置浏览器子智能体（通过 /browser 调用）允许和拒绝访问的 URL。需要",
+    "Configure allowed and denied URLs for the browser subagent (invoked with /browser).": "配置浏览器子智能体（通过 /browser 调用）允许和拒绝访问的 URL。",
+    "Requires Google Chrome.": "需要 Google Chrome。",
+    "Requires Google Chrome": "需要 Google Chrome",
     "Google does not control the availability or functionality of third party developer tools. Your data from third party developer tools connected to your Antigravity instance may be shared with Google. Google will protect any such data in accordance with the Google Privacy Policy, found here: https://policies.google.com/privacy": "Google 不控制第三方开发者工具的可用性或功能。连接到你的 Antigravity 实例的第三方开发者工具数据可能会与 Google 共享。Google 将根据 Google 隐私权政策保护此类数据，详情请参阅：https://policies.google.com/privacy",
     "Browse other marketplace customizations": "浏览其他市场自定义项",
     "What's included": "包含内容",
@@ -5103,6 +5124,63 @@ const DOM_TRANSLATOR_INJECTION = `
     // ===== 2.30.0 扩展市场搜索框占位符动态双重保障 =====
     if (/^Search customizations\\.{0,3}$/i.test(trimmed)) {
       const fixed = '搜索自定义项...';
+      if (stringCache.size < MAX_STRING_CACHE) stringCache.set(trimmed, fixed);
+      return text.replace(trimmed, fixed);
+    }
+
+    // ===== 2.30.0 设置面板新增动态双重保障 (界面布局/对话布局/快捷键搜索/浏览器规则) =====
+    if (/^Interface\\s+Layout$/i.test(trimmed)) {
+      const fixed = '界面布局';
+      if (stringCache.size < MAX_STRING_CACHE) stringCache.set(trimmed, fixed);
+      return text.replace(trimmed, fixed);
+    }
+
+    if (/^Knowledge\\s+Work$/i.test(trimmed)) {
+      const fixed = '知识工作';
+      if (stringCache.size < MAX_STRING_CACHE) stringCache.set(trimmed, fixed);
+      return text.replace(trimmed, fixed);
+    }
+
+    if (/^Software\\s+Engineering$/i.test(trimmed)) {
+      const fixed = '软件工程';
+      if (stringCache.size < MAX_STRING_CACHE) stringCache.set(trimmed, fixed);
+      return text.replace(trimmed, fixed);
+    }
+
+    if (/^Simplified\\s+interface\\s+for\\s+research,\\s*writing,\\s*and\\s+everyday\\s+tasks[.。]?$/i.test(trimmed)) {
+      const fixed = '专为调研、写作和日常任务打造的精简界面。';
+      if (stringCache.size < MAX_STRING_CACHE) stringCache.set(trimmed, fixed);
+      return text.replace(trimmed, fixed);
+    }
+
+    if (/^Full\\s+interface\\s+for\\s+coding,\\s*developer\\s+tools,\\s*and\\s+managing\\s+agents[.。]?$/i.test(trimmed)) {
+      const fixed = '涵盖编程、开发者工具与智能体管理的完整界面。';
+      if (stringCache.size < MAX_STRING_CACHE) stringCache.set(trimmed, fixed);
+      return text.replace(trimmed, fixed);
+    }
+
+    if (/^Chat\\s+Layout$/i.test(trimmed)) {
+      const fixed = '对话布局';
+      if (stringCache.size < MAX_STRING_CACHE) stringCache.set(trimmed, fixed);
+      return text.replace(trimmed, fixed);
+    }
+
+    if (/^Fill$/i.test(trimmed)) {
+      const fixed = '铺满';
+      if (stringCache.size < MAX_STRING_CACHE) stringCache.set(trimmed, fixed);
+      return text.replace(trimmed, fixed);
+    }
+
+    if (/^(?:Search|搜索)\\s+shortcuts\\.{0,3}$/i.test(trimmed)) {
+      const fixed = '搜索快捷键...';
+      if (stringCache.size < MAX_STRING_CACHE) stringCache.set(trimmed, fixed);
+      return text.replace(trimmed, fixed);
+    }
+
+    if (/^Configure\\s+allowed\\s+and\\s+denied\\s+URLs\\s+for\\s+the\\s+browser\\s+subagent/i.test(trimmed)) {
+      const fixed = trimmed.includes('Google Chrome')
+        ? '配置浏览器子智能体（通过 /browser 调用）允许和拒绝访问的 URL。需要 Google Chrome。'
+        : '配置浏览器子智能体（通过 /browser 调用）允许和拒绝访问的 URL。需要 ';
       if (stringCache.size < MAX_STRING_CACHE) stringCache.set(trimmed, fixed);
       return text.replace(trimmed, fixed);
     }

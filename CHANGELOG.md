@@ -18,6 +18,9 @@
 - **搜索输入框占位符自适应汉化**：自适应匹配 `Search customizations...` ➔ “搜索自定义配置...”，全面放行静态输入框 placeholder 属性汉化，确保无刷新实时呈现。
 - **项目与置顶对话菜单全量汉化**：补齐项目右键菜单（复制项目名称、项目设置、删除项目等）与置顶对话排序规则（排序方式、最近更新、最近提问、自定义排序）。
 - **自动化空状态文案彻底修复**：重构自动化空状态动态拦截机制，精准匹配单复数与混合分词（`No automation yet` / `No automations yet` / `No 自动化 yet` ➔ “暂无自动化”），并汉化定时任务运行说明。
+- **设置面板界面布局与模式全面汉化**：全量精准汉化「界面布局」(Interface Layout)、「知识工作」(Knowledge Work) 与日常任务精简界面说明、「软件工程」(Software Engineering) 与完整工程开发界面说明。
+- **高级设置与快捷键深度补全**：汉化「对话布局」(Chat Layout) 标题及「铺满」(Fill) 宽度选项；彻底消除快捷键搜索框“搜索 shortcuts...”半英半中残留（自适应转换为“搜索快捷键...”）。
+- **浏览器子智能体操作规则汉化**：自适应拦截并全量汉化「浏览器操作控制规则」官方长句说明（`Configure allowed and denied URLs for the browser subagent (invoked with /browser). Requires Google Chrome.` ➔ “配置浏览器子智能体（通过 /browser 调用）允许和拒绝访问的 URL。需要 Google Chrome。”）。
 
 ### 3. 产物与测试保障
 - **最新预编译补丁包打包**：构建生成针对 2.30.0 的 `app.asar.ready`，支持本地无感原子替换与一键极速热部署。

@@ -334,3 +334,73 @@ test('executeAutoRestore 进程退出超时后若仍在运行则安全中断拒�
 });
 
 
+
+test('未知客户端或补丁版本不应被标记兼容，也不得停止进程或写入备份', async t => {
+  for (const invalidClient of [false, true]) {
+    const dir = await workspace(t);
+    const appDir = path.join(dir, 'app');
+    const resources = path.join(appDir, 'resources');
+    await fs.mkdir(resources, { recursive: true });
+    const target = path.join(resources, 'app.asar');
+    const original = invalidClient ? Buffer.from('invalid client archive') : packedOfficial('2.31.0');
+    await fs.writeFile(target, original);
+    await fs.writeFile(path.join(dir, 'app.asar.ready'), invalidClient ? packedLocalized('2.31.0') : Buffer.from('invalid patch archive'));
+    const patch = await findAvailablePatch({ workspaceDir: dir, targetVersion: invalidClient ? null : '2.31.0' });
+    assert.equal(patch.isMatch, false);
+    let checkedProcesses = false;
+    const result = await executeAutoRestore({ appDir, workspaceDir: dir,
+      isAppRunning() { checkedProcesses = true; return true; } });
+    assert.equal(result.success, false);
+    assert.equal(result.code, 'VERSION_UNKNOWN');
+    assert.equal(checkedProcesses, false);
+    assert.deepEqual(await fs.readFile(target), original);
+    assert.deepEqual(await fs.readdir(resources), ['app.asar']);
+  }
+});
+
+test('指定候选包以实际归档版本为准，不接受缓存标签或调用方声明', async t => {
+  const dir = await workspace(t);
+  const appDir = path.join(dir, 'app');
+  const resources = path.join(appDir, 'resources');
+  await fs.mkdir(resources, { recursive: true });
+  const target = path.join(resources, 'app.asar');
+  const original = packedOfficial('2.31.2');
+  await fs.writeFile(target, original);
+  const patch = path.join(dir, 'app.asar.ready');
+  await fs.writeFile(patch, packedLocalized('2.31.0'));
+  const result = await executeAutoRestore({ appDir, workspaceDir: dir,
+    candidatePatch: { path: patch, version: '2.31.2' } });
+  assert.equal(result.code, 'VERSION_MISMATCH');
+  assert.equal(result.patchVersion, '2.31.0');
+  assert.deepEqual(await fs.readFile(target), original);
+  assert.deepEqual(await fs.readdir(resources), ['app.asar']);
+});
+
+test('缓存标签不能让版本不可读的归档被标记为匹配', async t => {
+  const dir = await workspace(t);
+  const cached = path.join(dir, 'cached.asar');
+  await fs.writeFile(cached, 'invalid cached archive');
+  const patch = await findAvailablePatch({ workspaceDir: dir, targetVersion: '2.31.0',
+    releaseManager: { listFiles: async () => [{ path: cached, tag: 'v2.31.0', modified: false, size: 22 }] } });
+  assert.equal(patch.version, null);
+  assert.equal(patch.isMatch, false);
+});
+
+test('等待退出期间补丁被换成其他版本时不得安装', async t => {
+  const dir = await workspace(t);
+  const appDir = path.join(dir, 'app');
+  const resources = path.join(appDir, 'resources');
+  await fs.mkdir(resources, { recursive: true });
+  const target = path.join(resources, 'app.asar');
+  const original = packedOfficial('2.31.0');
+  await fs.writeFile(target, original);
+  const patch = path.join(dir, 'app.asar.ready');
+  await fs.writeFile(patch, packedLocalized('2.31.0'));
+  let running = true;
+  const result = await executeAutoRestore({ appDir, workspaceDir: dir,
+    isAppRunning: () => running,
+    stopProcesses: async () => { running = false; await fs.writeFile(patch, packedLocalized('2.32.0')); } });
+  assert.equal(result.success, false);
+  assert.equal(result.code, 'INSTALL_FAILED');
+  assert.deepEqual(await fs.readFile(target), original);
+});

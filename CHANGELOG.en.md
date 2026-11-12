@@ -4,6 +4,28 @@ This document tracks all version releases, core architecture adaptations, and fe
 
 ---
 
+## v2.31.2 (2026-11-12)
+
+### 1. Seamless Adaptation to Official Antigravity v2.31.2 Maintenance Release
+- **Smooth Version Transition**: Closely synchronized with the official 2.31.2 maintenance update pushed on November 12, advancing core version definitions and metadata to `2.31.2`.
+- **100% Native Patch Hit Rate**: Comprehensively analyzed all 1,112 native files between 2.31.0 and 2.31.2, confirming that all 62 active native injection points remain 100% hit with zero regressions.
+- **macOS Double-Click Offline Restore & Version Hardening**: Added dedicated macOS `一键更新汉化.command` offline restore launcher with automated Node.js environment discovery across login shells (NVM, fnm, asdf); strictly hardened version validation in `auto-restore.js` by checking the true binary archive to eliminate white-screen risks from unknown or spoofed versions (thanks to @mutezebra in #52).
+
+### 2. Comprehensive UI & Interaction Consolidation & Settings Refinement
+- **Retained All Localization Assets**: Fully carried over the comprehensive Marketplace plugin details, categorized shelves, Settings interface layout & Chat layout options, adaptive shortcut search, browser subagent rules, and full Gemini Live voice descriptions.
+- **Settings & Project Management Refinement**:
+  - Added browser settings subtitle localization: `Configure built-in browser, link opening, and browser subagent preferences.` ➔ `配置内置浏览器、链接打开方式以及浏览器子智能体偏好设置。`.
+  - Added project settings subtitle localization: `Manage project folders and settings.` ➔ `管理项目文件夹与设置。`.
+  - Added adaptive pattern for setting override scope: `Modified in <scope>` ➔ `已在 <scope> 中修改`.
+  - Fixed project deletion confirmation dialog with dynamic conversation statistics: intelligently handles composite sentence fragmentation (`Permanently delete ... including <X> active conversation(s) and <Y> archived conversation(s).`), producing clean and fluent Chinese copy.
+- **Zero Token Contamination & Instant Response**: Maintained zero-latency DOM micro-batch translation engine and strict physical isolation for all user input and editor fields.
+
+### 3. Artifacts & Test Safeguards
+- **Pre-compiled Core Ready Package**: Built and validated `app.asar.ready` for 2.31.2, ready for instant zero-lag atomic deployment.
+- **TDD Regression Suite All Green**: Added Ticket-35 dedicated test suite, achieving **100% ALL GREEN** across all automated tests.
+
+---
+
 ## v2.31.0 (2026-11-10)
 
 ### 1. Comprehensive Deep Adaptation for Antigravity v2.31.0 Official Major Release

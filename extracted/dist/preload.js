@@ -5277,6 +5277,10 @@ installCustomFlagOverridesSync();
     "Zoho Desk plugin for Antigravity. Review, prioritize, and update Zoho Desk tickets directly from Antigravity through Zoho Desk MCP and includes a Ticket Prioritization Agent for triage and priority updates.": "Zoho Desk 的 Antigravity 插件。通过 Zoho Desk MCP 在 Antigravity 中直接查看、调整优先级并更新工单，并内置用于工单分流与优先级更新的工单定级智能体。",
     "Connect Zoho Projects to Antigravity to turn tasks and issues into working code. Access project context, investigate bugs, and update work items as you develop.": "将 Zoho Projects 连接到 Antigravity，将任务与缺陷直接转化为可运行的代码。在开发过程中无缝获取项目上下文、调查 Bug 并更新工作项状态。",
     "Run Zoho Books from Antigravity: invoicing, bills, banking, journals, projects, items, taxes, customization and automation.": "在 Antigravity 中高效运行 Zoho Books：发票管理、账单、银行对账、日记账、项目核算、商品、税务设置、定制化与财务自动化。",
+    "Configure built-in browser, link opening, and browser subagent preferences.": "配置内置浏览器、链接打开方式以及浏览器子智能体偏好设置。",
+    "Configure built-in browser, link opening, and browser subagent preferences": "配置内置浏览器、链接打开方式以及浏览器子智能体偏好设置",
+    "Manage project folders and settings.": "管理项目文件夹与设置。",
+    "Manage project folders and settings": "管理项目文件夹与设置",
   };
 
   const coreWords = {
@@ -5538,6 +5542,61 @@ installCustomFlagOverridesSync();
 
     if (/^(?:Clear|清除)\s+and\s+friendly[.。]?$/i.test(trimmed)) {
       const fixed = '清晰友好';
+      if (stringCache.size < MAX_STRING_CACHE) stringCache.set(trimmed, fixed);
+      return text.replace(trimmed, fixed);
+    }
+
+    // ===== 2.31.2 设置面板与项目管理深度补漏动态保障 =====
+    if (/^Configure built-in browser, link opening, and browser subagent preferences[.。]?$/i.test(trimmed)) {
+      const fixed = '配置内置浏览器、链接打开方式以及浏览器子智能体偏好设置。';
+      if (stringCache.size < MAX_STRING_CACHE) stringCache.set(trimmed, fixed);
+      return text.replace(trimmed, fixed);
+    }
+
+    if (/^Manage project folders and settings[.。]?$/i.test(trimmed)) {
+      const fixed = '管理项目文件夹与设置。';
+      if (stringCache.size < MAX_STRING_CACHE) stringCache.set(trimmed, fixed);
+      return text.replace(trimmed, fixed);
+    }
+
+    if (/\bModified\s+in\s+([a-zA-Z0-9_\-\/\.]+)/i.test(trimmed)) {
+      const fixed = trimmed.replace(/\bModified\s+in\s+([a-zA-Z0-9_\-\/\.]+)/gi, '已在 $1 中修改');
+      if (stringCache.size < MAX_STRING_CACHE) stringCache.set(trimmed, fixed);
+      return text.replace(trimmed, fixed);
+    }
+
+    if (/^(?:Permanently delete|永久删除)\s+(.+?)\s+(?:including|包括|包含)\s+(\d+)\s+active\s+conversations?\s+and\s+(\d+)\s+archived\s+conversations?([.。]?)$/i.test(trimmed)) {
+      const fixed = trimmed.replace(/^(?:Permanently delete|永久删除)\s+(.+?)\s+(?:including|包括|包含)\s+(\d+)\s+active\s+conversations?\s+and\s+(\d+)\s+archived\s+conversations?([.。]?)$/i, '永久删除 $1，包含 $2 个活跃对话与 $3 个已归档对话。');
+      if (stringCache.size < MAX_STRING_CACHE) stringCache.set(trimmed, fixed);
+      return text.replace(trimmed, fixed);
+    }
+
+    if (/^(?:Permanently delete|永久删除)\s+(.+?)\s+(?:including|包括|包含)\s+(\d+)\s+active\s+conversations?([.。]?)$/i.test(trimmed)) {
+      const fixed = trimmed.replace(/^(?:Permanently delete|永久删除)\s+(.+?)\s+(?:including|包括|包含)\s+(\d+)\s+active\s+conversations?([.。]?)$/i, '永久删除 $1，包含 $2 个活跃对话。');
+      if (stringCache.size < MAX_STRING_CACHE) stringCache.set(trimmed, fixed);
+      return text.replace(trimmed, fixed);
+    }
+
+    if (/^(?:Permanently delete|永久删除)\s+(.+?)\s+(?:including|包括|包含)\s+(\d+)\s+archived\s+conversations?([.。]?)$/i.test(trimmed)) {
+      const fixed = trimmed.replace(/^(?:Permanently delete|永久删除)\s+(.+?)\s+(?:including|包括|包含)\s+(\d+)\s+archived\s+conversations?([.。]?)$/i, '永久删除 $1，包含 $2 个已归档对话。');
+      if (stringCache.size < MAX_STRING_CACHE) stringCache.set(trimmed, fixed);
+      return text.replace(trimmed, fixed);
+    }
+
+    if (/^(?:(?:including|包括|包含)\s+)?(\d+)\s+active\s+conversations?\s+and\s+(\d+)\s+archived\s+conversations?([.。]?)$/i.test(trimmed)) {
+      const fixed = trimmed.replace(/^(?:(?:including|包括|包含)\s+)?(\d+)\s+active\s+conversations?\s+and\s+(\d+)\s+archived\s+conversations?([.。]?)$/i, '包含 $1 个活跃对话与 $2 个已归档对话。');
+      if (stringCache.size < MAX_STRING_CACHE) stringCache.set(trimmed, fixed);
+      return text.replace(trimmed, fixed);
+    }
+
+    if (/^(\d+)\s+active\s+conversations?([.。]?)$/i.test(trimmed)) {
+      const fixed = trimmed.replace(/^(\d+)\s+active\s+conversations?([.。]?)$/i, '$1 个活跃对话。');
+      if (stringCache.size < MAX_STRING_CACHE) stringCache.set(trimmed, fixed);
+      return text.replace(trimmed, fixed);
+    }
+
+    if (/^(\d+)\s+archived\s+conversations?([.。]?)$/i.test(trimmed)) {
+      const fixed = trimmed.replace(/^(\d+)\s+archived\s+conversations?([.。]?)$/i, '$1 个已归档对话。');
       if (stringCache.size < MAX_STRING_CACHE) stringCache.set(trimmed, fixed);
       return text.replace(trimmed, fixed);
     }

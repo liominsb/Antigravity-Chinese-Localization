@@ -132,6 +132,10 @@ node localize.js --now
    ```
 2. Click "一键汉化" in the dashboard. The default path is `/Applications/Antigravity.app`.
 
+After an official update, double-click **`一键更新汉化.command`** from the source checkout or a complete distribution containing `localize.js` (run `chmod +x 一键更新汉化.command` first if needed). This requires Node.js 14 or newer. It asks you to save your work and confirm before invoking the existing `--auto-restore` flow to close the client, back it up, and reapply localization; the app opens only after success. It does not require `extracted/`, download files, or rebuild archives. Only local prebuilt packages whose actual archive version matches the client are accepted; mismatched or unreadable versions stop the operation. Wait for a matching localization release rather than replacing a newer client with an older package. “Restore” here means restoring localization, not switching back to English.
+
+The launcher prefers a usable Node from the current PATH and adds common Homebrew locations. If needed, it loads the user’s login/interactive shell configuration for tools such as nvm, fnm, and asdf, then tries NVM’s default version. These tools must be configured in the user’s shell. Failure to open the app only displays a notice and does not change a successful localization exit code.
+
 > **macOS Code Signing Notice**:  
 > Modifying the internal asar bundle breaks the original signature, and Gatekeeper may report "App is damaged". Run the following command in terminal to clear the quarantine flag:  
 > ```bash

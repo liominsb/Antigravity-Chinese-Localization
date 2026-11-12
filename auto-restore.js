@@ -67,7 +67,7 @@ async function findAvailablePatch({ workspaceDir, targetVersion, releaseManager 
       const cached = await releaseManager.listFiles();
       for (const item of cached) {
         if (!item.modified && item.path && fs.existsSync(item.path)) {
-          const patchVersion = readAsarPackageVersion(item.path) || normalizeVersion(item.tag);
+          const patchVersion = readAsarPackageVersion(item.path);
           candidates.push({
             source: 'download-cache',
             cacheId: item.cacheId,
@@ -144,7 +144,7 @@ async function findAvailablePatch({ workspaceDir, targetVersion, releaseManager 
   // 若无精确匹配，按优先级返回第一个候选（并标记是否匹配）
   const primary = candidates[0];
   const primaryNorm = normalizeVersion(primary.version);
-  const isMatch = Boolean(!normTarget || !primaryNorm || normTarget === primaryNorm);
+  const isMatch = Boolean(normTarget && primaryNorm && normTarget === primaryNorm);
 
   return { ...primary, isMatch };
 }
@@ -245,18 +245,31 @@ async function executeAutoRestore({
   }
 
   const appNorm = normalizeVersion(status.appVersion);
-  const patchNorm = normalizeVersion(patch.version);
+  // 候选元数据和缓存标签可能过期，写入前以实际归档中的版本为准。
+  const patchVersion = readAsarPackageVersion(patch.path);
+  const patchNorm = normalizeVersion(patchVersion);
+
+  if (!appNorm || !patchNorm) {
+    return {
+      success: false,
+      code: 'VERSION_UNKNOWN',
+      appVersion: status.appVersion,
+      patchVersion,
+      patchPath: patch.path,
+      message: '[安全拦截] 无法读取客户端或汉化包版本，已阻止覆盖。请确认客户端和同版本汉化包完整后重试。'
+    };
+  }
 
   // 核心安全拦截：版本兼容性校验
-  // 如果客户端版本与补丁包版本均明确且不一致，坚决阻止盲目覆盖！
-  if (appNorm && patchNorm && appNorm !== patchNorm) {
+  // 仅允许已确认版本相同的客户端与补丁，避免覆盖官方更新。
+  if (appNorm !== patchNorm) {
     return {
       success: false,
       code: 'VERSION_MISMATCH',
       appVersion: status.appVersion,
-      patchVersion: patch.version,
+      patchVersion,
       patchPath: patch.path,
-      message: `[安全拦截] 客户端已由官方更新为 v${status.appVersion}，但本地补丁版本为 v${patch.version}。为防止界面崩溃或白屏，已阻止覆盖。请通过控制中心下载对应 v${status.appVersion} 的汉化包。`
+      message: `[安全拦截] 客户端已由官方更新为 v${status.appVersion}，但本地补丁版本为 v${patchVersion}。为防止界面崩溃或白屏，已阻止覆盖。请通过控制中心下载对应 v${status.appVersion} 的汉化包。`
     };
   }
 
@@ -343,6 +356,11 @@ async function executeAutoRestore({
     if (patchHash !== stageHash) {
       throw new Error('汉化包暂存写入校验失败，SHA256 不一致');
     }
+    // 等待进程退出和复制期间文件可能变化，提交前再次核对实际版本。
+    if (normalizeVersion(readAsarPackageVersion(stagePath)) !== appNorm ||
+        normalizeVersion(readAsarPackageVersion(asarPath)) !== appNorm) {
+      throw new Error('客户端或暂存汉化包版本已变化，已阻止覆盖，请重新检查后重试');
+    }
     // 3. 原子重命名覆盖目标
     await fsp.rename(stagePath, asarPath);
 
@@ -350,10 +368,10 @@ async function executeAutoRestore({
       success: true,
       code: 'RESTORED',
       appVersion: status.appVersion,
-      patchVersion: patch.version,
+      patchVersion,
       patchPath: patch.path,
       backupPath: createdBackupPath || standardBackup,
-      message: `汉化补丁 (v${patch.version || status.appVersion || '匹配'}) 已成功安全恢复！`
+      message: `汉化补丁 (v${patchVersion}) 已成功安全恢复！`
     };
   } catch (err) {
     // 清理暂存文件

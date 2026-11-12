@@ -22,6 +22,7 @@ const tests = [
   'ticket-20-v2230-features.test.js',
   'ticket-21-v2231-features.test.js',
   'ticket-22-auto-restore-on-update.test.js',
+  'macos-auto-restore-launcher.test.js',
   'ticket-23-v2240-features.test.js',
   'ticket-24-v2250-features.test.js',
   'ticket-25-v2260-features.test.js',

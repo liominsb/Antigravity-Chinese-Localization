@@ -122,6 +122,33 @@ check(
 );
 check('提及日期的无关句子不翻译', translateString('This text mentions November 18, 2026 but is unrelated.'), 'This text mentions November 18, 2026 but is unrelated.');
 
+console.log('\n[6] 模型可用范围提示（仅向部分订阅方案开放）');
+check(
+  'Ultra 与付费 Pro 方案',
+  translateString('Gemini 4 Argon is currently available to Ultra and paid Pro plan subscribers.'),
+  'Gemini 4 Argon 目前仅向 Ultra 与付费 Pro 方案订阅用户提供。'
+);
+check(
+  '付费 Pro 与 Ultra 方案（语序相反）',
+  translateString('Gemini 4 Hydrogen is currently available to paid Pro and Ultra plan subscribers.'),
+  'Gemini 4 Hydrogen 目前仅向付费 Pro 与 Ultra 方案订阅用户提供。'
+);
+check(
+  '其他订阅层级（保留原文并补空格）',
+  translateString('GPT-5.2 is currently available to Business subscribers.'),
+  'GPT-5.2 目前仅向 Business 订阅用户提供。'
+);
+check(
+  '当前方案不可用',
+  translateString('Gemini 4 Argon is not available on your current plan.'),
+  'Gemini 4 Argon 在你当前方案中不可用。'
+);
+check(
+  '无关的 available to 句子不翻译',
+  translateString('This feature is available to everyone.'),
+  'This feature is available to everyone.'
+);
+
 console.log(`\n=== Ticket-37 结果：${passed}/${total} 通过 ===`);
 
 if (passed !== total) {

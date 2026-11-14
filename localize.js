@@ -5232,6 +5232,30 @@ const DOM_TRANSLATOR_INJECTION = `
       return text.replace(trimmed, fixed);
     }
 
+    // ===== 自定义补充：模型可用范围提示（仅向部分订阅方案开放） =====
+    if (/^(.+?)\\s+(?:is|are)\\s+currently available to\\s+(.+?)\\s+subscribers?\\.$/i.test(trimmed)) {
+      const fixed = trimmed.replace(/^(.+?)\\s+(?:is|are)\\s+currently available to\\s+(.+?)\\s+subscribers?\\.$/i, (m, models, audience) => {
+        const a = String(audience)
+          .replace(/\\bUltra and paid Pro plans?\\b/gi, 'Ultra 与付费 Pro 方案')
+          .replace(/\\bpaid Pro and Ultra plans?\\b/gi, '付费 Pro 与 Ultra 方案')
+          .replace(/\\band\\b/gi, '与')
+          .replace(/\\bpaid\\b/gi, '付费')
+          .replace(/\\bplans?\\b/gi, '方案');
+        const lead = /^[A-Za-z0-9]/.test(a) ? ' ' : '';
+        const tail = /[A-Za-z0-9]$/.test(a) ? ' ' : '';
+        return models + ' 目前仅向' + lead + a + tail + '订阅用户提供。';
+      });
+      if (stringCache.size < MAX_STRING_CACHE) stringCache.set(trimmed, fixed);
+      return text.replace(trimmed, fixed);
+    }
+
+    // ===== 自定义补充：模型在当前方案不可用 =====
+    if (/^(.+?)\\s+(?:is|are)\\s+not available (?:on|in) your (?:current )?plan\\.$/i.test(trimmed)) {
+      const fixed = trimmed.replace(/^(.+?)\\s+(?:is|are)\\s+not available (?:on|in) your (?:current )?plan\\.$/i, (m, model) => model + ' 在你当前方案中不可用。');
+      if (stringCache.size < MAX_STRING_CACHE) stringCache.set(trimmed, fixed);
+      return text.replace(trimmed, fixed);
+    }
+
         // ===== 2.29.1 对话区选中文本浮动引用按钮（自适应快捷键） =====
     if (/^Quote(?:\s+(Ctrl\+[a-zA-Z0-9]+|Cmd\+[a-zA-Z0-9]+))?$/i.test(trimmed)) {
       const fixed = trimmed.replace(/^Quote(?:\s+(Ctrl\+[a-zA-Z0-9]+|Cmd\+[a-zA-Z0-9]+))?$/i, (match, shortcut) => {

@@ -5324,6 +5324,24 @@ const DOM_TRANSLATOR_INJECTION = `
       if (stringCache.size < MAX_STRING_CACHE) stringCache.set(trimmed, fixed);
       return fixed;
     }
+    // ===== 自定义补充：键盘快捷键提示（Enter Queues after the turn 等） =====
+    if (/^(.+?)\\s+Queues after the turn$/.test(trimmed)) {
+      const fixed = trimmed.replace(/^(.+?)\\s+Queues after the turn$/, (m, key) => key + ' 在当前回合结束后排队');
+      if (stringCache.size < MAX_STRING_CACHE) stringCache.set(trimmed, fixed);
+      return text.replace(trimmed, fixed);
+    }
+
+    if (/^(.+?)\\s+Sends immediately$/.test(trimmed)) {
+      const fixed = trimmed.replace(/^(.+?)\\s+Sends immediately$/, (m, key) => key + ' 立即发送');
+      if (stringCache.size < MAX_STRING_CACHE) stringCache.set(trimmed, fixed);
+      return text.replace(trimmed, fixed);
+    }
+
+    if (/^(.+?)\\s+On empty prompt, sends next in queue$/.test(trimmed)) {
+      const fixed = trimmed.replace(/^(.+?)\\s+On empty prompt, sends next in queue$/, (m, key) => key + ' 输入框为空时，发送队列中的下一条');
+      if (stringCache.size < MAX_STRING_CACHE) stringCache.set(trimmed, fixed);
+      return text.replace(trimmed, fixed);
+    }
 
         // ===== 2.29.1 对话区选中文本浮动引用按钮（自适应快捷键） =====
     if (/^Quote(?:\s+(Ctrl\+[a-zA-Z0-9]+|Cmd\+[a-zA-Z0-9]+))?$/i.test(trimmed)) {

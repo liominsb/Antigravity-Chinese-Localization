@@ -202,6 +202,29 @@ check(
   'Use the browser to open the page.'
 );
 
+console.log('\n[9] 键盘快捷键提示（执行 → 排队消息 的悬停说明）');
+check(
+  'Enter 排队说明',
+  translateString('Enter Queues after the turn'),
+  'Enter 在当前回合结束后排队'
+);
+check(
+  'Alt+Enter 立即发送',
+  translateString('Alt+Enter Sends immediately'),
+  'Alt+Enter 立即发送'
+);
+check(
+  'Alt+Enter 空输入框取队列',
+  translateString('Alt+Enter On empty prompt, sends next in queue'),
+  'Alt+Enter 输入框为空时，发送队列中的下一条'
+);
+check('macOS 符号键名保留', translateString('⌥⏎ Sends immediately'), '⌥⏎ 立即发送');
+check(
+  '无关句子不翻译',
+  translateString('This message queues after the turn but is unrelated'),
+  'This message queues after the turn but is unrelated'
+);
+
 console.log(`\n=== Ticket-37 结果：${passed}/${total} 通过 ===`);
 
 if (passed !== total) {

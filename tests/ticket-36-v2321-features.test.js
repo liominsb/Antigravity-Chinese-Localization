@@ -109,6 +109,7 @@ check('ipcHandlers.js 包含 Replace with New 映射', ipcHandlersSource.include
 check('ipcHandlers.js 包含 Ask /btw 映射', ipcHandlersSource.includes("'Ask /btw': '通过 /btw 提问'"), true);
 check('preload.js 包含 Ask /btw 动态正则与词典汉化', preloadSource.includes('通过 /btw 提问'), true);
 check('preload.js 包含 Ask /btw 选区气泡特权放行', preloadSource.includes('Ask(?:\\s+|\\s*\\/\\s*)btw') && preloadSource.includes('skipCache.set(element, false)'), true);
+check('preload.js 包含 自动化空状态容器级防夹生收敛', preloadSource.includes('emptyStateMap') && preloadSource.includes('暂无自动化'), true);
 
 // 2.32.1 补充：Google Workspace 新标语与 Gmail 插件
 check('preload.js 包含 Google Workspace 2.32.1 标语汉化', preloadSource.includes('连接到 Google Workspace，包括 Google 文档、表格、幻灯片、云端硬盘、日历和 Gmail。'), true);
@@ -144,6 +145,7 @@ check('app.asar.ready 包含 替换为新建 映射', asarSource.includes('替�
 check('app.asar.ready 包含 Google Workspace 2.32.1 标语', asarSource.includes('连接到 Google Workspace，包括 Google 文档、表格、幻灯片、云端硬盘、日历和 Gmail。'), true);
 check('app.asar.ready 包含 Gmail 插件描述汉化', asarSource.includes('在 Gmail 中搜索、阅读、起草和发送电子邮件。'), true);
 check('app.asar.ready 包含 通过 /btw 提问 汉化', asarSource.includes('通过 /btw 提问'), true);
+check('app.asar.ready 包含 暂无自动化 汉化', asarSource.includes('暂无自动化'), true);
 
 console.log(`\n测试汇总: 通过: ${passed}, 失败: ${total - passed}, 总计: ${total}\n`);
 

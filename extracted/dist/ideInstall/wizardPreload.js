@@ -6726,6 +6726,46 @@ electron_1.contextBridge.exposeInMainWorld('wizardAPI', wizardAPI);
           }
         }
       });
+      // 2.32.1 针对 React 片段化导致的「No 自动化 yet」等空状态提示进行容器级收敛
+      const containerText = (node.textContent || '').trim();
+      const emptyStateMatch = containerText.match(/^No\s+(automations?|automation|自动化|conversations?|conversation|对话|groups?|group|分组)\s+yet[.。]?$/i);
+      if (emptyStateMatch) {
+        const emptyStateMap = {
+          automations: '暂无自动化',
+          automation: '暂无自动化',
+          '自动化': '暂无自动化',
+          conversations: '暂无对话',
+          conversation: '暂无对话',
+          '对话': '暂无对话',
+          groups: '暂无分组',
+          group: '暂无分组',
+          '分组': '暂无分组'
+        };
+        const targetText = emptyStateMap[emptyStateMatch[1].toLowerCase()] || '暂无自动化';
+        let setDone = false;
+        for (let i = 0; i < node.childNodes.length; i++) {
+          const child = node.childNodes[i];
+          if (child.nodeType === Node.TEXT_NODE) {
+            if (!setDone) {
+              child.nodeValue = targetText;
+              translatedNodes.add(child);
+              setDone = true;
+            } else {
+              child.nodeValue = '';
+              translatedNodes.add(child);
+            }
+          } else if (child.nodeType === Node.ELEMENT_NODE) {
+            if (!setDone) {
+              child.textContent = targetText;
+              setDone = true;
+            } else {
+              child.textContent = '';
+            }
+          }
+        }
+        return;
+      }
+
       // 组合句翻译兜底：React 片段化导致整句词典条目无法命中时启用
       tryCombinedSentenceTranslation(node);
 

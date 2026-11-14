@@ -15,8 +15,12 @@ This document tracks all version releases, core architecture adaptations, and fe
 - **Dependency Clean-up & Alignment**: Aligned with official refactoring by stripping legacy shell dependencies and adopting official internal login shell env policies and `catcherPreload.js` input channels.
 - **100% Native Patch Hit Rate**: Confirmed that all 62+ active native injection points (application menu, tray, provisioning splash, WSL prompts, WebAuthn, device chooser, and Webview security) remain 100% stable with zero regressions.
 
-### 2. Comprehensive UI & Interaction Consolidation
+### 2. Comprehensive UI & Interaction Consolidation & Edge-Case Refinements
 - **Retained All Localization Assets**: Fully carried over the comprehensive Marketplace plugin ecosystem, settings layouts, Gemini Live voice attributes, and input isolation rules.
+- **Native Context Submenu Localization**: Completely localized native right-click submenus including "Copy" (Conversation Name, Conversation ID, Project Name, Workspace Path, etc.) and "Split" (Split Right, Split Down, Replace with New).
+- **Selection Floating Bubble & Quick Ask**: Localized the floating action bubble `Ask /btw` to "通过 /btw 提问" with privileged bypass handling for instant responsiveness.
+- **Empty State Container-Level Convergence**: Introduced container-level pre-inspection for React-split empty state text nodes (e.g., `No 自动化 yet`), seamlessly consolidating them into idiomatic "暂无自动化", "暂无对话", and "暂无分组".
+- **Official Plugin Ecosystem Deep Translation**: Fully localized the updated Google Workspace slogan, official Gmail plugin (overview, prompts, commands, descriptions), and 16 newly added Marketplace plugins including Arize AX, Better Stack, Cloudflare, CodeRabbit, Tavily, and SonarQube.
 - **Added Remote SSH UI & Command Patterns**: Added dictionary and dynamic rules for SSH remote host connections and command palette prompts.
 
 ### 3. Artifacts & Test Safeguards

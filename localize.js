@@ -5196,21 +5196,37 @@ const DOM_TRANSLATOR_INJECTION = `
       return text.replace(trimmed, fixed);
     }
 
-    // ===== 自定义补充：第三方模型访问公告（服务端下发文案） =====
+    // ===== 自定义补充：第三方模型访问公告（服务端下发，兼容多种句式） =====
     if (/^Changes to third-party model access$/i.test(trimmed)) {
       const fixed = '第三方模型访问方式调整';
       if (stringCache.size < MAX_STRING_CACHE) stringCache.set(trimmed, fixed);
       return text.replace(trimmed, fixed);
     }
 
-    if (/^Opus\\s*(.+?)\\s*and Sonnet\\s*(.+?)\\s*are available on paid Pro and Ultra plans\\.\\s*Third-party model access will no longer be available on your current plan starting on\\s*(.+?)\\.$/i.test(trimmed)) {
-      const fixed = trimmed.replace(/^Opus\\s*(.+?)\\s*and Sonnet\\s*(.+?)\\s*are available on paid Pro and Ultra plans\\.\\s*Third-party model access will no longer be available on your current plan starting on\\s*(.+?)\\.$/i, (m, a, b, d) => {
+    if (/^(.+?)\\s+(?:is|are)\\s+(?:now\\s+)?available on paid Pro and Ultra plans\\.\\s*Third-party model access will no longer be available on your current plan starting on\\s*(.+?)\\.$/i.test(trimmed)) {
+      const fixed = trimmed.replace(/^(.+?)\\s+(?:is|are)\\s+(?:now\\s+)?available on paid Pro and Ultra plans\\.\\s*Third-party model access will no longer be available on your current plan starting on\\s*(.+?)\\.$/i, (m, models, d) => {
         const months = { january: 1, february: 2, march: 3, april: 4, may: 5, june: 6, july: 7, august: 8, september: 9, october: 10, november: 11, december: 12 };
         const cn = (d || '').replace(/^([A-Za-z]+)\\s+(\\d{1,2}),?\\s*(\\d{4})$/, (mm, mon, day, year) => {
           const idx = months[mon.toLowerCase()];
           return idx ? (year + ' 年 ' + idx + ' 月 ' + day + ' 日') : d;
         });
-        return 'Opus ' + a + ' 与 Sonnet ' + b + ' 现已在付费 Pro 与 Ultra 方案中提供。自 ' + cn + '起，你当前方案将不再提供第三方模型访问。';
+        const parts = models.split(/\\s+and\\s+/i);
+        const modelsCn = parts.length === 2 ? parts.join(' 与 ') : parts.join('、');
+        return modelsCn + ' 现已在付费 Pro 与 Ultra 方案中提供。自 ' + cn + '起，你当前方案将不再提供第三方模型访问。';
+      });
+      if (stringCache.size < MAX_STRING_CACHE) stringCache.set(trimmed, fixed);
+      return text.replace(trimmed, fixed);
+    }
+
+    // ===== 自定义补充：模型下线公告（GPT-OSS will be removed from Antigravity on ...） =====
+    if (/^(.+?)\\s+will be removed from Antigravity on\\s+(.+?)\\.$/i.test(trimmed)) {
+      const fixed = trimmed.replace(/^(.+?)\\s+will be removed from Antigravity on\\s+(.+?)\\.$/i, (m, model, d) => {
+        const months = { january: 1, february: 2, march: 3, april: 4, may: 5, june: 6, july: 7, august: 8, september: 9, october: 10, november: 11, december: 12 };
+        const cn = (d || '').replace(/^([A-Za-z]+)\\s+(\\d{1,2}),?\\s*(\\d{4})$/, (mm, mon, day, year) => {
+          const idx = months[mon.toLowerCase()];
+          return idx ? (year + ' 年 ' + idx + ' 月 ' + day + ' 日') : d;
+        });
+        return model + ' 将于 ' + cn + '从 Antigravity 移除。';
       });
       if (stringCache.size < MAX_STRING_CACHE) stringCache.set(trimmed, fixed);
       return text.replace(trimmed, fixed);

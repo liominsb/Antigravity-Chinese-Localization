@@ -79,6 +79,21 @@ check(
   translateString('Opus 4.6 and Sonnet 3.7 are available on paid Pro and Ultra plans. Third-party model access will no longer be available on your current plan starting on March 1, 2027.'),
   'Opus 4.6 与 Sonnet 3.7 现已在付费 Pro 与 Ultra 方案中提供。自 2027 年 3 月 1 日起，你当前方案将不再提供第三方模型访问。'
 );
+check(
+  '公告正文（模型选择页 "is now available" 句式）',
+  translateString('Sonnet 5.5 is now available on paid Pro and Ultra plans. Third-party model access will no longer be available on your current plan starting on November 18, 2026.'),
+  'Sonnet 5.5 现已在付费 Pro 与 Ultra 方案中提供。自 2026 年 11 月 18 日起，你当前方案将不再提供第三方模型访问。'
+);
+check(
+  '公告正文（单模型 Opus "is now" 句式）',
+  translateString('Opus 4.6 is now available on paid Pro and Ultra plans. Third-party model access will no longer be available on your current plan starting on November 18, 2026.'),
+  'Opus 4.6 现已在付费 Pro 与 Ultra 方案中提供。自 2026 年 11 月 18 日起，你当前方案将不再提供第三方模型访问。'
+);
+check(
+  '公告正文（三模型并列用顿号）',
+  translateString('Claude Opus 4.6 and Claude Sonnet 4.6 and GPT-5.2 are available on paid Pro and Ultra plans. Third-party model access will no longer be available on your current plan starting on December 1, 2026.'),
+  'Claude Opus 4.6、Claude Sonnet 4.6、GPT-5.2 现已在付费 Pro 与 Ultra 方案中提供。自 2026 年 12 月 1 日起，你当前方案将不再提供第三方模型访问。'
+);
 
 console.log('\n[4] 账号方案与设置页残留词条');
 check('Your Plan 动态前缀', translateString('Your Plan: Antigravity Starter Quota'), '当前方案：Antigravity 入门配额');
@@ -93,6 +108,19 @@ check('二级快捷键说明', translateString('Enter always submits. This adds 
 check('上一条提示词', translateString('Jump to Previous Prompt'), '跳转到上一条提示词');
 check('下一条提示词', translateString('Jump to Next Prompt'), '跳转到下一条提示词');
 check('置顶/取消置顶对话', translateString('Pin / Unpin Conversation'), '置顶 / 取消置顶对话');
+
+console.log('\n[5] 模型下线公告（模型选择页底部提示）');
+check(
+  'GPT-OSS 下线提示',
+  translateString('GPT-OSS will be removed from Antigravity on November 18, 2026.'),
+  'GPT-OSS 将于 2026 年 11 月 18 日从 Antigravity 移除。'
+);
+check(
+  '其他模型下线提示（换月份）',
+  translateString('Gemini 2.5 Pro will be removed from Antigravity on January 5, 2027.'),
+  'Gemini 2.5 Pro 将于 2027 年 1 月 5 日从 Antigravity 移除。'
+);
+check('提及日期的无关句子不翻译', translateString('This text mentions November 18, 2026 but is unrelated.'), 'This text mentions November 18, 2026 but is unrelated.');
 
 console.log(`\n=== Ticket-37 结果：${passed}/${total} 通过 ===`);
 

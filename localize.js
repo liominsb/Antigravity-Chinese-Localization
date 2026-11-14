@@ -5094,6 +5094,14 @@ const DOM_TRANSLATOR_INJECTION = `
     "See Activity": "查看活动记录",
     "Get More AI Credits": "获取更多 AI 点数",
 
+    // ===== 自定义补充：设置项下拉/开关的选项说明（悬停浮层） =====
+    "Interrupt the agent and send immediately.": "中断智能体并立即发送。",
+    "Queue until after the current turn.": "在当前回合结束后排队。",
+    "The agent never asks for confirmation before executing terminal commands (except those in the Deny list). This provides the agent with the maximum ability to operate over long periods without intervention, but also has the highest risk of the agent executing an unsafe terminal command.": "智能体在执行终端命令前不会请求确认（拒绝列表中的命令除外）。这让智能体能在长时间内以最大自主能力运行，但同时也是最高风险：智能体可能执行不安全的终端命令。",
+    "Terminal commands automatically proceed inside the sandbox. A command that needs to leave the sandbox proceeds only if an agent judges it reversible, and otherwise requests review.": "终端命令会在沙箱内自动执行。需要离开沙箱的命令，只有智能体判断其可逆时才会继续，否则会请求审核。",
+    "The agent always asks for confirmation before executing terminal commands (except those in the Allow list).": "智能体在执行终端命令前始终请求确认（允许列表中的命令除外）。",
+    "Terminal command automatically proceeds if the command runs inside the sandbox. Otherwise, it requests review.": "终端命令如果在沙箱内运行，则自动执行；否则会请求审核。",
+
     // ===== 自定义补充：声音选择弹窗（音色描述，Clear and friendly 上游已收录） =====
     "Confident and clear": "自信而清晰",
     "Warm and engaging": "温暖而有感染力",

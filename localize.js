@@ -5093,6 +5093,13 @@ const DOM_TRANSLATOR_INJECTION = `
     "Unlimited": "无限制",
     "See Activity": "查看活动记录",
     "Get More AI Credits": "获取更多 AI 点数",
+
+    // ===== 自定义补充：声音选择弹窗（音色描述，Clear and friendly 上游已收录） =====
+    "Confident and clear": "自信而清晰",
+    "Warm and engaging": "温暖而有感染力",
+    "Warm and approachable": "温暖而亲切",
+    "Deep and velvety": "低沉而丝滑",
+    "Light and precise": "轻快而精准",
     "Antigravity Starter Quota": "Antigravity 入门配额",
     "Google AI Plus users receive the minimum base limits on Antigravity. You can upgrade to Google AI Pro or above to receive higher rate limits.": "Google AI Plus 用户享有 Antigravity 的最低基础额度。升级到 Google AI Pro 或更高方案可获得更高的速率上限。",
     "Verbose": "详细",
@@ -5304,6 +5311,18 @@ const DOM_TRANSLATOR_INJECTION = `
       const fixed = trimmed.replace(/^Available AI Credits:\\s*(.+)$/i, (m, n) => '可用 AI 点数：' + n);
       if (stringCache.size < MAX_STRING_CACHE) stringCache.set(trimmed, fixed);
       return text.replace(trimmed, fixed);
+    }
+    // ===== 自定义补充：声音选择弹窗按钮（Use Arlo） =====
+    if (/^Use\\s+([A-Z][A-Za-z0-9-]*)$/.test(trimmed)) {
+      const fixed = trimmed.replace(/^Use\\s+([A-Z][A-Za-z0-9-]*)$/, (m, name) => '使用 ' + name);
+      if (stringCache.size < MAX_STRING_CACHE) stringCache.set(trimmed, fixed);
+      return text.replace(trimmed, fixed);
+    }
+    // ===== 自定义补充：声音弹窗 "Use " + 名字 被拆成两个文本节点 =====
+    if (/^Use$/.test(trimmed)) {
+      const fixed = text.replace(/^(\\s*)Use(\\s*)$/, (m, a, b) => a + '使用' + b);
+      if (stringCache.size < MAX_STRING_CACHE) stringCache.set(trimmed, fixed);
+      return fixed;
     }
 
         // ===== 2.29.1 对话区选中文本浮动引用按钮（自适应快捷键） =====

@@ -186,6 +186,22 @@ check(
   'The panel is left aligned.'
 );
 
+console.log('\n[8] 声音选择弹窗（9 个声音的音色描述与确认按钮）');
+check('Arlo 音色', translateString('Confident and clear'), '自信而清晰');
+check('Fola 音色', translateString('Clear and friendly'), '清晰友好');
+check('Cleo 音色', translateString('Warm and engaging'), '温暖而有感染力');
+check('Finn 音色', translateString('Warm and approachable'), '温暖而亲切');
+check('Neno 音色', translateString('Deep and velvety'), '低沉而丝滑');
+check('Olin 音色', translateString('Light and precise'), '轻快而精准');
+check('确认按钮（整串）', translateString('Use Arlo'), '使用 Arlo');
+check('确认按钮（"Use " 独立节点）', translateString('Use '), '使用 ');
+check('声音名保持原文', translateString('Tari'), 'Tari');
+check(
+  '普通 Use 开头的句子不翻译',
+  translateString('Use the browser to open the page.'),
+  'Use the browser to open the page.'
+);
+
 console.log(`\n=== Ticket-37 结果：${passed}/${total} 通过 ===`);
 
 if (passed !== total) {

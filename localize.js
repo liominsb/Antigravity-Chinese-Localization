@@ -14,7 +14,7 @@ const {
   findAvailablePatch
 } = require('./auto-restore');
 
-const CURRENT_VERSION = '2.31.2';
+const CURRENT_VERSION = '2.32.1';
 
 function compareVersions(v1, v2) {
   const parse = (v) => (v || '').replace(/^[vV]/, '').split('.').map(n => parseInt(n, 10) || 0);
@@ -4972,6 +4972,29 @@ const DOM_TRANSLATOR_INJECTION = `
     "Configure built-in browser, link opening, and browser subagent preferences": "配置内置浏览器、链接打开方式以及浏览器子智能体偏好设置",
     "Manage project folders and settings.": "管理项目文件夹与设置。",
     "Manage project folders and settings": "管理项目文件夹与设置",
+    // ===== 2.32.1 远程 SSH 开发与配置 =====
+    "Connect to Host...": "连接到主机...",
+    "Connect to Host": "连接到主机",
+    "Connect to SSH Host...": "连接到 SSH 主机...",
+    "Connect to SSH Host": "连接到 SSH 主机",
+    "Recent Hosts": "最近的主机",
+    "Configure SSH Hosts...": "配置 SSH 主机...",
+    "Configure SSH Hosts": "配置 SSH 主机",
+    "Add New SSH Host...": "添加新的 SSH 主机...",
+    "Remote - SSH": "远程 - SSH",
+    "Stop SSH server": "停止 SSH 服务端",
+    "Stop Server": "停止服务端",
+    "Reconnecting…": "正在重新连接…",
+    "Reconnect": "重新连接",
+    "SSH Remote": "SSH 远程",
+    "SSH Configuration": "SSH 配置",
+    "SSH Config": "SSH 配置",
+    "SSH config": "SSH 配置",
+    "SSH Host": "SSH 主机",
+    "SSH hosts": "SSH 主机",
+    "Enter an SSH host": "输入 SSH 主机",
+    "Choose an SSH config file": "选择 SSH 配置文件",
+    "Touch your security key": "请轻触你的安全密钥",
   };
 
   const coreWords = {
@@ -5288,6 +5311,43 @@ const DOM_TRANSLATOR_INJECTION = `
 
     if (/^(\\d+)\\s+archived\\s+conversations?([.。]?)$/i.test(trimmed)) {
       const fixed = trimmed.replace(/^(\\d+)\\s+archived\\s+conversations?([.。]?)$/i, '$1 个已归档对话。');
+      if (stringCache.size < MAX_STRING_CACHE) stringCache.set(trimmed, fixed);
+      return text.replace(trimmed, fixed);
+    }
+
+    // ===== 2.32.1 远程 SSH 交互与状态动态保障 =====
+    if (/^Reconnecting to (.+?)[.…⋯]?$/i.test(trimmed)) {
+      const fixed = trimmed.replace(/^Reconnecting to (.+?)[.…⋯]?$/i, '正在重新连接到 $1…');
+      if (stringCache.size < MAX_STRING_CACHE) stringCache.set(trimmed, fixed);
+      return text.replace(trimmed, fixed);
+    }
+
+    if (/^Disconnected from (.+?)$/i.test(trimmed)) {
+      const fixed = trimmed.replace(/^Disconnected from (.+?)$/i, '已断开与 $1 的连接');
+      if (stringCache.size < MAX_STRING_CACHE) stringCache.set(trimmed, fixed);
+      return text.replace(trimmed, fixed);
+    }
+
+    if (/^Agents keep running on (.+?)\.?$/i.test(trimmed)) {
+      const fixed = trimmed.replace(/^Agents keep running on (.+?)\.?$/i, '智能体将在 $1 上继续运行。');
+      if (stringCache.size < MAX_STRING_CACHE) stringCache.set(trimmed, fixed);
+      return text.replace(trimmed, fixed);
+    }
+
+    if (/^Agents keep running on (.+?) unless its server stopped\.?$/i.test(trimmed)) {
+      const fixed = trimmed.replace(/^Agents keep running on (.+?) unless its server stopped\.?$/i, '智能体将在 $1 上继续运行（除非其服务端已停止）。');
+      if (stringCache.size < MAX_STRING_CACHE) stringCache.set(trimmed, fixed);
+      return text.replace(trimmed, fixed);
+    }
+
+    if (/^Stop the Antigravity server on (.+?)\?$/i.test(trimmed)) {
+      const fixed = trimmed.replace(/^Stop the Antigravity server on (.+?)\?$/i, '停止 $1 上的 Antigravity 服务端？');
+      if (stringCache.size < MAX_STRING_CACHE) stringCache.set(trimmed, fixed);
+      return text.replace(trimmed, fixed);
+    }
+
+    if (/^Not connected to (.+?)$/i.test(trimmed)) {
+      const fixed = trimmed.replace(/^Not connected to (.+?)$/i, '未连接到 $1');
       if (stringCache.size < MAX_STRING_CACHE) stringCache.set(trimmed, fixed);
       return text.replace(trimmed, fixed);
     }
@@ -7413,6 +7473,62 @@ function translateContextLabel(lbl) {
     replaceInFile(webviewSecurityPath, "label: 'Connection info…',", "label: '连接信息…',");
     replaceInFile(webviewSecurityPath, "title: 'Connection info',", "title: '连接信息',");
     replaceInFile(webviewSecurityPath, "buttons: ['OK'],", "buttons: ['确定'],");
+  }
+
+  // 14. Localize dist/remote/disconnectedPage.js (Remote SSH 断开/重连过渡页, v2.32.1+)
+  const disconnectedPagePath = path.join(EXTRACT_DIR, 'dist', 'remote', 'disconnectedPage.js');
+  if (fs.existsSync(disconnectedPagePath)) {
+    replaceInFile(disconnectedPagePath, "const title = connecting ? 'Reconnecting…' : 'Disconnected';", "const title = connecting ? '正在重新连接…' : '已断开连接';");
+    replaceInFile(disconnectedPagePath, "const heading = connecting\n        ? `Reconnecting to ${host}…`\n        : `Disconnected from ${host}`;", "const heading = connecting\n        ? `正在重新连接到 ${host}…`\n        : `已断开与 ${host} 的连接`;");
+    replaceInFile(disconnectedPagePath, "const body = connecting\n        ? `Agents keep running on ${host}.`\n        : `Agents keep running on ${host} unless its server stopped.`;", "const body = connecting\n        ? `智能体将在 ${host} 上继续运行。`\n        : `智能体将在 ${host} 上继续运行（除非其服务端已停止）。`;");
+    replaceInFile(disconnectedPagePath, '<a class="button primary" href="${action(\'reconnect\')}">Reconnect</a>', '<a class="button primary" href="${action(\'reconnect\')}">重新连接</a>');
+    replaceInFile(disconnectedPagePath, '<a class="button" href="${action(\'close\')}">Close</a>', '<a class="button" href="${action(\'close\')}">关闭</a>');
+  }
+
+  // 15. Localize dist/remote/sshPrompts.js (Remote SSH 凭据与安全密钥弹窗, v2.32.1+)
+  const sshPromptsPath = path.join(EXTRACT_DIR, 'dist', 'remote', 'sshPrompts.js');
+  if (fs.existsSync(sshPromptsPath)) {
+    replaceInFile(sshPromptsPath, '<div id="retry" class="note" hidden>Asked again: your last answer may not have worked.</div>', '<div id="retry" class="note" hidden>再次提示：上一次输入的密码或凭据可能不正确。</div>');
+    replaceInFile(sshPromptsPath, '<div id="long" class="note" hidden>That\'s too long.</div>', '<div id="long" class="note" hidden>内容过长。</div>');
+    replaceInFile(sshPromptsPath, '<div class="buttons"><button id="cancel">Cancel</button><button id="continue">Continue</button></div>', '<div class="buttons"><button id="cancel">取消</button><button id="continue">继续</button></div>');
+    replaceInFile(sshPromptsPath, "message: confirm ? `${label} asks:` : 'Touch your security key',", "message: confirm ? `${label} 询问：` : '请轻触你的安全密钥',");
+    replaceInFile(sshPromptsPath, "buttons: confirm ? ['Yes', 'No'] : ['Cancel'],", "buttons: confirm ? ['是', '否'] : ['取消'],");
+  }
+
+  // 16. Localize dist/remote/sshPromptPreload.js (Remote SSH 密码弹窗 Preload, v2.32.1+)
+  const sshPromptPreloadPath = path.join(EXTRACT_DIR, 'dist', 'remote', 'sshPromptPreload.js');
+  if (fs.existsSync(sshPromptPreloadPath)) {
+    replaceInFile(sshPromptPreloadPath, "asks.textContent = `${label} asks:`;", "asks.textContent = `${label} 询问：`;");
+  }
+
+  // 17. Localize dist/remote/remoteManager.js (Remote SSH 主机管理对话框, v2.32.1+)
+  const remoteManagerPath = path.join(EXTRACT_DIR, 'dist', 'remote', 'remoteManager.js');
+  if (fs.existsSync(remoteManagerPath)) {
+    replaceInFile(remoteManagerPath, "title: 'Choose an SSH config file',", "title: '选择 SSH 配置文件',");
+    replaceInFile(remoteManagerPath, "title: 'Stop SSH server',", "title: '停止 SSH 服务端',");
+    replaceInFile(remoteManagerPath, "message: `Stop the Antigravity server on ${entry.label}?`,", "message: `停止 ${entry.label} 上的 Antigravity 服务端？`,");
+    replaceInFile(remoteManagerPath, "buttons: ['Stop Server', 'Cancel'],", "buttons: ['停止服务端', '取消'],");
+    replaceInFile(remoteManagerPath, "message: `Not connected to ${label}`,", "message: `未连接到 ${label}`,");
+    replaceInFile(remoteManagerPath, "detail: 'Reconnect first, then stop its server.',", "detail: '请先重新连接，然后再停止其服务端。',");
+    replaceInFile(remoteManagerPath, "buttons: ['Sign In', 'Cancel'],", "buttons: ['登录', '取消'],");
+    replaceInFile(remoteManagerPath, "title: 'Sign in',", "title: '登录',");
+    replaceInFile(remoteManagerPath, "message: `Sign in to your organization for ${entry.label}?`,", "message: `为 ${entry.label} 登录到您的组织？`,");
+  }
+
+  // 18. Localize dist/remote/sshArgs.js (Remote SSH 错误与连接提示, v2.32.1+)
+  const sshArgsPath = path.join(EXTRACT_DIR, 'dist', 'remote', 'sshArgs.js');
+  if (fs.existsSync(sshArgsPath)) {
+    replaceInFile(sshArgsPath, "yes: 'SSH authentication failed. Check your password, code or keys, then try again.',", "yes: 'SSH 身份验证失败。请检查密码、动态验证码或密钥，然后重试。',");
+    replaceInFile(sshArgsPath, "onReconnect: 'SSH authentication failed. Click Reconnect to sign in again.',", "onReconnect: 'SSH 身份验证失败。请点击重新连接以再次登录。',");
+    replaceInFile(sshArgsPath, 'no: "SSH authentication failed. Antigravity can\'t answer password or code prompts on Windows yet: set up key-based login with ssh-agent, then try again.",', 'no: "SSH 身份验证失败。Antigravity 暂不支持在 Windows 下响应密码或动态码交互提示：请通过 ssh-agent 配置密钥免密登录后重试。",');
+    replaceInFile(sshArgsPath, "case 'INVALID_DESTINATION':\n            return \"That SSH host isn't valid. Enter an alias from your SSH config or a host like user@host or user@host:2222.\";", "case 'INVALID_DESTINATION':\n            return \"该 SSH 主机地址无效。请输入 SSH 配置中的别名或类似 user@host、user@host:2222 的格式。\";");
+    replaceInFile(sshArgsPath, "case 'FORWARDING_PROHIBITED':\n            return 'SSH port forwarding failed. Make sure the server allows TCP forwarding (AllowTcpForwarding) for your account, then try again.';", "case 'FORWARDING_PROHIBITED':\n            return 'SSH 端口转发失败。请确认服务端已允许您的账户进行 TCP 转发 (AllowTcpForwarding)，然后重试。';");
+    replaceInFile(sshArgsPath, "case 'UNSUPPORTED_HOST':\n            return \"The SSH host isn't supported. Antigravity needs Linux on x64 or arm64 with glibc 2.26 or newer.\";", "case 'UNSUPPORTED_HOST':\n            return \"该 SSH 主机不受支持。Antigravity 需要搭载 glibc 2.26 或更新版本的 Linux x64 或 arm64 系统。\";");
+    replaceInFile(sshArgsPath, "case 'SHARED_HOME_UNSUPPORTED':\n            return 'Another host that shares your home directory runs the Antigravity server. Connect to that host instead.';", "case 'SHARED_HOME_UNSUPPORTED':\n            return '与此主目录共享的另一台主机正在运行 Antigravity 服务端。请改为连接该主机。';");
+    replaceInFile(sshArgsPath, "case 'INSTALL_FAILED':\n            return \"Couldn't install the Antigravity server on the SSH host. Make sure it has free disk space, and that it or this computer can download from the internet.\";", "case 'INSTALL_FAILED':\n            return \"无法在 SSH 主机上安装 Antigravity 服务端。请确认该主机磁盘空间充足，且该主机或本计算机能够访问互联网下载。\";");
+    replaceInFile(sshArgsPath, "case 'LS_STOPPED':\n            return 'The Antigravity server on the SSH host stopped. Reconnect to start it again.';", "case 'LS_STOPPED':\n            return 'SSH 主机上的 Antigravity 服务端已停止。请重新连接以启动它。';");
+    replaceInFile(sshArgsPath, "case 'CONNECTION_CLOSED':\n            return 'The SSH connection closed. Check your network connection, then reconnect.';", "case 'CONNECTION_CLOSED':\n            return 'SSH 连接已断开。请检查网络连接后重新连接。';");
+    replaceInFile(sshArgsPath, "case 'CANCELLED':\n            return 'The connection was cancelled.';", "case 'CANCELLED':\n            return '连接已取消。';");
   }
 
 

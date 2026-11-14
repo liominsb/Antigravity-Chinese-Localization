@@ -1,6 +1,6 @@
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
-exports.wcvBrowserRegistry = exports.WcvBrowserRegistry = exports.MAX_WCV_SELECTION_CONSOLE_MESSAGE_LENGTH = exports.MAX_WCV_CONSOLE_SOURCE_ID_LENGTH = exports.MAX_WCV_CONSOLE_MESSAGE_LENGTH = exports.NO_DRAG_USER_CSS = exports.WCV_GUEST_EVENT_CHANNEL = exports.DEFAULT_HIDDEN_WCV_BOUNDS = exports.FALLBACK_HIDDEN_WCV_MEMORY_BYTES = exports.DEFAULT_HIDDEN_WCV_MEMORY_BUDGET_BYTES = exports.DEFAULT_MIN_HIDDEN_WCV_TABS = exports.MAX_HIDDEN_WCV_TABS = void 0;
+exports.wcvBrowserRegistry = exports.WcvBrowserRegistry = exports.MAX_WCV_SELECTION_CONSOLE_MESSAGE_LENGTH = exports.MAX_WCV_CONSOLE_SOURCE_ID_LENGTH = exports.MAX_WCV_CONSOLE_MESSAGE_LENGTH = exports.NO_DRAG_USER_CSS = exports.WCV_GUEST_EVENT_CHANNEL = exports.DEFAULT_HIDDEN_WCV_BOUNDS = exports.DEFAULT_LOAD_SETTLED_REVEAL_TIMEOUT_MS = exports.FALLBACK_HIDDEN_WCV_MEMORY_BYTES = exports.DEFAULT_HIDDEN_WCV_MEMORY_BUDGET_BYTES = exports.DEFAULT_MIN_HIDDEN_WCV_TABS = exports.MAX_HIDDEN_WCV_TABS = void 0;
 exports.computeGuestMemoryBytesByWebContentsId = computeGuestMemoryBytesByWebContentsId;
 exports.normalizeWcvConsoleMessageEvent = normalizeWcvConsoleMessageEvent;
 exports.isWcvGuestAgentActive = isWcvGuestAgentActive;
@@ -20,6 +20,7 @@ exports.MAX_HIDDEN_WCV_TABS = 20;
 exports.DEFAULT_MIN_HIDDEN_WCV_TABS = 3;
 exports.DEFAULT_HIDDEN_WCV_MEMORY_BUDGET_BYTES = 2 * 1024 * 1024 * 1024;
 exports.FALLBACK_HIDDEN_WCV_MEMORY_BYTES = 50 * 1024 * 1024;
+exports.DEFAULT_LOAD_SETTLED_REVEAL_TIMEOUT_MS = 500;
 /**
  * Computes physical working-set memory in bytes per guest `webContentsId` from
  * Electron `app.getAppMetrics()` (`workingSetSize` is reported in KB), dividing
@@ -268,6 +269,10 @@ const sameRect = (a, b) => Boolean(a &&
     a.y === b.y &&
     a.width === b.width &&
     a.height === b.height);
+const isNonBlankDocUrl = (raw) => Boolean(raw &&
+    raw.toLowerCase() !== 'about:blank' &&
+    !raw.startsWith('chrome-error://'));
+const hasRevealableClipDoc = (entry, url) => Boolean(entry.hasCommittedNonBlankNav || isNonBlankDocUrl(url));
 /** Main-process registry managing built-in browser `WebContentsView` instances keyed by `tabKey`. */
 class WcvBrowserRegistry {
     constructor(options = {}) {
@@ -284,6 +289,189 @@ class WcvBrowserRegistry {
         this.bootstrappedBlankEntries = new WeakSet();
         this.externallyNavigatedEntries = new WeakSet();
         this.htmlFullscreenListeners = new Set();
+        this.tabAcquiredListeners = new Set();
+        this.clipVisibilityListeners = new Set();
+        this.windowSlotBounds = new WeakMap();
+    }
+    getVisibleEntryForWindow(win) {
+        const isVis = (e) => Boolean(e &&
+            e.parentWindow === win &&
+            e.visible &&
+            !e.view.webContents.isDestroyed());
+        const reqKey = this.activeRequestedTabByWindow.get(win);
+        const req = reqKey !== undefined ? this.entries.get(reqKey) : undefined;
+        if (isVis(req)) {
+            return req;
+        }
+        for (const e of this.entries.values()) {
+            if (isVis(e)) {
+                return e;
+            }
+        }
+        return undefined;
+    }
+    resolveInnerSlotSize(win, preferred) {
+        if (preferred && preferred.width > 0 && preferred.height > 0) {
+            return { width: preferred.width, height: preferred.height };
+        }
+        const s = this.windowSlotBounds.get(win);
+        return s && s.width > 0 && s.height > 0
+            ? { width: s.width, height: s.height }
+            : {
+                width: exports.DEFAULT_HIDDEN_WCV_BOUNDS.width,
+                height: exports.DEFAULT_HIDDEN_WCV_BOUNDS.height,
+            };
+    }
+    applyClipInnerBounds(entry, sz) {
+        const inner = { x: 0, y: 0, width: sz.width, height: sz.height };
+        if (!sameRect(entry.appliedBoundsDip, inner)) {
+            entry.appliedBoundsDip = { ...inner };
+            entry.view.setBounds?.(inner);
+        }
+    }
+    canHoldClipTarget(e) {
+        return !e.crashed && !e.lastLoadError && !e.view.webContents.isDestroyed();
+    }
+    isClipEntryRevealReady(entry) {
+        return this.canHoldClipTarget(entry) && Boolean(entry.clipRevealReady);
+    }
+    isClipEntryRevealed(entry) {
+        const win = entry.parentWindow;
+        if (!(0, utils_1.getHubClipView)(win) ||
+            win.isDestroyed?.() ||
+            !entry.visible ||
+            !this.isClipEntryRevealReady(entry) ||
+            this.getVisibleEntryForWindow(win) !== entry) {
+            return false;
+        }
+        const b = entry.boundsDip;
+        return Boolean(entry.htmlFullscreen || (b && b.width > 0 && b.height > 0));
+    }
+    clearClipRevealTimer(entry) {
+        if (entry.clipRevealTimer !== undefined) {
+            clearTimeout(entry.clipRevealTimer);
+            entry.clipRevealTimer = undefined;
+        }
+    }
+    armClipRevealTimerIfNeeded(entry, resetExisting = false) {
+        const win = entry.parentWindow;
+        if (!(0, utils_1.getHubClipView)(win) ||
+            win.isDestroyed?.() ||
+            !this.canHoldClipTarget(entry) ||
+            entry.clipRevealReady ||
+            this.getVisibleEntryForWindow(win) !== entry) {
+            this.clearClipRevealTimer(entry);
+            return;
+        }
+        if (entry.clipRevealTimer !== undefined) {
+            if (!resetExisting) {
+                return;
+            }
+            this.clearClipRevealTimer(entry);
+        }
+        entry.clipRevealTimer = setTimeout(() => {
+            entry.clipRevealTimer = undefined;
+            if (this.entries.get(entry.tabKey) === entry &&
+                this.canHoldClipTarget(entry) &&
+                this.getVisibleEntryForWindow(entry.parentWindow) === entry) {
+                this.markClipEntryRevealReady(entry, 'load-settled-timeout');
+            }
+        }, exports.DEFAULT_LOAD_SETTLED_REVEAL_TIMEOUT_MS);
+    }
+    markClipEntryRevealReady(entry, reason) {
+        this.clearClipRevealTimer(entry);
+        if (!this.canHoldClipTarget(entry)) {
+            return;
+        }
+        const wasRevealReady = Boolean(entry.clipRevealReady);
+        entry.clipRevealReady = true;
+        const win = entry.parentWindow;
+        if (!wasRevealReady &&
+            (0, utils_1.getHubClipView)(win) &&
+            !win.isDestroyed?.() &&
+            this.getVisibleEntryForWindow(win) === entry) {
+            this.syncWindowClipAndEntryBounds(win);
+            this.notifyClipVisibilityChanged(win, reason);
+        }
+    }
+    hideClipEntryOnFault(entry, reason) {
+        entry.clipRevealReady = false;
+        this.clearClipRevealTimer(entry);
+        const win = entry.parentWindow;
+        if (!(0, utils_1.getHubClipView)(win)) {
+            return;
+        }
+        if (entry.htmlFullscreen) {
+            this.clearHtmlFullscreen(entry, false);
+        }
+        entry.view.setVisible?.(false);
+        if (entry.visible && !win.isDestroyed?.()) {
+            this.syncWindowClipAndEntryBounds(win);
+            this.notifyClipVisibilityChanged(win, reason);
+        }
+    }
+    /**
+     * Synchronizes `clipView` and inner guest `WebContentsView` bounds for `win`;
+     * holds `appliedBoundsDip` steady while `isAgentStepActive` is true (preserving
+     * screenshot-to-CDP coordinate correspondence) until `setAgentStepActive` clears.
+     */
+    syncWindowClipAndEntryBounds(win) {
+        const clipView = (0, utils_1.getHubClipView)(win);
+        if (!win || win.isDestroyed?.() || !clipView) {
+            return;
+        }
+        const active = this.getVisibleEntryForWindow(win);
+        for (const e of this.getEntriesForWindow(win)) {
+            if (e !== active && !e.view.webContents.isDestroyed()) {
+                e.view.setVisible?.(false);
+            }
+        }
+        if (!active) {
+            clipView.setVisible?.(false);
+            return;
+        }
+        const b = active.boundsDip;
+        const hasSlot = Boolean(b && b.width > 0 && b.height > 0);
+        const fs = active.htmlFullscreen
+            ? this.resolveFullscreenBounds(active)
+            : undefined;
+        const targetInnerSize = fs ?? this.resolveInnerSlotSize(win, b);
+        const deferAgentResize = Boolean(active.isAgentStepActive &&
+            !fs &&
+            active.appliedBoundsDip &&
+            active.appliedBoundsDip.width > 0 &&
+            active.appliedBoundsDip.height > 0);
+        if (!deferAgentResize) {
+            this.applyClipInnerBounds(active, targetInnerSize);
+        }
+        if (!this.isClipEntryRevealReady(active) || (!fs && !hasSlot)) {
+            active.view.setVisible?.(false);
+            if (b) {
+                clipView.setBounds?.(b);
+            }
+            clipView.setVisible?.(false);
+            return;
+        }
+        const kids = clipView.children;
+        if (!Array.isArray(kids) || kids[kids.length - 1] !== active.view) {
+            clipView.addChildView?.(active.view);
+        }
+        active.view.setVisible?.(true);
+        clipView.setBounds?.(fs ?? b);
+        clipView.setVisible?.(true);
+        active.shownInVisibleClip = true;
+    }
+    /** Registers a listener notified when a window's `clipView` reveal state changes. */
+    onClipVisibilityChanged(listener) {
+        this.clipVisibilityListeners.add(listener);
+        return () => {
+            this.clipVisibilityListeners.delete(listener);
+        };
+    }
+    notifyClipVisibilityChanged(win, reason) {
+        for (const listener of this.clipVisibilityListeners) {
+            listener(win, reason);
+        }
     }
     /** Registers a listener notified when a guest enters or exits HTML fullscreen. */
     onHtmlFullscreenChanged(listener) {
@@ -291,6 +479,18 @@ class WcvBrowserRegistry {
         return () => {
             this.htmlFullscreenListeners.delete(listener);
         };
+    }
+    /** Registers a listener awaited after `acquire` attaches or re-parents a tab. */
+    onTabAcquired(listener) {
+        this.tabAcquiredListeners.add(listener);
+        return () => {
+            this.tabAcquiredListeners.delete(listener);
+        };
+    }
+    async notifyTabAcquired(entry) {
+        for (const fn of this.tabAcquiredListeners) {
+            await Promise.resolve(fn(entry)).catch(() => undefined);
+        }
     }
     now() {
         return this.options.now ? this.options.now() : Date.now();
@@ -309,14 +509,57 @@ class WcvBrowserRegistry {
                 !existing.parentWindow.isDestroyed?.()) {
                 throw new Error(`Tab ${request.tabKey} is already owned by another Hub window`);
             }
+            const oldWindow = existing.parentWindow;
+            const wasVisibleOnOld = Boolean(existing.visible);
+            const hadOldClip = Boolean((0, utils_1.getHubClipView)(oldWindow));
+            const reparentClip = oldWindow !== parentWindow &&
+                Boolean(hadOldClip || (0, utils_1.getHubClipView)(parentWindow));
+            if (reparentClip) {
+                this.clearClipRevealTimer(existing);
+                if (this.activeRequestedTabByWindow.get(oldWindow) === request.tabKey) {
+                    this.activeRequestedTabByWindow.delete(oldWindow);
+                }
+                existing.visible = false;
+                if (existing.htmlFullscreen) {
+                    this.clearHtmlFullscreen(existing, false);
+                }
+            }
             existing.parentWindow = parentWindow;
             existing.hubSender = hubSender;
             existing.lastShownAt = this.now();
+            if (reparentClip) {
+                (0, utils_1.registerWindowWebContents)(parentWindow, existing.view.webContents);
+                this.ensureWindowMonitored(parentWindow);
+                (0, utils_1.getHubClipView)(oldWindow)?.removeChildView?.(existing.view);
+                contentViewOf(oldWindow)?.removeChildView?.(existing.view);
+                if (hadOldClip && !oldWindow.isDestroyed?.()) {
+                    this.syncWindowClipAndEntryBounds(oldWindow);
+                    if (wasVisibleOnOld) {
+                        this.notifyClipVisibilityChanged(oldWindow, 'tab-reparented');
+                    }
+                }
+                existing.boundsDip = undefined;
+                existing.appliedBoundsDip = undefined;
+                existing.shownInVisibleClip = false;
+                if (hadOldClip && !(0, utils_1.getHubClipView)(parentWindow)) {
+                    existing.view.setVisible?.(true);
+                }
+                else if (!hadOldClip && Boolean((0, utils_1.getHubClipView)(parentWindow))) {
+                    existing.clipRevealReady =
+                        this.canHoldClipTarget(existing) &&
+                            !existing.view.webContents.isLoading?.() &&
+                            hasRevealableClipDoc(existing, existing.lastUrl);
+                }
+                this.parkHiddenView(existing);
+            }
             if ((0, guestNetworkController_1.isNetworkTrackableContents)(existing.view.webContents)) {
                 guestNetworkController_1.guestNetworkController.trackGuest(existing.view.webContents, {
                     ownerId: hubSender.id,
                     sender: hubSender,
                 });
+            }
+            if (reparentClip) {
+                await this.notifyTabAcquired(existing);
             }
             return this.toSnapshot(existing);
         }
@@ -367,6 +610,7 @@ class WcvBrowserRegistry {
             lastShownAt: this.now(),
             lastUrl,
             lastTitle,
+            clipRevealReady: false,
         };
         this.entries.set(request.tabKey, entry);
         this.byWebContentsId.set(wc.id, entry);
@@ -380,7 +624,7 @@ class WcvBrowserRegistry {
         (0, webviewBrowser_1.configureWebviewBrowserContents)(wc, {
             allowWebContentsView: true,
             hostWebContents: hubSender,
-            getParentWindow: () => parentWindow,
+            getParentWindow: () => entry.parentWindow,
             openExternal,
             now: this.options.now,
             isAgentControlled: () => Boolean(entry.isAgentStepActive),
@@ -390,46 +634,7 @@ class WcvBrowserRegistry {
         void Promise.resolve(wc.setVisualZoomLevelLimits?.(1, 1)).catch(() => undefined);
         wc.setIgnoreMenuShortcuts?.(true);
         this.attachGuestListeners(entry);
-        if (!this.monitoredWindows.has(parentWindow)) {
-            this.monitoredWindows.add(parentWindow);
-            const onResize = () => {
-                if (parentWindow.isDestroyed?.()) {
-                    return;
-                }
-                for (const e of this.entries.values()) {
-                    if (e.parentWindow !== parentWindow ||
-                        e.view.webContents.isDestroyed()) {
-                        continue;
-                    }
-                    if (e.visible && e.htmlFullscreen) {
-                        e.view.setBounds?.(this.resolveFullscreenBounds(e));
-                    }
-                }
-            };
-            const onLeaveWindowFullscreen = () => {
-                if (parentWindow.isDestroyed?.()) {
-                    return;
-                }
-                for (const e of this.entries.values()) {
-                    if (e.parentWindow === parentWindow && e.htmlFullscreen) {
-                        this.clearHtmlFullscreen(e, true);
-                    }
-                }
-            };
-            parentWindow.on?.('resize', onResize);
-            parentWindow.on?.('enter-full-screen', onResize);
-            parentWindow.on?.('enter-html-full-screen', onResize);
-            parentWindow.on?.('leave-full-screen', onLeaveWindowFullscreen);
-            parentWindow.on?.('leave-html-full-screen', onLeaveWindowFullscreen);
-            parentWindow.once?.('closed', () => {
-                parentWindow.off?.('resize', onResize);
-                parentWindow.off?.('enter-full-screen', onResize);
-                parentWindow.off?.('enter-html-full-screen', onResize);
-                parentWindow.off?.('leave-full-screen', onLeaveWindowFullscreen);
-                parentWindow.off?.('leave-html-full-screen', onLeaveWindowFullscreen);
-                this.disposeForWindow(parentWindow);
-            });
-        }
+        this.ensureWindowMonitored(parentWindow);
         this.parkHiddenView(entry);
         let guestNavigationStarted = false;
         // eslint-disable-next-line @typescript-eslint/no-explicit-any
@@ -463,7 +668,12 @@ class WcvBrowserRegistry {
             if (isExternalAuth && !hasConcurrentNavigation) {
                 void openExternal(rawTargetUrl);
             }
-            if (!hasConcurrentNavigation) {
+            if (hasConcurrentNavigation) {
+                if (hasRevealableClipDoc(entry, currentLiveUrl) && !wc.isLoading?.()) {
+                    this.markClipEntryRevealReady(entry, 'load-settled');
+                }
+            }
+            else {
                 // A restored stack is the tab's real history, so it must skip the
                 // blank bootstrap whose first did-navigate clears history.
                 const restoreResult = isExternalAuth
@@ -488,6 +698,13 @@ class WcvBrowserRegistry {
                         await wc.loadURL('about:blank').catch(() => undefined);
                     }
                 }
+                if (!superseded &&
+                    (restoreResult === 'restored' || lastUrlAllowed) &&
+                    !wc.isDestroyed() &&
+                    this.entries.get(entry.tabKey) === entry &&
+                    !wc.isLoading?.()) {
+                    this.markClipEntryRevealReady(entry, 'load-settled');
+                }
             }
             if ((0, guestNetworkController_1.isNetworkTrackableContents)(wc)) {
                 guestNetworkController_1.guestNetworkController.trackGuest(wc, {
@@ -497,6 +714,11 @@ class WcvBrowserRegistry {
             }
         }
         this.evictHiddenIfNeeded();
+        if (!wc.isDestroyed() &&
+            this.entries.get(entry.tabKey) === entry &&
+            (0, utils_1.getHubClipView)(entry.parentWindow)) {
+            await this.notifyTabAcquired(entry);
+        }
         return this.toSnapshot(entry);
     }
     show(tabKey, boundsDip, parentWindow) {
@@ -508,12 +730,34 @@ class WcvBrowserRegistry {
         if (!entry || entry.view.webContents.isDestroyed()) {
             if (targetWindow) {
                 this.detachVisibleSiblings(targetWindow);
+                if ((0, utils_1.getHubClipView)(targetWindow)) {
+                    this.syncWindowClipAndEntryBounds(targetWindow);
+                }
             }
             return null;
         }
         entry.visible = true;
         entry.lastShownAt = this.now();
+        // The tab shows through the Hub UI's hole, so `hubWcv` must be see-through
+        // before the tab is placed; `reconcileWindow` makes it opaque again once
+        // no tab on the window is visible.
+        (0, utils_1.setHubSurfaceTransparent)(entry.parentWindow, true);
         entry.view.webContents.setAudioMuted?.(this.userMutedTabs.has(tabKey));
+        const clipView = (0, utils_1.getHubClipView)(entry.parentWindow);
+        if (clipView) {
+            const wasInClip = Array.isArray(clipView.children) &&
+                clipView.children.includes(entry.view);
+            if (!wasInClip) {
+                entry.appliedBoundsDip = undefined;
+                entry.view.setVisible?.(false);
+                clipView.addChildView?.(entry.view, 0);
+            }
+            this.recordNormalizedBoundsDip(entry, boundsDip);
+            this.detachVisibleSiblings(entry.parentWindow, entry);
+            this.armClipRevealTimerIfNeeded(entry);
+            this.syncWindowClipAndEntryBounds(entry.parentWindow);
+            return this.toSnapshot(entry);
+        }
         const contentView = contentViewOf(entry.parentWindow);
         const hubView = (0, utils_1.getHubView)(entry.parentWindow);
         const children = contentView?.children;
@@ -618,6 +862,9 @@ class WcvBrowserRegistry {
         for (const tabKey of visibleKeys) {
             this.hide(tabKey);
         }
+        if (visibleKeys.length === 0 && (0, utils_1.getHubClipView)(parentWindow)) {
+            this.syncWindowClipAndEntryBounds(parentWindow);
+        }
     }
     async rehydrateEvictedAndShow(parentWindow, hubSender, tabKey, boundsDip) {
         if (!this.hasEvicted(tabKey, hubSender.id)) {
@@ -626,6 +873,9 @@ class WcvBrowserRegistry {
         const startEpoch = this.windowResetEpoch.get(parentWindow) ?? 0;
         this.activeRequestedTabByWindow.set(parentWindow, tabKey);
         this.detachVisibleSiblings(parentWindow);
+        if ((0, utils_1.getHubClipView)(parentWindow)) {
+            this.syncWindowClipAndEntryBounds(parentWindow);
+        }
         const rehydrated = await this.rehydrateEvicted(parentWindow, hubSender, tabKey);
         const current = rehydrated ? this.entries.get(tabKey) : undefined;
         if (!rehydrated ||
@@ -643,6 +893,9 @@ class WcvBrowserRegistry {
             if (activeTab !== tabKey) {
                 this.hide(tabKey);
             }
+            else if ((0, utils_1.getHubClipView)(parentWindow)) {
+                this.syncWindowClipAndEntryBounds(parentWindow);
+            }
             return null;
         }
         return this.show(tabKey, boundsDip, parentWindow);
@@ -655,11 +908,7 @@ class WcvBrowserRegistry {
             this.detachView(entry);
         });
     }
-    setBounds(tabKey, bounds) {
-        const entry = this.entries.get(tabKey);
-        if (!entry) {
-            return;
-        }
+    recordNormalizedBoundsDip(entry, bounds) {
         const collapsed = !(typeof bounds.width === 'number' && Math.round(bounds.width) > 0) ||
             !(typeof bounds.height === 'number' && Math.round(bounds.height) > 0);
         if (collapsed &&
@@ -684,10 +933,43 @@ class WcvBrowserRegistry {
         };
         entry.boundsDip = nextBounds;
         if (nextBounds.width > 0 && nextBounds.height > 0) {
-            entry.lastNonZeroSize = {
-                width: nextBounds.width,
-                height: nextBounds.height,
-            };
+            const win = entry.parentWindow;
+            const clipView = (0, utils_1.getHubClipView)(win);
+            if (!clipView) {
+                entry.lastNonZeroSize = {
+                    width: nextBounds.width,
+                    height: nextBounds.height,
+                };
+            }
+            else if (entry.visible ||
+                !this.getVisibleEntryForWindow(win) ||
+                !this.windowSlotBounds.has(win)) {
+                this.windowSlotBounds.set(win, { ...nextBounds });
+            }
+        }
+        return nextBounds;
+    }
+    setBounds(tabKey, bounds) {
+        const entry = this.entries.get(tabKey);
+        if (!entry) {
+            return;
+        }
+        const win = entry.parentWindow;
+        const hasClip = Boolean((0, utils_1.getHubClipView)(win));
+        const prevRevealed = hasClip && this.isClipEntryRevealed(entry);
+        const nextBounds = this.recordNormalizedBoundsDip(entry, bounds);
+        if (hasClip) {
+            const hasArea = nextBounds.width > 0 && nextBounds.height > 0;
+            if (entry.visible || (hasArea && !this.getVisibleEntryForWindow(win))) {
+                if (entry.visible && hasArea) {
+                    this.armClipRevealTimerIfNeeded(entry);
+                }
+                this.syncWindowClipAndEntryBounds(win);
+                if (this.isClipEntryRevealed(entry) !== prevRevealed) {
+                    this.notifyClipVisibilityChanged(win, 'bounds-changed');
+                }
+            }
+            return;
         }
         if (entry.visible && !entry.view.webContents.isDestroyed()) {
             if (entry.htmlFullscreen) {
@@ -704,6 +986,7 @@ class WcvBrowserRegistry {
         this.mutate(tabKey, (entry) => (entry.pinned = pinned));
     }
     setAgentStepActive(tabKey, active) {
+        const wasActive = Boolean(this.entries.get(tabKey)?.isAgentStepActive);
         if (active) {
             const entry = this.entries.get(tabKey);
             if (entry) {
@@ -714,6 +997,13 @@ class WcvBrowserRegistry {
             entry.isAgentStepActive = active;
             if (active && entry.htmlFullscreen) {
                 this.clearHtmlFullscreen(entry, true);
+            }
+            else if (wasActive &&
+                !active &&
+                (0, utils_1.getHubClipView)(entry.parentWindow) &&
+                !entry.parentWindow.isDestroyed?.() &&
+                this.getVisibleEntryForWindow(entry.parentWindow) === entry) {
+                this.syncWindowClipAndEntryBounds(entry.parentWindow);
             }
         });
     }
@@ -743,6 +1033,16 @@ class WcvBrowserRegistry {
      * Returns `true` when `webContentsId` belongs to a live registered
      * `WebContentsView` tab currently undergoing an agent step.
      */
+    /**
+     * Whether the WCV guest belongs to an agent: it runs an agent step now or
+     * the agent pinned it (pinned tabs stay agent-owned between steps).
+     */
+    isGuestAgentOwned(webContentsId) {
+        const entry = this.byWebContentsId.get(webContentsId);
+        return Boolean(entry &&
+            (entry.isAgentStepActive || entry.pinned) &&
+            !entry.view.webContents.isDestroyed());
+    }
     isGuestAgentActive(webContentsId) {
         const entry = this.byWebContentsId.get(webContentsId);
         return Boolean(entry && entry.isAgentStepActive && !entry.view.webContents.isDestroyed());
@@ -780,6 +1080,26 @@ class WcvBrowserRegistry {
         this.externallyNavigatedEntries.add(entry);
         if (url && url !== 'about:blank') {
             entry.lastUrl = url;
+            if ((0, utils_1.getHubClipView)(entry.parentWindow) &&
+                !this.isClipEntryRevealed(entry)) {
+                entry.clipRevealReady = false;
+                this.armClipRevealTimerIfNeeded(entry, true);
+            }
+        }
+    }
+    noteExternalNavigationSettled(tabKey, succeeded) {
+        const entry = this.entries.get(tabKey);
+        if (!entry || entry.view.webContents.isDestroyed()) {
+            return;
+        }
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
+        const wc = entry.view.webContents;
+        if (wc.isLoading?.()) {
+            return;
+        }
+        const liveUrl = (wc.getURL?.() || '').trim();
+        if (succeeded || hasRevealableClipDoc(entry, liveUrl)) {
+            this.markClipEntryRevealReady(entry, 'load-settled');
         }
     }
     dispose(tabKey, clearEvicted = true) {
@@ -798,6 +1118,12 @@ class WcvBrowserRegistry {
         if (!entry) {
             return;
         }
+        this.clearClipRevealTimer(entry);
+        const ownerWindow = entry.parentWindow;
+        const clipView = (0, utils_1.getHubClipView)(ownerWindow);
+        if (clipView) {
+            entry.visible = false;
+        }
         if (entry.htmlFullscreen) {
             this.clearHtmlFullscreen(entry, false);
         }
@@ -807,7 +1133,8 @@ class WcvBrowserRegistry {
             onlyPopupControls: false,
         });
         (this.options.dialogController ?? guestDialogController_1.guestDialogController).disposeGuest(entry.view.webContents);
-        contentViewOf(entry.parentWindow)?.removeChildView?.(entry.view);
+        clipView?.removeChildView?.(entry.view);
+        contentViewOf(ownerWindow)?.removeChildView?.(entry.view);
         this.entries.delete(tabKey);
         this.byWebContentsId.delete(entry.webContentsId);
         guestWebMcpController_1.guestWebMcpController.noteGuestDisposed(entry.webContentsId);
@@ -815,10 +1142,14 @@ class WcvBrowserRegistry {
             entry.view.webContents.close?.();
         }
         deviceChooser_1.deviceChooserController.cancelForGuest(entry.webContentsId);
+        if (clipView) {
+            this.syncWindowClipAndEntryBounds(ownerWindow);
+        }
     }
     disposeForWindow(win) {
         this.windowResetEpoch.set(win, (this.windowResetEpoch.get(win) ?? 0) + 1);
         this.activeRequestedTabByWindow.delete(win);
+        this.windowSlotBounds.delete(win);
         for (const [tabKey, entry] of this.entries.entries()) {
             if (entry.parentWindow === win) {
                 this.dispose(tabKey);
@@ -912,6 +1243,53 @@ class WcvBrowserRegistry {
             },
         ]).catch(() => undefined);
     }
+    ensureWindowMonitored(parentWindow) {
+        if (this.monitoredWindows.has(parentWindow)) {
+            return;
+        }
+        this.monitoredWindows.add(parentWindow);
+        const onResize = () => {
+            if (parentWindow.isDestroyed?.()) {
+                return;
+            }
+            for (const e of this.entries.values()) {
+                if (e.parentWindow === parentWindow &&
+                    !e.view.webContents.isDestroyed() &&
+                    e.visible &&
+                    e.htmlFullscreen) {
+                    if ((0, utils_1.getHubClipView)(parentWindow)) {
+                        e.appliedBoundsDip = undefined;
+                        this.syncWindowClipAndEntryBounds(parentWindow);
+                    }
+                    else {
+                        e.view.setBounds?.(this.resolveFullscreenBounds(e));
+                    }
+                }
+            }
+        };
+        const onLeave = () => {
+            if (!parentWindow.isDestroyed?.()) {
+                for (const e of this.entries.values()) {
+                    if (e.parentWindow === parentWindow && e.htmlFullscreen) {
+                        this.clearHtmlFullscreen(e, true);
+                    }
+                }
+            }
+        };
+        parentWindow.on?.('resize', onResize);
+        parentWindow.on?.('enter-full-screen', onResize);
+        parentWindow.on?.('enter-html-full-screen', onResize);
+        parentWindow.on?.('leave-full-screen', onLeave);
+        parentWindow.on?.('leave-html-full-screen', onLeave);
+        parentWindow.once?.('closed', () => {
+            parentWindow.off?.('resize', onResize);
+            parentWindow.off?.('enter-full-screen', onResize);
+            parentWindow.off?.('enter-html-full-screen', onResize);
+            parentWindow.off?.('leave-full-screen', onLeave);
+            parentWindow.off?.('leave-html-full-screen', onLeave);
+            this.disposeForWindow(parentWindow);
+        });
+    }
     clearHtmlFullscreen(entry, exitGuestDom) {
         const wasFullscreen = Boolean(entry.htmlFullscreen);
         entry.htmlFullscreen = false;
@@ -921,7 +1299,20 @@ class WcvBrowserRegistry {
         if (!wasFullscreen) {
             return;
         }
-        if (entry.visible &&
+        const clipView = (0, utils_1.getHubClipView)(entry.parentWindow);
+        if (clipView) {
+            if (!entry.view.webContents.isDestroyed()) {
+                entry.appliedBoundsDip = undefined;
+                if (exitGuestDom &&
+                    !entry.visible &&
+                    Array.isArray(clipView.children) &&
+                    clipView.children.includes(entry.view)) {
+                    this.applyClipInnerBounds(entry, this.resolveInnerSlotSize(entry.parentWindow, entry.boundsDip));
+                }
+                this.syncWindowClipAndEntryBounds(entry.parentWindow);
+            }
+        }
+        else if (entry.visible &&
             entry.boundsDip &&
             !entry.view.webContents.isDestroyed()) {
             entry.appliedBoundsDip = { ...entry.boundsDip };
@@ -964,6 +1355,27 @@ class WcvBrowserRegistry {
     }
     parkHiddenView(entry) {
         entry.visible = false;
+        const win = entry.parentWindow;
+        const clipView = (0, utils_1.getHubClipView)(win);
+        if (clipView) {
+            this.clearClipRevealTimer(entry);
+            deviceChooser_1.deviceChooserController.cancelForGuest(entry.webContentsId);
+            if (entry.view.webContents.isDestroyed()) {
+                clipView.removeChildView?.(entry.view);
+                contentViewOf(win)?.removeChildView?.(entry.view);
+            }
+            else {
+                entry.view.setVisible?.(false);
+                if (!Array.isArray(clipView.children) ||
+                    !clipView.children.includes(entry.view)) {
+                    entry.appliedBoundsDip = undefined;
+                    clipView.addChildView?.(entry.view, 0);
+                    this.applyClipInnerBounds(entry, this.resolveInnerSlotSize(win));
+                }
+            }
+            this.syncWindowClipAndEntryBounds(win);
+            return;
+        }
         entry.appliedBoundsDip = undefined;
         const contentView = contentViewOf(entry.parentWindow);
         deviceChooser_1.deviceChooserController.cancelForGuest(entry.webContentsId);
@@ -995,6 +1407,9 @@ class WcvBrowserRegistry {
         }
     }
     detachView(entry) {
+        if ((0, utils_1.getHubClipView)(entry.parentWindow)) {
+            entry.visible = false;
+        }
         guestPromptController_1.guestPromptController.cancelForGuest(entry.webContentsId);
         if (entry.htmlFullscreen) {
             this.clearHtmlFullscreen(entry, true);
@@ -1095,6 +1510,12 @@ class WcvBrowserRegistry {
                 entry.crashed = false;
                 entry.lastLoadError = null;
                 entry.lastHttpResponseCode = null;
+                if (navUrl.toLowerCase() !== 'about:blank') {
+                    if (!this.isClipEntryRevealed(entry) && wc.isLoading?.()) {
+                        entry.clipRevealReady = false;
+                    }
+                    this.armClipRevealTimerIfNeeded(entry, true);
+                }
             }
             emit(type, {
                 url: navUrl,
@@ -1129,8 +1550,17 @@ class WcvBrowserRegistry {
             enforceGuestZoomLock();
         });
         on('did-start-loading', () => emit('did-start-loading'));
-        on('did-stop-loading', () => emit('did-stop-loading'));
+        on('did-stop-loading', () => {
+            const liveUrl = (wc.getURL?.() || '').trim();
+            if (!wc.isDestroyed() &&
+                !wc.isLoading?.() &&
+                hasRevealableClipDoc(entry, liveUrl)) {
+                this.markClipEntryRevealReady(entry, 'load-settled');
+            }
+            emit('did-stop-loading');
+        });
         on('did-navigate', (_event, url, httpResponseCode, httpStatusText) => {
+            const hadErrorOrCrash = Boolean(entry.crashed || entry.lastLoadError);
             if (!url?.startsWith('chrome-error://')) {
                 entry.crashed = false;
                 entry.lastLoadError = null;
@@ -1138,11 +1568,15 @@ class WcvBrowserRegistry {
                     typeof httpResponseCode === 'number' && httpResponseCode > 0
                         ? httpResponseCode
                         : null;
+                entry.hasCommittedNonBlankNav = Boolean(url && url.toLowerCase() !== 'about:blank');
                 if (url && url !== 'about:blank') {
                     entry.lastUrl = url;
                     if (this.bootstrappedBlankEntries.delete(entry)) {
                         wc.navigationHistory?.clear?.();
                     }
+                }
+                if (hadErrorOrCrash) {
+                    this.armClipRevealTimerIfNeeded(entry);
                 }
             }
             if (entry.htmlFullscreen) {
@@ -1173,7 +1607,10 @@ class WcvBrowserRegistry {
         });
         on('page-favicon-updated', (_event, favicons) => emit('page-favicon-updated', { favicons }));
         on('enter-html-full-screen', () => {
-            if (!entry.visible || entry.isAgentStepActive) {
+            if (!entry.visible ||
+                entry.isAgentStepActive ||
+                ((0, utils_1.getHubClipView)(entry.parentWindow) &&
+                    !this.isClipEntryRevealReady(entry))) {
                 this.clearHtmlFullscreen(entry, true);
                 return;
             }
@@ -1183,7 +1620,12 @@ class WcvBrowserRegistry {
             }
             if (entry.htmlFullscreen && entry.visible && !wc.isDestroyed()) {
                 entry.appliedBoundsDip = undefined;
-                entry.view.setBounds(this.resolveFullscreenBounds(entry));
+                if ((0, utils_1.getHubClipView)(entry.parentWindow)) {
+                    this.syncWindowClipAndEntryBounds(entry.parentWindow);
+                }
+                else {
+                    entry.view.setBounds(this.resolveFullscreenBounds(entry));
+                }
             }
         });
         on('leave-html-full-screen', () => {
@@ -1205,19 +1647,44 @@ class WcvBrowserRegistry {
                 }
                 if (errorCode !== -379) {
                     entry.lastLoadError = { errorCode, errorDescription, validatedURL };
+                    this.hideClipEntryOnFault(entry, 'guest-load-failed');
                 }
                 emit('did-fail-load', { errorCode, errorDescription, validatedURL });
             }
         });
         on('render-process-gone', (_e, details) => {
             entry.crashed = true;
+            if ((0, utils_1.getHubClipView)(entry.parentWindow)) {
+                entry.shownInVisibleClip = false;
+            }
+            this.hideClipEntryOnFault(entry, 'guest-render-process-gone');
             emit('render-process-gone', { reason: details?.reason ?? 'crashed' });
         });
         wc.once?.('destroyed', () => {
+            this.clearClipRevealTimer(entry);
             guestWebMcpController_1.guestWebMcpController.noteGuestDisposed(entry.webContentsId);
             this.byWebContentsId.delete(entry.webContentsId);
-            if (this.entries.get(entry.tabKey) === entry) {
+            const isCurrent = this.entries.get(entry.tabKey) === entry;
+            const win = entry.parentWindow;
+            if (isCurrent) {
                 this.entries.delete(entry.tabKey);
+            }
+            const clipView = (0, utils_1.getHubClipView)(win);
+            if (clipView) {
+                if (isCurrent) {
+                    entry.visible = false;
+                    if (this.activeRequestedTabByWindow.get(win) === entry.tabKey) {
+                        this.activeRequestedTabByWindow.delete(win);
+                    }
+                    if (entry.htmlFullscreen) {
+                        this.clearHtmlFullscreen(entry, false);
+                    }
+                }
+                clipView.removeChildView?.(entry.view);
+                contentViewOf(win)?.removeChildView?.(entry.view);
+                if (!win.isDestroyed?.()) {
+                    this.syncWindowClipAndEntryBounds(win);
+                }
             }
         });
     }
@@ -1256,4 +1723,5 @@ function isWcvGuestAgentActive(webContentsId) {
     return exports.wcvBrowserRegistry.isGuestAgentActive(webContentsId);
 }
 (0, guestAgentControl_1.registerGuestAgentControlPredicate)(isWcvGuestAgentActive);
+(0, guestAgentControl_1.registerGuestAgentOwnershipPredicate)((webContentsId) => exports.wcvBrowserRegistry.isGuestAgentOwned(webContentsId));
 guestPromptController_1.guestPromptController.setHostResolver((guest) => exports.wcvBrowserRegistry.resolvePromptHostContext(guest.id));

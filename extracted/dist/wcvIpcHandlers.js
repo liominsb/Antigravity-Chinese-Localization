@@ -3,12 +3,108 @@ Object.defineProperty(exports, "__esModule", { value: true });
 exports.isAuthorizedHubMainFrameEvent = isAuthorizedHubMainFrameEvent;
 exports.registerWcvIpcHandlers = registerWcvIpcHandlers;
 const electron_1 = require("electron");
+const catcherChannels_1 = require("./catcherChannels");
 const utils_1 = require("./utils");
 const wcvBrowserRegistry_1 = require("./wcvBrowserRegistry");
+const remoteWindowSecurity_1 = require("./remote/remoteWindowSecurity");
 const wcvZOrderController_1 = require("./wcvZOrderController");
 const guestPromptController_1 = require("./guestPromptController");
 const guestAgentControl_1 = require("./guestAgentControl");
 const guestWebMcpController_1 = require("./guestWebMcpController");
+const DOWN_BUTTONS = ['left', 'middle', 'right', 'back', 'forward'];
+const isPlainObject = (v) => v !== null && typeof v === 'object' && !Array.isArray(v);
+const isFiniteNum = (v) => typeof v === 'number' && Number.isFinite(v);
+const isPositiveInt = (v) => typeof v === 'number' && Number.isInteger(v) && v > 0;
+const isModifiersMask = (v) => typeof v === 'number' && Number.isInteger(v) && v >= 0 && v <= 15;
+const isDragButton = (v) => v === 'left' || v === 'middle' || v === 'right';
+const isClickCount = (v) => v === 1 || v === 2 || v === 3;
+const isDragPhase = (v) => v === 'enter' || v === 'over' || v === 'leave' || v === 'drop';
+const isStr = (v, max) => typeof v === 'string' && v.length > 0 && v.length <= max;
+const isList = (v, max, fn) => Array.isArray(v) && v.length <= max && v.every(fn);
+const isDropFile = (f) => isStr(f, 4096) && !f.includes('\0');
+const isDropItem = (it) => isPlainObject(it) &&
+    isStr(it.mimeType, 256) &&
+    typeof it.data === 'string' &&
+    it.data.length <= 1048576;
+function parseCatcherDragPayload(p) {
+    if (!isPlainObject(p) ||
+        !isDragPhase(p.phase) ||
+        !isFiniteNum(p.x) ||
+        !isFiniteNum(p.y) ||
+        !isModifiersMask(p.modifiers) ||
+        typeof p.hasFiles !== 'boolean' ||
+        !isList(p.types, 64, (t) => isStr(t, 256))) {
+        return null;
+    }
+    const { phase, x, y, modifiers, hasFiles } = p;
+    const base = {
+        phase,
+        x,
+        y,
+        modifiers,
+        hasFiles,
+        types: [...p.types],
+    };
+    if (phase !== 'drop') {
+        return base;
+    }
+    if (p.files !== undefined && !isList(p.files, 256, isDropFile)) {
+        return null;
+    }
+    if (p.items !== undefined && !isList(p.items, 64, isDropItem)) {
+        return null;
+    }
+    if (p.files) {
+        base.files = [...p.files];
+    }
+    if (p.items) {
+        base.items = p.items.map(({ mimeType, data }) => ({ mimeType, data }));
+    }
+    return base;
+}
+function isTopFrameWindowSender(event) {
+    const s = event?.sender;
+    const f = event?.senderFrame;
+    const okType = typeof s?.getType !== 'function' || s.getType() === 'window';
+    return Boolean(s &&
+        typeof s === 'object' &&
+        !s.isDestroyed?.() &&
+        okType &&
+        !(0, remoteWindowSecurity_1.isRemoteContents)(s) &&
+        f &&
+        typeof f === 'object' &&
+        !f.parent &&
+        s.mainFrame &&
+        f === s.mainFrame);
+}
+function resolveAuthorizedCatcherWindow(event) {
+    if (!isTopFrameWindowSender(event)) {
+        return undefined;
+    }
+    const win = (0, utils_1.resolveHubWindowFromCatcherWebContents)(event.sender);
+    if (!win || win.isDestroyed?.()) {
+        return undefined;
+    }
+    const catcher = (0, utils_1.getHubCatcherView)(win);
+    return catcher?.webContents &&
+        !catcher.webContents.isDestroyed?.() &&
+        catcher.webContents === event.sender
+        ? win
+        : undefined;
+}
+function resolveAuthorizedHubCatcherTargetWindow(event) {
+    if (!isTopFrameWindowSender(event)) {
+        return undefined;
+    }
+    const win = (0, utils_1.resolveHubWindowFromWebContents)(event.sender);
+    if (!win || win.isDestroyed?.() || (0, utils_1.getHubWebContents)(win) !== event.sender) {
+        return undefined;
+    }
+    const catcher = (0, utils_1.getHubCatcherView)(win);
+    return catcher?.webContents && !catcher.webContents.isDestroyed?.()
+        ? win
+        : undefined;
+}
 function isAuthorizedHubMainFrameEvent(event) {
     const s = event?.sender;
     const f = event?.senderFrame;
@@ -17,6 +113,9 @@ function isAuthorizedHubMainFrameEvent(event) {
         return false;
     }
     if (s.mainFrame && f !== s.mainFrame) {
+        return false;
+    }
+    if ((0, remoteWindowSecurity_1.isRemoteContents)(s)) {
         return false;
     }
     const win = (0, utils_1.resolveHubWindowFromWebContents)(s);
@@ -30,6 +129,10 @@ function assertAuthorizedWcvCaller(event, registry, tabKey) {
         (typeof sender.getType === 'function' && sender.getType() !== 'window') ||
         event?.senderFrame?.parent) {
         throw new Error('Unauthorized WCV IPC caller');
+    }
+    // Not SSH windows: these tabs use the laptop's browser profiles.
+    if ((0, remoteWindowSecurity_1.isRemoteContents)(sender)) {
+        throw new Error('Unauthorized WCV IPC caller: SSH window');
     }
     const win = (0, utils_1.resolveHubWindowFromWebContents)(sender);
     if (!win || (0, utils_1.getHubWebContents)(win) !== sender) {
@@ -123,6 +226,17 @@ async function runOnLiveAgentTab(event, registry, tabKey, op) {
     });
 }
 function registerWcvIpcHandlers(registry = wcvBrowserRegistry_1.wcvBrowserRegistry, controller = wcvZOrderController_1.wcvZOrderController, storageManager) {
+    const handleChannels = [];
+    const registerHandle = (channel, listener) => {
+        electron_1.ipcMain.handle(channel, listener);
+        handleChannels.push(channel);
+    };
+    const onListeners = [];
+    const registerOn = (channel, fn) => {
+        const listener = fn;
+        electron_1.ipcMain.on(channel, listener);
+        onListeners.push([channel, listener]);
+    };
     guestPromptController_1.guestPromptController.setPromptVisibilityListener((tabKey, open) => {
         controller.setHumanPromptOpen(tabKey, open);
     });
@@ -132,7 +246,7 @@ function registerWcvIpcHandlers(registry = wcvBrowserRegistry_1.wcvBrowserRegist
     // agent-controlling after the step.
     let agentControllingCalls = 0;
     const latestAgentControllingCall = new Map();
-    electron_1.ipcMain.handle('wcv:acquire', (event, req) => {
+    registerHandle('wcv:acquire', (event, req) => {
         const { win, sender } = assertAuthorizedWcvCaller(event, registry, req?.tabKey);
         const { webmcpEnabled, ...rest } = req ?? {};
         if (typeof webmcpEnabled === 'boolean') {
@@ -146,7 +260,7 @@ function registerWcvIpcHandlers(registry = wcvBrowserRegistry_1.wcvBrowserRegist
             return snap;
         });
     });
-    electron_1.ipcMain.handle('wcv:show', (event, tabKey, boundsCss) => {
+    registerHandle('wcv:show', (event, tabKey, boundsCss) => {
         const { win, sender } = assertAuthorizedWcvCaller(event, registry, tabKey);
         const boundsDip = hubCssToDip(event, boundsCss);
         const snap = registry.show(tabKey, boundsDip, win);
@@ -164,22 +278,35 @@ function registerWcvIpcHandlers(registry = wcvBrowserRegistry_1.wcvBrowserRegist
         }
         return null;
     });
-    electron_1.ipcMain.handle('wcv:hide', (event, tabKey) => {
+    registerHandle('wcv:hide', (event, tabKey) => {
         const { win } = assertAuthorizedWcvCaller(event, registry, tabKey);
         registry.hide(tabKey);
         controller.revokeFocusGrant(tabKey);
         controller.reconcileWindow(win, 'tab-hidden');
     });
-    electron_1.ipcMain.on('wcv:set-bounds-sync', (event, tabKey, boundsCss) => {
+    registerOn('wcv:set-bounds-sync', (event, tabKey, boundsCss) => {
         try {
-            assertAuthorizedWcvCaller(event, registry, tabKey);
-            registry.setBounds(tabKey, hubCssToDip(event, boundsCss));
+            const { win, entry } = assertAuthorizedWcvCaller(event, registry, tabKey);
+            const apply = () => registry.setBounds(tabKey, hubCssToDip(event, boundsCss));
+            if (!(0, utils_1.getHubCatcherView)(win)) {
+                apply();
+                return;
+            }
+            const ok = isPlainObject(boundsCss) &&
+                [boundsCss.x, boundsCss.y, boundsCss.width, boundsCss.height].every(isFiniteNum);
+            if (!ok) {
+                return;
+            }
+            apply();
+            if (entry && (0, utils_1.getHubCatcherView)(entry.parentWindow)) {
+                controller.syncCatcherSlotBounds(entry.parentWindow);
+            }
         }
         catch {
             // Ignore unauthorized one-way callers without crashing main process.
         }
     });
-    electron_1.ipcMain.handle('wcv:set-theme-color', async (event, color) => {
+    registerHandle('wcv:set-theme-color', async (event, color) => {
         const { win } = assertAuthorizedWcvCaller(event, registry);
         const normalized = (0, utils_1.setHubCurtainColor)(win, color);
         if (!normalized) {
@@ -190,11 +317,11 @@ function registerWcvIpcHandlers(registry = wcvBrowserRegistry_1.wcvBrowserRegist
         })).catch(() => undefined);
         return true;
     });
-    electron_1.ipcMain.handle('wcv:set-pinned', (event, tabKey, pinned) => {
+    registerHandle('wcv:set-pinned', (event, tabKey, pinned) => {
         assertAuthorizedWcvCaller(event, registry, tabKey);
         registry.setPinned(tabKey, pinned);
     });
-    electron_1.ipcMain.handle('wcv:set-agent-controlling', async (event, tabKey, active) => {
+    registerHandle('wcv:set-agent-controlling', async (event, tabKey, active) => {
         assertAuthorizedWcvCaller(event, registry, tabKey);
         if (!active) {
             latestAgentControllingCall.delete(tabKey);
@@ -212,30 +339,30 @@ function registerWcvIpcHandlers(registry = wcvBrowserRegistry_1.wcvBrowserRegist
             return controller.setAgentControlling(tabKey, true);
         });
     });
-    electron_1.ipcMain.handle('wcv:set-overlay-active', (event, tabKey, active) => {
+    registerHandle('wcv:set-overlay-active', (event, tabKey, active) => {
         assertAuthorizedWcvCaller(event, registry, tabKey);
         return controller.setOverlayActive(tabKey, active);
     });
-    electron_1.ipcMain.handle('wcv:set-portal-overlay-open', (event, open) => {
+    registerHandle('wcv:set-portal-overlay-open', (event, open) => {
         const { win } = assertAuthorizedWcvCaller(event, registry);
         controller.setPortalOverlayOpen(win, open);
     });
-    electron_1.ipcMain.handle('wcv:elevate', (event, tabKey, reason, focusBrowser) => {
+    registerHandle('wcv:elevate', (event, tabKey, reason, focusBrowser) => {
         assertAuthorizedWcvCaller(event, registry, tabKey);
         return controller.elevate(tabKey, reason, focusBrowser);
     });
-    electron_1.ipcMain.handle('wcv:set-drag-over', (event, tabKey, active) => {
+    registerHandle('wcv:set-drag-over', (event, tabKey, active) => {
         assertAuthorizedWcvCaller(event, registry, tabKey);
         return controller.setDragOverActive(tabKey, active);
     });
-    electron_1.ipcMain.handle('wcv:demote', (event, tabKey, reason) => {
+    registerHandle('wcv:demote', (event, tabKey, reason) => {
         assertAuthorizedWcvCaller(event, registry, tabKey);
         return controller.demote(tabKey, reason);
     });
-    electron_1.ipcMain.handle('wcv:navigate', async (event, tabKey, url) => {
+    registerHandle('wcv:navigate', async (event, tabKey, url) => {
         return runOnLiveAgentTab(event, registry, tabKey, () => controller.navigate(tabKey, url));
     });
-    electron_1.ipcMain.handle('wcv:control', (event, tabKey, action) => {
+    registerHandle('wcv:control', (event, tabKey, action) => {
         const { entry } = assertAuthorizedWcvCaller(event, registry, tabKey);
         // eslint-disable-next-line @typescript-eslint/no-explicit-any
         const wc = entry?.view.webContents;
@@ -298,16 +425,16 @@ function registerWcvIpcHandlers(registry = wcvBrowserRegistry_1.wcvBrowserRegist
                 break;
         }
     });
-    electron_1.ipcMain.handle('wcv:send-mouse', async (event, tabKey, params, coordSpace) => {
+    registerHandle('wcv:send-mouse', async (event, tabKey, params, coordSpace) => {
         return runOnLiveAgentTab(event, registry, tabKey, () => controller.dispatchMouseEvent(tabKey, hubCssMouseToDip(event, params, coordSpace)));
     });
-    electron_1.ipcMain.handle('wcv:send-key', async (event, tabKey, params) => {
+    registerHandle('wcv:send-key', async (event, tabKey, params) => {
         return runOnLiveAgentTab(event, registry, tabKey, () => controller.dispatchKeyEvent(tabKey, params));
     });
-    electron_1.ipcMain.handle('wcv:insert-text', async (event, tabKey, text) => {
+    registerHandle('wcv:insert-text', async (event, tabKey, text) => {
         return runOnLiveAgentTab(event, registry, tabKey, () => controller.insertText(tabKey, text));
     });
-    electron_1.ipcMain.handle('wcv:set-viewport-size', (event, tabKey, size) => {
+    registerHandle('wcv:set-viewport-size', (event, tabKey, size) => {
         assertAuthorizedWcvCaller(event, registry, tabKey);
         if (size !== null &&
             (!size ||
@@ -320,13 +447,130 @@ function registerWcvIpcHandlers(registry = wcvBrowserRegistry_1.wcvBrowserRegist
         }
         return controller.setViewportSize(tabKey, size);
     });
-    electron_1.ipcMain.handle('wcv:capture-page', async (event, tabKey) => {
+    registerHandle('wcv:capture-page', async (event, tabKey) => {
         return runOnLiveAgentTab(event, registry, tabKey, () => controller.capturePage(tabKey));
     });
-    electron_1.ipcMain.handle('wcv:dispose', (event, tabKey) => {
+    registerHandle('wcv:dispose', (event, tabKey) => {
         const { win } = assertAuthorizedWcvCaller(event, registry, tabKey);
         controller.revokeFocusGrant(tabKey);
         registry.dispose(tabKey);
         controller.reconcileWindow(win, 'disposed');
     });
+    registerOn(wcvZOrderController_1.WCV_HUB_CURSOR_HOLE_STATE_CHANNEL, (event, p) => {
+        const win = resolveAuthorizedHubCatcherTargetWindow(event);
+        if (win &&
+            isPlainObject(p) &&
+            typeof p.isHole === 'boolean' &&
+            isFiniteNum(p.dipX) &&
+            isFiniteNum(p.dipY) &&
+            (p.reason === undefined ||
+                p.reason === 'pointermove' ||
+                p.reason === 'stationary-overlay' ||
+                p.reason === 'dragover')) {
+            controller.handleHubCursorHoleState(win, p);
+        }
+    });
+    registerOn(wcvZOrderController_1.WCV_HUB_PROBE_POINT_RESPONSE_CHANNEL, (event, p) => {
+        const win = resolveAuthorizedHubCatcherTargetWindow(event);
+        if (win &&
+            isPlainObject(p) &&
+            isPositiveInt(p.requestId) &&
+            typeof p.isHole === 'boolean') {
+            controller.handleHubProbePointResponse(win, p);
+        }
+    });
+    registerOn(catcherChannels_1.WCV_CATCHER_POINTER_DOWN_CHANNEL, (event, p) => {
+        const win = resolveAuthorizedCatcherWindow(event);
+        if (win &&
+            isPlainObject(p) &&
+            isPositiveInt(p.pressId) &&
+            isFiniteNum(p.x) &&
+            isFiniteNum(p.y) &&
+            typeof p.rawButton === 'number' &&
+            Number.isInteger(p.rawButton) &&
+            p.rawButton >= 0 &&
+            p.rawButton <= 4 &&
+            DOWN_BUTTONS[p.rawButton] === p.button &&
+            isClickCount(p.clickCount) &&
+            isModifiersMask(p.modifiers)) {
+            void controller.handleCatcherPointerDown(win, p);
+        }
+    });
+    registerOn(catcherChannels_1.WCV_CATCHER_POINTER_MOVE_CHANNEL, (event, p) => {
+        const win = resolveAuthorizedCatcherWindow(event);
+        if (win &&
+            isPlainObject(p) &&
+            typeof p.isDragging === 'boolean' &&
+            isFiniteNum(p.x) &&
+            isFiniteNum(p.y) &&
+            isModifiersMask(p.modifiers) &&
+            (p.isDragging
+                ? isPositiveInt(p.pressId) && isDragButton(p.button)
+                : p.pressId === null && p.button === 'none')) {
+            controller.handleCatcherPointerMove(win, p);
+        }
+    });
+    registerOn(catcherChannels_1.WCV_CATCHER_POINTER_UP_CHANNEL, (event, p) => {
+        const win = resolveAuthorizedCatcherWindow(event);
+        if (win &&
+            isPlainObject(p) &&
+            isPositiveInt(p.pressId) &&
+            isFiniteNum(p.x) &&
+            isFiniteNum(p.y) &&
+            isDragButton(p.button) &&
+            isClickCount(p.clickCount) &&
+            isModifiersMask(p.modifiers) &&
+            typeof p.outOfBounds === 'boolean') {
+            void controller.handleCatcherPointerUp(win, p);
+        }
+    });
+    registerOn(catcherChannels_1.WCV_CATCHER_POINTER_LEAVE_CHANNEL, (event) => {
+        const win = resolveAuthorizedCatcherWindow(event);
+        if (win) {
+            controller.handleCatcherPointerLeave(win);
+        }
+    });
+    registerOn(catcherChannels_1.WCV_CATCHER_WHEEL_CHANNEL, (event, p) => {
+        const win = resolveAuthorizedCatcherWindow(event);
+        if (win &&
+            isPlainObject(p) &&
+            isFiniteNum(p.x) &&
+            isFiniteNum(p.y) &&
+            isFiniteNum(p.deltaX) &&
+            isFiniteNum(p.deltaY) &&
+            isModifiersMask(p.modifiers)) {
+            controller.handleCatcherWheel(win, p);
+        }
+    });
+    registerOn(catcherChannels_1.WCV_CATCHER_PINCH_CHANNEL, (event, p) => {
+        const win = resolveAuthorizedCatcherWindow(event);
+        if (win &&
+            isPlainObject(p) &&
+            isFiniteNum(p.x) &&
+            isFiniteNum(p.y) &&
+            isFiniteNum(p.scaleFactor) &&
+            p.scaleFactor > 0) {
+            controller.handleCatcherPinch(win, p);
+        }
+    });
+    registerOn(catcherChannels_1.WCV_CATCHER_DRAG_CHANNEL, (event, p) => {
+        const win = resolveAuthorizedCatcherWindow(event);
+        const parsed = win ? parseCatcherDragPayload(p) : null;
+        if (win && parsed) {
+            void controller.handleCatcherDrag(win, parsed);
+        }
+    });
+    let cleanedUp = false;
+    return () => {
+        if (cleanedUp) {
+            return;
+        }
+        cleanedUp = true;
+        for (const channel of handleChannels) {
+            electron_1.ipcMain.removeHandler(channel);
+        }
+        for (const [channel, listener] of onListeners) {
+            electron_1.ipcMain.removeListener(channel, listener);
+        }
+    };
 }

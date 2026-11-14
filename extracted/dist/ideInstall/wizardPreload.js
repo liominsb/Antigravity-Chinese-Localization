@@ -4804,6 +4804,29 @@ electron_1.contextBridge.exposeInMainWorld('wizardAPI', wizardAPI);
     "Configure built-in browser, link opening, and browser subagent preferences": "配置内置浏览器、链接打开方式以及浏览器子智能体偏好设置",
     "Manage project folders and settings.": "管理项目文件夹与设置。",
     "Manage project folders and settings": "管理项目文件夹与设置",
+    // ===== 2.32.1 远程 SSH 开发与配置 =====
+    "Connect to Host...": "连接到主机...",
+    "Connect to Host": "连接到主机",
+    "Connect to SSH Host...": "连接到 SSH 主机...",
+    "Connect to SSH Host": "连接到 SSH 主机",
+    "Recent Hosts": "最近的主机",
+    "Configure SSH Hosts...": "配置 SSH 主机...",
+    "Configure SSH Hosts": "配置 SSH 主机",
+    "Add New SSH Host...": "添加新的 SSH 主机...",
+    "Remote - SSH": "远程 - SSH",
+    "Stop SSH server": "停止 SSH 服务端",
+    "Stop Server": "停止服务端",
+    "Reconnecting…": "正在重新连接…",
+    "Reconnect": "重新连接",
+    "SSH Remote": "SSH 远程",
+    "SSH Configuration": "SSH 配置",
+    "SSH Config": "SSH 配置",
+    "SSH config": "SSH 配置",
+    "SSH Host": "SSH 主机",
+    "SSH hosts": "SSH 主机",
+    "Enter an SSH host": "输入 SSH 主机",
+    "Choose an SSH config file": "选择 SSH 配置文件",
+    "Touch your security key": "请轻触你的安全密钥",
   };
 
   const coreWords = {
@@ -5120,6 +5143,43 @@ electron_1.contextBridge.exposeInMainWorld('wizardAPI', wizardAPI);
 
     if (/^(\d+)\s+archived\s+conversations?([.。]?)$/i.test(trimmed)) {
       const fixed = trimmed.replace(/^(\d+)\s+archived\s+conversations?([.。]?)$/i, '$1 个已归档对话。');
+      if (stringCache.size < MAX_STRING_CACHE) stringCache.set(trimmed, fixed);
+      return text.replace(trimmed, fixed);
+    }
+
+    // ===== 2.32.1 远程 SSH 交互与状态动态保障 =====
+    if (/^Reconnecting to (.+?)[.…⋯]?$/i.test(trimmed)) {
+      const fixed = trimmed.replace(/^Reconnecting to (.+?)[.…⋯]?$/i, '正在重新连接到 $1…');
+      if (stringCache.size < MAX_STRING_CACHE) stringCache.set(trimmed, fixed);
+      return text.replace(trimmed, fixed);
+    }
+
+    if (/^Disconnected from (.+?)$/i.test(trimmed)) {
+      const fixed = trimmed.replace(/^Disconnected from (.+?)$/i, '已断开与 $1 的连接');
+      if (stringCache.size < MAX_STRING_CACHE) stringCache.set(trimmed, fixed);
+      return text.replace(trimmed, fixed);
+    }
+
+    if (/^Agents keep running on (.+?).?$/i.test(trimmed)) {
+      const fixed = trimmed.replace(/^Agents keep running on (.+?).?$/i, '智能体将在 $1 上继续运行。');
+      if (stringCache.size < MAX_STRING_CACHE) stringCache.set(trimmed, fixed);
+      return text.replace(trimmed, fixed);
+    }
+
+    if (/^Agents keep running on (.+?) unless its server stopped.?$/i.test(trimmed)) {
+      const fixed = trimmed.replace(/^Agents keep running on (.+?) unless its server stopped.?$/i, '智能体将在 $1 上继续运行（除非其服务端已停止）。');
+      if (stringCache.size < MAX_STRING_CACHE) stringCache.set(trimmed, fixed);
+      return text.replace(trimmed, fixed);
+    }
+
+    if (/^Stop the Antigravity server on (.+?)?$/i.test(trimmed)) {
+      const fixed = trimmed.replace(/^Stop the Antigravity server on (.+?)?$/i, '停止 $1 上的 Antigravity 服务端？');
+      if (stringCache.size < MAX_STRING_CACHE) stringCache.set(trimmed, fixed);
+      return text.replace(trimmed, fixed);
+    }
+
+    if (/^Not connected to (.+?)$/i.test(trimmed)) {
+      const fixed = trimmed.replace(/^Not connected to (.+?)$/i, '未连接到 $1');
       if (stringCache.size < MAX_STRING_CACHE) stringCache.set(trimmed, fixed);
       return text.replace(trimmed, fixed);
     }

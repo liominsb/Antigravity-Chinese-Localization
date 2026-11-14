@@ -50,9 +50,9 @@ function isVerGte2310(v) {
 const currentVerMatch = localizeSource.match(/const CURRENT_VERSION = ['"]([^'"]+)['"];/);
 check('localize.js CURRENT_VERSION >= 2.31.0', isVerGte2310(currentVerMatch ? currentVerMatch[1] : ''), true);
 check('extracted/package.json version >= 2.31.0', isVerGte2310(packageJson.version), true);
-check('index.html 控制中心显示 v2.31.x', /控制中心 v2\.31\.\d+/.test(indexSource), true);
-check('README.md 包含 v2.31.x+', /Antigravity v2\.31\.\d+\+/.test(readmeSource), true);
-check('README.en.md 包含 v2.31.x+', /Antigravity v2\.31\.\d+\+/.test(readmeEnSource), true);
+check('index.html 控制中心显示 v2.31.0 或更高', /控制中心 v2\.(3[1-9]|[4-9]\d)\.\d+/.test(indexSource), true);
+check('README.md 包含 v2.31.0+ 或更高', /Antigravity v2\.(3[1-9]|[4-9]\d)\.\d+\+/.test(readmeSource), true);
+check('README.en.md 包含 v2.31.0+ 或更高', /Antigravity v2\.(3[1-9]|[4-9]\d)\.\d+\+/.test(readmeEnSource), true);
 check('CHANGELOG.md 包含 v2.31.0 章节', changelogSource.includes('## v2.31.0 (2026-11-10)'), true);
 check('CHANGELOG.en.md 包含 v2.31.0 章节', changelogEnSource.includes('## v2.31.0 (2026-11-10)'), true);
 check('app.asar.ready package.json 版本 >= 2.31.0', isVerGte2310(readAsarPackageVersion(readyAsarPath)), true);

@@ -1,7 +1,7 @@
 {
   "name": "antigravity",
   "productName": "Antigravity",
-  "version": "2.31.2",
+  "version": "2.32.1",
   "description": "Antigravity - Agentic Desktop Application",
   "homepage": "https://antigravity.google",
   "author": {
@@ -16,7 +16,6 @@
     "chrome-devtools-mcp": "^1.1.0",
     "electron-log": "^5.4.3",
     "electron-updater": "^6.8.9",
-    "js-yaml": "^4.3.2",
-    "shell-env": "^4.0.3"
+    "js-yaml": "^4.3.2"
   }
 }

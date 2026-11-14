@@ -67,6 +67,10 @@ const guestPromptController_1 = require("./guestPromptController");
 const webviewBrowser_1 = require("./webviewBrowser");
 const windowState_1 = require("./windowState");
 const browserEngine_1 = require("./browserEngine/browserEngine");
+const remoteWindowSecurity_1 = require("./remote/remoteWindowSecurity");
+const hostStores_1 = require("./remote/hostStores");
+const remoteManager_1 = require("./remote/remoteManager");
+const sshBridge_1 = require("./remote/sshBridge");
 const gotTheLock = electron_1.app.requestSingleInstanceLock();
 if (!gotTheLock) {
     electron_1.app.quit();
@@ -82,6 +86,7 @@ let isQuitting = false;
 // Loopback HTTP server the language server uses to read update status and
 // request an update. Kept at module scope so it is not garbage collected.
 let hostBridgeServer;
+let remoteManager;
 // ---------------------------------------------------------------------------
 // Config
 // ---------------------------------------------------------------------------
@@ -91,6 +96,7 @@ let hostBridgeServer;
 const HEADLESS = process.env.ELECTRON_OZONE_PLATFORM_HINT === 'headless';
 // When set, skip LS startup and load this URL directly (for dev iteration).
 const DEV_URL = process.env.DEV_URL;
+const IS_INSIDERS = electron_1.app.getName().toLowerCase().includes('insiders');
 // WSL distro to provision and launch the LS in (Windows only, '' = local).
 // Precedence: --wsl-distro switch (empty value forces local) >
 // ANTIGRAVITY_WSL_DISTRO env var > distro persisted from the last session.
@@ -143,7 +149,8 @@ electron_1.app.commandLine.appendSwitch('disable-backgrounding-occluded-windows'
 // ---------------------------------------------------------------------------
 let pendingDeepLink = null;
 function handleDeepLink(url) {
-    const wins = (0, utils_1.getHubWindows)();
+    // Deep links can carry auth codes: never to an SSH window.
+    const wins = (0, utils_1.getLocalHubWindows)();
     // This block handles deep links when windows are already open.
     if (wins.length > 0) {
         if (wins[0].isMinimized()) {
@@ -168,8 +175,7 @@ function handleDeepLink(url) {
     }
     else {
         pendingDeepLink = url;
-        // The app is running with no windows open (macOS, or "run in background"
-        // on other platforms). Open one so the stored link is picked up.
+        // No local window (maybe only SSH windows): open one to take the link.
         if (!HEADLESS && hasStartedMainApplication) {
             (0, utils_1.createWindow)(DEV_URL ?? `${constants_1.WINDOW_ORIGIN}:${(0, languageServer_1.getLsPort)()}/`, storageManager);
             electron_1.app.focus({ steal: true });
@@ -199,7 +205,38 @@ electron_1.app.on('second-instance', (_event, commandLine) => {
     if (url) {
         handleDeepLink(url);
     }
+    else if (hasStartedMainApplication) {
+        // Not before: the IDE install wizard may be open.
+        openSshHostFromArgs(commandLine);
+    }
 });
+const SSH_HOST_SWITCH = '--ssh-host=';
+function sshHostFromArgs(argv) {
+    const arg = argv.find((a) => a.startsWith(SSH_HOST_SWITCH));
+    // '||': an empty value means unset.
+    return arg?.slice(SSH_HOST_SWITCH.length).trim() || undefined;
+}
+/** Opens `--ssh-host`'s window; a failure shows on the local window. */
+function openSshHostFromArgs(argv) {
+    // Deep links take precedence over --ssh-host (both on cold start and
+    // second-instance) so protocol launches cannot carry an SSH destination.
+    if (argv.some((a) => a.startsWith(`${PROTOCOL}://`))) {
+        return;
+    }
+    const host = sshHostFromArgs(argv);
+    if (!host || isQuitting || !remoteManager) {
+        return;
+    }
+    if (HEADLESS) {
+        console.log('[SSH] Ignoring --ssh-host: this Hub is headless.');
+        return;
+    }
+    // Opened at startup or by the second launch.
+    const [parent] = (0, utils_1.getLocalHubWindows)();
+    if (parent) {
+        void remoteManager.openFromCommandLine(host, parent);
+    }
+}
 (0, customScheme_1.registerCustomSchemes)();
 electron_1.app.on('open-url', (event, url) => {
     event.preventDefault();
@@ -213,7 +250,10 @@ electron_1.app.on('session-created', (targetSession) => {
     (0, guestPromptController_1.configureSessionPromptPreload)(targetSession);
 });
 electron_1.app.on('web-contents-created', (_event, contents) => {
-    if ((0, scriptJail_1.isScriptJailSession)(contents.session)) {
+    // Not SSH sessions: the setup below would undo their hardening (e.g. re-add
+    // the session preloads it removed).
+    if ((0, scriptJail_1.isScriptJailSession)(contents.session) ||
+        (0, remoteWindowSecurity_1.isRemoteSession)(contents.session)) {
         return;
     }
     (0, deviceChooser_1.configureSessionDeviceChooser)(contents.session);
@@ -243,7 +283,8 @@ electron_1.app
     Object.assign(console, main_1.default.functions);
     (0, paths_1.tightenActivePortPermissions)(electron_1.app.getPath('userData'), (0, paths_1.getActivePortFilePath)());
     const storagePath = (0, paths_1.getAppStoragePath)();
-    storageManager = new storage_1.StorageManager(storagePath, settingsService_1.DEFAULTS);
+    // SSH windows hear only this store's app settings (hosts have their own).
+    storageManager = new storage_1.StorageManager(storagePath, settingsService_1.DEFAULTS, hostStores_1.mainStoreScope);
     settingsService = new settingsService_1.SettingsService(storageManager);
     // Handle deep link URL from command line arguments (All platforms)
     const deepLinkFromArg = process.argv.find((arg) => arg.startsWith(`${PROTOCOL}://`));
@@ -251,9 +292,25 @@ electron_1.app
         console.log('Launched with deep link:', deepLinkFromArg);
         pendingDeepLink = deepLinkFromArg;
     }
-    // Register IPC handlers
-    (0, ipcHandlers_1.registerIpcHandlers)(storageManager);
-    electron_1.ipcMain.handle('deep-link:get-stored', () => {
+    remoteManager = new remoteManager_1.RemoteManager({
+        mainStorage: storageManager,
+        appVersion: electron_1.app.getVersion(),
+        isInsiders: IS_INSIDERS,
+        openLocalWindow: () => {
+            (0, utils_1.createWindow)(DEV_URL ?? `${constants_1.WINDOW_ORIGIN}:${(0, languageServer_1.getLsPort)()}/`, storageManager, { cascade: true });
+        },
+    });
+    (0, sshBridge_1.registerSshBridgeIpc)(remoteManager);
+    // Register IPC handlers. SSH windows get their host's store.
+    const hostStores = new hostStores_1.HostStores(electron_1.app.getPath('userData'), storageManager);
+    (0, ipcHandlers_1.registerIpcHandlers)(storageManager, {
+        resolveStorage: (sender) => hostStores.forSender(sender),
+        sidecarRoutesFor: (sender) => remoteManager?.sidecarRoutesFor(sender),
+    });
+    electron_1.ipcMain.handle('deep-link:get-stored', (event) => {
+        if ((0, remoteWindowSecurity_1.isRemoteContents)(event?.sender)) {
+            return null; // Deep links are for local windows only.
+        }
         const link = pendingDeepLink;
         pendingDeepLink = null; // Clear after read
         return link;
@@ -293,6 +350,7 @@ electron_1.app
         console.log('Starting in dev mode with URL:', DEV_URL);
         (0, utils_1.createWindow)(DEV_URL, storageManager);
         hasStartedMainApplication = true;
+        openSshHostFromArgs(process.argv);
         return;
     }
     if (!WSL_DISTRO && !fs.existsSync(languageServer_1.LS_BINARY)) {
@@ -330,7 +388,7 @@ electron_1.app
         // provisioning actually has work to do (first launch per version).
         let splash;
         try {
-            const binaryPath = await (0, wsl_1.ensureServerInstalled)(WSL_DISTRO, electron_1.app.getVersion(), electron_1.app.getName().toLowerCase().includes('insiders'), (status) => {
+            const binaryPath = await (0, wsl_1.ensureServerInstalled)(WSL_DISTRO, electron_1.app.getVersion(), IS_INSIDERS, (status) => {
                 if (!HEADLESS) {
                     splash ?? (splash = (0, provisionSplash_1.createProvisionSplash)(WSL_DISTRO));
                     splash.setStatus(status);
@@ -385,7 +443,7 @@ electron_1.app
                 // Apply cert trust
                 (0, languageServer_1.setupLocalCertTrust)();
                 if (!HEADLESS) {
-                    const windows = (0, utils_1.getHubWindows)();
+                    const windows = (0, utils_1.getLocalHubWindows)();
                     for (const win of windows) {
                         void win.loadURL(newUrl);
                     }
@@ -474,6 +532,7 @@ electron_1.app
             }
         });
     }
+    openSshHostFromArgs(process.argv);
     // Start checking for app updates.
     (0, updater_1.initAutoUpdater)(HEADLESS, settingsService);
     hasStartedMainApplication = true;
@@ -527,6 +586,10 @@ electron_1.app.on('before-quit', async (event) => {
         // Persist the focused/open Hub window bounds and full-screen/maximized state
         // before `win.destroy()`, which bypasses the normal `'close'` event.
         (0, windowState_1.flushTrackedWindowState)((0, utils_1.getFocusedHubWindow)());
+        // Before destroying the windows (see disposeAll).
+        const sshClosed = remoteManager?.disposeAll().catch((err) => {
+            console.error('Failed to close SSH connections:', err);
+        }) ?? Promise.resolve();
         // Destroy all windows to terminate renderers and release keep-alive sockets
         const windows = [
             ...new Set([...(0, utils_1.getHubWindows)(), ...electron_1.BrowserWindow.getAllWindows()]),
@@ -543,6 +606,7 @@ electron_1.app.on('before-quit', async (event) => {
             (0, browserEngine_1.closeAllBrowserSessions)().catch((err) => {
                 console.error('Failed to close browser sessions:', err);
             }),
+            sshClosed,
         ]);
         // The host bridge server comes down last, in reverse order of startup: the
         // language server is its only client, so closing it first would just drop

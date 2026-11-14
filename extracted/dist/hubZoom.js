@@ -55,7 +55,9 @@ function resolveHubZoomShortcutAction(input, keyLower = (input.key || '').toLowe
  * (`getHubWebContents(win)`) — never on a focused child `WebContentsView` —
  * and persists `zoomLevel` when a storage updater is registered.
  */
-async function applyHubWindowZoom(win, action) {
+async function applyHubWindowZoom(win, action, 
+/** Bounds the new level (e.g. for zoom that remote content asked for). */
+limit) {
     if (!win || win.isDestroyed?.()) {
         return;
     }
@@ -71,6 +73,7 @@ async function applyHubWindowZoom(win, action) {
         const baseLevel = typeof current === 'number' && Number.isFinite(current) ? current : 0;
         newLevel = action === 'in' ? baseLevel + exports.ZOOM_STEP : baseLevel - exports.ZOOM_STEP;
     }
+    newLevel = limit ? limit(newLevel) : newLevel;
     hubContents.setZoomLevel?.(newLevel);
     if (typeof registeredStorageManager?.updateItems === 'function') {
         await registeredStorageManager.updateItems({

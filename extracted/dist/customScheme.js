@@ -6,6 +6,7 @@ exports.handleFaviconProtocolRequest = handleFaviconProtocolRequest;
 exports.registerCustomSchemeHandlers = registerCustomSchemeHandlers;
 const electron_1 = require("electron");
 const faviconStore_1 = require("./faviconStore");
+const redirects_1 = require("./redirects");
 // A map of extension authority -> original URL (http://localhost:<port>)
 // The authority is usually a hash of unique extension identifiers
 // like extension ID + port + project ID. An extension running on localhost:<port>
@@ -71,19 +72,18 @@ function registerCustomSchemeHandlers() {
         if (!originalHost) {
             return new Response(null, { status: 404 });
         }
-        const targetUrl = new URL(url.pathname + url.search, originalHost);
+        // Origin plus path: resolving a path like "//host/x" against the sidecar
+        // URL would switch to another host.
+        const sidecar = new URL(originalHost);
+        const targetUrl = new URL(`${sidecar.origin}${url.pathname}${url.search}`);
+        if (targetUrl.host !== sidecar.host) {
+            return new Response(null, { status: 404 });
+        }
         try {
-            const fetchOptions = {
-                method: request.method,
-                headers: request.headers,
-                body: request.body,
-            };
-            if (request.body) {
-                // Required by Electron's net.fetch when the body is a stream
-                fetchOptions.duplex = 'half';
-            }
-            const response = await electron_1.net.fetch(targetUrl.toString(), fetchOptions);
-            return response;
+            // With the main process's network and cookies. A redirect goes back to
+            // the frame if it stays on the sidecar's origin (redirects.ts).
+            const response = await (0, redirects_1.fetchWithoutFollowing)(targetUrl.href, request);
+            return (0, redirects_1.pluginResponse)(response, targetUrl, url);
         }
         catch (err) {
             console.error(`Failed to proxy request to ${targetUrl}:`, err);

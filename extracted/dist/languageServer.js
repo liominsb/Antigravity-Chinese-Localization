@@ -51,7 +51,6 @@ exports.killLanguageServer = killLanguageServer;
 exports.setupLocalCertTrust = setupLocalCertTrust;
 const child_process_1 = require("child_process");
 const electron_1 = require("electron");
-const shell_env_1 = require("shell-env");
 const fs = __importStar(require("fs"));
 const path_1 = __importDefault(require("path"));
 const readline = __importStar(require("readline"));
@@ -59,6 +58,8 @@ const stream_1 = require("stream");
 const paths_1 = require("./paths");
 const utils_1 = require("./utils");
 const wsl_1 = require("./wsl");
+const lsDefaults_1 = require("./lsDefaults");
+const loginShellEnvReads_1 = require("./loginShellEnvReads");
 // ---------------------------------------------------------------------------
 // Config
 // ---------------------------------------------------------------------------
@@ -190,20 +191,20 @@ function setupNodeModules(env, modules) {
         env[mod.envVar] = entryPoint;
     }
 }
-let prefetchedShellEnv;
+// Not with the shell-env package: the process-wide exit and signal hooks of
+// its execa dependency reset Electron's SIGTERM handling, after which a
+// SIGTERM killed the app without running before-quit (so the language server
+// was not shut down).
+const shellEnvReads = new loginShellEnvReads_1.LoginShellEnvReads(false);
 /**
  * Starts loading the login-shell env (spawns an interactive shell, which can
  * take seconds with heavy rc files) so it overlaps app startup instead of
- * blocking the LS spawn. Consumed by the next startLanguageServer call; later
- * calls (LS restarts) reload it so rc edits are still picked up.
+ * blocking the LS spawn. Consumed by the next startLanguageServer call, which
+ * waits 10 s at most; later calls (LS restarts) reload it so rc edits are
+ * still picked up, unless a read is still running.
  */
 function prefetchShellEnv() {
-    prefetchedShellEnv ?? (prefetchedShellEnv = (0, shell_env_1.shellEnv)());
-}
-function takeShellEnv() {
-    const env = prefetchedShellEnv ?? (0, shell_env_1.shellEnv)();
-    prefetchedShellEnv = undefined;
-    return env;
+    shellEnvReads.prefetch();
 }
 /**
  * Spawn the language server and resolve with a LanguageServerHandle once
@@ -215,30 +216,17 @@ function takeShellEnv() {
  */
 async function startLanguageServer(port, csrf, options = {}) {
     const { headless, hostBridgeUrl, hostBridgeToken, wsl } = options;
-    const loginShellEnv = await takeShellEnv();
+    const loginShellEnv = await shellEnvReads.take();
     return new Promise((resolve, reject) => {
         const logStream = fs.createWriteStream((0, paths_1.getLsLogPath)(), { flags: 'w' });
         // We need to pass the override flags because the LS is running in standalone mode
         const args = [
-            '--standalone',
-            '--override_ide_name',
-            'antigravity',
-            '--subclient_type',
-            'hub',
-            '--override_ide_version',
-            electron_1.app.getVersion(),
-            '--override_user_agent_name',
-            'antigravity',
-            '--https_server_port',
-            String(port),
-            '--csrf_token',
-            csrf,
-            '--app_data_dir',
-            (0, paths_1.getAppDataDirName)(),
-            '--api_server_url',
-            'https://generativelanguage.googleapis.com',
-            '--cloud_code_endpoint',
-            'https://daily-cloudcode-pa.googleapis.com',
+            ...(0, lsDefaults_1.baseLsArgs)({
+                ideVersion: electron_1.app.getVersion(),
+                httpsServerPort: port,
+                csrfToken: csrf,
+                appDataDir: (0, paths_1.getAppDataDirName)(),
+            }),
             '--enable_sidecars',
         ];
         // Point the LS at the main process' host bridge server. The LS tolerates

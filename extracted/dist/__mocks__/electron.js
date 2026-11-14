@@ -45,6 +45,41 @@ exports.app = {
     focus: vitest_1.vi.fn(),
     getAppMetrics: vitest_1.vi.fn().mockReturnValue([]),
 };
+function createMockContainerView() {
+    const children = [];
+    let visible = true;
+    let bounds = { x: 0, y: 0, width: 0, height: 0 };
+    return {
+        children,
+        addChildView: vitest_1.vi.fn((view, index) => {
+            const existing = children.indexOf(view);
+            if (existing >= 0) {
+                children.splice(existing, 1);
+            }
+            if (typeof index === 'number' && index >= 0 && index <= children.length) {
+                children.splice(index, 0, view);
+            }
+            else {
+                children.push(view);
+            }
+        }),
+        removeChildView: vitest_1.vi.fn((view) => {
+            const idx = children.indexOf(view);
+            if (idx >= 0) {
+                children.splice(idx, 1);
+            }
+        }),
+        setBounds: vitest_1.vi.fn((next) => {
+            bounds = { ...next };
+        }),
+        getBounds: vitest_1.vi.fn(() => ({ ...bounds })),
+        setVisible: vitest_1.vi.fn((next) => {
+            visible = Boolean(next);
+        }),
+        getVisible: vitest_1.vi.fn(() => visible),
+        setBackgroundColor: vitest_1.vi.fn(),
+    };
+}
 const _mockBrowserWindowInstance = {
     loadURL: vitest_1.vi.fn(),
     once: vitest_1.vi.fn(),
@@ -70,10 +105,7 @@ const _mockBrowserWindowInstance = {
         .mockReturnValue({ x: 100, y: 100, width: 1400, height: 900 }),
     getContentSize: vitest_1.vi.fn().mockReturnValue([1000, 800]),
     setBackgroundColor: vitest_1.vi.fn(),
-    contentView: {
-        addChildView: vitest_1.vi.fn(),
-        removeChildView: vitest_1.vi.fn(),
-    },
+    contentView: createMockContainerView(),
     webContents: {
         id: 1,
         isDestroyed: vitest_1.vi.fn().mockReturnValue(false),
@@ -96,10 +128,7 @@ const _mockBrowserWindowInstance = {
 exports.BaseWindow = Object.assign(vitest_1.vi.fn().mockImplementation(function () {
     return {
         ..._mockBrowserWindowInstance,
-        contentView: {
-            addChildView: vitest_1.vi.fn(),
-            removeChildView: vitest_1.vi.fn(),
-        },
+        contentView: createMockContainerView(),
     };
 }), {
     getAllWindows: vitest_1.vi.fn().mockReturnValue([]),
@@ -113,16 +142,19 @@ exports.BrowserWindow = Object.assign(vitest_1.vi.fn().mockImplementation(functi
     fromWebContents: vitest_1.vi.fn().mockReturnValue(null),
 });
 exports.View = vitest_1.vi.fn().mockImplementation(function () {
-    return {
-        setBounds: vitest_1.vi.fn(),
-        setBackgroundColor: vitest_1.vi.fn(),
-    };
+    return createMockContainerView();
 });
+let _nextMockWebContentsViewId = 10000;
 exports.WebContentsView = vitest_1.vi.fn().mockImplementation(function () {
+    const id = _nextMockWebContentsViewId++;
+    let visible = true;
+    let zoomFactor = 1;
+    let bounds = { x: 0, y: 0, width: 0, height: 0 };
     return {
         webContents: {
-            id: 1,
+            id,
             loadURL: vitest_1.vi.fn().mockResolvedValue(undefined),
+            reload: vitest_1.vi.fn(),
             insertCSS: vitest_1.vi.fn().mockResolvedValue('mock-css-key'),
             removeInsertedCSS: vitest_1.vi.fn().mockResolvedValue(undefined),
             executeJavaScript: vitest_1.vi.fn().mockResolvedValue({ ok: true }),
@@ -136,9 +168,14 @@ exports.WebContentsView = vitest_1.vi.fn().mockImplementation(function () {
             getURL: vitest_1.vi.fn().mockReturnValue('https://127.0.0.1:1234/'),
             setWebRTCIPHandlingPolicy: vitest_1.vi.fn(),
             setWindowOpenHandler: vitest_1.vi.fn(),
+            setIgnoreMenuShortcuts: vitest_1.vi.fn(),
+            setZoomMode: vitest_1.vi.fn(),
             getZoomLevel: vitest_1.vi.fn().mockReturnValue(0),
             setZoomLevel: vitest_1.vi.fn(),
-            getZoomFactor: vitest_1.vi.fn().mockReturnValue(1),
+            getZoomFactor: vitest_1.vi.fn(() => zoomFactor),
+            setZoomFactor: vitest_1.vi.fn((next) => {
+                zoomFactor = next;
+            }),
             setVisualZoomLevelLimits: vitest_1.vi.fn().mockResolvedValue(undefined),
             toggleDevTools: vitest_1.vi.fn(),
             getOSProcessId: vitest_1.vi.fn().mockReturnValue(12345),
@@ -147,7 +184,14 @@ exports.WebContentsView = vitest_1.vi.fn().mockImplementation(function () {
             close: vitest_1.vi.fn(),
             destroy: vitest_1.vi.fn(),
         },
-        setBounds: vitest_1.vi.fn(),
+        setBounds: vitest_1.vi.fn((next) => {
+            bounds = { ...next };
+        }),
+        getBounds: vitest_1.vi.fn(() => ({ ...bounds })),
+        setVisible: vitest_1.vi.fn((next) => {
+            visible = Boolean(next);
+        }),
+        getVisible: vitest_1.vi.fn(() => visible),
         setBackgroundColor: vitest_1.vi.fn(),
     };
 });
@@ -189,6 +233,9 @@ const _mockNativeImage = {
 };
 exports.nativeImage = {
     createFromPath: vitest_1.vi.fn().mockReturnValue(_mockNativeImage),
+    createFromBuffer: vitest_1.vi.fn().mockReturnValue({
+        isEmpty: vitest_1.vi.fn().mockReturnValue(true),
+    }),
 };
 exports.Tray = vitest_1.vi.fn().mockImplementation(function () {
     return {
@@ -288,6 +335,9 @@ exports.session = {
             setPermissionCheckHandler: vitest_1.vi.fn(),
             webRequest: {
                 onBeforeRequest: vitest_1.vi.fn(),
+            },
+            protocol: {
+                handle: vitest_1.vi.fn(),
             },
         };
     }),

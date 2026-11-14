@@ -52,6 +52,7 @@ exports.wslShellArgs = wslShellArgs;
 exports.buildInstallScript = buildInstallScript;
 exports.resolveStableArtifactDir = resolveStableArtifactDir;
 exports.resolveInsidersArtifactDir = resolveInsidersArtifactDir;
+exports.linuxServerUrl = linuxServerUrl;
 exports.resolveServerBinarySource = resolveServerBinarySource;
 exports.ensureServerInstalled = ensureServerInstalled;
 const child_process_1 = require("child_process");
@@ -275,9 +276,9 @@ async function installServerBinary(distro, version, data) {
     console.log(`[WSL] Installed server ${version} into ${distro}`);
 }
 /** URL of the GCS folder with stable `version` artifacts (antigravity-hub/<version>-<execution_id>/). */
-async function resolveStableArtifactDir(version) {
+async function resolveStableArtifactDir(version, fetchImpl = fetch) {
     const url = `${exports.DEFAULT_UPDATER_BASE_URL}/releases`;
-    const res = await fetch(url);
+    const res = await fetchImpl(url);
     if (!res.ok) {
         throw new Error(`Failed to list releases: HTTP ${res.status}`);
     }
@@ -301,6 +302,10 @@ async function resolveInsidersArtifactDir(arch) {
     }
     return `${exports.PUBLIC_ARTIFACT_BASE_URL}/insiders/${String(match.version)}`;
 }
+/** URL of the raw Linux LS binary for `arch` in a release artifact folder. */
+function linuxServerUrl(artifactDir, arch) {
+    return `${artifactDir}/unsigned/language_server-linux-${arch}`;
+}
 /**
  * Returns the Linux LS binary from the same build as this Hub, downloaded
  * from the release bucket. ANTIGRAVITY_WSL_LS_PATH overrides (for dev).
@@ -317,7 +322,7 @@ async function resolveServerBinarySource(version, isInsiders) {
     const artifactDir = isInsiders
         ? await resolveInsidersArtifactDir(arch)
         : await resolveStableArtifactDir(version);
-    const url = `${artifactDir}/unsigned/language_server-linux-${arch}`;
+    const url = linuxServerUrl(artifactDir, arch);
     console.log(`[WSL] Downloading server binary from ${url}`);
     const res = await fetch(url);
     if (!res.ok) {

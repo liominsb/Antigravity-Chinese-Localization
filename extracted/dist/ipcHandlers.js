@@ -69,6 +69,8 @@ const isolatedWorldExec_1 = require("./isolatedWorldExec");
 const guestFrameBridge_1 = require("./guestFrameBridge");
 const guestNetworkController_1 = require("./guestNetworkController");
 const guestWebMcpController_1 = require("./guestWebMcpController");
+const windowBackends_1 = require("./remote/windowBackends");
+const remoteWindowSecurity_1 = require("./remote/remoteWindowSecurity");
 function isMainFramePromptCaller(event) {
     const s = event?.sender;
     return Boolean(s &&
@@ -76,11 +78,16 @@ function isMainFramePromptCaller(event) {
         !event?.senderFrame?.parent &&
         (!event?.senderFrame || !s.mainFrame || event.senderFrame === s.mainFrame));
 }
+// Not SSH windows: they have no guests or session preloads to prompt from.
 const onHumanPromptSync = (event, rawJson) => {
+    if ((0, remoteWindowSecurity_1.isRemoteContents)(event?.sender)) {
+        event.returnValue = null;
+        return;
+    }
     guestPromptController_1.guestPromptController.handleSyncPrompt(event, rawJson);
 };
 const onHumanPromptSubscriberState = (event, subscribed) => {
-    if (isMainFramePromptCaller(event)) {
+    if (isMainFramePromptCaller(event) && !(0, remoteWindowSecurity_1.isRemoteContents)(event.sender)) {
         guestPromptController_1.guestPromptController.setHostSubscribed(event.sender, Boolean(subscribed));
     }
 };
@@ -89,6 +96,36 @@ function onDeviceChooserSubscriberState(event, subscribed) {
     if ((0, wcvIpcHandlers_1.isAuthorizedHubMainFrameEvent)(event)) {
         deviceChooser_1.deviceChooserController.setHostSubscribed(event.sender, Boolean(subscribed));
     }
+}
+/** Hub window that sent an IPC message, if it still exists. */
+function windowForSender(sender) {
+    // A destroyed sender's getters (e.g. hostWebContents) throw.
+    if (!sender || sender.isDestroyed?.()) {
+        return undefined;
+    }
+    const win = (0, utils_1.resolveHubWindowFromWebContents)(sender);
+    return win && !win.isDestroyed?.() ? win : undefined;
+}
+/**
+ * Registers a channel SSH windows can't use (defense in depth: their preload
+ * lacks it). Remote content must not reach the laptop's dialogs, updater,
+ * logs (they name local ports), plugin:// map, files, IDE, WSL, built-in
+ * browser or script jail.
+ */
+function localOnly(channel, handler) {
+    electron_1.ipcMain.handle(channel, (event, ...args) => {
+        if ((0, remoteWindowSecurity_1.isRemoteContents)(event?.sender)) {
+            throw new Error(`${channel} is not available in SSH windows`);
+        }
+        return handler(event, ...args);
+    });
+}
+/** Longest notification title/body accepted from a page. */
+const MAX_NOTIFICATION_TITLE = 200;
+const MAX_NOTIFICATION_BODY = 1000;
+function truncate(text, max) {
+    const s = typeof text === 'string' ? text : '';
+    return s.length > max ? `${s.slice(0, max - 1)}…` : s;
 }
 function buildContextMenuTemplate(items, onSelect) {
     return items.map((item) => {
@@ -121,10 +158,22 @@ function buildContextMenuTemplate(items, onSelect) {
  * Registers all IPC handlers for the main process.
  */
 const SAFE_UPLOAD_CONVERSATION_ID_RE = /^[A-Za-z0-9._-]+$/;
-function registerIpcHandlers(storageManager) {
+function registerIpcHandlers(storageManager, deps = {}) {
     (0, hubZoom_1.setHubZoomStorageManager)(storageManager);
-    const getTargetHubWindow = () => {
-        return (0, utils_1.getFocusedHubWindow)() ?? (0, utils_1.getHubWindows)()[0];
+    /** For an SSH window its own (never another), else the focused or first. */
+    const getTargetHubWindow = (sender) => (0, remoteWindowSecurity_1.isRemoteContents)(sender)
+        ? windowForSender(sender)
+        : ((0, utils_1.getFocusedHubWindow)() ?? (0, utils_1.getHubWindows)()[0]);
+    const storageFor = (sender) => {
+        const store = sender && deps.resolveStorage?.(sender);
+        if (store) {
+            return store;
+        }
+        // Fail closed: other remote contents get no store, never the main one.
+        if ((0, remoteWindowSecurity_1.isRemoteContents)(sender)) {
+            throw new Error('Storage is not available in this SSH window');
+        }
+        return storageManager;
     };
     // Dialog
     // In WSL mode, start the folder dialog in the distro's home directory.
@@ -161,7 +210,7 @@ function registerIpcHandlers(storageManager) {
         }
         return t.path;
     }
-    electron_1.ipcMain.handle('dialog:open-workspace', async () => {
+    localOnly('dialog:open-workspace', async () => {
         const result = await electron_1.dialog.showOpenDialog({
             properties: ['openDirectory', 'createDirectory'],
             title: '打开工作区',
@@ -172,7 +221,7 @@ function registerIpcHandlers(storageManager) {
         }
         return mapPickedPath(result.filePaths[0]);
     });
-    electron_1.ipcMain.handle('dialog:get-default-download-dir', (event) => {
+    localOnly('dialog:get-default-download-dir', (event) => {
         const sender = event?.sender;
         if (!sender ||
             sender.isDestroyed?.() ||
@@ -199,7 +248,7 @@ function registerIpcHandlers(storageManager) {
     });
     // Like 'dialog:open-workspace' but allows selecting multiple folders,
     // returning an array of paths (empty if cancelled).
-    electron_1.ipcMain.handle('dialog:open-workspaces', async () => {
+    localOnly('dialog:open-workspaces', async () => {
         const result = await electron_1.dialog.showOpenDialog({
             properties: ['openDirectory', 'createDirectory', 'multiSelections'],
             title: '打开工作区',
@@ -213,35 +262,47 @@ function registerIpcHandlers(storageManager) {
             .filter((p) => p !== undefined);
     });
     // Auto-updater
-    electron_1.ipcMain.handle('updater:apply', async () => {
+    localOnly('updater:apply', async () => {
         (0, updater_1.broadcastState)({ type: types_1.UpdateState.Ready });
     });
-    electron_1.ipcMain.handle('updater:quit-and-install', () => {
+    localOnly('updater:quit-and-install', () => {
         if (!electron_1.app.isPackaged) {
             console.log('[AutoUpdater] Skipping quitAndInstall (requires a packaged app).');
             return;
         }
         electron_updater_1.autoUpdater.quitAndInstall();
     });
-    electron_1.ipcMain.handle('updater:get-state', () => {
+    localOnly('updater:get-state', () => {
         return (0, updater_1.getLastState)();
     });
     // Notifications
-    electron_1.ipcMain.handle('notification:send', (_, options) => {
+    electron_1.ipcMain.handle('notification:send', (event, options) => {
+        // Named by their host: an SSH window can't pose as the app.
+        const remote = (0, remoteWindowSecurity_1.isRemoteContents)(event?.sender);
+        const label = (0, windowBackends_1.remoteBackendOf)(event?.sender)?.label ?? 'SSH';
+        const remoteTitle = truncate(options?.title, MAX_NOTIFICATION_TITLE);
         const notification = new electron_1.Notification({
-            title: options.title,
-            body: options.body,
-            silent: options.silent ?? false,
+            title: remote
+                ? truncate(remoteTitle ? `${label}: ${remoteTitle}` : label, MAX_NOTIFICATION_TITLE)
+                : options.title,
+            body: remote
+                ? truncate(options?.body, MAX_NOTIFICATION_BODY)
+                : options.body,
+            silent: options?.silent ?? false,
         });
         notification.on('click', () => {
-            const win = (0, utils_1.getHubWindows)()[0];
+            // A remote payload goes only to the window that posted it (if open); a
+            // local one to the first local window.
+            const win = remote
+                ? windowForSender(event?.sender)
+                : (0, utils_1.getLocalHubWindows)()[0];
             if (win) {
                 if (win.isMinimized()) {
                     win.restore();
                 }
                 win.show();
                 win.focus();
-                if (options.payload) {
+                if (options?.payload) {
                     win.webContents.send('notification:clicked', options.payload);
                 }
             }
@@ -285,7 +346,7 @@ function registerIpcHandlers(storageManager) {
             return 'unknown';
         }
     };
-    electron_1.ipcMain.handle('mic:get-access-status', (event) => {
+    localOnly('mic:get-access-status', (event) => {
         if (!(0, wcvIpcHandlers_1.isAuthorizedHubMainFrameEvent)(event)) {
             return 'unknown';
         }
@@ -295,7 +356,7 @@ function registerIpcHandlers(storageManager) {
         return 'unknown';
     });
     let pendingMicAccessRequest = null;
-    electron_1.ipcMain.handle('mic:request-access', async (event) => {
+    localOnly('mic:request-access', async (event) => {
         if (!(0, wcvIpcHandlers_1.isAuthorizedHubMainFrameEvent)(event)) {
             return 'unknown';
         }
@@ -330,7 +391,7 @@ function registerIpcHandlers(storageManager) {
         }
         return 'unknown';
     });
-    electron_1.ipcMain.handle('mic:open-system-preferences', async (event) => {
+    localOnly('mic:open-system-preferences', async (event) => {
         if (!(0, wcvIpcHandlers_1.isAuthorizedHubMainFrameEvent)(event)) {
             return;
         }
@@ -344,22 +405,18 @@ function registerIpcHandlers(storageManager) {
     // Storage
     electron_1.ipcMain.removeAllListeners?.('storage:get-items-sync');
     electron_1.ipcMain.on('storage:get-items-sync', (event) => {
-        const s = event?.sender;
-        const trusted = Boolean(s) &&
-            !s.isDestroyed?.() &&
-            s.getType?.() !== 'webview' &&
-            !event.senderFrame?.parent &&
-            (0, utils_1.getHubWindows)().some((w) => (0, utils_1.getHubWebContents)(w) === s);
-        event.returnValue = trusted ? storageManager.getItemsSync() : null;
+        event.returnValue = (0, utils_1.isLocalHubTopFrame)(event)
+            ? storageManager.getItemsSync()
+            : null;
     });
-    electron_1.ipcMain.handle('storage:get-items', async () => {
-        return storageManager.getItems();
+    electron_1.ipcMain.handle('storage:get-items', async (event) => {
+        return storageFor(event?.sender).getItems();
     });
-    electron_1.ipcMain.handle('storage:update-items', async (_event, changes) => {
-        await storageManager.updateItems(changes);
+    electron_1.ipcMain.handle('storage:update-items', async (event, changes) => {
+        await storageFor(event?.sender).updateItems(changes);
     });
     // Logs
-    electron_1.ipcMain.handle('logs:electron', async () => {
+    localOnly('logs:electron', async () => {
         try {
             const logPath = main_1.default.transports.file.getFile().path;
             const contents = await fs.readFile(logPath, 'utf-8');
@@ -369,20 +426,37 @@ function registerIpcHandlers(storageManager) {
             return `Failed to read logs: ${String(err)}`;
         }
     });
-    // Sidecar extension custom scheme
-    electron_1.ipcMain.handle('extensions:send-authorities', async (_event, authorities) => {
+    // Sidecar extension custom scheme: the laptop's map for local windows. An
+    // SSH window's map is its host's LS's list of sidecars, which main reads
+    // itself (remoteSidecars.ts): the send only says that the list changed.
+    electron_1.ipcMain.handle('extensions:send-authorities', async (event, authorities) => {
+        if ((0, remoteWindowSecurity_1.isRemoteContents)(event?.sender)) {
+            const backend = (0, windowBackends_1.remoteBackendOf)(event?.sender);
+            const routes = backend && deps.sidecarRoutesFor?.(event.sender);
+            if (!routes) {
+                throw new Error('extensions:send-authorities is not available in this SSH window');
+            }
+            const error = await routes.refresh();
+            if (error) {
+                main_1.default.warn(`[SSH] ${backend.label}: listing its sidecars failed: ${error}`);
+            }
+            return;
+        }
         customScheme_1.extensionAuthorities.clear();
         for (const [key, value] of Object.entries(authorities)) {
             customScheme_1.extensionAuthorities.set(key, value);
         }
     });
     // Agent
-    electron_1.ipcMain.handle('agent:update-active-count', async (_event, count) => {
+    electron_1.ipcMain.handle('agent:update-active-count', async (event, count) => {
+        if ((0, remoteWindowSecurity_1.isRemoteContents)(event?.sender)) {
+            return; // The tray counts local agents (remote ones outlive quitting).
+        }
         (0, tray_1.updateTrayAgentCount)(count);
     });
     // Window
-    electron_1.ipcMain.handle('window:set-title-bar-overlay', async (_event, options) => {
-        const win = getTargetHubWindow();
+    electron_1.ipcMain.handle('window:set-title-bar-overlay', async (event, options) => {
+        const win = getTargetHubWindow(event?.sender);
         if (win && process.platform === 'win32') {
             win.setTitleBarOverlay({
                 color: options.color,
@@ -391,46 +465,50 @@ function registerIpcHandlers(storageManager) {
             });
         }
     });
-    electron_1.ipcMain.handle('window:minimize', async () => {
-        const win = getTargetHubWindow();
+    electron_1.ipcMain.handle('window:minimize', async (event) => {
+        const win = getTargetHubWindow(event?.sender);
         if (win) {
             win.minimize();
         }
     });
-    electron_1.ipcMain.handle('window:maximize', async () => {
-        const win = getTargetHubWindow();
+    electron_1.ipcMain.handle('window:maximize', async (event) => {
+        const win = getTargetHubWindow(event?.sender);
         if (win) {
             win.maximize();
         }
     });
-    electron_1.ipcMain.handle('window:unmaximize', async () => {
-        const win = getTargetHubWindow();
+    electron_1.ipcMain.handle('window:unmaximize', async (event) => {
+        const win = getTargetHubWindow(event?.sender);
         if (win) {
             win.unmaximize();
         }
     });
-    electron_1.ipcMain.handle('window:is-maximized', async () => {
-        const win = getTargetHubWindow();
+    electron_1.ipcMain.handle('window:is-maximized', async (event) => {
+        const win = getTargetHubWindow(event?.sender);
         return win ? win.isMaximized() : false;
     });
-    electron_1.ipcMain.handle('window:close', async () => {
-        const win = getTargetHubWindow();
+    electron_1.ipcMain.handle('window:close', async (event) => {
+        const win = getTargetHubWindow(event?.sender);
         if (win) {
             win.close();
         }
     });
     electron_1.ipcMain.handle('window:toggle-devtools', async (event) => {
-        if (!(0, debugConsole_1.isDebugConsoleEnabled)() || !(0, wcvIpcHandlers_1.isAuthorizedHubMainFrameEvent)(event)) {
+        // An SSH window's top frame too (the other check takes local windows only).
+        const allowed = (0, windowBackends_1.remoteBackendOf)(event?.sender)
+            ? !!event.senderFrame && event.senderFrame === event.sender.mainFrame
+            : (0, wcvIpcHandlers_1.isAuthorizedHubMainFrameEvent)(event);
+        if (!(0, debugConsole_1.isDebugConsoleEnabled)() || !allowed) {
             return;
         }
-        const win = getTargetHubWindow();
+        const win = getTargetHubWindow(event?.sender);
         if (win) {
             win.webContents.toggleDevTools();
         }
     });
     electron_1.ipcMain.removeListener?.(deviceChooser_1.WEBVIEW_DEVICE_CHOOSER_SUBSCRIBER_STATE_CHANNEL, onDeviceChooserSubscriberState);
     electron_1.ipcMain.on?.(deviceChooser_1.WEBVIEW_DEVICE_CHOOSER_SUBSCRIBER_STATE_CHANNEL, onDeviceChooserSubscriberState);
-    electron_1.ipcMain.handle(deviceChooser_1.WEBVIEW_DEVICE_CHOOSER_RESPONSE_CHANNEL, async (event, requestId, resolution) => {
+    localOnly(deviceChooser_1.WEBVIEW_DEVICE_CHOOSER_RESPONSE_CHANNEL, async (event, requestId, resolution) => {
         if (!(0, wcvIpcHandlers_1.isAuthorizedHubMainFrameEvent)(event)) {
             throw new Error('Unauthorized webview:device-chooser-response sender');
         }
@@ -457,8 +535,10 @@ function registerIpcHandlers(storageManager) {
         return false;
     });
     let activeContextMenu = null;
-    electron_1.ipcMain.handle('window:show-context-menu', async (_event, items) => {
-        const win = getTargetHubWindow();
+    // An SSH window may close only its own window's menu.
+    let activeContextMenuOwner;
+    electron_1.ipcMain.handle('window:show-context-menu', async (event, items) => {
+        const win = getTargetHubWindow(event?.sender);
         if (!win || !Array.isArray(items) || items.length === 0) {
             return null;
         }
@@ -469,17 +549,20 @@ function registerIpcHandlers(storageManager) {
                 if (!settled) {
                     settled = true;
                     activeContextMenu = null;
+                    activeContextMenuOwner = undefined;
                     resolve(id);
                 }
             });
             const menu = electron_1.Menu.buildFromTemplate(template);
             activeContextMenu = menu;
+            activeContextMenuOwner = win;
             menu.popup({
                 window: win,
                 callback: () => {
                     setImmediate(() => {
                         if (activeContextMenu === menu) {
                             activeContextMenu = null;
+                            activeContextMenuOwner = undefined;
                         }
                         if (!settled) {
                             settled = true;
@@ -490,32 +573,44 @@ function registerIpcHandlers(storageManager) {
             });
         });
     });
-    electron_1.ipcMain.handle('window:close-context-menu', () => {
-        const win = getTargetHubWindow();
+    electron_1.ipcMain.handle('window:close-context-menu', (event) => {
+        const win = getTargetHubWindow(event?.sender);
+        if ((0, remoteWindowSecurity_1.isRemoteContents)(event?.sender) && activeContextMenuOwner !== win) {
+            return; // Not its own window's menu.
+        }
         activeContextMenu?.closePopup?.(win);
         activeContextMenu = null;
+        activeContextMenuOwner = undefined;
     });
     // Zoom — main-process source of truth so the level is reliably persisted
     // across restarts on all platforms (works around a Chromium quirk on Windows
     // where renderer-only webFrame.setZoomLevel changes aren't cached).
-    electron_1.ipcMain.handle('window:zoom-in', async () => {
-        await (0, hubZoom_1.applyHubWindowZoom)(getTargetHubWindow(), 'in');
-    });
-    electron_1.ipcMain.handle('window:zoom-out', async () => {
-        await (0, hubZoom_1.applyHubWindowZoom)(getTargetHubWindow(), 'out');
-    });
-    electron_1.ipcMain.handle('window:reset-zoom', async () => {
-        await (0, hubZoom_1.applyHubWindowZoom)(getTargetHubWindow(), 'reset');
-    });
+    // The level is shared and Electron doesn't clamp it: SSH windows stay within
+    // Chrome's 25%-500% (factor 1.2^level).
+    const MIN_REMOTE_ZOOM_LEVEL = Math.log(0.25) / Math.log(1.2);
+    const MAX_REMOTE_ZOOM_LEVEL = Math.log(5) / Math.log(1.2);
+    const zoom = (event, action) => (0, hubZoom_1.applyHubWindowZoom)(getTargetHubWindow(event?.sender), action, (0, remoteWindowSecurity_1.isRemoteContents)(event?.sender)
+        ? (level) => Math.min(MAX_REMOTE_ZOOM_LEVEL, Math.max(MIN_REMOTE_ZOOM_LEVEL, level))
+        : undefined);
+    electron_1.ipcMain.handle('window:zoom-in', (event) => zoom(event, 'in'));
+    electron_1.ipcMain.handle('window:zoom-out', (event) => zoom(event, 'out'));
+    electron_1.ipcMain.handle('window:reset-zoom', (event) => zoom(event, 'reset'));
     // Auto-updater manual check
-    electron_1.ipcMain.handle('updater:check-for-updates', () => {
+    localOnly('updater:check-for-updates', () => {
         (0, updater_1.checkForUpdates)(true);
     });
     // Safe external shell launch
-    electron_1.ipcMain.handle('shell:open-external', async (_event, url) => {
+    electron_1.ipcMain.handle('shell:open-external', async (event, url) => {
+        if ((0, remoteWindowSecurity_1.isRemoteContents)(event?.sender)) {
+            if ((0, remoteWindowSecurity_1.openRemoteUrl)(url) !== 'opened') {
+                const label = (0, windowBackends_1.remoteBackendOf)(event?.sender)?.label ?? 'an SSH window';
+                main_1.default.warn(`[SSH] Not opening a link from ${label}: blocked.`);
+            }
+            return;
+        }
         await (0, externalUrl_1.openExternalSafely)(url, 'confirmed');
     });
-    electron_1.ipcMain.handle('shell:reveal-in-file-picker', (_event, path) => {
+    localOnly('shell:reveal-in-file-picker', (_event, path) => {
         const distro = (0, wsl_1.getActiveWslDistro)();
         if (distro) {
             const posixPath = (0, url_1.fileURLToPath)(path, { windows: false });
@@ -524,7 +619,7 @@ function registerIpcHandlers(storageManager) {
         }
         electron_1.shell.showItemInFolder((0, url_1.fileURLToPath)(path));
     });
-    electron_1.ipcMain.handle('webview:set-download-dir', (event, webContentsId, downloadDir) => {
+    localOnly('webview:set-download-dir', (event, webContentsId, downloadDir) => {
         if (typeof webContentsId !== 'number' ||
             !Number.isInteger(webContentsId) ||
             webContentsId <= 0) {
@@ -546,7 +641,7 @@ function registerIpcHandlers(storageManager) {
         }
         return (0, webviewBrowser_1.setGuestDownloadDirectory)(wc, downloadDir);
     });
-    electron_1.ipcMain.handle('webview:set-agent-controlled', (event, webContentsId, active) => {
+    localOnly('webview:set-agent-controlled', (event, webContentsId, active) => {
         // Same sender/ownership rules as webview:set-download-dir, but reject
         // with `false` instead of throwing.
         if (typeof webContentsId !== 'number' ||
@@ -581,28 +676,28 @@ function registerIpcHandlers(storageManager) {
         }
         return sender.id;
     };
-    electron_1.ipcMain.handle('webview:open-download', async (event, downloadId) => {
+    localOnly('webview:open-download', async (event, downloadId) => {
         const senderId = assertTopLevelSenderId(event, 'webview:open-download');
         if (typeof downloadId !== 'string') {
             throw new Error('downloadId must be a string');
         }
         return (0, webviewBrowser_1.openTrackedWebviewDownload)(senderId, downloadId);
     });
-    electron_1.ipcMain.handle('webview:show-download-in-folder', (event, downloadId) => {
+    localOnly('webview:show-download-in-folder', (event, downloadId) => {
         const senderId = assertTopLevelSenderId(event, 'webview:show-download-in-folder');
         if (typeof downloadId !== 'string') {
             throw new Error('downloadId must be a string');
         }
         return (0, webviewBrowser_1.showTrackedWebviewDownloadInFolder)(senderId, downloadId);
     });
-    electron_1.ipcMain.handle('webview:cancel-download', (event, downloadId) => {
+    localOnly('webview:cancel-download', (event, downloadId) => {
         const senderId = assertTopLevelSenderId(event, 'webview:cancel-download');
         if (typeof downloadId !== 'string') {
             throw new Error('downloadId must be a string');
         }
         return (0, webviewBrowser_1.cancelTrackedWebviewDownload)(senderId, downloadId);
     });
-    electron_1.ipcMain.handle('webview:resolve-download', (event, downloadId, approve) => {
+    localOnly('webview:resolve-download', (event, downloadId, approve) => {
         // Approving resumes a paused agent download, so reject (return false)
         // anything other than the owning host's main frame with valid args.
         let senderId;
@@ -617,7 +712,7 @@ function registerIpcHandlers(storageManager) {
         }
         return (0, webviewBrowser_1.resolveTrackedWebviewDownload)(senderId, downloadId, approve);
     });
-    electron_1.ipcMain.handle('dialog:select-download-dir', async (event, defaultPath) => {
+    localOnly('dialog:select-download-dir', async (event, defaultPath) => {
         assertTopLevelSenderId(event, 'dialog:select-download-dir');
         let resolvedDefaultPath;
         if (typeof defaultPath === 'string' &&
@@ -659,7 +754,7 @@ function registerIpcHandlers(storageManager) {
         }
     });
     // IDE installation check
-    electron_1.ipcMain.handle('ide:is-installed', async () => {
+    localOnly('ide:is-installed', async () => {
         try {
             // Check standard installation path (works even if the app has never been launched).
             await fs.stat((0, constants_1.getIdeInstallPath)());
@@ -670,7 +765,7 @@ function registerIpcHandlers(storageManager) {
         }
     });
     // Per-guest renderer working-set memory in bytes for memory-budgeted LRU eviction.
-    electron_1.ipcMain.handle('webview:get-memory-usage', async (event, webContentsIds) => {
+    localOnly('webview:get-memory-usage', async (event, webContentsIds) => {
         const sender = event?.sender;
         if (!sender ||
             sender.isDestroyed() ||
@@ -728,7 +823,7 @@ function registerIpcHandlers(storageManager) {
     });
     // WSL environment switching (Windows only). Lets the web UI (e.g. the
     // Settings page) discover WSL distros and relaunch the app into/out of one.
-    electron_1.ipcMain.handle('wsl:get-state', async () => {
+    localOnly('wsl:get-state', async () => {
         if (!(0, wsl_1.isWslAvailable)()) {
             return { available: false, activeDistro: null, distros: [] };
         }
@@ -746,7 +841,7 @@ function registerIpcHandlers(storageManager) {
         }
     });
     // Relaunches into the given distro, or locally when `distro` is empty.
-    electron_1.ipcMain.handle('wsl:connect', (_event, distro) => {
+    localOnly('wsl:connect', (_event, distro) => {
         (0, menu_1.relaunchWithWslDistro)(distro || '');
     });
     // Execute JavaScript inside an Electron <webview> guest's isolated world.
@@ -755,7 +850,7 @@ function registerIpcHandlers(storageManager) {
     // and stays well below Chromium's fatal ISOLATED_WORLD_ID_MAX CHECK.
     const MIN_ISOLATED_WORLD_ID = 1000;
     const MAX_ISOLATED_WORLD_ID = 100000;
-    electron_1.ipcMain.handle('webview:execute-js-isolated-world', async (event, webContentsId, worldId, code) => {
+    localOnly('webview:execute-js-isolated-world', async (event, webContentsId, worldId, code) => {
         if (typeof webContentsId !== 'number' ||
             !Number.isInteger(webContentsId) ||
             webContentsId <= 0) {
@@ -809,7 +904,7 @@ function registerIpcHandlers(storageManager) {
         }
         return { wc, sender };
     };
-    electron_1.ipcMain.handle('webview:get-network-requests', (event, webContentsId) => {
+    localOnly('webview:get-network-requests', (event, webContentsId) => {
         const { wc, sender } = resolveOwnedGuestWebContents(event, webContentsId);
         if (!event?.senderFrame ||
             (sender.mainFrame && event.senderFrame !== sender.mainFrame) ||
@@ -818,7 +913,7 @@ function registerIpcHandlers(storageManager) {
         }
         return guestNetworkController_1.guestNetworkController.getRequests(wc.id);
     });
-    electron_1.ipcMain.handle('webview:clear-network-requests', (event, webContentsId) => {
+    localOnly('webview:clear-network-requests', (event, webContentsId) => {
         const { wc, sender } = resolveOwnedGuestWebContents(event, webContentsId);
         if (!event?.senderFrame ||
             (sender.mainFrame && event.senderFrame !== sender.mainFrame) ||
@@ -835,20 +930,20 @@ function registerIpcHandlers(storageManager) {
         }
         return { wc, sender };
     };
-    electron_1.ipcMain.handle('webview:webmcp-set-enabled', (event, enabled) => {
+    localOnly('webview:webmcp-set-enabled', (event, enabled) => {
         if (!(0, wcvIpcHandlers_1.isAuthorizedHubMainFrameEvent)(event) || typeof enabled !== 'boolean') {
             throw new Error('Invalid webview:webmcp-set-enabled call');
         }
         guestWebMcpController_1.guestWebMcpController.setEnabled(enabled);
         return guestWebMcpController_1.guestWebMcpController.isEnabled();
     });
-    electron_1.ipcMain.handle('webview:webmcp-list-tools', (event, webContentsId, origin) => guestWebMcpController_1.guestWebMcpController.listTools(guestOf(event, webContentsId).wc, origin));
-    electron_1.ipcMain.handle('webview:webmcp-call-tool', (event, webContentsId, origin, params) => {
+    localOnly('webview:webmcp-list-tools', (event, webContentsId, origin) => guestWebMcpController_1.guestWebMcpController.listTools(guestOf(event, webContentsId).wc, origin));
+    localOnly('webview:webmcp-call-tool', (event, webContentsId, origin, params) => {
         const { wc, sender } = guestOf(event, webContentsId);
         return guestWebMcpController_1.guestWebMcpController.callTool(wc, sender, origin, params);
     });
-    electron_1.ipcMain.handle('webview:webmcp-cancel-tool-call', (event, webContentsId, callId) => guestWebMcpController_1.guestWebMcpController.cancelToolCall(webContentsId, callId, guestOf(event, webContentsId).sender.id));
-    electron_1.ipcMain.handle('webview:set-dialog-policy', async (event, webContentsId, policy) => {
+    localOnly('webview:webmcp-cancel-tool-call', (event, webContentsId, callId) => guestWebMcpController_1.guestWebMcpController.cancelToolCall(webContentsId, callId, guestOf(event, webContentsId).sender.id));
+    localOnly('webview:set-dialog-policy', async (event, webContentsId, policy) => {
         const { wc, sender } = resolveOwnedGuestWebContents(event, webContentsId);
         const safePolicy = {
             enabled: Boolean(policy?.enabled),
@@ -873,7 +968,7 @@ function registerIpcHandlers(storageManager) {
         }
         return guestDialogController_1.guestDialogController.setPolicy(wc, sender, safePolicy);
     });
-    electron_1.ipcMain.handle('webview:handle-javascript-dialog', async (event, webContentsId, decision) => {
+    localOnly('webview:handle-javascript-dialog', async (event, webContentsId, decision) => {
         const { wc } = resolveOwnedGuestWebContents(event, webContentsId);
         return guestDialogController_1.guestDialogController.handleDialog(wc, {
             ...(typeof decision?.dialogId === 'string'
@@ -889,7 +984,7 @@ function registerIpcHandlers(storageManager) {
     electron_1.ipcMain.on?.(webviewPromptPreload_1.HUMAN_PROMPT_SYNC_CHANNEL, onHumanPromptSync);
     electron_1.ipcMain.removeListener?.(guestPromptController_1.WEBVIEW_PROMPT_SUBSCRIBER_STATE_CHANNEL, onHumanPromptSubscriberState);
     electron_1.ipcMain.on?.(guestPromptController_1.WEBVIEW_PROMPT_SUBSCRIBER_STATE_CHANNEL, onHumanPromptSubscriberState);
-    electron_1.ipcMain.handle(guestPromptController_1.WEBVIEW_PROMPT_RESPONSE_CHANNEL, (event, promptId, value) => {
+    localOnly(guestPromptController_1.WEBVIEW_PROMPT_RESPONSE_CHANNEL, (event, promptId, value) => {
         if (!isMainFramePromptCaller(event)) {
             throw new Error('webview:prompt-response must be called from the main frame');
         }
@@ -927,14 +1022,14 @@ function registerIpcHandlers(storageManager) {
         assertMainFrameSender(event, channel);
         return { wc, sender };
     };
-    electron_1.ipcMain.handle('webview:set-file-chooser-policy', async (event, webContentsId, policy) => {
+    localOnly('webview:set-file-chooser-policy', async (event, webContentsId, policy) => {
         const { wc, sender } = resolveMainFrameOwnedGuest(event, webContentsId, 'webview:set-file-chooser-policy');
         return guestFileChooserController_1.guestFileChooserController.setPolicy(wc, sender, {
             enabled: Boolean(policy?.enabled),
             ...(typeof policy?.tabKey === 'string' ? { tabKey: policy.tabKey } : {}),
         });
     });
-    electron_1.ipcMain.handle('webview:handle-file-chooser', async (event, webContentsId, decision) => {
+    localOnly('webview:handle-file-chooser', async (event, webContentsId, decision) => {
         const { wc } = resolveMainFrameOwnedGuest(event, webContentsId, 'webview:handle-file-chooser');
         const pinned = {
             ...(decision ?? { chooserId: '' }),
@@ -944,14 +1039,14 @@ function registerIpcHandlers(storageManager) {
         }
         return guestFileChooserController_1.guestFileChooserController.handleFileChooser(wc, pinned);
     });
-    electron_1.ipcMain.handle('webview:set-input-files', async (event, webContentsId, request) => {
+    localOnly('webview:set-input-files', async (event, webContentsId, request) => {
         const { wc } = resolveMainFrameOwnedGuest(event, webContentsId, 'webview:set-input-files');
         return guestFileChooserController_1.guestFileChooserController.setInputFiles(wc, {
             ...request,
             allowedUploadsDir: pinUploadsRoot(request?.expectedConversationId),
         });
     });
-    electron_1.ipcMain.handle('webview:resolve-upload-files', (event, req) => {
+    localOnly('webview:resolve-upload-files', (event, req) => {
         assertMainFrameSender(event, 'webview:resolve-upload-files');
         return (0, guestFileChooserController_1.resolveGuestUploadFiles)(req && {
             ...req,
@@ -959,21 +1054,21 @@ function registerIpcHandlers(storageManager) {
         });
     });
     const assertMainFrameGuestCaller = (event, webContentsId, channel) => resolveMainFrameOwnedGuest(event, webContentsId, channel).wc;
-    electron_1.ipcMain.handle('webview:list-frames', async (event, wcId) => guestFrameBridge_1.guestFrameBridge.listFrames(assertMainFrameGuestCaller(event, wcId, 'webview:list-frames')));
-    electron_1.ipcMain.handle('webview:execute-js-frame-isolated-world', async (event, wcId, frameId, code, expectedOrigin) => {
+    localOnly('webview:list-frames', async (event, wcId) => guestFrameBridge_1.guestFrameBridge.listFrames(assertMainFrameGuestCaller(event, wcId, 'webview:list-frames')));
+    localOnly('webview:execute-js-frame-isolated-world', async (event, wcId, frameId, code, expectedOrigin) => {
         const channel = 'webview:execute-js-frame-isolated-world';
         const wc = assertMainFrameGuestCaller(event, wcId, channel);
         return guestFrameBridge_1.guestFrameBridge.executeInFrameIsolatedWorld(wc, frameId, code, expectedOrigin);
     });
     // Execute an untrusted agent script inside a single-use, zero-egress
     // Electron script jail and transfer the paired MessagePort to the caller.
-    electron_1.ipcMain.handle('script-jail:run', async (event, req) => {
+    localOnly('script-jail:run', async (event, req) => {
         return (0, scriptJail_1.runScriptInJail)(event?.sender, req, event?.senderFrame);
     });
-    electron_1.ipcMain.handle('script-jail:abort', (event, jailId) => {
+    localOnly('script-jail:abort', (event, jailId) => {
         return (0, scriptJail_1.abortScriptInJail)(event?.sender, jailId, event?.senderFrame);
     });
-    electron_1.ipcMain.handle('script-jail:warm', async (event) => {
+    localOnly('script-jail:warm', async (event) => {
         return (0, scriptJail_1.warmScriptJail)(event?.sender, event?.senderFrame);
     });
     (0, wcvIpcHandlers_1.registerWcvIpcHandlers)(undefined, undefined, storageManager);

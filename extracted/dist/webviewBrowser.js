@@ -7,6 +7,7 @@ exports.validateWebviewNavigationUrl = validateWebviewNavigationUrl;
 exports.isPopupWindowRequest = isPopupWindowRequest;
 exports.parsePopupWindowDimensions = parsePopupWindowDimensions;
 exports.clearWebviewFaviconCacheForTesting = clearWebviewFaviconCacheForTesting;
+exports.stripGuestElectronUserAgentToken = stripGuestElectronUserAgentToken;
 exports.isOwnedBrowserGuestWebContents = isOwnedBrowserGuestWebContents;
 exports.clearTrackedWebviewDownloadsForTesting = clearTrackedWebviewDownloadsForTesting;
 exports.openTrackedWebviewDownload = openTrackedWebviewDownload;
@@ -18,6 +19,7 @@ exports.setGuestDownloadDirectory = setGuestDownloadDirectory;
 exports.configureWebviewBrowserContents = configureWebviewBrowserContents;
 const electron_1 = require("electron");
 const utils_1 = require("./utils");
+const scriptJail_1 = require("./scriptJail");
 const faviconStore_1 = require("./faviconStore");
 const webviewSecurityState_1 = require("./webviewSecurityState");
 const guestNetworkController_1 = require("./guestNetworkController");
@@ -29,6 +31,8 @@ exports.WEBVIEW_OPEN_NEW_TAB_CHANNEL = 'webview:open-new-tab';
 /** IPC channel sent to the host renderer when a `<webview>` guest's favicon updates. */
 exports.WEBVIEW_FAVICON_UPDATED_CHANNEL = 'webview:favicon-updated';
 const guestAgentControl_1 = require("./guestAgentControl");
+const guestRequestHeaders_1 = require("./guestRequestHeaders");
+const guestCrossSiteCredentials_1 = require("./guestCrossSiteCredentials");
 const guestPermissionPolicy_1 = require("./guestPermissionPolicy");
 const isolatedWorldExec_1 = require("./isolatedWorldExec");
 const MAX_INLINE_FAVICON_BYTES = 8 * 1024;
@@ -840,6 +844,103 @@ exports.HUMAN_DOWNLOAD_AFTER_RELEASE_ACTIVATION_WINDOW_MS = 10000;
 const configuredDownloadSessions = new WeakSet();
 const inFlightInlinePdfDownloads = new Map();
 const hostByGuestContents = new WeakMap();
+const configuredUserAgentSessions = new WeakSet();
+/**
+ * Google BotGuard's anchored official-Chrome `User-Agent` rule. A guest UA
+ * matching it is classified as desktop Chrome and must expose
+ * `window.chrome.app`, which Electron lacks, so Google Sign-In rejects it.
+ */
+const BOTGUARD_OFFICIAL_CHROME_UA_RE = /^Mozilla\/5\.0 \(.*\) AppleWebKit\/[0-9.]* \(KHTML, like Gecko\) Chrome\/[0-9.]* Safari\/[0-9.]*(?:,gzip\(gfe\))*$/;
+/**
+ * Removes the `Electron/<version>` product token from a Chromium `User-Agent`
+ * and relocates any `<AppName>/<version>` token sitting between
+ * `(KHTML, like Gecko)` and `Chrome/<ver> Safari/<ver>` to immediately after
+ * `Safari/<ver>`.
+ *
+ * Returns `userAgent` unchanged when it is blank, or when removing the token
+ * would leave a bare official-Chrome string matching
+ * {@link BOTGUARD_OFFICIAL_CHROME_UA_RE}.
+ */
+function stripGuestElectronUserAgentToken(userAgent) {
+    if (!userAgent || !userAgent.trim()) {
+        return userAgent;
+    }
+    const cleaned = userAgent
+        .replace(/(?:^|\s)Electron\/\S+/gi, ' ')
+        .replace(/\s+/g, ' ')
+        .trim()
+        .replace(/\(KHTML, like Gecko\)\s+(?!Chrome\/)(.+?)\s+(Chrome\/\S+\s+Safari\/[0-9.]+)/, '(KHTML, like Gecko) $2 $1');
+    if (!cleaned || BOTGUARD_OFFICIAL_CHROME_UA_RE.test(cleaned)) {
+        return userAgent;
+    }
+    return cleaned;
+}
+/**
+ * Returns `true` for a browser guest partition whose `User-Agent` may be
+ * rewritten: never `session.defaultSession` (Hub's own UI) or a Script Jail
+ * session.
+ */
+function isIsolatedGuestUserAgentSession(guestSession) {
+    if (!guestSession || typeof guestSession !== 'object') {
+        return false;
+    }
+    if (electron_1.session?.defaultSession &&
+        guestSession === electron_1.session.defaultSession) {
+        return false;
+    }
+    return !(0, scriptJail_1.isScriptJailSession)(guestSession);
+}
+function applyGuestUserAgentToContents(targetContents, fallbackUserAgent = '') {
+    if (!targetContents || typeof targetContents.setUserAgent !== 'function') {
+        return;
+    }
+    const rawUa = (typeof targetContents.getUserAgent === 'function'
+        ? targetContents.getUserAgent()
+        : '') || fallbackUserAgent;
+    const cleanedUa = stripGuestElectronUserAgentToken(rawUa);
+    if (cleanedUa && cleanedUa !== rawUa) {
+        targetContents.setUserAgent(cleanedUa);
+    }
+}
+function configureGuestUserAgent(contents, guestSession) {
+    if (!isIsolatedGuestUserAgentSession(guestSession)) {
+        return;
+    }
+    // Read the session UA before mutating the session, so contents whose
+    // `getUserAgent()` is empty still get the raw UA to clean.
+    const rawSessionUa = guestSession.getUserAgent?.() ?? '';
+    applyGuestUserAgentToContents(contents, rawSessionUa);
+    // Tabs share one `persist:hub-browser-*` partition: each tab needs its own
+    // `setUserAgent`, but the session and its header listener are set up once.
+    if (configuredUserAgentSessions.has(guestSession)) {
+        return;
+    }
+    configuredUserAgentSessions.add(guestSession);
+    if (typeof guestSession.setUserAgent === 'function') {
+        const cleanedSessionUa = stripGuestElectronUserAgentToken(rawSessionUa);
+        if (cleanedSessionUa && cleanedSessionUa !== rawSessionUa) {
+            guestSession.setUserAgent(cleanedSessionUa);
+        }
+    }
+    // Service/shared workers and renderer-opened `window.open` popups send
+    // `app.userAgentFallback` rather than the session's UA, so clean the request
+    // header too. Their `navigator.userAgent` still reports
+    // `app.userAgentFallback`: `setWindowOpenHandler`/`webPreferences` has no
+    // `userAgent` option, and Electron creates `window.open` entries without
+    // Chromium's `is_overriding_user_agent` bit so `webContents.setUserAgent` is
+    // ignored on popup navigations.
+    // The session has one `onBeforeSendHeaders` listener shared by every
+    // header policy (see guestRequestHeaders.ts).
+    (0, guestRequestHeaders_1.addGuestRequestHeaderRewriter)(guestSession, (_details, requestHeaders) => {
+        for (const name of Object.keys(requestHeaders)) {
+            const value = requestHeaders[name];
+            if (name.toLowerCase() === 'user-agent' && typeof value === 'string') {
+                requestHeaders[name] = stripGuestElectronUserAgentToken(value);
+            }
+        }
+        return requestHeaders;
+    });
+}
 /**
  * Returns `true` when `wc` is a live browser guest (`<webview>` or configured
  * `WebContentsView`) hosted by `senderId`.
@@ -1356,10 +1457,27 @@ function ensureSessionDownloadListener(guestSession) {
     }
     configuredDownloadSessions.add(guestSession);
     if (typeof guestSession.webRequest?.onHeadersReceived === 'function') {
-        guestSession.webRequest.onHeadersReceived(
+        guestSession.webRequest.onHeadersReceived((
         // eslint-disable-next-line @typescript-eslint/no-explicit-any
-        (details, callback) => {
-            callback({ cancel: false });
+        details, callback) => {
+            // A cross-site subframe of an agent-owned guest loads signed-out and
+            // must not write that site's cookies into the shared partition.
+            let responseHeaders;
+            try {
+                responseHeaders = details
+                    ? (0, guestCrossSiteCredentials_1.stripCrossSiteSubframeResponseCookies)(details)
+                    : undefined;
+            }
+            catch {
+                // Unreachable while the policy keeps failing closed internally;
+                // kept so a future throw still answers the response, without
+                // Set-Cookie unless it is the top document.
+                responseHeaders =
+                    details?.resourceType === 'mainFrame'
+                        ? undefined
+                        : (0, guestCrossSiteCredentials_1.withoutSetCookie)(details?.responseHeaders);
+            }
+            callback(responseHeaders ? { cancel: false, responseHeaders } : { cancel: false });
             if (!details ||
                 details.resourceType !== 'mainFrame' ||
                 String(details.method || 'GET').toUpperCase() !== 'GET' ||
@@ -1540,7 +1658,7 @@ function ensureSessionDownloadListener(guestSession) {
             return payload;
         };
         /** Cancels before any tracking and reports `cancelled` to the host. */
-        const cancelImmediately = (agent) => {
+        const cancelImmediately = (agent, blockedReason) => {
             clearInlinePdfDedupeForItem(guestSession, rawWcId, openerWcId, item, inlinePdfMatch?.inlineKey);
             try {
                 item?.cancel?.();
@@ -1549,7 +1667,11 @@ function ensureSessionDownloadListener(guestSession) {
                 // Still report the download as cancelled.
             }
             if (host && !host.isDestroyed()) {
-                host.send(exports.WEBVIEW_DOWNLOAD_PROGRESS_CHANNEL, buildPayload('cancelled', '', agent));
+                const payload = buildPayload('cancelled', '', agent);
+                if (blockedReason) {
+                    payload.blockedReason = blockedReason;
+                }
+                host.send(exports.WEBVIEW_DOWNLOAD_PROGRESS_CHANNEL, payload);
             }
             closeInitialDownloadPopup?.();
         };
@@ -1563,6 +1685,15 @@ function ensureSessionDownloadListener(guestSession) {
                     openerWcId <= 0 &&
                     consumeDroppedInlinePdfTombstone(guestSession, item)))) {
             cancelImmediately(true);
+            return;
+        }
+        // Agent downloads never write executables or active local markup to disk,
+        // even when the item already carries a save path (which is checked too,
+        // so a benign name or MIME type can't hide a `.html` destination).
+        if (isArmedGuestOrOpener &&
+            ((0, webviewDownloadRouting_1.isBlockedAgentDownloadFormat)(item?.getFilename?.(), item?.getMimeType?.()) ||
+                (0, webviewDownloadRouting_1.isBlockedAgentDownloadFormat)(item?.getSavePath?.() ?? ''))) {
+            cancelImmediately(true, 'blocked_format');
             return;
         }
         // Synchronously assign a validated destination path (or cancel on error) so
@@ -1589,7 +1720,7 @@ function ensureSessionDownloadListener(guestSession) {
             if (!target || isBlockedAgentFormat) {
                 target?.release();
                 isAgentDownload = target?.isAgentDownload ?? isAgentDownload;
-                cancelImmediately(isAgentDownload);
+                cancelImmediately(isAgentDownload, isBlockedAgentFormat ? 'blocked_format' : undefined);
                 return;
             }
             resolvedSavePath = target.savePath;
@@ -1673,7 +1804,7 @@ function ensureSessionDownloadListener(guestSession) {
             let tokenTimer;
             const watcherDisposers = [];
             const pendingCountKey = webContentsId;
-            const sendGated = (state) => {
+            const sendGated = (state, blockedReason) => {
                 gatedRecord.state = state;
                 if (isTerminalDownloadState(state)) {
                     gatedRecord.cancel = undefined;
@@ -1694,6 +1825,9 @@ function ensureSessionDownloadListener(guestSession) {
                     };
                     if (openerWcId > 0) {
                         payload.openerWebContentsId = openerWcId;
+                    }
+                    if (blockedReason) {
+                        payload.blockedReason = blockedReason;
                     }
                     host.send(exports.WEBVIEW_DOWNLOAD_PROGRESS_CHANNEL, payload);
                 }
@@ -1731,7 +1865,7 @@ function ensureSessionDownloadListener(guestSession) {
                 }
             };
             /** Reports the final state exactly once and frees everything held. */
-            const finish = (state) => {
+            const finish = (state, blockedReason) => {
                 if (finished) {
                     return;
                 }
@@ -1739,7 +1873,7 @@ function ensureSessionDownloadListener(guestSession) {
                 settlePending();
                 dropToken();
                 releaseReservation?.();
-                sendGated(state);
+                sendGated(state, blockedReason);
                 // A download-only popup closes once its downloads are over, as for
                 // ungated downloads.
                 closeInitialDownloadPopup?.();
@@ -1781,10 +1915,10 @@ function ensureSessionDownloadListener(guestSession) {
                 const reachesUnapprovedSite = [
                     ...collectItemCandidateUrls(redownload),
                 ].some((u) => !approvedSiteKeys.has(downloadUrlSiteKey(u)));
-                if (reachesUnapprovedSite ||
-                    (0, webviewDownloadRouting_1.isBlockedAgentDownloadFormat)(redownload?.getFilename?.(), redownload?.getMimeType?.())) {
+                const servesBlockedFormat = (0, webviewDownloadRouting_1.isBlockedAgentDownloadFormat)(redownload?.getFilename?.(), redownload?.getMimeType?.());
+                if (reachesUnapprovedSite || servesBlockedFormat) {
                     refuse(redownload, redownloadEvent);
-                    finish('cancelled');
+                    finish('cancelled', servesBlockedFormat ? 'blocked_format' : undefined);
                     return;
                 }
                 activeItem = redownload;
@@ -2117,7 +2251,9 @@ function configureWebviewBrowserContents(contents, options) {
         configuredWebviewById.set(trackedId, contents);
     }
     ensureSessionDownloadListener(guestSession);
+    configureGuestUserAgent(contents, guestSession);
     (0, guestPermissionPolicy_1.configureSessionAgentPermissionPolicy)(guestSession);
+    (0, guestCrossSiteCredentials_1.configureSessionCrossSiteCredentialPolicy)(guestSession);
     const webContentsId = contents.id;
     const openExternal = options?.openExternal ?? ((url) => electron_1.shell.openExternal(url));
     const now = options?.now ?? (() => Date.now());

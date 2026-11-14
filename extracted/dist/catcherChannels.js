@@ -1,0 +1,12 @@
+"use strict";
+Object.defineProperty(exports, "__esModule", { value: true });
+exports.WCV_CATCHER_DRAG_CHANNEL = exports.WCV_CATCHER_SET_CURSOR_CHANNEL = exports.WCV_CATCHER_RESET_DRAG_CHANNEL = exports.WCV_CATCHER_PINCH_CHANNEL = exports.WCV_CATCHER_WHEEL_CHANNEL = exports.WCV_CATCHER_POINTER_LEAVE_CHANNEL = exports.WCV_CATCHER_POINTER_UP_CHANNEL = exports.WCV_CATCHER_POINTER_MOVE_CHANNEL = exports.WCV_CATCHER_POINTER_DOWN_CHANNEL = void 0;
+exports.WCV_CATCHER_POINTER_DOWN_CHANNEL = 'wcv:catcher-pointer-down';
+exports.WCV_CATCHER_POINTER_MOVE_CHANNEL = 'wcv:catcher-pointer-move';
+exports.WCV_CATCHER_POINTER_UP_CHANNEL = 'wcv:catcher-pointer-up';
+exports.WCV_CATCHER_POINTER_LEAVE_CHANNEL = 'wcv:catcher-pointer-leave';
+exports.WCV_CATCHER_WHEEL_CHANNEL = 'wcv:catcher-wheel';
+exports.WCV_CATCHER_PINCH_CHANNEL = 'wcv:catcher-pinch';
+exports.WCV_CATCHER_RESET_DRAG_CHANNEL = 'wcv:catcher-reset-drag';
+exports.WCV_CATCHER_SET_CURSOR_CHANNEL = 'wcv:catcher-set-cursor';
+exports.WCV_CATCHER_DRAG_CHANNEL = 'wcv:catcher-drag';

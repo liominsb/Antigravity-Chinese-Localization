@@ -5088,6 +5088,11 @@ const DOM_TRANSLATOR_INJECTION = `
     "Find the latest documentation and code examples for integrating [API or library] into my project.": "查找将 [API 或库] 集成到我项目中的最新文档与代码示例。",
 
     // ===== 自定义补充：设置页与配额提示残留词条 =====
+    "% left": "% 可用",
+    "% Left": "% 可用",
+    "Unlimited": "无限制",
+    "See Activity": "查看活动记录",
+    "Get More AI Credits": "获取更多 AI 点数",
     "Antigravity Starter Quota": "Antigravity 入门配额",
     "Google AI Plus users receive the minimum base limits on Antigravity. You can upgrade to Google AI Pro or above to receive higher rate limits.": "Google AI Plus 用户享有 Antigravity 的最低基础额度。升级到 Google AI Pro 或更高方案可获得更高的速率上限。",
     "Verbose": "详细",
@@ -5252,6 +5257,51 @@ const DOM_TRANSLATOR_INJECTION = `
     // ===== 自定义补充：模型在当前方案不可用 =====
     if (/^(.+?)\\s+(?:is|are)\\s+not available (?:on|in) your (?:current )?plan\\.$/i.test(trimmed)) {
       const fixed = trimmed.replace(/^(.+?)\\s+(?:is|are)\\s+not available (?:on|in) your (?:current )?plan\\.$/i, (m, model) => model + ' 在你当前方案中不可用。');
+      if (stringCache.size < MAX_STRING_CACHE) stringCache.set(trimmed, fixed);
+      return text.replace(trimmed, fixed);
+    }
+
+    // ===== 自定义补充：用量窗口与重置时间（Weekly limit, resets in 6d 23h） =====
+    if (/^(.+?),\\s*resets? in\\s+(.+)$/i.test(trimmed)) {
+      const fixed = trimmed.replace(/^(.+?),\\s*resets? in\\s+(.+)$/i, (m, label, t) => {
+        const labelMap = { 'weekly limit': '每周限额', 'daily limit': '每日限额', 'hourly limit': '每小时限额', 'monthly limit': '每月限额' };
+        const labelCn = labelMap[label.trim().toLowerCase()] || label;
+        const dur = String(t).trim()
+          .replace(/^<\\s*1\\s*m$/i, '不到 1 分钟')
+          .replace(/(\\d+)\\s*d/gi, '$1 天')
+          .replace(/(\\d+)\\s*h/gi, '$1 小时')
+          .replace(/(\\d+)\\s*m(?!o)/gi, '$1 分钟')
+          .replace(/\\s+/g, ' ')
+          .trim();
+        return labelCn + '，' + dur + '后重置';
+      });
+      if (stringCache.size < MAX_STRING_CACHE) stringCache.set(trimmed, fixed);
+      return text.replace(trimmed, fixed);
+    }
+
+    if (/^resets? in\\s+(.+)$/i.test(trimmed)) {
+      const fixed = trimmed.replace(/^resets? in\\s+(.+)$/i, (m, t) => {
+        const dur = String(t).trim()
+          .replace(/^<\\s*1\\s*m$/i, '不到 1 分钟')
+          .replace(/(\\d+)\\s*d/gi, '$1 天')
+          .replace(/(\\d+)\\s*h/gi, '$1 小时')
+          .replace(/(\\d+)\\s*m(?!o)/gi, '$1 分钟')
+          .replace(/\\s+/g, ' ')
+          .trim();
+        return dur + '后重置';
+      });
+      if (stringCache.size < MAX_STRING_CACHE) stringCache.set(trimmed, fixed);
+      return text.replace(trimmed, fixed);
+    }
+
+    if (/^(\\d+(?:\\.\\d+)?)%\\s*left$/i.test(trimmed)) {
+      const fixed = trimmed.replace(/^(\\d+(?:\\.\\d+)?)%\\s*left$/i, (m, pct) => pct + '% 可用');
+      if (stringCache.size < MAX_STRING_CACHE) stringCache.set(trimmed, fixed);
+      return text.replace(trimmed, fixed);
+    }
+    // ===== 自定义补充：AI 点数余额（Available AI Credits: N） =====
+    if (/^Available AI Credits:\\s*(.+)$/i.test(trimmed)) {
+      const fixed = trimmed.replace(/^Available AI Credits:\\s*(.+)$/i, (m, n) => '可用 AI 点数：' + n);
       if (stringCache.size < MAX_STRING_CACHE) stringCache.set(trimmed, fixed);
       return text.replace(trimmed, fixed);
     }

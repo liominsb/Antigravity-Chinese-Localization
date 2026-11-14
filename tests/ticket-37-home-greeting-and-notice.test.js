@@ -149,6 +149,43 @@ check(
   'This feature is available to everyone.'
 );
 
+console.log('\n[7] 用量窗口与重置时间（模型下拉「查看使用额度」浮层）');
+check(
+  '周限额 + 天/小时倒计时',
+  translateString('Weekly limit, resets in 6d 23h'),
+  '每周限额，6 天 23 小时后重置'
+);
+check(
+  '日限额 + 时/分倒计时',
+  translateString('Daily limit, resets in 5h 30m'),
+  '每日限额，5 小时 30 分钟后重置'
+);
+check(
+  '仅分钟倒计时',
+  translateString('Daily limit, resets in 45m'),
+  '每日限额，45 分钟后重置'
+);
+check(
+  '独立倒计时文案',
+  translateString('Resets in <1m'),
+  '不到 1 分钟后重置'
+);
+check('剩余百分比（独立节点）', translateString('% left'), '% 可用');
+check('剩余百分比（整串）', translateString('100% left'), '100% 可用');
+check(
+  'AI 点数余额',
+  translateString('Available AI Credits: 1250'),
+  '可用 AI 点数：1250'
+);
+check('查看活动记录', translateString('See Activity'), '查看活动记录');
+check('获取更多 AI 点数', translateString('Get More AI Credits'), '获取更多 AI 点数');
+check('无限额度', translateString('Unlimited'), '无限制');
+check(
+  '无关的 left 句子不翻译',
+  translateString('The panel is left aligned.'),
+  'The panel is left aligned.'
+);
+
 console.log(`\n=== Ticket-37 结果：${passed}/${total} 通过 ===`);
 
 if (passed !== total) {

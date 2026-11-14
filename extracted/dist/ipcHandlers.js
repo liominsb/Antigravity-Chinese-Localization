@@ -1164,6 +1164,7 @@ const contextMenuTranslationMap = {
   'Replace with New': '替换为新建',
   'Replace With New': '替换为新建',
   'Replace with new': '替换为新建',
+  'Ask /btw': '通过 /btw 提问',
 };
 function translateContextLabel(lbl) {
   if (!lbl) return '';

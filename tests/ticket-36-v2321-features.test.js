@@ -99,13 +99,16 @@ check('preload.js 包含 Reconnecting to 动态正则保障', preloadSource.incl
 check('preload.js 包含 Disconnected from 动态正则保障', preloadSource.includes("已断开与 $1 的连接"), true);
 check('preload.js 包含 Stop the Antigravity server on 动态正则保障', preloadSource.includes("停止 $1 上的 Antigravity 服务端？"), true);
 
-// 2.32.1 补充：原生右键二级子菜单
+// 2.32.1 补充：原生右键二级子菜单与选中文本浮动提问
 check('ipcHandlers.js 包含 Conversation Name 映射', ipcHandlersSource.includes("'Conversation Name': '对话名称'"), true);
 check('ipcHandlers.js 包含 Conversation ID 映射', ipcHandlersSource.includes("'Conversation ID': '对话 ID'"), true);
 check('ipcHandlers.js 包含 Project Name 映射', ipcHandlersSource.includes("'Project Name': '项目名称'"), true);
 check('ipcHandlers.js 包含 Split Right 映射', ipcHandlersSource.includes("'Split Right': '向右分屏'"), true);
 check('ipcHandlers.js 包含 Split Down 映射', ipcHandlersSource.includes("'Split Down': '向下分屏'"), true);
 check('ipcHandlers.js 包含 Replace with New 映射', ipcHandlersSource.includes("'Replace with New': '替换为新建'"), true);
+check('ipcHandlers.js 包含 Ask /btw 映射', ipcHandlersSource.includes("'Ask /btw': '通过 /btw 提问'"), true);
+check('preload.js 包含 Ask /btw 动态正则与词典汉化', preloadSource.includes('通过 /btw 提问'), true);
+check('preload.js 包含 Ask /btw 选区气泡特权放行', preloadSource.includes('Ask(?:\\s+|\\s*\\/\\s*)btw') && preloadSource.includes('skipCache.set(element, false)'), true);
 
 // 2.32.1 补充：Google Workspace 新标语与 Gmail 插件
 check('preload.js 包含 Google Workspace 2.32.1 标语汉化', preloadSource.includes('连接到 Google Workspace，包括 Google 文档、表格、幻灯片、云端硬盘、日历和 Gmail。'), true);
@@ -140,6 +143,7 @@ check('app.asar.ready 包含 对话 ID 映射', asarSource.includes('对话 ID')
 check('app.asar.ready 包含 替换为新建 映射', asarSource.includes('替换为新建'), true);
 check('app.asar.ready 包含 Google Workspace 2.32.1 标语', asarSource.includes('连接到 Google Workspace，包括 Google 文档、表格、幻灯片、云端硬盘、日历和 Gmail。'), true);
 check('app.asar.ready 包含 Gmail 插件描述汉化', asarSource.includes('在 Gmail 中搜索、阅读、起草和发送电子邮件。'), true);
+check('app.asar.ready 包含 通过 /btw 提问 汉化', asarSource.includes('通过 /btw 提问'), true);
 
 console.log(`\n测试汇总: 通过: ${passed}, 失败: ${total - passed}, 总计: ${total}\n`);
 

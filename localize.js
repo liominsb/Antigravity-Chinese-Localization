@@ -5001,6 +5001,7 @@ const DOM_TRANSLATOR_INJECTION = `
     "Replace with new": "替换为新建",
     "Split Left": "向左分屏",
     "Split Up": "向上分屏",
+    "Ask /btw": "通过 /btw 提问",
 
     // ===== 2.32.1 扩展市场新增与更新插件全量汉化 =====
     // 1. Google Workspace & 官方插件 (Official Plugins)
@@ -5157,6 +5158,15 @@ const DOM_TRANSLATOR_INJECTION = `
     if (/^Quote(?:\s+(Ctrl\+[a-zA-Z0-9]+|Cmd\+[a-zA-Z0-9]+))?$/i.test(trimmed)) {
       const fixed = trimmed.replace(/^Quote(?:\s+(Ctrl\+[a-zA-Z0-9]+|Cmd\+[a-zA-Z0-9]+))?$/i, (match, shortcut) => {
         return shortcut ? ('引用 ' + shortcut.toUpperCase().replace('CTRL', 'Ctrl').replace('CMD', 'Cmd')) : '引用';
+      });
+      if (stringCache.size < MAX_STRING_CACHE) stringCache.set(trimmed, fixed);
+      return text.replace(trimmed, fixed);
+    }
+
+    // ===== 2.32.1 对话区选中文本浮动提问按钮 (Ask /btw) =====
+    if (/^Ask(?:\\s+|\\s*\\/\\s*)btw(?:\\s+(Ctrl\\+[a-zA-Z0-9]+|Cmd\\+[a-zA-Z0-9]+))?$/i.test(trimmed)) {
+      const fixed = trimmed.replace(/^Ask(?:\\s+|\\s*\\/\\s*)btw(?:\\s+(Ctrl\\+[a-zA-Z0-9]+|Cmd\\+[a-zA-Z0-9]+))?$/i, (match, shortcut) => {
+        return shortcut ? ('通过 /btw 提问 ' + shortcut.toUpperCase().replace('CTRL', 'Ctrl').replace('CMD', 'Cmd')) : '通过 /btw 提问';
       });
       if (stringCache.size < MAX_STRING_CACHE) stringCache.set(trimmed, fixed);
       return text.replace(trimmed, fixed);
@@ -6601,8 +6611,8 @@ const DOM_TRANSLATOR_INJECTION = `
     // 3. 特殊特权放行：针对执行步骤的药丸标签（如 Ran, Explored, Edited, Viewed, Thought, Thinking, Working 等）
     // 无论其父级为 SPAN、CODE 还是 BUTTON，只要是系统执行药丸且不在用户提问气泡内，一律无条件放行汉化
     const textContent = (element.innerText || element.textContent || '').trim();
-        // 选中文本快捷引用气泡（Quote / Quote Ctrl+L / Quote Cmd+L）特权放行
-    if (/^Quote(?:\s+(?:Ctrl|Cmd)\+[a-zA-Z0-9]+)?$/i.test(textContent)) {
+        // 选中文本快捷引用气泡（Quote / Quote Ctrl+L / Quote Cmd+L）及 /btw 提问气泡特权放行
+    if (/^(?:Quote|Ask(?:\\s+|\\s*\\/\\s*)btw)(?:\\s+(?:Ctrl|Cmd)\\+[a-zA-Z0-9]+)?$/i.test(textContent)) {
       skipCache.set(element, false);
       return false;
     }
@@ -7256,6 +7266,7 @@ const menuTranslationMap = {
   'Replace with New': '替换为新建',
   'Replace With New': '替换为新建',
   'Replace with new': '替换为新建',
+  'Ask /btw': '通过 /btw 提问',
 };
 function translateMenu(menuItem) {
   if (menuItem.label && menuTranslationMap[menuItem.label]) {
@@ -7438,6 +7449,7 @@ const contextMenuTranslationMap = {
   'Replace with New': '替换为新建',
   'Replace With New': '替换为新建',
   'Replace with new': '替换为新建',
+  'Ask /btw': '通过 /btw 提问',
 };
 function translateContextLabel(lbl) {
   if (!lbl) return '';

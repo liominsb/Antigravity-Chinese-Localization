@@ -5086,6 +5086,21 @@ const DOM_TRANSLATOR_INJECTION = `
     "Find key decision-makers at [company] and summarize their professional backgrounds.": "查找 [公司] 的核心决策者并总结他们的职业背景。",
     "Research [company], including its products, competitors, and latest news.": "调研 [公司]，包括其产品、竞品及最新动态。",
     "Find the latest documentation and code examples for integrating [API or library] into my project.": "查找将 [API 或库] 集成到我项目中的最新文档与代码示例。",
+
+    // ===== 自定义补充：设置页与配额提示残留词条 =====
+    "Antigravity Starter Quota": "Antigravity 入门配额",
+    "Google AI Plus users receive the minimum base limits on Antigravity. You can upgrade to Google AI Pro or above to receive higher rate limits.": "Google AI Plus 用户享有 Antigravity 的最低基础额度。升级到 Google AI Pro 或更高方案可获得更高的速率上限。",
+    "Verbose": "详细",
+    "Code Preview": "代码预览",
+    "There are no customizations enabled.": "尚未启用任何自定义项。",
+    "Developer-only tools. These settings do not affect other users.": "仅开发者可用的工具，这些设置不会影响其他用户。",
+    "Submit Prompt (Alternate to Enter)": "提交提示词（Enter 的备用键）",
+    "Enter always submits. This adds a second shortcut.": "Enter 始终用于提交，此项用于添加第二个快捷键。",
+    "Jump to Previous Prompt": "跳转到上一条提示词",
+    "Jump to Next Prompt": "跳转到下一条提示词",
+    "Pin / Unpin Conversation": "置顶 / 取消置顶对话",
+    "Pin Conversation": "置顶对话",
+    "Unpin Conversation": "取消置顶对话",
   };
 
   const coreWords = {
@@ -5152,6 +5167,53 @@ const DOM_TRANSLATOR_INJECTION = `
     // 0. 极速缓存查询（O(1) 命中瞬间返回）
     if (stringCache.has(trimmed)) {
       return text.replace(trimmed, stringCache.get(trimmed));
+    }
+
+    // ===== 自定义补充：首页问候语（3 组模板 × 有/无用户名） =====
+    if (/^(?:Hey|Welcome back|Good to see you)/i.test(trimmed)) {
+      const greetingRules = [
+        [/^Hey there,\\s*what should we build today\\?$/i, () => '嘿，今天想构建点什么？'],
+        [/^Hey\\s+(.+?),\\s*what should we build today\\?$/i, (n) => '嘿，' + n + '，今天想构建点什么？'],
+        [/^Welcome back,\\s*(.+?)\\.\\s*Where should we pick up\\?$/i, (n) => '欢迎回来，' + n + '。我们从哪里继续？'],
+        [/^Welcome back\\.\\s*Where should we pick up\\?$/i, () => '欢迎回来。我们从哪里继续？'],
+        [/^Good to see you,\\s*(.+?)\\.\\s*What's next\\?$/i, (n) => '很高兴见到你，' + n + '。接下来做什么？'],
+        [/^Good to see you\\.\\s*What's next\\?$/i, () => '很高兴见到你。接下来做什么？']
+      ];
+      for (let gi = 0; gi < greetingRules.length; gi++) {
+        if (greetingRules[gi][0].test(trimmed)) {
+          const fixed = trimmed.replace(greetingRules[gi][0], (m, n) => greetingRules[gi][1](n));
+          if (stringCache.size < MAX_STRING_CACHE) stringCache.set(trimmed, fixed);
+          return text.replace(trimmed, fixed);
+        }
+      }
+    }
+
+    // ===== 自定义补充：账号方案提示（Your Plan: xxx） =====
+    if (/^Your Plan:\\s*(.+)$/i.test(trimmed)) {
+      const planMap = { 'antigravity starter quota': 'Antigravity 入门配额' };
+      const fixed = trimmed.replace(/^Your Plan:\\s*(.+)$/i, (m, p) => '当前方案：' + (planMap[p.trim().toLowerCase()] || p));
+      if (stringCache.size < MAX_STRING_CACHE) stringCache.set(trimmed, fixed);
+      return text.replace(trimmed, fixed);
+    }
+
+    // ===== 自定义补充：第三方模型访问公告（服务端下发文案） =====
+    if (/^Changes to third-party model access$/i.test(trimmed)) {
+      const fixed = '第三方模型访问方式调整';
+      if (stringCache.size < MAX_STRING_CACHE) stringCache.set(trimmed, fixed);
+      return text.replace(trimmed, fixed);
+    }
+
+    if (/^Opus\\s*(.+?)\\s*and Sonnet\\s*(.+?)\\s*are available on paid Pro and Ultra plans\\.\\s*Third-party model access will no longer be available on your current plan starting on\\s*(.+?)\\.$/i.test(trimmed)) {
+      const fixed = trimmed.replace(/^Opus\\s*(.+?)\\s*and Sonnet\\s*(.+?)\\s*are available on paid Pro and Ultra plans\\.\\s*Third-party model access will no longer be available on your current plan starting on\\s*(.+?)\\.$/i, (m, a, b, d) => {
+        const months = { january: 1, february: 2, march: 3, april: 4, may: 5, june: 6, july: 7, august: 8, september: 9, october: 10, november: 11, december: 12 };
+        const cn = (d || '').replace(/^([A-Za-z]+)\\s+(\\d{1,2}),?\\s*(\\d{4})$/, (mm, mon, day, year) => {
+          const idx = months[mon.toLowerCase()];
+          return idx ? (year + ' 年 ' + idx + ' 月 ' + day + ' 日') : d;
+        });
+        return 'Opus ' + a + ' 与 Sonnet ' + b + ' 现已在付费 Pro 与 Ultra 方案中提供。自 ' + cn + '起，你当前方案将不再提供第三方模型访问。';
+      });
+      if (stringCache.size < MAX_STRING_CACHE) stringCache.set(trimmed, fixed);
+      return text.replace(trimmed, fixed);
     }
 
         // ===== 2.29.1 对话区选中文本浮动引用按钮（自适应快捷键） =====

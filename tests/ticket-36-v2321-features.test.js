@@ -88,6 +88,7 @@ check('sshArgs.js 包含 SSH 连接已断开 状态提示汉化', sshArgsSource.
 // 3. UI 界面细节与动态保障断言
 console.log('\n--- 3. UI 界面细节与动态保障断言 ---');
 const preloadSource = fs.readFileSync(path.join(distDir, 'preload.js'), 'utf-8');
+const ipcHandlersSource = fs.readFileSync(path.join(distDir, 'ipcHandlers.js'), 'utf-8');
 
 check('preload.js 包含 连接到主机... 汉化', preloadSource.includes('"Connect to Host...": "连接到主机..."'), true);
 check('preload.js 包含 连接到 SSH 主机... 汉化', preloadSource.includes('"Connect to SSH Host...": "连接到 SSH 主机..."'), true);
@@ -97,6 +98,29 @@ check('preload.js 包含 停止 SSH 服务端 汉化', preloadSource.includes('"
 check('preload.js 包含 Reconnecting to 动态正则保障', preloadSource.includes("正在重新连接到 $1…"), true);
 check('preload.js 包含 Disconnected from 动态正则保障', preloadSource.includes("已断开与 $1 的连接"), true);
 check('preload.js 包含 Stop the Antigravity server on 动态正则保障', preloadSource.includes("停止 $1 上的 Antigravity 服务端？"), true);
+
+// 2.32.1 补充：原生右键二级子菜单
+check('ipcHandlers.js 包含 Conversation Name 映射', ipcHandlersSource.includes("'Conversation Name': '对话名称'"), true);
+check('ipcHandlers.js 包含 Conversation ID 映射', ipcHandlersSource.includes("'Conversation ID': '对话 ID'"), true);
+check('ipcHandlers.js 包含 Project Name 映射', ipcHandlersSource.includes("'Project Name': '项目名称'"), true);
+check('ipcHandlers.js 包含 Split Right 映射', ipcHandlersSource.includes("'Split Right': '向右分屏'"), true);
+check('ipcHandlers.js 包含 Split Down 映射', ipcHandlersSource.includes("'Split Down': '向下分屏'"), true);
+check('ipcHandlers.js 包含 Replace with New 映射', ipcHandlersSource.includes("'Replace with New': '替换为新建'"), true);
+
+// 2.32.1 补充：Google Workspace 新标语与 Gmail 插件
+check('preload.js 包含 Google Workspace 2.32.1 标语汉化', preloadSource.includes('连接到 Google Workspace，包括 Google 文档、表格、幻灯片、云端硬盘、日历和 Gmail。'), true);
+check('preload.js 包含 Gmail 插件描述汉化', preloadSource.includes('在 Gmail 中搜索、阅读、起草和发送电子邮件。'), true);
+check('preload.js 包含 Gmail 总结未读邮件提示词汉化', preloadSource.includes('总结我今天的未读邮件'), true);
+check('preload.js 包含 Gmail 起草回复提示词汉化', preloadSource.includes('起草一份关于发布就绪状态最新会话的回复'), true);
+check('preload.js 包含 Gmail 查找附件邮件提示词汉化', preloadSource.includes('查找上周带有附件的电子邮件'), true);
+check('preload.js 包含 Gmail 管理收件箱概览汉化', preloadSource.includes('管理您的 Gmail 收件箱。搜索并总结邮件会话、起草回复、整理标签，并在经您批准后发送邮件。'), true);
+
+// 2.32.1 补充：合作伙伴生态新增插件
+check('preload.js 包含 Arize AX 插件汉化', preloadSource.includes('在 Antigravity 中查询 Arize AX 项目、链路追踪、数据集和实验'), true);
+check('preload.js 包含 Better Stack 插件汉化', preloadSource.includes('在 Better Stack 中调查事件、查看值班人员并查询日志'), true);
+check('preload.js 包含 Cloudflare 插件汉化', preloadSource.includes('在 Cloudflare Workers、存储与 AI 上构建、部署和管理应用程序'), true);
+check('preload.js 包含 CodeRabbit 插件汉化', preloadSource.includes('由 CodeRabbit 提供支持的 AI 代码审查'), true);
+check('preload.js 包含 Tavily 插件汉化', preloadSource.includes('通过 Tavily 托管的 MCP 服务器和技能'), true);
 
 // 4. app.asar.ready 打包产物全面验证
 console.log('\n--- 4. app.asar.ready 打包产物全面验证 ---');
@@ -111,6 +135,11 @@ check('app.asar.ready 包含 正在重新连接…', asarSource.includes('正在
 check('app.asar.ready 包含 请轻触你的安全密钥', asarSource.includes('请轻触你的安全密钥'), true);
 check('app.asar.ready 包含 浏览器设置副标题汉化', asarSource.includes('配置内置浏览器、链接打开方式以及浏览器子智能体偏好设置。'), true);
 check('app.asar.ready 包含 项目设置副标题汉化', asarSource.includes('管理项目文件夹与设置。'), true);
+check('app.asar.ready 包含 对话名称 映射', asarSource.includes('对话名称'), true);
+check('app.asar.ready 包含 对话 ID 映射', asarSource.includes('对话 ID'), true);
+check('app.asar.ready 包含 替换为新建 映射', asarSource.includes('替换为新建'), true);
+check('app.asar.ready 包含 Google Workspace 2.32.1 标语', asarSource.includes('连接到 Google Workspace，包括 Google 文档、表格、幻灯片、云端硬盘、日历和 Gmail。'), true);
+check('app.asar.ready 包含 Gmail 插件描述汉化', asarSource.includes('在 Gmail 中搜索、阅读、起草和发送电子邮件。'), true);
 
 console.log(`\n测试汇总: 通过: ${passed}, 失败: ${total - passed}, 总计: ${total}\n`);
 

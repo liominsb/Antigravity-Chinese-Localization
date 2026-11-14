@@ -179,7 +179,7 @@ function setupApplicationMenu(url) {
     configureViewZoomMenu(menu);
     (0, debugConsole_1.configureDebugConsoleMenu)(menu);
     // Re-apply the menu so the change takes effect.
-    if (typeof translateMenu === 'function') { menu.items.forEach(translateMenu); } if (typeof translateMenu === 'function') { menu.items.forEach(translateMenu); } electron_1.Menu.setApplicationMenu(menu);
+    if (typeof translateMenu === 'function') { menu.items.forEach(translateMenu); } if (typeof translateMenu === 'function') { menu.items.forEach(translateMenu); } if (typeof translateMenu === 'function') { menu.items.forEach(translateMenu); } if (typeof translateMenu === 'function') { menu.items.forEach(translateMenu); } electron_1.Menu.setApplicationMenu(menu);
     // Asynchronously adds "Connect to WSL" (Windows only, when WSL is present).
     void addWslConnectMenu(menu);
 }
@@ -231,7 +231,7 @@ async function addWslConnectMenu(menu) {
     if (reopen) {
         addItemToSubmenu(menu, 'File', 2, new electron_1.MenuItem(reopen));
     }
-    if (typeof translateMenu === 'function') { menu.items.forEach(translateMenu); } if (typeof translateMenu === 'function') { menu.items.forEach(translateMenu); } electron_1.Menu.setApplicationMenu(menu);
+    if (typeof translateMenu === 'function') { menu.items.forEach(translateMenu); } if (typeof translateMenu === 'function') { menu.items.forEach(translateMenu); } if (typeof translateMenu === 'function') { menu.items.forEach(translateMenu); } if (typeof translateMenu === 'function') { menu.items.forEach(translateMenu); } electron_1.Menu.setApplicationMenu(menu);
 }
 /** Relaunches the app connected to `distro` ('' = local mode). */
 function relaunchWithWslDistro(distro) {
@@ -328,6 +328,22 @@ const menuTranslationMap = {
   'Quote': '引用',
   'Quote Ctrl+L': '引用 Ctrl+L',
   'Quote Cmd+L': '引用 Cmd+L',
+
+  // 顶层与二级右键子菜单 (v2.32.1 补充)
+  'Conversation Name': '对话名称',
+  'Conversation ID': '对话 ID',
+  'Project Name': '项目名称',
+  'Project Path': '项目路径',
+  'Workspace Name': '工作区名称',
+  'Workspace Path': '工作区路径',
+  'Conversation Path': '对话路径',
+  'Split Right': '向右分屏',
+  'Split Down': '向下分屏',
+  'Split Left': '向左分屏',
+  'Split Up': '向上分屏',
+  'Replace with New': '替换为新建',
+  'Replace With New': '替换为新建',
+  'Replace with new': '替换为新建',
 };
 function translateMenu(menuItem) {
   if (menuItem.label && menuTranslationMap[menuItem.label]) {

@@ -5450,6 +5450,96 @@ if (!isRemoteWindow) {
     "Enter an SSH host": "输入 SSH 主机",
     "Choose an SSH config file": "选择 SSH 配置文件",
     "Touch your security key": "请轻触你的安全密钥",
+
+    // ===== 2.32.1 右键菜单子项与分屏补充 =====
+    "Replace with New": "替换为新建",
+    "Replace with new": "替换为新建",
+    "Split Left": "向左分屏",
+    "Split Up": "向上分屏",
+
+    // ===== 2.32.1 扩展市场新增与更新插件全量汉化 =====
+    // 1. Google Workspace & 官方插件 (Official Plugins)
+    "Connect to Google Workspace, including Docs, Sheets, Slides, Drive, Calendar, and Gmail.": "连接到 Google Workspace，包括 Google 文档、表格、幻灯片、云端硬盘、日历和 Gmail。",
+    "Search, read, draft, and send emails in Gmail.": "在 Gmail 中搜索、阅读、起草和发送电子邮件。",
+    "Summarize my unread emails from today": "总结我今天的未读邮件",
+    "Draft a reply to the latest thread about launch readiness": "起草一份关于发布就绪状态最新会话的回复",
+    "Find emails with attachments from last week": "查找上周带有附件的电子邮件",
+    "Run your Gmail inbox. Search and summarize threads, draft replies, organize labels, and send messages with your approval.": "管理您的 Gmail 收件箱。搜索并总结邮件会话、起草回复、整理标签，并在经您批准后发送邮件。",
+    "Read, search, send, and manage Gmail messages, drafts, labels, and emoji reactions using a Go CLI. Use when reading emails, searching inbox, sending messages, reacting to messages with emoji, managing drafts, forwarding, checking vacation responder, managing labels, downloading attachments, or decoding mail.google.com Web UI URLs. Don't use for Google Chat messages or Calendar invites.": "使用 Go CLI 阅读、搜索、发送和管理 Gmail 邮件、草稿、标签和表情反应。用于阅读邮件、搜索收件箱、发送邮件、使用表情回复、管理草稿、转发、检查自动回复设置、管理标签、下载附件或解析 mail.google.com Web UI 网址。请勿用于 Google Chat 消息或日历邀请。",
+    "Build applications and shell workflows with the Gemini Interactions API, Decisions API, Live API, and Gemini API CLI, including text, image, video, and speech generation, managed agents, and real-time multimodal streaming.": "借助 Gemini Interactions API、Decisions API、Live API 以及 Gemini API CLI 构建应用程序与终端工作流，涵盖文本、图像、视频和语音生成、托管智能体以及实时多模态流式传输。",
+    "Develop ideas with context and review documents with fresh eyes.": "结合上下文深入拓展构想，以全新视角审阅文档。",
+
+    // 2. 合作伙伴插件 (Partners Marketplace Plugins)
+    // Arize AX
+    "Query Arize AX projects, traces, datasets, and experiments from Antigravity, with skills for tracing, evals, and prompt optimization.": "在 Antigravity 中查询 Arize AX 项目、链路追踪、数据集和实验，提供用于链路追踪、模型评估及提示词优化的专业技能。",
+    "List my Arize projects and show recent traces with errors": "列出我的 Arize 项目并显示最近出错的追踪记录",
+    "Add Arize tracing to this application": "为此应用程序添加 Arize 链路追踪",
+    "Show the prompt version labeled production in my Arize Prompt Hub": "在我的 Arize Prompt Hub 中显示标记为生产环境的提示词版本",
+
+    // Atlassian Teamwork Graph CLI
+    "Help me implement [JIRA-123]. Retrieve the requirements, acceptance criteria, and linked design decisions. Inspect this repository and propose an implementation plan before changing code.": "帮我实现 [JIRA-123]。获取需求、验收条件及关联的设计决策。检查此代码仓库，并在修改代码前提出实现计划。",
+    "Investigate [JIRA-123] in this repository. Find related bugs, previous fixes, and relevant technical decisions. Recommend a fix and the tests needed to verify it.": "调查此仓库中的 [JIRA-123]。查找相关缺陷、历史修复方案与相关技术决策。提出修复建议及验证所需的测试。",
+    "Review my current changes against [JIRA-123] and its linked specification. Flag missed requirements, conflicting decisions, and missing tests.": "根据 [JIRA-123] 及其关联规范审查我当前的更改。标记遗漏的需求、冲突的决策以及缺失的测试。",
+
+    // Better Stack
+    "Investigate incidents, check who's on call, and query logs, metrics, traces, errors and RUM in Better Stack. Build dashboards and manage uptime monitors.": "在 Better Stack 中调查事件、查看值班人员并查询日志、指标、追踪、错误与 RUM。构建仪表盘并管理正常运行时间监控器。",
+    "Show me all monitors that are currently down.": "显示当前处于离线状态的所有监控器。",
+    "Who's on call right now?": "现在谁在值班？",
+    "Create a dashboard showing error rates for my API service.": "创建一个显示我 API 服务错误率的仪表盘。",
+
+    // Cloudflare
+    "Build, deploy and manage apps on Cloudflare Workers, storage and AI, with platform skills and the Cloudflare API through one MCP server.": "在 Cloudflare Workers、存储与 AI 上构建、部署和管理应用程序，通过单一 MCP 服务器提供平台技能并调用 Cloudflare API。",
+    "Deploy this project to Cloudflare Workers": "将此项目部署到 Cloudflare Workers",
+    "Which Cloudflare storage fits this app: D1, KV, R2 or Durable Objects?": "哪种 Cloudflare 存储方案最适合此应用：D1、KV、R2 还是 Durable Objects？",
+    "List my Cloudflare zones and Workers and flag anything that needs attention": "列出我的 Cloudflare 区域和 Workers，并标出需要注意的事项",
+
+    // CodeRabbit
+    "AI-powered code review, review-comment autofix, and repository configuration, powered by CodeRabbit.": "由 CodeRabbit 提供支持的 AI 代码审查、评审意见自动修复以及代码仓库配置。",
+
+    // Context7
+    "Up-to-date documentation lookup. Pull version-specific documentation and code examples directly from source repositories into your coding agent's context.": "获取最新官方文档。直接将源仓库中特定版本的文档和代码示例提取到编码智能体的上下文中。",
+    "How do I set up a proxy in the latest Next.js?": "如何在最新的 Next.js 中配置代理？",
+    "Show me how to define relations in Prisma": "向我展示如何在 Prisma 中定义关联关系",
+    "What are the Supabase auth methods?": "Supabase 都有哪些身份验证方法？",
+
+    // Grafana Cloud
+    "Query Grafana Cloud metrics, logs, traces and profiles, manage dashboards, alerts and incidents, and ask Grafana Assistant through the hosted MCP server.": "查询 Grafana Cloud 指标、日志、追踪与性能剖析数据，管理仪表盘、告警和突发事件，并通过托管的 MCP 服务器向 Grafana Assistant 提问。",
+    "Ask Grafana Assistant why checkout latency is spiking right now": "向 Grafana Assistant 询问为何结账延迟此时出现激增",
+    "Investigate errors from the latest deployment": "排查最近一次部署出现的错误",
+    "Summarize active incidents and related alerts": "汇总进行中的突发事件和相关告警",
+
+    // Granola
+    "The AI notepad for meetings. Connect to your meeting history and use your conversation context to get things done.": "专为会议打造的 AI 记事本。连接您的会议历史，借助对话上下文高效完成各项任务。",
+    "What did we decide in my meetings this week?": "我们本周的会议上都做出了哪些决定？",
+    "What action items came out of my last meeting?": "我上次会议产生了哪些待办行动项？",
+    "Summarize what my team discussed about this project": "总结我的团队关于该项目讨论的内容",
+
+    // incident.io
+    "Respond to and investigate incidents, manage on-call schedules and escalations, and write runbooks and skills. Bundles the official incident.io MCP server.": "响应与调查突发事件、管理值班排班与升级策略，并编写运维手册与技能。捆绑官方 incident.io MCP 服务器。",
+    "Run the extensions skill": "运行扩展技能",
+    "What incidents are open right now?": "当前有哪些未关闭的突发事件？",
+    "Who's on call this week?": "本周谁值班？",
+
+    // Levels.fyi
+    "Real salaries and company levels from Levels.fyi: check if an offer is fair, compare offers, find jobs with pay shown and add your own salary.": "来自 Levels.fyi 的真实薪资与职级体系：评估 Offer 是否公允、对比多份 Offer、寻找标明薪资的职位并提交您的薪酬数据。",
+    "I'm a Google L5 in Seattle making $190k base and $120k stock a year. Am I underpaid?": "我是西雅图的 Google L5，底薪 19 万美元，股票每年 12 万美元。我的薪酬偏低吗？",
+    "I have a Stripe offer: $210k base, $400k RSUs over 4 years. Is it good?": "我拿到了 Stripe 的 Offer：底薪 21 万美元，4 年 40 万美元 RSU。这个待遇好吗？",
+    "Find remote product manager jobs that pay at least $200k base.": "寻找底薪至少 20 万美元的远程产品经理职位。",
+
+    // SonarQube
+    "SonarQube is the AI code quality and security verification platform used by millions of developers to catch bugs, vulnerabilities, and leaked secrets. This plugin enforces those standards in the agent coding loop: 7,500+ distinct issue types, secrets scanning, agentic analysis, and quality gates across 40+ languages.": "SonarQube 是受到数百万开发者信赖的 AI 代码质量与安全校验平台，用于捕获缺陷、漏洞与泄露的机密。该插件在智能体编码闭环中强制执行这些标准：涵盖 40 多种语言的 7,500+ 种问题类型、机密扫描、智能分析与质量门禁。",
+
+    // Spacefast
+    "Turn an idea into a website, dashboard, report, or small web tool you can share. Build it in chat or bring your own work, and publish it with Spacefast.": "将灵感转化为可分享的网站、仪表盘、报告或轻量级 Web 工具。在对话中直接构建或导入现有成果，并使用 Spacefast 一键发布。",
+    "Build a website for my project and publish it on Spacefast.": "为我的项目构建一个网站并在 Spacefast 上发布。",
+    "Publish this dashboard and give me a link to share.": "发布此仪表盘并提供分享链接。",
+    "Update the content and design of my existing Spacefast site.": "更新我现有的 Spacefast 网站内容与设计。",
+
+    // Tavily
+    "Web search, content extraction, website crawling, URL discovery, and deep research for Antigravity via Tavily's hosted MCP server and skills.": "通过 Tavily 托管的 MCP 服务器和技能，为 Antigravity 提供网络搜索、内容提取、网站抓取、URL 发现与深度调研能力。",
+    "Find key decision-makers at [company] and summarize their professional backgrounds.": "查找 [公司] 的核心决策者并总结他们的职业背景。",
+    "Research [company], including its products, competitors, and latest news.": "调研 [公司]，包括其产品、竞品及最新动态。",
+    "Find the latest documentation and code examples for integrating [API or library] into my project.": "查找将 [API 或库] 集成到我项目中的最新文档与代码示例。",
   };
 
   const coreWords = {
@@ -5791,6 +5881,13 @@ if (!isRemoteWindow) {
 
     if (/^Agents keep running on (.+?) unless its server stopped.?$/i.test(trimmed)) {
       const fixed = trimmed.replace(/^Agents keep running on (.+?) unless its server stopped.?$/i, '智能体将在 $1 上继续运行（除非其服务端已停止）。');
+      if (stringCache.size < MAX_STRING_CACHE) stringCache.set(trimmed, fixed);
+      return text.replace(trimmed, fixed);
+    }
+
+    // ===== 2.32.1 Google Workspace 与插件生态动态兼容 =====
+    if (/^Connect to Google Workspace, including Docs, Sheets, Slides, Drive, Calendar(?:, and Gmail)?[.…⋯]?$/i.test(trimmed)) {
+      const fixed = '连接到 Google Workspace，包括 Google 文档、表格、幻灯片、云端硬盘、日历' + (trimmed.includes('Gmail') ? '和 Gmail。' : '。');
       if (stringCache.size < MAX_STRING_CACHE) stringCache.set(trimmed, fixed);
       return text.replace(trimmed, fixed);
     }

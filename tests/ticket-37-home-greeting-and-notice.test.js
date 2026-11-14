@@ -257,6 +257,13 @@ check(
   '智能体在执行终端命令前不会请求确认（拒绝列表中的命令除外）。这让智能体能在长时间内以最大自主能力运行，但同时也是最高风险：智能体可能执行不安全的终端命令。'
 );
 
+console.log('\n[11] 开发者设置：workspaceUri 说明（原文含反引号，走通配规则）');
+check(
+  'workspaceUri 说明',
+  translateString('Sets the `workspaceUri` URL parameter and reloads, repointing the active workspace. Pick a folder from an existing project or enter a custom URI (e.g. file:///path/to/workspace).'),
+  '设置 workspaceUri URL 参数并重新加载，从而把当前工作区指向新的位置。可从已有项目中选择文件夹，或输入自定义 URI（例如 file:///path/to/workspace）。'
+);
+
 console.log(`\n=== Ticket-37 结果：${passed}/${total} 通过 ===`);
 
 if (passed !== total) {

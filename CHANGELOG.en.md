@@ -21,6 +21,7 @@ This document tracks all version releases, core architecture adaptations, and fe
 - **Selection Floating Bubble & Quick Ask**: Localized the floating action bubble `Ask /btw` to "通过 /btw 提问" with privileged bypass handling for instant responsiveness.
 - **Empty State Container-Level Convergence**: Introduced container-level pre-inspection for React-split empty state text nodes (e.g., `No 自动化 yet`), seamlessly consolidating them into idiomatic "暂无自动化", "暂无对话", and "暂无分组".
 - **Official Plugin Ecosystem Deep Translation**: Fully localized the updated Google Workspace slogan, official Gmail plugin (overview, prompts, commands, descriptions), and 16 newly added Marketplace plugins including Arize AX, Better Stack, Cloudflare, CodeRabbit, Tavily, and SonarQube.
+- **Home Greetings, Model Notices & Settings Copy**: Added deep regex templates for 6 home greeting styles (retaining username interpolation); structured matching for third-party model release and deprecation notices with localized Chinese dates; covered quota reset countdowns, AI credit balances, and voice picker actions; added 48 detailed settings long descriptions; added Ticket-37 and Ticket-38 with 115 test assertions (special thanks to @angel12538 in #57).
 - **Added Remote SSH UI & Command Patterns**: Added dictionary and dynamic rules for SSH remote host connections and command palette prompts.
 
 ### 3. Artifacts & Test Safeguards

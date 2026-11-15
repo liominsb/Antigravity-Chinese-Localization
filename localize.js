@@ -5086,6 +5086,91 @@ const DOM_TRANSLATOR_INJECTION = `
     "Find key decision-makers at [company] and summarize their professional backgrounds.": "查找 [公司] 的核心决策者并总结他们的职业背景。",
     "Research [company], including its products, competitors, and latest news.": "调研 [公司]，包括其产品、竞品及最新动态。",
     "Find the latest documentation and code examples for integrating [API or library] into my project.": "查找将 [API 或库] 集成到我项目中的最新文档与代码示例。",
+
+    // ===== 自定义补充：设置页与配额提示残留词条 =====
+    "% left": "% 可用",
+    "% Left": "% 可用",
+    "Unlimited": "无限制",
+    "See Activity": "查看活动记录",
+    "Get More AI Credits": "获取更多 AI 点数",
+
+    // ===== 自定义补充：设置项与界面零散文案补充 =====
+    "Toggle Word Wrap": "切换自动换行",
+    "Connect to SSH Host…": "连接到 SSH 主机…",
+    "Stop SSH Server…": "停止 SSH 服务器…",
+    "Switch to This Computer": "切换到本机",
+    "Back 5s (←)": "后退 5 秒（←）",
+    "Forward 5s (→)": "前进 5 秒（→）",
+    "Comment": "评论",
+    "Environments": "环境",
+    "Custom…": "自定义…",
+    "Developer: Reset Onboarding": "开发者：重置新手引导",
+    "Developer: Reset NUX": "开发者：重置 NUX",
+    "1. Accessibility": "1. 辅助功能",
+    "2. Screen Recording": "2. 屏幕录制",
+    "Browser downloads": "浏览器下载",
+    "No coordinators": "无协调者",
+    "SSH Host…": "SSH 主机…",
+    "Recent": "最近",
+    "Starting the conversation…": "正在开始对话…",
+    "Resolving link…": "正在解析链接…",
+    "Google One Referral": "Google One 推荐",
+    "Project 4K interface without developer tooling.": "不含开发者工具的 Project 4K 界面。",
+    "The full developer experience.": "完整的开发者体验。",
+    "Controls whether terminal commands require your approval before running.\\n\\nNote: A change to this setting will only apply to new messages sent to the agent. In-progress responses will use the previous setting value.": "控制终端命令在执行前是否需要你的批准。\\n\\n注意：该设置的改动仅对之后发送给智能体的新消息生效，正在进行的回复仍沿用原有的设置值。",
+    "Show how full the context window is next to the send button. Click it for a breakdown and to see your model quota.": "在发送按钮旁显示上下文窗口的占用情况。点击可查看明细与模型配额。",
+    "Permanently delete your remote conversations, projects, scheduled tasks, connected plugins and settings. Data in the desktop app and your Google account are not affected.": "永久删除你的云端对话、项目、定时任务、已连接的插件与设置。桌面应用内的数据与你的 Google 账号不受影响。",
+    "Share your referral link with friends": "与好友分享你的推荐链接",
+    "Allow/deny agent browser file downloads from specific sites.": "允许或拒绝智能体浏览器从指定网站下载文件。",
+    "Logs each telemetry event to the browser's DevTools console as it fires, with the click or key that caused it. Stays on across reloads until you turn it off.": "每当遥测事件触发时，将其连同触发它的点击或按键一并输出到浏览器 DevTools 控制台。开关会保持开启，直到你手动关闭。",
+    "Uploaded project files and in-chat attachments are stored on Google servers and mounted into your cloud sandbox so your agent can read and work with them.": "上传的项目文件与对话内附件会存储在 Google 服务器上，并挂载到你的云端沙盒，供智能体读取和处理。",
+    "Remove individual uploaded files or connected resources in Project Settings, or delete a project or conversation to remove its stored files.": "可在「项目设置」中移除单个已上传文件或已连接资源，也可删除项目或对话以清除其存储的文件。",
+    "No plugin loads from this folder.": "此文件夹中的插件不会被加载。",
+    "Open Blame in Code Search": "在代码搜索中查看 Blame",
+    "Open in full conversation": "在完整对话中打开",
+    "Send reply": "发送回复",
+    "Playback speed (< / >)": "播放速度（< / >）",
+    "Cookies and site data": "Cookie 与网站数据",
+    "Resume comment draft": "继续编辑评论草稿",
+    "Discard comment draft": "丢弃评论草稿",
+    "Try out early-stage features before they ship. These may be changed or removed at any time. These features are experimental, and we make no guarantees about performance or functionality.": "抢先体验尚未正式发布的功能。这些功能可能随时变更或移除，属于实验性功能，我们不保证其性能或可用性。",
+    "Optimized for you": "为你优化",
+    "Failed to export artifact": "导出产物失败",
+    "Uploading to Google Drive…": "正在上传到 Google 云端硬盘…",
+    "Added": "已添加",
+    "Untracked": "未跟踪",
+    "Coordinators": "协调者",
+    "Built to help, not hurt": "旨在帮助，而非伤害",
+    "You are in control": "掌控权在你",
+    "Stay up to date.": "保持最新状态。",
+
+    // ===== 自定义补充：设置项下拉/开关的选项说明（悬停浮层） =====
+    "Interrupt the agent and send immediately.": "中断智能体并立即发送。",
+    "Queue until after the current turn.": "在当前回合结束后排队。",
+    "The agent never asks for confirmation before executing terminal commands (except those in the Deny list). This provides the agent with the maximum ability to operate over long periods without intervention, but also has the highest risk of the agent executing an unsafe terminal command.": "智能体在执行终端命令前不会请求确认（拒绝列表中的命令除外）。这让智能体能在长时间内以最大自主能力运行，但同时也是最高风险：智能体可能执行不安全的终端命令。",
+    "Terminal commands automatically proceed inside the sandbox. A command that needs to leave the sandbox proceeds only if an agent judges it reversible, and otherwise requests review.": "终端命令会在沙箱内自动执行。需要离开沙箱的命令，只有智能体判断其可逆时才会继续，否则会请求审核。",
+    "The agent always asks for confirmation before executing terminal commands (except those in the Allow list).": "智能体在执行终端命令前始终请求确认（允许列表中的命令除外）。",
+    "Terminal command automatically proceeds if the command runs inside the sandbox. Otherwise, it requests review.": "终端命令如果在沙箱内运行，则自动执行；否则会请求审核。",
+
+    // ===== 自定义补充：声音选择弹窗（音色描述，Clear and friendly 上游已收录） =====
+    "Confident and clear": "自信而清晰",
+    "Warm and engaging": "温暖而有感染力",
+    "Warm and approachable": "温暖而亲切",
+    "Deep and velvety": "低沉而丝滑",
+    "Light and precise": "轻快而精准",
+    "Antigravity Starter Quota": "Antigravity 入门配额",
+    "Google AI Plus users receive the minimum base limits on Antigravity. You can upgrade to Google AI Pro or above to receive higher rate limits.": "Google AI Plus 用户享有 Antigravity 的最低基础额度。升级到 Google AI Pro 或更高方案可获得更高的速率上限。",
+    "Verbose": "详细",
+    "Code Preview": "代码预览",
+    "There are no customizations enabled.": "尚未启用任何自定义项。",
+    "Developer-only tools. These settings do not affect other users.": "仅开发者可用的工具，这些设置不会影响其他用户。",
+    "Submit Prompt (Alternate to Enter)": "提交提示词（Enter 的备用键）",
+    "Enter always submits. This adds a second shortcut.": "Enter 始终用于提交，此项用于添加第二个快捷键。",
+    "Jump to Previous Prompt": "跳转到上一条提示词",
+    "Jump to Next Prompt": "跳转到下一条提示词",
+    "Pin / Unpin Conversation": "置顶 / 取消置顶对话",
+    "Pin Conversation": "置顶对话",
+    "Unpin Conversation": "取消置顶对话",
   };
 
   const coreWords = {
@@ -5152,6 +5237,174 @@ const DOM_TRANSLATOR_INJECTION = `
     // 0. 极速缓存查询（O(1) 命中瞬间返回）
     if (stringCache.has(trimmed)) {
       return text.replace(trimmed, stringCache.get(trimmed));
+    }
+
+    // ===== 自定义补充：首页问候语（3 组模板 × 有/无用户名） =====
+    if (/^(?:Hey|Welcome back|Good to see you)/i.test(trimmed)) {
+      const greetingRules = [
+        [/^Hey there,\\s*what should we build today\\?$/i, () => '嘿，今天想构建点什么？'],
+        [/^Hey\\s+(.+?),\\s*what should we build today\\?$/i, (n) => '嘿，' + n + '，今天想构建点什么？'],
+        [/^Welcome back,\\s*(.+?)\\.\\s*Where should we pick up\\?$/i, (n) => '欢迎回来，' + n + '。我们从哪里继续？'],
+        [/^Welcome back\\.\\s*Where should we pick up\\?$/i, () => '欢迎回来。我们从哪里继续？'],
+        [/^Good to see you,\\s*(.+?)\\.\\s*What's next\\?$/i, (n) => '很高兴见到你，' + n + '。接下来做什么？'],
+        [/^Good to see you\\.\\s*What's next\\?$/i, () => '很高兴见到你。接下来做什么？']
+      ];
+      for (let gi = 0; gi < greetingRules.length; gi++) {
+        if (greetingRules[gi][0].test(trimmed)) {
+          const fixed = trimmed.replace(greetingRules[gi][0], (m, n) => greetingRules[gi][1](n));
+          if (stringCache.size < MAX_STRING_CACHE) stringCache.set(trimmed, fixed);
+          return text.replace(trimmed, fixed);
+        }
+      }
+    }
+
+    // ===== 自定义补充：账号方案提示（Your Plan: xxx） =====
+    if (/^Your Plan:\\s*(.+)$/i.test(trimmed)) {
+      const planMap = { 'antigravity starter quota': 'Antigravity 入门配额' };
+      const fixed = trimmed.replace(/^Your Plan:\\s*(.+)$/i, (m, p) => '当前方案：' + (planMap[p.trim().toLowerCase()] || p));
+      if (stringCache.size < MAX_STRING_CACHE) stringCache.set(trimmed, fixed);
+      return text.replace(trimmed, fixed);
+    }
+
+    // ===== 自定义补充：第三方模型访问公告（服务端下发，兼容多种句式） =====
+    if (/^Changes to third-party model access$/i.test(trimmed)) {
+      const fixed = '第三方模型访问方式调整';
+      if (stringCache.size < MAX_STRING_CACHE) stringCache.set(trimmed, fixed);
+      return text.replace(trimmed, fixed);
+    }
+
+    if (/^(.+?)\\s+(?:is|are)\\s+(?:now\\s+)?available on paid Pro and Ultra plans\\.\\s*Third-party model access will no longer be available on your current plan starting on\\s*(.+?)\\.$/i.test(trimmed)) {
+      const fixed = trimmed.replace(/^(.+?)\\s+(?:is|are)\\s+(?:now\\s+)?available on paid Pro and Ultra plans\\.\\s*Third-party model access will no longer be available on your current plan starting on\\s*(.+?)\\.$/i, (m, models, d) => {
+        const months = { january: 1, february: 2, march: 3, april: 4, may: 5, june: 6, july: 7, august: 8, september: 9, october: 10, november: 11, december: 12 };
+        const cn = (d || '').replace(/^([A-Za-z]+)\\s+(\\d{1,2}),?\\s*(\\d{4})$/, (mm, mon, day, year) => {
+          const idx = months[mon.toLowerCase()];
+          return idx ? (year + ' 年 ' + idx + ' 月 ' + day + ' 日') : d;
+        });
+        const parts = models.split(/\\s+and\\s+/i);
+        const modelsCn = parts.length === 2 ? parts.join(' 与 ') : parts.join('、');
+        return modelsCn + ' 现已在付费 Pro 与 Ultra 方案中提供。自 ' + cn + '起，你当前方案将不再提供第三方模型访问。';
+      });
+      if (stringCache.size < MAX_STRING_CACHE) stringCache.set(trimmed, fixed);
+      return text.replace(trimmed, fixed);
+    }
+
+    // ===== 自定义补充：模型下线公告（GPT-OSS will be removed from Antigravity on ...） =====
+    if (/^(.+?)\\s+will be removed from Antigravity on\\s+(.+?)\\.$/i.test(trimmed)) {
+      const fixed = trimmed.replace(/^(.+?)\\s+will be removed from Antigravity on\\s+(.+?)\\.$/i, (m, model, d) => {
+        const months = { january: 1, february: 2, march: 3, april: 4, may: 5, june: 6, july: 7, august: 8, september: 9, october: 10, november: 11, december: 12 };
+        const cn = (d || '').replace(/^([A-Za-z]+)\\s+(\\d{1,2}),?\\s*(\\d{4})$/, (mm, mon, day, year) => {
+          const idx = months[mon.toLowerCase()];
+          return idx ? (year + ' 年 ' + idx + ' 月 ' + day + ' 日') : d;
+        });
+        return model + ' 将于 ' + cn + '从 Antigravity 移除。';
+      });
+      if (stringCache.size < MAX_STRING_CACHE) stringCache.set(trimmed, fixed);
+      return text.replace(trimmed, fixed);
+    }
+
+    // ===== 自定义补充：模型可用范围提示（仅向部分订阅方案开放） =====
+    if (/^(.+?)\\s+(?:is|are)\\s+currently available to\\s+(.+?)\\s+subscribers?\\.$/i.test(trimmed)) {
+      const fixed = trimmed.replace(/^(.+?)\\s+(?:is|are)\\s+currently available to\\s+(.+?)\\s+subscribers?\\.$/i, (m, models, audience) => {
+        const a = String(audience)
+          .replace(/\\bUltra and paid Pro plans?\\b/gi, 'Ultra 与付费 Pro 方案')
+          .replace(/\\bpaid Pro and Ultra plans?\\b/gi, '付费 Pro 与 Ultra 方案')
+          .replace(/\\band\\b/gi, '与')
+          .replace(/\\bpaid\\b/gi, '付费')
+          .replace(/\\bplans?\\b/gi, '方案');
+        const lead = /^[A-Za-z0-9]/.test(a) ? ' ' : '';
+        const tail = /[A-Za-z0-9]$/.test(a) ? ' ' : '';
+        return models + ' 目前仅向' + lead + a + tail + '订阅用户提供。';
+      });
+      if (stringCache.size < MAX_STRING_CACHE) stringCache.set(trimmed, fixed);
+      return text.replace(trimmed, fixed);
+    }
+
+    // ===== 自定义补充：模型在当前方案不可用 =====
+    if (/^(.+?)\\s+(?:is|are)\\s+not available (?:on|in) your (?:current )?plan\\.$/i.test(trimmed)) {
+      const fixed = trimmed.replace(/^(.+?)\\s+(?:is|are)\\s+not available (?:on|in) your (?:current )?plan\\.$/i, (m, model) => model + ' 在你当前方案中不可用。');
+      if (stringCache.size < MAX_STRING_CACHE) stringCache.set(trimmed, fixed);
+      return text.replace(trimmed, fixed);
+    }
+
+    // ===== 自定义补充：用量窗口与重置时间（Weekly limit, resets in 6d 23h） =====
+    if (/^(.+?),\\s*resets? in\\s+(.+)$/i.test(trimmed)) {
+      const fixed = trimmed.replace(/^(.+?),\\s*resets? in\\s+(.+)$/i, (m, label, t) => {
+        const labelMap = { 'weekly limit': '每周限额', 'daily limit': '每日限额', 'hourly limit': '每小时限额', 'monthly limit': '每月限额' };
+        const labelCn = labelMap[label.trim().toLowerCase()] || label;
+        const dur = String(t).trim()
+          .replace(/^<\\s*1\\s*m$/i, '不到 1 分钟')
+          .replace(/(\\d+)\\s*d/gi, '$1 天')
+          .replace(/(\\d+)\\s*h/gi, '$1 小时')
+          .replace(/(\\d+)\\s*m(?!o)/gi, '$1 分钟')
+          .replace(/\\s+/g, ' ')
+          .trim();
+        return labelCn + '，' + dur + '后重置';
+      });
+      if (stringCache.size < MAX_STRING_CACHE) stringCache.set(trimmed, fixed);
+      return text.replace(trimmed, fixed);
+    }
+
+    if (/^resets? in\\s+(.+)$/i.test(trimmed)) {
+      const fixed = trimmed.replace(/^resets? in\\s+(.+)$/i, (m, t) => {
+        const dur = String(t).trim()
+          .replace(/^<\\s*1\\s*m$/i, '不到 1 分钟')
+          .replace(/(\\d+)\\s*d/gi, '$1 天')
+          .replace(/(\\d+)\\s*h/gi, '$1 小时')
+          .replace(/(\\d+)\\s*m(?!o)/gi, '$1 分钟')
+          .replace(/\\s+/g, ' ')
+          .trim();
+        return dur + '后重置';
+      });
+      if (stringCache.size < MAX_STRING_CACHE) stringCache.set(trimmed, fixed);
+      return text.replace(trimmed, fixed);
+    }
+
+    if (/^(\\d+(?:\\.\\d+)?)%\\s*left$/i.test(trimmed)) {
+      const fixed = trimmed.replace(/^(\\d+(?:\\.\\d+)?)%\\s*left$/i, (m, pct) => pct + '% 可用');
+      if (stringCache.size < MAX_STRING_CACHE) stringCache.set(trimmed, fixed);
+      return text.replace(trimmed, fixed);
+    }
+    // ===== 自定义补充：AI 点数余额（Available AI Credits: N） =====
+    if (/^Available AI Credits:\\s*(.+)$/i.test(trimmed)) {
+      const fixed = trimmed.replace(/^Available AI Credits:\\s*(.+)$/i, (m, n) => '可用 AI 点数：' + n);
+      if (stringCache.size < MAX_STRING_CACHE) stringCache.set(trimmed, fixed);
+      return text.replace(trimmed, fixed);
+    }
+    // ===== 自定义补充：声音选择弹窗按钮（Use Arlo） =====
+    if (/^Use\\s+([A-Z][A-Za-z0-9-]*)$/.test(trimmed)) {
+      const fixed = trimmed.replace(/^Use\\s+([A-Z][A-Za-z0-9-]*)$/, (m, name) => '使用 ' + name);
+      if (stringCache.size < MAX_STRING_CACHE) stringCache.set(trimmed, fixed);
+      return text.replace(trimmed, fixed);
+    }
+    // ===== 自定义补充：声音弹窗 "Use " + 名字 被拆成两个文本节点 =====
+    if (/^Use$/.test(trimmed)) {
+      const fixed = text.replace(/^(\\s*)Use(\\s*)$/, (m, a, b) => a + '使用' + b);
+      if (stringCache.size < MAX_STRING_CACHE) stringCache.set(trimmed, fixed);
+      return fixed;
+    }
+    // ===== 自定义补充：键盘快捷键提示（Enter Queues after the turn 等） =====
+    if (/^(.+?)\\s+Queues after the turn$/.test(trimmed)) {
+      const fixed = trimmed.replace(/^(.+?)\\s+Queues after the turn$/, (m, key) => key + ' 在当前回合结束后排队');
+      if (stringCache.size < MAX_STRING_CACHE) stringCache.set(trimmed, fixed);
+      return text.replace(trimmed, fixed);
+    }
+
+    if (/^(.+?)\\s+Sends immediately$/.test(trimmed)) {
+      const fixed = trimmed.replace(/^(.+?)\\s+Sends immediately$/, (m, key) => key + ' 立即发送');
+      if (stringCache.size < MAX_STRING_CACHE) stringCache.set(trimmed, fixed);
+      return text.replace(trimmed, fixed);
+    }
+
+    if (/^(.+?)\\s+On empty prompt, sends next in queue$/.test(trimmed)) {
+      const fixed = trimmed.replace(/^(.+?)\\s+On empty prompt, sends next in queue$/, (m, key) => key + ' 输入框为空时，发送队列中的下一条');
+      if (stringCache.size < MAX_STRING_CACHE) stringCache.set(trimmed, fixed);
+      return text.replace(trimmed, fixed);
+    }
+    // ===== 自定义补充：开发者设置 workspaceUri 说明（原文含反引号，用通配匹配） =====
+    if (/^Sets the .workspaceUri. URL parameter and reloads, repointing the active workspace\./.test(trimmed)) {
+      const fixed = '设置 workspaceUri URL 参数并重新加载，从而把当前工作区指向新的位置。可从已有项目中选择文件夹，或输入自定义 URI（例如 file:///path/to/workspace）。';
+      if (stringCache.size < MAX_STRING_CACHE) stringCache.set(trimmed, fixed);
+      return text.replace(trimmed, fixed);
     }
 
         // ===== 2.29.1 对话区选中文本浮动引用按钮（自适应快捷键） =====

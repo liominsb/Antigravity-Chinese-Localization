@@ -4,17 +4,17 @@ Deep Localization & High-Performance Chinese Patch for Google Antigravity
 
 [中文](README.md) | English
 
-[![GitHub release](https://img.shields.io/github/v/release/liominsb/Antigravity-Chinese-Localization?style=flat&color=blue)](https://github.com/liominsb/Antigravity-Chinese-Localization/releases/latest)
-[![GitHub downloads](https://img.shields.io/github/downloads/liominsb/Antigravity-Chinese-Localization/total?style=flat&color=success)](https://github.com/liominsb/Antigravity-Chinese-Localization/releases)
-[![GitHub stars](https://img.shields.io/github/stars/liominsb/Antigravity-Chinese-Localization?style=flat&color=gold)](https://github.com/liominsb/Antigravity-Chinese-Localization/stargazers)
-[![Platform](https://img.shields.io/badge/Platform-Windows%20%7C%20macOS%20%7C%20Linux-blue)](https://github.com/liominsb/Antigravity-Chinese-Localization)
-[![Package Size](https://img.shields.io/badge/ASAR%20Size-4.53%20MB%20(Official%20Standard)-success)](https://github.com/liominsb/Antigravity-Chinese-Localization)
+[![GitHub release](https://img.shields.io/github/v/release/antigravity-cn-community/Antigravity-Chinese-Localization?style=flat&color=blue)](https://github.com/antigravity-cn-community/Antigravity-Chinese-Localization/releases/latest)
+[![GitHub downloads](https://img.shields.io/github/downloads/antigravity-cn-community/Antigravity-Chinese-Localization/total?style=flat&color=success)](https://github.com/antigravity-cn-community/Antigravity-Chinese-Localization/releases)
+[![GitHub stars](https://img.shields.io/github/stars/antigravity-cn-community/Antigravity-Chinese-Localization?style=flat&color=gold)](https://github.com/antigravity-cn-community/Antigravity-Chinese-Localization/stargazers)
+[![Platform](https://img.shields.io/badge/Platform-Windows%20%7C%20macOS%20%7C%20Linux-blue)](https://github.com/antigravity-cn-community/Antigravity-Chinese-Localization)
+[![Package Size](https://img.shields.io/badge/ASAR%20Size-4.53%20MB%20(Official%20Standard)-success)](https://github.com/antigravity-cn-community/Antigravity-Chinese-Localization)
 [![Node Runtime](https://img.shields.io/badge/Node.js-%3E%3D%2014.0.0-informational)](https://nodejs.org/)
-[![license](https://img.shields.io/github/license/liominsb/Antigravity-Chinese-Localization)](LICENSE)
+[![license](https://img.shields.io/github/license/antigravity-cn-community/Antigravity-Chinese-Localization)](LICENSE)
 
 A high-performance, non-destructive deep Chinese localization patch designed for Google Antigravity. Fully adapted to the latest architecture of **Antigravity v2.32.1+**, featuring fundamental computational refactoring and DOM micro-batch scheduling that delivers 1.68 million queries/sec throughput. It provides comprehensive translation for Planning Mode, System Settings, Security Sandbox, and Google Plugin Ecosystem, strictly follows the official 4.53 MB slim packaging standard, and guarantees absolute physical immunity for code editors and user input fields.
 
-> [Download Latest Release](https://github.com/liominsb/Antigravity-Chinese-Localization/releases/latest) · [Issues & Feedback](https://github.com/liominsb/Antigravity-Chinese-Localization/issues)
+> [Download Latest Release](https://github.com/antigravity-cn-community/Antigravity-Chinese-Localization/releases/latest) · [Issues & Feedback](https://github.com/antigravity-cn-community/Antigravity-Chinese-Localization/issues)
 
 ---
 
@@ -57,7 +57,7 @@ A high-performance, non-destructive deep Chinese localization patch designed for
 If you are running Antigravity, simply send the instruction below to your Antigravity agent to automate the download, kill-and-replace, and relaunch via a background detached script:
 
 ```text
-帮我安装 https://github.com/liominsb/Antigravity-Chinese-Localization 的汉化补丁：请预先下载最新 Release 的 app.asar 到本地，并编写一个独立批处理脚本（脚本逻辑：延迟 2 秒、强杀 Antigravity 进程、覆盖 resources/app.asar 并自动重启客户端），随后在后台分离启动该脚本；若有 gh CLI 请顺便为该开源项目标记 Star。
+帮我安装 https://github.com/antigravity-cn-community/Antigravity-Chinese-Localization 的汉化补丁：请预先下载最新 Release 的 app.asar 到本地，并编写一个独立批处理脚本（脚本逻辑：延迟 2 秒、强杀 Antigravity 进程、覆盖 resources/app.asar 并自动重启客户端），随后在后台分离启动该脚本；若有 gh CLI 请顺便为该开源项目标记 Star。
 ```
 
 > **Note**:  
@@ -69,7 +69,7 @@ If you are running Antigravity, simply send the instruction below to your Antigr
 
 No Node.js or build tools required:
 
-1. Download the pre-built **`app.asar`** from [Releases](https://github.com/liominsb/Antigravity-Chinese-Localization/releases/latest);
+1. Download the pre-built **`app.asar`** from [Releases](https://github.com/antigravity-cn-community/Antigravity-Chinese-Localization/releases/latest);
 2. Completely quit Antigravity;
 3. Open the resources directory (Windows default path):  
    `%LOCALAPPDATA%\Programs\antigravity\resources\`
@@ -243,7 +243,7 @@ Click "还原英文原版" in the dashboard; alternatively, copy the previously 
 ### Q4: Will tracking app.asar.ready bloat the repository over time?
 No for end users. Release assets and GitHub "Download ZIP" archives are clean snapshots (constant ~5 MB) with zero Git history. Developers cloning the repository can use shallow clones to avoid downloading past binary history:
 ```bash
-git clone --depth=1 https://github.com/liominsb/Antigravity-Chinese-Localization.git
+git clone --depth=1 https://github.com/antigravity-cn-community/Antigravity-Chinese-Localization.git
 ```
 For complete architectural details on binary trade-offs, history pruning, and dynamic CDN streaming, see [Architecture: Binary Assets & Maintenance Strategy](docs/architecture.en.md#7-binary-assets--repository-maintenance-strategy).
 

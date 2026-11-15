@@ -2008,7 +2008,7 @@
       releaseElement('release-notes').textContent = item ? item.body || '该发布没有填写更新说明。' : '选择版本后查看更新说明。';
       const link = releaseElement('release-detail-link');
       // Only the expected HTTPS release pages can become external links.
-      const validLink = item && /^https:\/\/github\.com\/liominsb\/Antigravity-Chinese-Localization\/releases\//i.test(item.releaseUrl || '');
+      const validLink = item && /^https:\/\/github\.com\/(?:liominsb|antigravity-cn-community)\/Antigravity-Chinese-Localization\/releases\//i.test(item.releaseUrl || '');
       link.hidden = !validLink;
       if (validLink) link.href = item.releaseUrl;
       else link.removeAttribute('href');

@@ -179,7 +179,7 @@ if (markerIndex !== -1) {
 面向通过源码参与贡献或拉取工程的开发者，推荐使用浅克隆（Shallow Clone），直接忽略历史所有大文件 commit：
 ```bash
 # 只克隆最新一次提交，历史体积归零，拉取体积恒定为 ~5 MB
-git clone --depth=1 https://github.com/liominsb/Antigravity-Chinese-Localization.git
+git clone --depth=1 https://github.com/antigravity-cn-community/Antigravity-Chinese-Localization.git
 ```
 若后续需要提交 PR，可通过 `git fetch --unshallow` 按需拉取历史，或直接在浅克隆分支上提交改动。
 

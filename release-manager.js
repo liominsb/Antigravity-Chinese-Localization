@@ -11,7 +11,7 @@ const { Transform, pipeline: streamPipeline } = require('stream');
 const { promisify } = require('util');
 const pipeline = promisify(streamPipeline);
 
-const REPOSITORY = 'liominsb/Antigravity-Chinese-Localization';
+const REPOSITORY = 'antigravity-cn-community/Antigravity-Chinese-Localization';
 const API_ROOT = `https://api.github.com/repos/${REPOSITORY}`;
 const USER_AGENT = 'Antigravity-Chinese-Localization-Console';
 const FILE_NAME = 'app.asar.ready';

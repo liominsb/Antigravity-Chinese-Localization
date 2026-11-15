@@ -8303,7 +8303,7 @@ const server = http.createServer((req, res) => {
   else if (req.url === '/api/check-release' && req.method === 'GET') {
     const options = {
       hostname: 'api.github.com',
-      path: '/repos/liominsb/Antigravity-Chinese-Localization/releases/latest',
+      path: '/repos/antigravity-cn-community/Antigravity-Chinese-Localization/releases/latest',
       headers: {
         'User-Agent': 'Antigravity-Chinese-Localization-Console'
       },

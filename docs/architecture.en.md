@@ -167,7 +167,7 @@ To give end users a seamless out-of-the-box experience without build toolchain p
 Developers contributing or working on source code should use shallow clones to skip large historical blobs:
 ```bash
 # Clone only the latest commit; historical payload drops to zero (~5 MB download)
-git clone --depth=1 https://github.com/liominsb/Antigravity-Chinese-Localization.git
+git clone --depth=1 https://github.com/antigravity-cn-community/Antigravity-Chinese-Localization.git
 ```
 Unshallow can be performed on demand (`git fetch --unshallow`) if full history is ever required.
 

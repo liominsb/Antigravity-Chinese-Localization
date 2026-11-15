@@ -9,7 +9,7 @@ const os = require('os');
 const crypto = require('crypto');
 const { createReleaseManager } = require('../release-manager');
 
-const REPO = 'liominsb/Antigravity-Chinese-Localization';
+const REPO = 'antigravity-cn-community/Antigravity-Chinese-Localization';
 const API = `/repos/${REPO}/releases`;
 const sha256 = bytes => crypto.createHash('sha256').update(bytes).digest('hex');
 

@@ -4,6 +4,24 @@
 
 ---
 
+## v2.32.1.2 (2026-11-16)
+
+### 1. 右键菜单、设置面板、主题配色与模型限额全方位补漏
+- **原生标签页与侧边栏右键菜单补全（40 项）**：在 `ipcHandlers.js` 与 `menu.js` 中补全标签页管理（关闭标签页/其他/左侧/右侧/全部/终端标签页、固定/取消固定、保持打开）、打开方式子菜单、图片/视频保存、评论草稿、分组管理（移动到分组/新建/移除）、快捷键编辑与 `Proceed with Plan` 等 40 项原生右键映射，并支持 `(Default)` ➔ `（默认）` 动态后缀识别。
+- **界面词典与动态正则深度扩充（117 条）**：新增右侧栏「自定义分区 (Customize Sections)」、侧边提问 (Side Questions)、已使用技能、Cookie 与网站数据、浏览器下载、实验性功能声明等百余条设置与面板词条；补齐 `File not found` 文件未找到兜底与 `not found` 大小写匹配；升级模型用量配额正则以兼容带前置模型名的 `Model — 100% · ...` 格式，补充 `Show N more subagents` 动态展开按钮汉化。
+- **外观配色预设双语标识升级**：浅色与深色全部外观主题预设均采用保留社区习惯原名 + 中文意译的双语表达（如 `Catppuccin（猫布奇诺）`、`Everforest（森屿青）`、`Gruvbox Material（复古暖棕）`、`Dracula（德古拉）`、`Monokai（莫奈高彩）`、`Vesper（暮星）` 等），并将深色夜幕预设正式定名为「霓虹夜幕（深靛蓝）」。
+- **首页问候语、第三方模型公告与设置浮层补齐**：包含 PR #57 贡献的 6 类首页问候语模板、第三方模型上下线与订阅范围提示、用量重置倒计时与 AI 点数余额、声音选择描述与确认按钮、排队消息快捷键悬停、设置下拉/开关浮层及 48 条设置长文案（感谢 @angel12538）。
+
+### 2. 官方上游缺陷热修复
+- **左侧栏展开态项目拖拽排序偏移 Bug 热修复**：在前端运行时注入 `setupSidebarProjectDragFix`，修复官方 Antigravity v2.32.1 在折叠/展开文件夹状态下拖拽排序时的坐标测量竞态与首项 `topBound` 锁死问题，不修改官方逻辑源码，安全可逆。
+
+### 3. 开源组织迁移、千星纪念与合规共建
+- **社区组织联合运营与 Discussions 开启**：仓库正式迁入开源社区组织 [`antigravity-cn-community`](https://github.com/antigravity-cn-community/Antigravity-Chinese-Localization) 联合维护，启用 GitHub Discussions 并发布千星里程碑公告与成长曲线；更新双语 `README` 与架构文档。
+- **MIT 共同版权声明确认（PR #58）**：合并原作者 `@liominsb` (`aabbWei`) 确认的 MIT 版权补充声明，正式记录原作者与 `antigravity-cn-community Contributors` 联合版权。
+- **四段点分版本号与全绿门禁**：控制中心与 Release Tag 采用 `v2.32.1.2`（确保旧版 `v2.32.1` 控制中心可自动触发「发现新版」提醒），同时内核 `app.asar.ready` 内部版本维持 `2.32.1` 以严格对齐官方客户端防白屏校验；全工程 **42 组 TDD 回归测试套件 100% ALL GREEN**。
+
+---
+
 ## v2.32.1 (2026-11-14)
 
 ### 1. 全面深度适配 Antigravity v2.32.1 官方大版本与 Remote SSH 子系统

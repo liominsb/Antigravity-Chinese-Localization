@@ -4,6 +4,23 @@ This document tracks all version releases, core architecture adaptations, and fe
 
 ---
 
+## v2.32.1.2 (2026-11-16)
+
+### 1. Context Menus, Settings Copy, Bilingual Themes & Quota Regex Completion
+- **Native Tab & Sidebar Context Menu Completion (40 Items)**: Added 40 native menu items in `ipcHandlers.js` and `menu.js` covering tab management (Close Tab / Others / Left / Right / All / Terminal Tab, Pin/Unpin, Keep Open), Open In submenus, media actions, comment drafts, group management, shortcut actions, and `Proceed with Plan`, plus dynamic `(Default)` ➔ `（默认）` suffix translation.
+- **UI Dictionary & Dynamic Pattern Expansion (117 Entries)**: Covered right-sidebar Customize Sections, Side Questions, Skills Used, Cookies and site data, Browser downloads, experimental feature notices, `Show N more subagents`, case-insensitive `not found` / `File not found` guard, and upgraded quota regex to support model-prefixed strings (`Model — 100% · ...`).
+- **Bilingual Theme Preset Labels**: Upgraded all light and dark theme preset options to bilingual palette labels preserving recognizable names (e.g., `Catppuccin（猫布奇诺）`, `Everforest（森屿青）`, `Gruvbox Material（复古暖棕）`, `Dracula（德古拉）`, `Monokai（莫奈高彩）`, `Vesper（暮星）`) alongside `霓虹夜幕（深靛蓝）`.
+- **Home Greetings, Model Notices & Settings Overlays**: Bundles PR #57 (6 home greeting templates, third-party model launch/deprecation notices with localized Chinese dates, quota countdowns, AI credit balances, voice picker copy, queued message shortcut tooltips, and 48 detailed settings items; thanks to @angel12538).
+
+### 2. Upstream Bug Hot-Fix
+- **Sidebar Project Drag Offset Hot-Fix**: Injected `setupSidebarProjectDragFix` in the runtime layer to fix upstream Antigravity v2.32.1 measurement race conditions and first-item `topBound` lockup when dragging projects with expanded folders.
+
+### 3. Community Governance, 1,000-Star Milestone & Test Safeguards
+- **Community Org Migration & GitHub Discussions**: Transitioned repository maintenance to [`antigravity-cn-community`](https://github.com/antigravity-cn-community/Antigravity-Chinese-Localization), enabled Discussions, refreshed bilingual READMEs with the 1,000-Star growth chart, and merged PR #58 (cumulative MIT copyright notice confirmed by original creator `@liominsb`).
+- **4-Segment Update Tag & All-Green Gate**: Uses `v2.32.1.2` for the control center and Release tag so existing `v2.32.1` control centers automatically detect the update, while keeping the internal `app.asar.ready` package version at `2.32.1` for strict compatibility with upstream `auto-restore` checks; all **42 TDD test suites 100% ALL GREEN**.
+
+---
+
 ## v2.32.1 (2026-11-14)
 
 ### 1. Seamless Adaptation to Official Antigravity v2.32.1 & Remote SSH Subsystem

@@ -15,6 +15,7 @@ const {
 } = require('./auto-restore');
 
 const CURRENT_VERSION = '2.32.1';
+const RELEASE_VERSION = '2.32.1.2'; // 补丁发版追踪号；CURRENT_VERSION 保持与目标客户端及 app.asar.ready 一致
 
 function compareVersions(v1, v2) {
   const parse = (v) => (v || '').replace(/^[vV]/, '').split('.').map(n => parseInt(n, 10) || 0);
@@ -8699,7 +8700,7 @@ const server = http.createServer((req, res) => {
             const release = JSON.parse(data);
             const latestTag = release.tag_name || '';
             const cleanLatest = latestTag.replace(/^[vV]/, '');
-            const hasUpdate = compareVersions(cleanLatest, CURRENT_VERSION) > 0;
+            const hasUpdate = compareVersions(cleanLatest, RELEASE_VERSION) > 0;
             res.writeHead(200, { 'Content-Type': 'application/json; charset=utf-8' });
             res.end(JSON.stringify({
               success: true,

@@ -134,12 +134,12 @@ To prevent password managers (1Password, Bitwarden, etc.) from falsely recognizi
 
 ## 6. Package Slimming & Upgrades
 
-### 1. 4.53 MB Official Size Guarantee
-Native modules like `chrome-devtools-mcp` (17 MB) reside in `resources/app.asar.unpacked/`. Packing rules must explicitly decouple them:
+### 1. Official Slim Size Guarantee (4.53 MB on v2.12.0 / ~6.3 MB on v2.32.1)
+Native modules like `chrome-devtools-mcp` reside in `resources/app.asar.unpacked/`. Packing rules must explicitly decouple them:
 ```bash
 npx --yes asar pack "<extract_dir>" "<output_asar>" --unpack-dir "**/chrome-devtools-mcp/**"
 ```
-This restores package size strictly to **4.53 MB**.
+This prevents 21MB+ bundle bloat and keeps `app.asar` strictly aligned with each upstream version's official distribution size (4.53 MB on v2.12.0, ~6.3 MB on v2.32.1).
 
 ### 2. `injectOrUpdate` Seamless Upgrades
 Truncates legacy injection blocks cleanly and writes the updated engine payload, ensuring smooth upgrades without manual cleanups.

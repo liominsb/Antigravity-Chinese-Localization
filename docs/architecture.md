@@ -136,13 +136,13 @@
 
 ## 六、打包瘦身与热升级机制 (Packaging & Upgrades)
 
-### 1. 4.53 MB 官方基准瘦身原理
-官方 Antigravity 在打包时将 `chrome-devtools-mcp` 等体积达 17MB 的原生依赖模块存放在 `resources/app.asar.unpacked/` 中。若重新打包时不加过滤，打包工具会将外置文件冗余压缩进 `app.asar` 导致体积膨胀至 21.4MB。  
+### 1. 官方基准瘦身原理（v2.12.0 基线 4.53 MB / v2.32.1 约 6.3 MB）
+官方 Antigravity 在打包时将 `chrome-devtools-mcp` 等原生依赖模块存放在 `resources/app.asar.unpacked/` 中。若重新打包时不加过滤，打包工具会将外置文件冗余压缩进 `app.asar` 导致体积大幅膨胀至 21MB+。  
 本项目在重打包命令中严谨注入：
 ```bash
 npx --yes asar pack "<extract_dir>" "<output_asar>" --unpack-dir "**/chrome-devtools-mcp/**"
 ```
-保持外置目录解耦，使输出的 `app.asar` 物理体积精准维持在官方标准的 **4.53 MB**。
+保持外置目录解耦，使输出的 `app.asar` 物理体积严格对齐各版本的官方原生轻量基准（v2.12.0 基线 4.53 MB，当前 v2.32.1 约 6.3 MB）。
 
 ### 2. `injectOrUpdate` 平滑升级机制
 摒弃检测到标记即跳过的旧版逻辑，采用正确定位与截断技术：

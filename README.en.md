@@ -7,14 +7,15 @@ Deep Localization & High-Performance Chinese Patch for Google Antigravity
 [![GitHub release](https://img.shields.io/github/v/release/antigravity-cn-community/Antigravity-Chinese-Localization?style=flat&color=blue)](https://github.com/antigravity-cn-community/Antigravity-Chinese-Localization/releases/latest)
 [![GitHub downloads](https://img.shields.io/github/downloads/antigravity-cn-community/Antigravity-Chinese-Localization/total?style=flat&color=success)](https://github.com/antigravity-cn-community/Antigravity-Chinese-Localization/releases)
 [![GitHub stars](https://img.shields.io/github/stars/antigravity-cn-community/Antigravity-Chinese-Localization?style=flat&color=gold)](https://github.com/antigravity-cn-community/Antigravity-Chinese-Localization/stargazers)
+[![GitHub Discussions](https://img.shields.io/github/discussions/antigravity-cn-community/Antigravity-Chinese-Localization?style=flat&color=purple)](https://github.com/antigravity-cn-community/Antigravity-Chinese-Localization/discussions)
 [![Platform](https://img.shields.io/badge/Platform-Windows%20%7C%20macOS%20%7C%20Linux-blue)](https://github.com/antigravity-cn-community/Antigravity-Chinese-Localization)
-[![Package Size](https://img.shields.io/badge/ASAR%20Size-4.53%20MB%20(Official%20Standard)-success)](https://github.com/antigravity-cn-community/Antigravity-Chinese-Localization)
+[![Package Size](https://img.shields.io/badge/ASAR%20Size-~6.3%20MB%20(Official%20Slim)-success)](https://github.com/antigravity-cn-community/Antigravity-Chinese-Localization)
 [![Node Runtime](https://img.shields.io/badge/Node.js-%3E%3D%2014.0.0-informational)](https://nodejs.org/)
 [![license](https://img.shields.io/github/license/antigravity-cn-community/Antigravity-Chinese-Localization)](LICENSE)
 
-A high-performance, non-destructive deep Chinese localization patch designed for Google Antigravity. Fully adapted to the latest architecture of **Antigravity v2.32.1+**, featuring fundamental computational refactoring and DOM micro-batch scheduling that delivers 1.68 million queries/sec throughput. It provides comprehensive translation for Planning Mode, System Settings, Security Sandbox, and Google Plugin Ecosystem, strictly follows the official 4.53 MB slim packaging standard, and guarantees absolute physical immunity for code editors and user input fields.
+A high-performance, non-destructive deep Chinese localization patch designed for Google Antigravity, now co-maintained under the open-source organization **[`antigravity-cn-community`](https://github.com/antigravity-cn-community/Antigravity-Chinese-Localization)**. Fully adapted to the latest architecture of **Antigravity v2.32.1+**, featuring fundamental computational refactoring and DOM micro-batch scheduling that delivers 1.68 million queries/sec throughput. It provides comprehensive localization for Planning Mode, System Settings, Security Sandbox, Remote SSH subsystem, and the Google Plugin Ecosystem, strictly aligns with the official slim packaging spec (~6.3 MB for v2.32.1), and guarantees absolute physical immunity for code editors and user input fields.
 
-> [Download Latest Release](https://github.com/antigravity-cn-community/Antigravity-Chinese-Localization/releases/latest) · [Issues & Feedback](https://github.com/antigravity-cn-community/Antigravity-Chinese-Localization/issues)
+> [Download Latest Release](https://github.com/antigravity-cn-community/Antigravity-Chinese-Localization/releases/latest) · [Discussions & 1K Stars Milestone](https://github.com/antigravity-cn-community/Antigravity-Chinese-Localization/discussions) · [Issues & Feedback](https://github.com/antigravity-cn-community/Antigravity-Chinese-Localization/issues)
 
 ---
 
@@ -25,17 +26,17 @@ A high-performance, non-destructive deep Chinese localization patch designed for
 | Core Module | Coverage Depth & Metrics | Translation Scope & Value |
 | :--- | :--- | :--- |
 | **Planning Mode** | Full Lifecycle Closed-Loop | Translates Planning Mode toggles, Implementation Plans, Walkthrough reviews, Approval prompts, Open Questions, Proposed Changes, Automated Tests, and Manual Verification workflows. |
-| **System Settings** | 150+ Configuration Items | Translates Appearance (Light/Dark/System), Conversation Width, Keep-awake, Background Running, Auto Updates, Command Approval Policies (Always Run/Review/Strict/Turbo), Storage and Cache Maintenance. |
-| **Security & Sandbox** | Granular Policy Engine | Fully adapted to 2.14.0 Global Permissions and Inherit Global architecture; translates Terminal Sandbox, confirmation rules, workspace file access (Allow/Ask/Deny), network policies, and domain/command whitelists. |
-| **Split & Fork Collaboration** | Native Menu + DOM Cascades | Comprehensive coverage of left sidebar split views (Split Right/Down, Equalize Panes, Split Diff), Conversation Forking, and Group Management (New/Move/Rename/Delete) menus. |
-| **Side Questions & VCS** | 2.13.0+ Deep Adaptation | Deeply translates Side Question / Questionnaire interactions (question cards, response choices, minimized counter), Git Amend full workflow, and Sidebar Hover Cards. |
-| **Plugins & Remote Ecosystem** | Full Lifecycle Ecosystem | Translates Plugin Center operations (Install/Uninstall/Enable/Disable), Component badges (Skills/Rules/MCP/Hooks), and Remote Control cross-device flow modals. |
+| **System Settings** | 200+ Configuration Items | Translates Appearance & theme presets (with bilingual palette labels), Conversation Width, Keep-awake, Background Running, Auto Updates, Permission Sandbox, and Model Quota cards. |
+| **Security & Sandbox** | Granular Policy Engine | Adapted to Global, Cloud, and Project-inherited Permissions; translates Terminal Sandbox, confirmation rules, workspace file access (Allow/Ask/Deny), network policies, and domain/command whitelists. |
+| **Split, Drag & Collaboration** | Native Menu + DOM Cascades | Covers sidebar/panel splits, native tab context menus (Close Tab / Others / Left / Right), Conversation Forking, Group Management, and hot-fixes the upstream expanded-folder project drag offset bug. |
+| **Side Questions & VCS** | Full-Scenario Adaptation | Deeply translates Side Questions, Customize Sections, Remote SSH lifecycle & credential prompts, Git Amend workflow, and Sidebar Hover Cards. |
+| **Plugins & Remote Ecosystem** | Full Lifecycle Ecosystem | Translates Plugin Center operations (Install/Uninstall/Enable/Disable), Component badges (Skills/Rules/MCP/Hooks), Marketplace listings, and Remote Control cross-device flow modals. |
 
 ### 2. Developer Ergonomics & Physical Sandbox Guard
 
 | Core Strategy | Guard Mechanism | Developer Protection & Value |
 | :--- | :--- | :--- |
-| **Native Model & Thinking Display** | 100% Native English Retained | Strictly adheres to developer ergonomics: Model selector dropdowns (Gemini 3.8 / Claude 3.7) and Thinking/Thought processes strictly retain native English, eliminating confusion caused by machine translation. |
+| **Native Model & Thinking Display** | 100% Native English Retained | Strictly adheres to developer ergonomics: Model names (Gemini 4 / Gemini 3.8 / Claude) and Thinking/Thought processes retain native English, eliminating confusion caused by machine translation. |
 | **Physical Code & Input Immunity** | Shadow DOM Penetration | Actively protects `INPUT`, `TEXTAREA`, rich text editors, Monaco Code Editor, Diff views, and user message bubbles with absolute physical isolation, guaranteeing zero tampering with prompts and source code. |
 | **Lossless Backup & Self-Healing** | Instant Bidirectional Switch | Automatically creates `app.asar.bak` on first run, enabling instant one-click rollback to pristine English via the dashboard's "Restore English" action, or by copying the backup over `app.asar`, at any time. |
 
@@ -44,9 +45,9 @@ A high-performance, non-destructive deep Chinese localization patch designed for
 | Engineering Dimension | Performance & Standards | Implementation Details |
 | :--- | :--- | :--- |
 | **High Throughput & Frame Rate** | Over 1.68 Million QPS | Leverages precompiled $O(1)$ Hash Map, ASCII short-circuit, unified regex stream scanning, DOM ancestor pruning, and microtask frame aggregation to ensure buttery-smooth 60fps/120fps operation. |
-| **Slim Packaging Standards** | Aligned with 4.53 ~ 4.66 MB | Uses `--unpack-dir` to exclude redundant external Node modules, completely eliminating legacy 14MB+ package bloat and matching official distribution size. |
+| **Slim Packaging Standards** | Aligned with Official Spec (~6.3 MB) | Uses `--unpack-dir` to exclude redundant external Node modules, completely eliminating legacy 14MB–21MB package bloat and matching official distribution size. |
 | **Lifecycle Self-Healing & Hot Updates** | `injectOrUpdate` Truncation Logic | Overcomes legacy limitations where existing markers prevented updates; supports hot file replacement and instantaneous `Ctrl + R` reload across versions. |
-| **TDD Automated Test Gate** | 215+ Test Cases 100% PASS | Robust test matrix (Ticket-06 through Ticket-09) coupled with strict `node --check` AST syntax verification across 37 core JavaScript files, preventing runtime crashes. |
+| **TDD Automated Test Gate** | 42 Test Suites ALL GREEN | Comprehensive regression matrix (`Ticket-01` through `Ticket-38`) covering dictionary deduplication, native menus, AST syntax checks, file/process safety, and streaming release installer guards. |
 
 ---
 
@@ -211,12 +212,11 @@ Detailed architectural designs, benchmarks (1.68M qps), and engineering practice
 
 For detailed release notes, new feature adaptations, and architectural evolution history across all versions, please refer to the dedicated [CHANGELOG.en.md](CHANGELOG.en.md) (or [Chinese CHANGELOG.md](CHANGELOG.md)):
 
-- **[v2.15.1](CHANGELOG.en.md#v2151-2026-09-21)** (2026-09-21): Comprehensive adaptation to Antigravity v2.15.1 architecture; left sidebar Pinned Conversations & group headers localization; 100% TDD test suite (305 tests) and 37 dist JS AST static syntax check gates passed.
-- **[v2.15.0](CHANGELOG.en.md#v2150-2026-09-19)** (2026-09-19): Comprehensive adaptation to Antigravity v2.15.0 architecture; custom agent default prompt & tools controls localization; project picker unbound state & invalid tool call prompt optimizations; 100% TDD test suite (239 tests) and 37 dist JS AST static syntax check gates passed.
-- **[v2.14.0](CHANGELOG.en.md#v2140-2026-09-16)** (2026-09-16): Comprehensive adaptation to Antigravity v2.14.0 architecture; version metadata and dependencies seamless upgrade; 100% TDD test suite and 37 dist JS AST static syntax check gates passed.
-- **[v2.13.0](CHANGELOG.en.md#v2130-2026-09-13)** (2026-09-13): Comprehensive adaptation to Antigravity v2.13.0 architecture; in-depth localization for Side Question & Questionnaire system; full-flow localization for Source Control Git Amend; General Settings Advanced area reorganization; Artifact and table width customization; Windows UAC elevation flow; natural language plugin builder; Split, Fork, and Conversation Group cascade menus full localization and native menu parsing hardening.
-- **[v2.12.2](CHANGELOG.en.md#v2122-2026-09-08)** (2026-09-08): Comprehensive v2.12.2 adaptation; Slash Commands & floating cards full localization; Context Mention (@ Mention) menu localization and parameter protection; General Settings in-depth completion; native application menu & sidebar history hover cards dynamic timestamps and multi-state indicators.
-- **[v2.12.0.1](CHANGELOG.en.md#v21201-2026-09-04)** (2026-09-04): Thinking Process physical containment against token mistranslation; dynamic regex escaping distortion corrections; dashboard light/dark theme toggle, online release check, and one-click cache cleaning.
+- **[v2.32.1](CHANGELOG.en.md#v2321-2026-11-14)** (2026-11-14 & follow-up patches): Comprehensive adaptation to Antigravity v2.32.1 and Remote SSH subsystem; added native tab context menu items (Close Tab / Others / Left / Right), right-sidebar Customize Sections, Settings copy gap-fill, model-prefixed quota regex, bilingual theme presets, `File not found` guard, and `setupSidebarProjectDragFix` hot-fix for the upstream sidebar project drag offset bug.
+- **[v2.31.2](CHANGELOG.en.md#v2312-2026-11-12)** (2026-11-12): Adapted v2.31.2 maintenance release; added macOS one-click `一键更新汉化.command` launcher with hardened version validation; refined browser, override scope, and deletion dialog translations.
+- **[v2.31.0](CHANGELOG.en.md#v2310-2026-11-10)** (2026-11-10): Comprehensive adaptation to Antigravity v2.31.0 major release with 50+ native patch points verified across the full test suite.
+- **[v2.30.0](CHANGELOG.en.md#v2300-2026-11-10)** (2026-11-10): Adapted 20 new upstream native modules and plugin sidebar integrations, plus expanded Settings and execution policy localization.
+- **[v2.29.1](CHANGELOG.en.md#v2291-2026-11-08)** (2026-11-08): Full Marketplace plugin catalog & detail page localization alongside cascading native context submenu completions.
 
 > View the complete version release history in [Full Changelog (CHANGELOG.en.md)](CHANGELOG.en.md).
 
@@ -241,7 +241,7 @@ Click "还原英文原版" in the dashboard; alternatively, copy the previously 
 > Make sure Antigravity is fully closed before copying, otherwise the file may be locked. Keeping a copy of `app.asar.bak` also lets you re-localize later.
 
 ### Q4: Will tracking app.asar.ready bloat the repository over time?
-No for end users. Release assets and GitHub "Download ZIP" archives are clean snapshots (constant ~5 MB) with zero Git history. Developers cloning the repository can use shallow clones to avoid downloading past binary history:
+No for end users. Release assets and GitHub "Download ZIP" archives are clean snapshots (~6.3 MB currently) with zero Git history. Developers cloning the repository can use shallow clones to avoid downloading past binary history:
 ```bash
 git clone --depth=1 https://github.com/antigravity-cn-community/Antigravity-Chinese-Localization.git
 ```
@@ -249,16 +249,31 @@ For complete architectural details on binary trade-offs, history pruning, and dy
 
 ---
 
+## 1,000+ Stars Milestone & Growth History
+
+> **November 16, 2026 at 13:25 CST**: This project officially crossed **1,000 Stars** (175 days after its first star on May 25, 2026) and is now co-maintained under **[`antigravity-cn-community`](https://github.com/antigravity-cn-community/Antigravity-Chinese-Localization)**! Join the conversation and check milestones in [GitHub Discussions](https://github.com/antigravity-cn-community/Antigravity-Chinese-Localization/discussions).
+
+![Antigravity-Chinese-Localization 1,000+ Stars Milestone Growth Curve](docs/star_history_light.png)
+
+> Vector chart archive: [docs/star_history_light.svg](docs/star_history_light.svg) · Full timestamp dataset: [docs/stargazers.json](docs/stargazers.json)
+
+---
+
 ## Contributors & Open Source Collaboration
 
 | Contributor | Role & Contributions |
 | :--- | :--- |
-| [liominsb](https://github.com/liominsb) | Original project creator, built the initial Electron asar injection and Web dashboard architecture |
-| [LAN-TINA-WS](https://github.com/LAN-TINA-WS) | v2.12.0+ deep refactoring, computational & DOM scheduling performance leap (1.68M/s), 4.53MB slimming fix, hot-upgrade engine, lifecycle & slice auto-stitching, comprehensive Settings/Plugins dictionary expansion, and standalone maintenance |
+| [liominsb](https://github.com/liominsb) | Original project creator, built the initial Electron asar injection and Web dashboard architecture, and initiated the community organization transition |
+| [LAN-TINA-WS](https://github.com/LAN-TINA-WS) | Community co-maintainer, v2.12.0+ deep refactoring, 1.68M QPS engine optimization, slimming & hot-upgrade mechanism, extensive Settings/Plugins dictionary expansion, and ongoing v2.32.1 maintenance |
 | [Justin-Mai](https://github.com/Justin-Mai) | 2.0 Web dashboard architecture upgrade, multi-user/custom path support, heartbeat self-healing, code preview & diff isolation mechanisms |
-| [songxitao](https://github.com/songxitao) | v2.10.0+ deep adaptation, 3-layer DOM physical isolation defense (eliminating Project directory mistranslation), Markdown & code area anti-pollution, and full TDD automated test suite construction |
+| [songxitao](https://github.com/songxitao) | v2.10.0+ deep adaptation, 3-layer DOM physical isolation defense, Markdown & code area anti-pollution, and full TDD automated test suite construction |
+| [angel12538](https://github.com/angel12538) | Dynamic home greeting, third-party model notices, quota reset countdowns, settings descriptions & Ticket-37/38 test coverage |
+| [mojingjing-git](https://github.com/mojingjing-git) | Comprehensive v2.26.0–v2.29.0 upstream version adaptations, missing UI copy coverage, and version assertion fixes |
+| [mutezebra](https://github.com/mutezebra) | macOS one-click `一键更新汉化.command` offline restore launcher and hardened version mismatch validation |
+| [501Ranger](https://github.com/501Ranger) | Linux/Ubuntu platform adaptation and legacy Node.js compatibility support |
+| [shixiaogaoya](https://github.com/shixiaogaoya) | Early dictionary expansion and duplicate-injection crash fix |
 
-- **Contributions**: Pull Requests and Issues reporting untranslated strings are welcome.
+- **Contributions**: Pull Requests, feedback in [Discussions](https://github.com/antigravity-cn-community/Antigravity-Chinese-Localization/discussions), and Issues reporting untranslated UI strings are welcome.
 
 ---
 

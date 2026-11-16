@@ -5003,6 +5003,130 @@ electron_1.contextBridge.exposeInMainWorld('wizardAPI', wizardAPI);
     "Pin / Unpin Conversation": "置顶 / 取消置顶对话",
     "Pin Conversation": "置顶对话",
     "Unpin Conversation": "取消置顶对话",
+
+    // ===== 自定义补充：右下角新模型发布弹窗公告（服务端下发） =====
+    "Introducing Gemini 4 Hydrogen": "全新推出 Gemini 4 Hydrogen",
+    "Our daily driver for rapid coding and dependable agentic execution!": "我们的日常主力模型，兼顾快速编码与可靠的智能体执行！",
+    "Our daily driver for rapid coding and dependable agentic execution": "我们的日常主力模型，兼顾快速编码与可靠的智能体执行",
+
+    // ===== 自定义补充：右侧边栏、文件查看器、预设主题与设置页查漏补齐 =====
+    "Customize Sections": "自定义分区",
+    "Side Questions": "侧边提问",
+    "Skills Used": "已使用的技能",
+    "Active Goal": "当前目标",
+    "Search or enter a URL": "搜索或输入 URL",
+    "Search tabs, files and more": "搜索标签页、文件及更多内容",
+    "Keep Open": "保持打开",
+    "File not found": "文件未找到",
+    "Failed to read file content": "读取文件内容失败",
+    "Failed to reveal file in native file manager": "无法在系统文件管理器中显示文件",
+    "Configure what the agent can do in local and remote conversations.": "配置智能体在本地和远程对话中的操作权限。",
+    "Configure allowed and denied URLs for the browser subagent. It runs in the built-in browser, so no separate browser install is needed.": "配置浏览器子智能体允许和拒绝访问的 URL。它在内置浏览器中运行，无需单独安装浏览器。",
+    "Clear visited URLs and autocomplete suggestions from side panel preview.": "清除侧边栏预览中的已访问 URL 和自动补全建议。",
+    "Modify permissions for file and terminal tools.": "修改文件与终端工具的权限。",
+    "Modify permissions for file, terminal, and MCP tools.": "修改文件、终端以及 MCP 工具的权限。",
+    "Legacy Light": "经典浅色",
+    "Legacy Dark": "经典深色",
+    "Solarized Dark": "Solarized 深色",
+    "Send a message in the main conversation first to start a side question": "请先在主对话中发送一条消息，然后再发起侧边提问",
+    "Delete Side Question": "删除侧边提问",
+    "Failed to delete side question": "删除侧边提问失败",
+    "Are you sure you want to delete this side question? This action cannot be undone.": "确定要删除此侧边提问吗？此操作无法撤销。",
+    "No background tasks": "暂无后台任务",
+    "No subagents": "暂无子智能体",
+    "Blocked, needs input": "已受阻，需要输入",
+    "Needs attention": "需要关注",
+    "Cancel Task": "取消任务",
+    "Toggle checkerboard background": "切换棋盘格背景",
+    "Zoom in": "放大",
+    "Zoom out": "缩小",
+    "Annotate": "标注",
+    "Pan": "平移",
+    "Grid": "网格",
+    "Invalid notebook JSON.": "无效的 Notebook JSON。",
+    "No notebook cells were found.": "未找到 Notebook 单元格。",
+    "This notebook has no renderable cells.": "此 Notebook 没有可渲染的单元格。",
+    "Notebook cell output": "Notebook 单元格输出",
+    "Resume environment": "恢复环境",
+    "Cloud Permissions": "云端权限",
+    "Global Permissions": "全局权限",
+    "Blocked by organization policy": "已被组织策略阻止",
+    "Terminal sandbox is not supported in this environment": "当前环境不支持终端沙盒",
+    "Start without a workspace, for general questions.": "无工作区启动，适用于常规提问。",
+    "Create a new workspace from your first message.": "根据你的第一条消息创建新工作区。",
+    "Reuse your last workspace.": "复用你上次使用的工作区。",
+    "Last Workspace": "上次使用的工作区",
+    "Click to enable tool": "点击启用工具",
+    "Click to disable tool": "点击禁用工具",
+    "Could not determine MCP config file path": "无法确定 MCP 配置文件路径",
+    "Failed to open MCP config file": "打开 MCP 配置文件失败",
+    "No method available to open MCP config file": "没有可用于打开 MCP 配置文件的方式",
+    "Plugin operations are not supported in this environment.": "当前环境不支持插件操作。",
+    "No Plugins Available": "暂无可用插件",
+    "No description available.": "暂无描述。",
+    "Unknown Server": "未知服务器",
+    "Unknown error": "未知错误",
+    "Dismiss error": "忽略错误",
+    "Side Panel": "侧边栏",
+    "Side Panel Preview": "侧边栏预览",
+    "Bottom Panel": "底部面板",
+    "Middle Click": "鼠标中键点击",
+    "Queued Messages": "排队消息",
+    "Your Plan": "当前方案",
+    "Choose a Subscription": "选择订阅方案",
+    "Use Antigravity through your Gemini subscription.": "通过你的 Gemini 订阅使用 Antigravity。",
+    "Pay only for the tokens you use, billed through Gemini platform.": "仅按实际使用的 Token 付费，通过 Gemini 平台计费。",
+    "For Antigravity Business consumption options, see": "有关 Antigravity 商业版消费选项，请参阅",
+    "Delete All Data": "删除所有数据",
+    "Delete all": "全部删除",
+    "Console Telemetry": "控制台遥测",
+    "Custom Flags": "自定义标志",
+    "Custom flag to turn on": "要开启的自定义标志",
+    "No custom flag matches your search.": "没有匹配搜索条件的自定义标志。",
+    "This client was started with no custom flags.": "此客户端启动时未带有任何自定义标志。",
+    "Reset overrides": "重置覆盖项",
+    "Reset all shortcuts to defaults": "将所有快捷键重置为默认值",
+    "No keyboard shortcuts found matching your filter.": "未找到匹配筛选条件的键盘快捷键。",
+    "Keyboard shortcuts": "键盘快捷键",
+    "Press keys...": "请按下按键...",
+    "This shortcut is reserved by browser tabs and may not trigger in Web mode. It works in the Desktop Hub or installed PWA.": "此快捷键已被浏览器标签页保留，在网页模式下可能无法触发。它在桌面客户端或已安装的 PWA 中可正常工作。",
+    "Running (Dev only)": "运行中（仅开发者）",
+    "Nothing is running right now": "当前没有正在运行的任务",
+    "Running processes are killed. This cannot be undone.": "正在运行的进程将被终止。此操作无法撤销。",
+    "Still running": "仍在运行",
+    "Invite a Friend": "邀请好友",
+    "Privacy Settings": "隐私设置",
+    "System Settings": "系统设置",
+    "Chime volume": "提示音音量",
+    "Voice volume": "语音音量",
+    "Voice engine address": "语音引擎地址",
+    "Allow microphone access to start Voice": "允许麦克风访问权限以启动语音模式",
+    "Microphone blocked": "麦克风已被阻止",
+    "Microphone blocked in browser site settings.": "麦克风在浏览器站点设置中已被阻止。",
+    "Microphone blocked in system settings.": "麦克风在系统设置中已被阻止。",
+    "Microphone is in use or unavailable.": "麦克风正在使用中或不可用。",
+    "No microphone found. Connect one.": "未检测到麦克风，请连接麦克风。",
+    "No recordings": "暂无录音",
+    "Your sign-in needs an update. Sign in again to use Voice.": "你的登录状态需要更新。请重新登录以使用语音功能。",
+    "Customization token budget exceeded. Large customizations are excluded from context.": "自定义项 Token 额度已超限。大型自定义项已被排除在上下文之外。",
+    "Rules token budget exceeded. Large rules are demoted to path pointers.": "规则 Token 额度已超限。大型规则已降级为路径指针。",
+    "Rules and customization token budgets exceeded. Large rules are demoted to path pointers and large customizations are excluded from context.": "规则与自定义项 Token 额度均已超限。大型规则已降级为路径指针，大型自定义项已被排除在上下文之外。",
+    "No token data available.": "暂无 Token 数据。",
+    "No matching project folders. Apply to use the custom URI.": "没有匹配的项目文件夹。点击应用以使用自定义 URI。",
+    "These settings can only be changed on the computer running the app, not from a remote session.": "这些设置只能在运行该应用的本机上更改，无法在远程会话中修改。",
+    "The app is currently connected to a WSL distro. Reopening locally relaunches it directly on Windows.": "应用当前已连接到 WSL 发行版。在本地重新打开将直接在 Windows 上重启应用。",
+    "The browser subagent has been disabled by your administrator. Contact your administrator to enable browser use.": "浏览器子智能体已被管理员禁用。请联系管理员以启用浏览器功能。",
+    "Setup script ran successfully.": "初始化脚本运行成功。",
+    "Setup script failed.": "初始化脚本运行失败。",
+    "Validation timed out.": "验证超时。",
+    "Signing Out...": "正在退出登录...",
+    "Something went wrong": "出错了",
+    "Path copied!": "路径已复制！",
+    "Download files": "下载文件",
+    "Enter target...": "输入目标...",
+    "Enter your feedback here...": "在此输入你的反馈...",
+    "Unnamed rule": "未命名规则",
+    "Untitled project": "未命名项目",
   };
 
   const coreWords = {
@@ -5129,6 +5253,15 @@ electron_1.contextBridge.exposeInMainWorld('wizardAPI', wizardAPI);
           return idx ? (year + ' 年 ' + idx + ' 月 ' + day + ' 日') : d;
         });
         return model + ' 将于 ' + cn + '从 Antigravity 移除。';
+      });
+      if (stringCache.size < MAX_STRING_CACHE) stringCache.set(trimmed, fixed);
+      return text.replace(trimmed, fixed);
+    }
+
+    // ===== 自定义补充：新模型发布弹窗公告（Introducing Gemini 4 Hydrogen 等） =====
+    if (/^Introducing\s+((?:Gemini|Claude|GPT|Gemma|Veo|Imagen)(?:\s+[A-Za-z0-9._-]+){1,5})([!.]?)$/i.test(trimmed)) {
+      const fixed = trimmed.replace(/^Introducing\s+((?:Gemini|Claude|GPT|Gemma|Veo|Imagen)(?:\s+[A-Za-z0-9._-]+){1,5})([!.]?)$/i, (_m, model, punc) => {
+        return '全新推出 ' + model + (punc === '!' ? '！' : '');
       });
       if (stringCache.size < MAX_STRING_CACHE) stringCache.set(trimmed, fixed);
       return text.replace(trimmed, fixed);
@@ -6348,6 +6481,33 @@ electron_1.contextBridge.exposeInMainWorld('wizardAPI', wizardAPI);
       isDynamic = true;
     }
 
+    // 模型/分组专属限额标题动态匹配 (例如 "Gemini 4 Argon Weekly Limit", "Gemini 4 Hydrogen 5-Hour Limit", "Claude Opus 5.5 Weekly Limit Remaining")
+    if (/^(.+?)\s+(Weekly|Five[- ]Hour|5[- ]Hour|\d+[- ]?Hour|\d+h|Hourly|Daily|Monthly)\s+Limit(\s+Remaining)?$/i.test(trimmed)) {
+      dynamicMatch = trimmed.replace(/^(.+?)\s+(Weekly|Five[- ]Hour|5[- ]Hour|(\d+)[- ]?Hour|(\d+)h|Hourly|Daily|Monthly)\s+Limit(\s+Remaining)?$/i, (_m, prefix, period, h1, h2, rem) => {
+        const pLower = period.toLowerCase();
+        let periodCn = '每周限额';
+        if (pLower.includes('five') || pLower === '5-hour' || pLower === '5 hour' || pLower === '5h') periodCn = '5 小时限额';
+        else if (h1 || h2) periodCn = (h1 || h2) + ' 小时限额';
+        else if (pLower.includes('hourly')) periodCn = '每小时限额';
+        else if (pLower.includes('daily')) periodCn = '每日限额';
+        else if (pLower.includes('monthly')) periodCn = '每月限额';
+        const prefixTrim = prefix.trim();
+        const prefixCn = dictionary[prefixTrim] || lowerDictionary.get(prefixTrim.toLowerCase()) || prefixTrim;
+        return prefixCn + ' ' + periodCn + (rem ? '剩余' : '');
+      });
+      isDynamic = true;
+    }
+
+    // 侧边栏子智能体折叠按钮动态匹配 ("Show N more subagent(s)" / "Show less")
+    if (/^Show\s+(\d+)\s+more\s+subagents?$/i.test(trimmed)) {
+      dynamicMatch = trimmed.replace(/^Show\s+(\d+)\s+more\s+subagents?$/i, '显示其余 $1 个子智能体');
+      isDynamic = true;
+    }
+    if (/^Show\s+less$/i.test(trimmed)) {
+      dynamicMatch = '收起';
+      isDynamic = true;
+    }
+
     // 配额提示句 (含动态天数/小时/分钟，支持全英或半中文状态下自愈清洗)
     if (/(?:You have used some of your|您已使用了部分).*(?:limit|限额)/i.test(trimmed)) {
       dynamicMatch = dynamicMatch
@@ -6609,6 +6769,7 @@ electron_1.contextBridge.exposeInMainWorld('wizardAPI', wizardAPI);
     finalTranslated = finalTranslated.replace(/(?:Thought\s*持续|思考了\s*持续)\s*(.+)/gi, '思考了 $1');
     finalTranslated = finalTranslated.replace(/查看\s*could not be opened/gi, '查看文件无法打开');
     finalTranslated = finalTranslated.replace(/could not be opened/gi, '无法打开');
+    finalTranslated = finalTranslated.replace(/([\u4e00-\u9fa5]+)\s+not\s+found$/i, '$1未找到');
     finalTranslated = finalTranslated.replace(/(\d+)\s+searches?/gi, '$1 次搜索');
     finalTranslated = finalTranslated.replace(/(?:Type|输入)\s*\/\s*(?:and|并|和)?\s*(?:select|选择)?\s*['"]?plan['"]?\s*to\s+have\s+the\s+agent\s+generate\s+a\s+plan[。.]?/gi, '输入 / 并选择 plan 来让智能体生成计划。');
     finalTranslated = finalTranslated.replace(/输入\s*\/\s*并\s*选择\s*plan\s*来让智能体生成计划[。.]?/g, '输入 / 并选择 plan 来让智能体生成计划。');
@@ -7245,6 +7406,130 @@ electron_1.contextBridge.exposeInMainWorld('wizardAPI', wizardAPI);
       };
       window.addEventListener('popstate', () => setTimeout(safeScan, 50));
     } catch (_) {}
+
+    // 4. 修复官方 v2.32.1 左侧边栏项目拖拽排序错位 Bug (u2c 展开态测量竞态与首项 topBound 锁死)
+    setupSidebarProjectDragFix();
+  }
+
+  const NON_PROJECT_DROP_IDS = new Set(['all', 'main-section-header', 'pinned', 'section-coordinator', 'standalone']);
+
+  function isProjectSectionWrapper(el) {
+    if (!el || typeof el.hasAttribute !== 'function' || !el.hasAttribute('data-sidebar-section-drop-id') || !el.hasAttribute('data-index')) {
+      return false;
+    }
+    const dropId = el.getAttribute('data-sidebar-section-drop-id') || '';
+    if (!dropId || NON_PROJECT_DROP_IDS.has(dropId) || dropId.startsWith('convgroup:')) {
+      return false;
+    }
+    if (el.hasAttribute('data-sidebar-row-id')) {
+      return false;
+    }
+    if (typeof el.querySelector === 'function' && !el.querySelector('button[data-project-card="true"], div.border-dashed')) {
+      return false;
+    }
+    return true;
+  }
+
+  function getExtraDragTranslateY(transformStr) {
+    if (!transformStr) return 0;
+    const m3d = transformStr.match(/translate3d\([^,]+,\s*([-+\d.]+)px/i);
+    if (m3d) return parseFloat(m3d[1]) || 0;
+    const allY = [];
+    const reY = /translateY\(\s*([-+\d.]+)px\s*\)/gi;
+    let m;
+    while ((m = reY.exec(transformStr)) !== null) {
+      allY.push(parseFloat(m[1]) || 0);
+    }
+    return allY.length >= 2 ? allY[allY.length - 1] : 0;
+  }
+
+  function setupSidebarProjectDragFix() {
+    if (typeof window === 'undefined' || typeof Element === 'undefined' || window.__agySidebarDragFixInstalled) return;
+    window.__agySidebarDragFixInstalled = true;
+
+    let isProjectPointerDown = false;
+    let hasProjectPointerMoved = false;
+
+    window.addEventListener('pointerdown', (e) => {
+      if (e && e.button === 0 && e.target && typeof e.target.closest === 'function') {
+        const projectBtn = e.target.closest('button[data-project-card="true"][data-testid="project-header"]');
+        if (projectBtn && projectBtn.closest('[data-sidebar-scroll-container="true"]')) {
+          isProjectPointerDown = true;
+          hasProjectPointerMoved = false;
+        }
+      }
+    }, true);
+
+    window.addEventListener('pointermove', () => {
+      if (isProjectPointerDown) {
+        hasProjectPointerMoved = true;
+      }
+    }, true);
+
+    const clearDragState = () => {
+      isProjectPointerDown = false;
+      hasProjectPointerMoved = false;
+    };
+    window.addEventListener('pointerup', clearDragState, false);
+    window.addEventListener('pointercancel', clearDragState, false);
+    window.addEventListener('blur', clearDragState, false);
+
+    const origGetBCR = Element.prototype.getBoundingClientRect;
+    if (typeof origGetBCR !== 'function') return;
+
+    Element.prototype.getBoundingClientRect = function() {
+      const rect = origGetBCR.call(this);
+      if (!isProjectPointerDown || !hasProjectPointerMoved || !isProjectSectionWrapper(this)) {
+        return rect;
+      }
+      const parent = this.parentElement;
+      if (!parent || !parent.children) return rect;
+
+      const myIdx = parseInt(this.getAttribute('data-index') || '', 10);
+      if (Number.isNaN(myIdx)) return rect;
+
+      let minProjectIdx = myIdx;
+      const children = parent.children;
+      for (let i = 0; i < children.length; i++) {
+        const child = children[i];
+        if (isProjectSectionWrapper(child)) {
+          const idx = parseInt(child.getAttribute('data-index') || '', 10);
+          if (!Number.isNaN(idx) && idx < minProjectIdx) {
+            minProjectIdx = idx;
+          }
+        }
+      }
+
+      if (myIdx === minProjectIdx) {
+        const extraY = getExtraDragTranslateY(this.style && this.style.transform);
+        if (extraY !== 0) {
+          return {
+            x: rect.x,
+            y: rect.y - extraY,
+            width: rect.width,
+            height: rect.height,
+            top: rect.top - extraY,
+            right: rect.right,
+            bottom: rect.bottom - extraY,
+            left: rect.left,
+            toJSON: () => (typeof rect.toJSON === 'function' ? rect.toJSON() : rect)
+          };
+        }
+        return rect;
+      }
+
+      return {
+        x: rect.x,
+        y: rect.y,
+        width: rect.width,
+        height: rect.height,
+        top: undefined,
+        right: rect.right,
+        bottom: rect.bottom,
+        left: rect.left,
+        toJSON: () => (typeof rect.toJSON === 'function' ? rect.toJSON() : rect)
+      };
+    };
   }
 
   if (document.readyState === 'loading') {

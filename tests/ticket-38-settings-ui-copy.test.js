@@ -87,7 +87,18 @@ const CASES = [
   ["Coordinators", "协调者"],
   ["Built to help, not hurt", "旨在帮助，而非伤害"],
   ["You are in control", "掌控权在你"],
-  ["Stay up to date.", "保持最新状态。"]
+  ["Stay up to date.", "保持最新状态。"],
+  ["Customize Sections", "自定义分区"],
+  ["Side Questions", "侧边提问"],
+  ["Skills Used", "已使用的技能"],
+  ["Search or enter a URL", "搜索或输入 URL"],
+  ["Search tabs, files and more", "搜索标签页、文件及更多内容"],
+  ["File not found", "文件未找到"],
+  ["Failed to read file content", "读取文件内容失败"],
+  ["Configure what the agent can do in local and remote conversations.", "配置智能体在本地和远程对话中的操作权限。"],
+  ["Legacy Light", "经典浅色"],
+  ["Legacy Dark", "经典深色"],
+  ["Solarized Dark", "Solarized 深色"]
 ];
 
 let passed = 0;

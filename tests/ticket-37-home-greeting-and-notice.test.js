@@ -264,6 +264,70 @@ check(
   '设置 workspaceUri URL 参数并重新加载，从而把当前工作区指向新的位置。可从已有项目中选择文件夹，或输入自定义 URI（例如 file:///path/to/workspace）。'
 );
 
+console.log('\n[12] 右下角新模型发布弹窗公告（Gemini 4 Hydrogen 等）');
+check(
+  '模型发布标题：Introducing Gemini 4 Hydrogen',
+  translateString('Introducing Gemini 4 Hydrogen'),
+  '全新推出 Gemini 4 Hydrogen'
+);
+check(
+  '模型发布标题：同类模型泛化（Introducing Gemini 4 Argon!）',
+  translateString('Introducing Gemini 4 Argon!'),
+  '全新推出 Gemini 4 Argon！'
+);
+check(
+  '模型发布正文：单行原文',
+  translateString('Our daily driver for rapid coding and dependable agentic execution!'),
+  '我们的日常主力模型，兼顾快速编码与可靠的智能体执行！'
+);
+check(
+  '模型发布正文：含换行折行容错',
+  translateString('Our daily driver for rapid coding and dependable\nagentic execution!'),
+  '我们的日常主力模型，兼顾快速编码与可靠的智能体执行！'
+);
+check(
+  '模型发布正文：无标点容错',
+  translateString('Our daily driver for rapid coding and dependable agentic execution'),
+  '我们的日常主力模型，兼顾快速编码与可靠的智能体执行'
+);
+check(
+  '非模型 Introducing 文本不误翻译',
+  translateString('Introducing my new workflow to the team today.'),
+  'Introducing my new workflow to the team today.'
+);
+
+console.log('\n--- [13] 模型专属限额标题与防夹生兜底 ---');
+check(
+  'Gemini 4 Argon Weekly Limit 动态翻译',
+  translateString('Gemini 4 Argon Weekly Limit'),
+  'Gemini 4 Argon 每周限额'
+);
+check(
+  'Gemini 4 Hydrogen 5-Hour Limit 动态翻译',
+  translateString('Gemini 4 Hydrogen 5-Hour Limit'),
+  'Gemini 4 Hydrogen 5 小时限额'
+);
+check(
+  'Claude Opus 5.5 Weekly Limit Remaining 动态翻译',
+  translateString('Claude Opus 5.5 Weekly Limit Remaining'),
+  'Claude Opus 5.5 每周限额剩余'
+);
+check(
+  'Show 3 more subagents 动态翻译',
+  translateString('Show 3 more subagents'),
+  '显示其余 3 个子智能体'
+);
+check(
+  'File not found 完整翻译防夹生',
+  translateString('File not found'),
+  '文件未找到'
+);
+check(
+  'Directory not found 防夹生后置清洗',
+  translateString('Directory not found'),
+  '目录未找到'
+);
+
 console.log(`\n=== Ticket-37 结果：${passed}/${total} 通过 ===`);
 
 if (passed !== total) {

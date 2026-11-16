@@ -723,9 +723,16 @@ const DOM_TRANSLATOR_INJECTION = `
     "Always Proceed": "自动继续",
 
     // Themes
-    "One Light": "One 浅色",
-    "Solarized Light": "Solarized 浅色",
-    "One Dark Pro": "One 深色 Pro",
+    "One Light": "One Light（One 浅色）",
+    "Solarized Light": "Solarized Light（Solarized 浅色）",
+    "One Dark Pro": "One Dark Pro（One 深色 Pro）",
+    "Catppuccin": "Catppuccin（猫布奇诺）",
+    "Everforest": "Everforest（森屿青）",
+    "Gruvbox Material": "Gruvbox Material（复古暖棕）",
+    "Dracula": "Dracula（德古拉）",
+    "Monokai": "Monokai（莫奈高彩）",
+    "Tokyo Night": "Tokyo Night（东京夜）",
+    "Vesper": "Vesper（暮星）",
     
     // Models
     "Configure AI models and view your quota.": "配置 AI 模型并查看您的配额与可用点数。",
@@ -5195,7 +5202,7 @@ const DOM_TRANSLATOR_INJECTION = `
     "Modify permissions for file, terminal, and MCP tools.": "修改文件、终端以及 MCP 工具的权限。",
     "Legacy Light": "经典浅色",
     "Legacy Dark": "经典深色",
-    "Solarized Dark": "Solarized 深色",
+    "Solarized Dark": "Solarized Dark（Solarized 深色）",
     "Send a message in the main conversation first to start a side question": "请先在主对话中发送一条消息，然后再发起侧边提问",
     "Delete Side Question": "删除侧边提问",
     "Failed to delete side question": "删除侧边提问失败",

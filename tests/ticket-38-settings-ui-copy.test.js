@@ -98,7 +98,17 @@ const CASES = [
   ["Configure what the agent can do in local and remote conversations.", "配置智能体在本地和远程对话中的操作权限。"],
   ["Legacy Light", "经典浅色"],
   ["Legacy Dark", "经典深色"],
-  ["Solarized Dark", "Solarized 深色"]
+  ["Solarized Dark", "Solarized Dark（Solarized 深色）"],
+  ["One Light", "One Light（One 浅色）"],
+  ["Solarized Light", "Solarized Light（Solarized 浅色）"],
+  ["One Dark Pro", "One Dark Pro（One 深色 Pro）"],
+  ["Catppuccin", "Catppuccin（猫布奇诺）"],
+  ["Everforest", "Everforest（森屿青）"],
+  ["Gruvbox Material", "Gruvbox Material（复古暖棕）"],
+  ["Dracula", "Dracula（德古拉）"],
+  ["Monokai", "Monokai（莫奈高彩）"],
+  ["Tokyo Night", "Tokyo Night（东京夜）"],
+  ["Vesper", "Vesper（暮星）"]
 ];
 
 let passed = 0;

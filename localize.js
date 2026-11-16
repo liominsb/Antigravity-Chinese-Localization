@@ -731,7 +731,7 @@ const DOM_TRANSLATOR_INJECTION = `
     "Gruvbox Material": "Gruvbox Material（复古暖棕）",
     "Dracula": "Dracula（德古拉）",
     "Monokai": "Monokai（莫奈高彩）",
-    "Tokyo Night": "Tokyo Night（东京夜）",
+    "Tokyo Night": "霓虹夜幕（深靛蓝）",
     "Vesper": "Vesper（暮星）",
     
     // Models

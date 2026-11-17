@@ -4,6 +4,17 @@ This document tracks all version releases, core architecture adaptations, and fe
 
 ---
 
+## v2.32.2.1 (2026-11-17) — Conversation Page `Send all (N)` Button, Model Effort Tiers (`Extra`/`Max`) & Confirm Undo Completion
+
+### New Features & Fixes
+- **Queued Messages & `Send all (N)` Button Localization**: Added dynamic count regex `/^Send\s+all\s*\((\d+)\)$/i` (`Send all (1)` ➔ `全部发送 (1)`) alongside queued message card copy (`Sends after agent finishes working`, `Empty message`, `Queued message deleted`, `+N attachments`, `Send now: ...`).
+- **Model Effort Tiers Completion (`Extra` / `Max`)**: Added `Extra` (➔ `极高`) and `Max` (➔ `最高`) alongside existing `Low`/`Medium`/`High`, plus combined effort + context-window label matching and multi-model count formatting.
+- **Undo Confirmation Modal, Cleared-Step Notice & Battle Survey**: Covered undo eligibility tooltips, file/conversation-only rewind explanations, `View Diff for <file>`, the long-conversation cleared notice (`This conversation grew too large...`), approval/answer waiting states, and the Best of N preference survey (**+44** dictionary entries and **+8** dynamic regex rules).
+- **Scoped Decorator Exemption & Untouched Timestamps**: Exempted `[data-testid="queued-decorators"]` and `[data-testid="user-message-actions"]` in `shouldSkipNode` while preserving strict protection for `[data-testid="user-message-content"]` and keeping relative timestamps (`2m ago`, `24m`, `11h`) untouched.
+- **TDD Regression Gate**: Added [Ticket-40](tests/ticket-40-conversation-queue-and-tiers.test.js) covering all 45 test suites at **100% ALL GREEN**.
+
+---
+
 ## v2.32.2 (2026-11-17) — Full Support for Official v2.32.2, Robotics Plugin, GitHub Fine-Grained Policies & Automation Schedule Editor
 
 ### New Features & Core Improvements

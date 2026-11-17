@@ -4,6 +4,17 @@
 
 ---
 
+## v2.32.2.1 (2026-11-17) — 对话页排队发送按钮 (`Send all (N)`)、模型思考档位 (`Extra`/`Max`) 与撤销确认弹窗深度补全
+
+### 新特性与核心修复
+- **排队发送按钮与排队消息卡片全量汉化**：新增动态计数正则 `/^Send\s+all\s*\((\d+)\)$/i`（`Send all (1)` ➔ `全部发送 (1)`），并补齐排队消息卡片副标题（`Sends after agent finishes working` ➔ `智能体完成当前工作后发送`）、`Empty message`、`Queued message deleted`、`+N attachments` 与 `Send now: ...` 无障碍描述。
+- **模型思考档位补齐 (`Extra` / `Max`)**：补齐 `High`/`Medium`/`Low` 之外新增的 `Extra`（➔ `极高`）与 `Max`（➔ `最高`）档位，并新增 `^(Low|Medium|High|Extra|Max) · (上下文窗口)$` 组合标签动态翻译与多模型选择统计（`3 models selected` ➔ `已选择 3 个模型`）。
+- **撤销确认弹窗、过长对话提示与回复偏好问卷**：完整补齐撤回消息错误提示、`Confirm Undo` 工作区/仅回退对话说明、`View Diff for <文件>`、过长对话清理横幅 (`This conversation grew too large...`)、等待批准/回答状态与 Best of N 回复偏好问卷（共 **+44 条** 词典与 **+8 组** 动态正则）。
+- **作用域精准放行与时间标签免疫**：在 `shouldSkipNode` 中精准放行 `[data-testid="queued-decorators"]` 与 `[data-testid="user-message-actions"]` 系统按钮区域，同时继续对 `[data-testid="user-message-content"]` 用户提问正文保持绝对物理免疫，并保持对话相对时间（如 `2m ago`、`24m`、`11h`）原样显示。
+- **TDD 回归测试扩充**：新增 [Ticket-40](tests/ticket-40-conversation-queue-and-tiers.test.js) 专项测试，全工程 **45 套测试套件 100% ALL GREEN**。
+
+---
+
 ## v2.32.2 (2026-11-17) — 完美适配官方 2.32.2 最新版，新增 Robotics 官方机器人插件、GitHub 细粒度权限策略与自动化计划编辑器全量汉化
 
 ### 新特性与核心升级

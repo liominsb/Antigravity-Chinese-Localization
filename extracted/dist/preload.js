@@ -5898,6 +5898,51 @@ if (!isRemoteWindow) {
     "Remove from Recent": "从最近记录中移除",
     "View MCP servers": "查看 MCP 服务器",
     "MCP server error": "MCP 服务器错误",
+    // ===== 2.32.2.1 对话页排队发送、模型思考档位与撤销确认弹窗深度补全 =====
+    "Send all": "全部发送",
+    "Sends after agent finishes working": "智能体完成当前工作后发送",
+    "Queued message deleted": "已删除排队消息",
+    "Empty message": "空消息",
+    "Accept all": "全部接受",
+    "Reject all": "全部拒绝",
+    "Extra": "极高",
+    "Max": "最高",
+    "Workspaces are not available for this project": "此项目暂不支持工作区",
+    "Worktrees are available for Git repositories": "Git 仓库支持 Worktree",
+    "Worktrees are not available for this project": "此项目暂不支持 Worktree",
+    "This conversation grew too large, so the history before this point may be missing or incomplete.": "此对话已过长，因此该节点之前的历史记录可能已缺失或不完整。",
+    "You said": "你说",
+    "Agent working": "智能体正在工作",
+    "Agent said": "智能体说",
+    "Waiting for your answer": "等待您的回答",
+    "Waiting for your approval": "等待您的批准",
+    "Expand message": "展开消息",
+    "Commented on:": "已评论：",
+    "Copied to clipboard": "已复制到剪贴板",
+    "Auto-proceeded with": "已自动继续",
+    "Proceeded with": "已继续处理",
+    "Open Diff": "打开差异对比",
+    "Cannot revert this message": "无法撤回此消息",
+    "Cannot revert to a message that was cleared to save space": "无法撤回到为节省空间而已清理的消息",
+    "Cannot revert a message sent while the agent was running": "无法撤回在智能体运行期间发送的消息",
+    "Cannot revert messages before or at the point where Best of N mode was triggered": "无法撤回 Best of N 模式触发节点及之前的消息",
+    "Cannot revert messages with artifact comments": "无法撤回包含产物评论的消息",
+    "Cannot revert messages with file diff comments": "无法撤回包含文件差异评论的消息",
+    "Cannot revert messages with file comments": "无法撤回包含文件评论的消息",
+    "Only the conversation will be rewound; your files will be left as-is.": "仅会回退对话内容；您的文件将保持原样不变。",
+    "Undo restores your entire workspace to its state at this point.": "撤销会将您的整个工作区恢复到此时间点的状态。",
+    "The files below were changed by the agent and will be reverted, but other files may also be affected if your workspace changed for other reasons (e.g. a sync) in the meantime.": "下方列出的文件曾被智能体修改，将会一并还原；但如果在此期间您的工作区因其他原因（如同步）发生过变化，其他文件也可能受到影响。",
+    "The agent made no code changes, but other files may still be affected if your workspace changed for other reasons (e.g. a sync) in the meantime.": "智能体未进行任何代码更改；但如果在此期间您的工作区因其他原因（如同步）发生过变化，其他文件仍可能受到影响。",
+    "Confirming this undo action will make the following changes:": "确认此撤销操作将执行以下更改：",
+    "This undo action will not make any code changes.": "此撤销操作不会产生任何代码更改。",
+    "Why did you choose this response?": "你为什么选择此回复？",
+    "Something else (optional)": "其他原因（可选）",
+    "Better instruction following": "更准确地遵循指令",
+    "Better solution & code": "更好的解决方案与代码",
+    "More thorough research": "更深入全面的调研",
+    "The other model hallucinated": "另一个模型出现了幻觉",
+    "Clearer writing & artifacts": "更清晰的表达与工件产出",
+    "Faster response": "响应速度更快",
   };
 
   const coreWords = {
@@ -6438,6 +6483,58 @@ if (!isRemoteWindow) {
 
     if (/^Stop the Antigravity server on (.+?)?$/i.test(trimmed)) {
       const fixed = trimmed.replace(/^Stop the Antigravity server on (.+?)?$/i, '停止 $1 上的 Antigravity 服务端？');
+      if (stringCache.size < MAX_STRING_CACHE) stringCache.set(trimmed, fixed);
+      return text.replace(trimmed, fixed);
+    }
+
+    // ===== 2.32.2.1 对话页排队发送 (Send all (N))、模型档位及撤销弹窗动态匹配 =====
+    if (/^Send\s+all\s*\((\d+)\)$/i.test(trimmed)) {
+      const fixed = trimmed.replace(/^Send\s+all\s*\((\d+)\)$/i, '全部发送 ($1)');
+      if (stringCache.size < MAX_STRING_CACHE) stringCache.set(trimmed, fixed);
+      return text.replace(trimmed, fixed);
+    }
+
+    if (/^Send\s+all$/i.test(trimmed)) {
+      const fixed = '全部发送';
+      if (stringCache.size < MAX_STRING_CACHE) stringCache.set(trimmed, fixed);
+      return text.replace(trimmed, fixed);
+    }
+
+    if (/^(Low|Medium|High|Extra|Max)\s*·\s*(.+)$/i.test(trimmed)) {
+      const fixed = trimmed.replace(/^(Low|Medium|High|Extra|Max)\s*·\s*(.+)$/i, (_m, tier, ctx) => {
+        const tierMap = { low: '低', medium: '中', high: '高', xhigh: '极高', extra: '极高', max: '最高' };
+        return (tierMap[tier.toLowerCase()] || tier) + ' · ' + ctx;
+      });
+      if (stringCache.size < MAX_STRING_CACHE) stringCache.set(trimmed, fixed);
+      return text.replace(trimmed, fixed);
+    }
+
+    if (/^(\d+)\s+models\s+selected$/i.test(trimmed)) {
+      const fixed = trimmed.replace(/^(\d+)\s+models\s+selected$/i, '已选择 $1 个模型');
+      if (stringCache.size < MAX_STRING_CACHE) stringCache.set(trimmed, fixed);
+      return text.replace(trimmed, fixed);
+    }
+
+    if (/^\+(\d+)\s+attachments?$/i.test(trimmed)) {
+      const fixed = trimmed.replace(/^\+(\d+)\s+attachments?$/i, '+$1 个附件');
+      if (stringCache.size < MAX_STRING_CACHE) stringCache.set(trimmed, fixed);
+      return text.replace(trimmed, fixed);
+    }
+
+    if (/^Send\s+now:\s*(.+)$/i.test(trimmed)) {
+      const fixed = trimmed.replace(/^Send\s+now:\s*(.+)$/i, (_m, v) => '立即发送：' + v);
+      if (stringCache.size < MAX_STRING_CACHE) stringCache.set(trimmed, fixed);
+      return text.replace(trimmed, fixed);
+    }
+
+    if (/^View\s+Diff\s+for\s+(.+)$/i.test(trimmed)) {
+      const fixed = trimmed.replace(/^View\s+Diff\s+for\s+(.+)$/i, (_m, v) => '查看 ' + v + ' 的差异');
+      if (stringCache.size < MAX_STRING_CACHE) stringCache.set(trimmed, fixed);
+      return text.replace(trimmed, fixed);
+    }
+
+    if (/^There was an error determining the code changes that this undo action will make:\s*(.+)$/i.test(trimmed)) {
+      const fixed = trimmed.replace(/^There was an error determining the code changes that this undo action will make:\s*(.+)$/i, (_m, v) => '确定此撤销操作将产生的代码更改时出错：' + v);
       if (stringCache.size < MAX_STRING_CACHE) stringCache.set(trimmed, fixed);
       return text.replace(trimmed, fixed);
     }
@@ -7679,6 +7776,12 @@ if (!isRemoteWindow) {
       return false;
     }
 
+    // 排队发送控制栏与用户消息操作栏（不含用户正文 user-message-content）放行汉化
+    const isUserActionDecorator = element.closest && element.closest('[data-testid="queued-decorators"], [data-testid="user-message-actions"]');
+    if (isUserActionDecorator && !(element.closest && element.closest('[data-testid="user-message-content"]'))) {
+      skipCache.set(element, false);
+      return false;
+    }
     // 3. 特殊特权放行：针对执行步骤的药丸标签（如 Ran, Explored, Edited, Viewed, Thought, Thinking, Working 等）
     // 无论其父级为 SPAN、CODE 还是 BUTTON，只要是系统执行药丸且不在用户提问气泡内，一律无条件放行汉化
     const textContent = (element.innerText || element.textContent || '').trim();

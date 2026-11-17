@@ -13,7 +13,7 @@ Antigravity 深度汉化与高性能本地化补丁程序
 [![Node Runtime](https://img.shields.io/badge/Node.js-%3E%3D%2014.0.0-informational)](https://nodejs.org/)
 [![license](https://img.shields.io/github/license/antigravity-cn-community/Antigravity-Chinese-Localization)](LICENSE)
 
-专为 Google Antigravity 打造的高性能、非破坏性深度汉化补丁，现由开源社区组织 **[`antigravity-cn-community`](https://github.com/antigravity-cn-community/Antigravity-Chinese-Localization)** 联合维护。全面适配 **Antigravity v2.32.2+** 最新架构，深度重构基础算力层与 DOM 调度层，带来百万级吞吐量的极致流畅体验。全量汉化规划模式、系统设置、安全沙盒、Remote SSH 子系统与官方插件生态等数千条核心界面文案，严格对齐官方原生轻量级打包规格（v2.32.1 约 6.3 MB），并对用户打字与代码编辑区实施绝对物理免疫。
+专为 Google Antigravity 打造的高性能、非破坏性深度汉化补丁，现由开源社区组织 **[`antigravity-cn-community`](https://github.com/antigravity-cn-community/Antigravity-Chinese-Localization)** 联合维护。全面适配 **Antigravity v2.32.2+** 最新架构，深度重构基础算力层与 DOM 调度层，带来百万级吞吐量的极致流畅体验。全量汉化规划模式、系统设置、安全沙盒、Remote SSH 子系统与官方插件生态等数千条核心界面文案，严格对齐官方原生轻量级打包规格（v2.32.2 约 6.3 MB），并对用户打字与代码编辑区实施绝对物理免疫。
 
 > [最新 Release 下载](https://github.com/antigravity-cn-community/Antigravity-Chinese-Localization/releases/latest) · [社区讨论与千星里程碑 (Discussions)](https://github.com/antigravity-cn-community/Antigravity-Chinese-Localization/discussions) · [问题反馈与建议](https://github.com/antigravity-cn-community/Antigravity-Chinese-Localization/issues)
 
@@ -215,6 +215,8 @@ node localize.js --apply-only
 
 各版本的详细更新记录、新特性适配细节与底层技术架构演进，请参阅独立的 [CHANGELOG.md](CHANGELOG.md)（英文版请参阅 [CHANGELOG.en.md](CHANGELOG.en.md)）：
 
+- **[v2.32.2.1](CHANGELOG.md#v23221-2026-11-17)** (2026-11-17)：深度补齐对话页排队发送按钮（`Send all (N)` ➔ `全部发送 (N)`）及排队消息卡片（`Sends after agent finishes working`、`Empty message`）、补全模型思考档位 `Extra` / `Max`（`极高` / `最高` 及 `· 上下文窗口` 组合标签）、撤销确认弹窗、过长对话历史提示与 Best of N 回复偏好问卷（共 +44 条词典与 +8 组动态正则），并在放行排队/操作装饰栏的同时保持用户正文与时间标签（如 `2m ago`）原样不变。
+- **[v2.32.2](CHANGELOG.md#v2322-2026-11-17)** (2026-11-17)：全面同步官方 `v2.32.2` 更新，新增官方插件市场 `Robotics` 机器人开发插件（描述及 9 条示例提示词）、GitHub 细粒度权限策略 (`GitHub Policies & Permissions`)、协调器 (`Coordinator`)、跨设备接力、侧边提问 (`Side Question`) 与自动化分步创建向导及定时计划编辑器（共 +140 条词典、+9 组动态正则与 +13 项原生菜单映射），并修复 `replaceInFile` 同义目标幂等逻辑。
 - **[v2.32.1.2](CHANGELOG.md#v23212-2026-11-16)** (2026-11-16)：补全标签页与侧边栏原生右键菜单 40 项（含 `(Default)` 动态后缀）、117 条设置与右侧栏界面文案、`File not found` 兜底、首页问候语与第三方模型公告（PR #57）、模型专属限额动态正则及全套双语外观主题预设；植入 `setupSidebarProjectDragFix` 热修复官方左侧栏项目拖拽偏移 Bug；同步千星纪念组织化治理与共同 MIT 版权声明（PR #58）。
 - **[v2.32.1](CHANGELOG.md#v2321-2026-11-14)** (2026-11-14)：全面深度适配 Antigravity v2.32.1 与 Remote SSH 远程开发子系统（断开页、凭据密钥弹窗、主机管理与连接诊断），补全原生二级右键子菜单、`Ask /btw` 气泡、空状态防夹生机制与 Google Workspace / Gmail 等 16 款官方与合作插件生态汉化。
 - **[v2.31.2](CHANGELOG.md#v2312-2026-11-12)** (2026-11-12)：全面适配 v2.31.2 维护更新；新增 macOS 一键更新恢复启动器并收紧版本安全校验防线；补充浏览器设置、项目作用域及删除弹窗对话统计自适应规则。

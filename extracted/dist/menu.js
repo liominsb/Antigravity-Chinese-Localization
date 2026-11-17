@@ -179,7 +179,7 @@ function setupApplicationMenu(url) {
     configureViewZoomMenu(menu);
     (0, debugConsole_1.configureDebugConsoleMenu)(menu);
     // Re-apply the menu so the change takes effect.
-    if (typeof translateMenu === 'function') { menu.items.forEach(translateMenu); } if (typeof translateMenu === 'function') { menu.items.forEach(translateMenu); } if (typeof translateMenu === 'function') { menu.items.forEach(translateMenu); } if (typeof translateMenu === 'function') { menu.items.forEach(translateMenu); } if (typeof translateMenu === 'function') { menu.items.forEach(translateMenu); } if (typeof translateMenu === 'function') { menu.items.forEach(translateMenu); } electron_1.Menu.setApplicationMenu(menu);
+    if (typeof translateMenu === 'function') { menu.items.forEach(translateMenu); } electron_1.Menu.setApplicationMenu(menu);
     // Asynchronously adds "Connect to WSL" (Windows only, when WSL is present).
     void addWslConnectMenu(menu);
 }
@@ -231,7 +231,7 @@ async function addWslConnectMenu(menu) {
     if (reopen) {
         addItemToSubmenu(menu, 'File', 2, new electron_1.MenuItem(reopen));
     }
-    if (typeof translateMenu === 'function') { menu.items.forEach(translateMenu); } if (typeof translateMenu === 'function') { menu.items.forEach(translateMenu); } if (typeof translateMenu === 'function') { menu.items.forEach(translateMenu); } if (typeof translateMenu === 'function') { menu.items.forEach(translateMenu); } if (typeof translateMenu === 'function') { menu.items.forEach(translateMenu); } if (typeof translateMenu === 'function') { menu.items.forEach(translateMenu); } electron_1.Menu.setApplicationMenu(menu);
+    if (typeof translateMenu === 'function') { menu.items.forEach(translateMenu); } electron_1.Menu.setApplicationMenu(menu);
 }
 /** Relaunches the app connected to `distro` ('' = local mode). */
 function relaunchWithWslDistro(distro) {
@@ -386,6 +386,20 @@ const menuTranslationMap = {
   'Remove from Group': '从分组中移除',
   'Delete Permanently': '永久删除',
   'Proceed with Plan': '按计划继续',
+  // 2.32.2 新增菜单与分屏/远程操作
+  'Copy Conversation Markdown': '复制对话 Markdown',
+  'Pin This Conversation': '置顶此对话',
+  'Unpin This Conversation': '取消置顶此对话',
+  'Rename This Conversation': '重命名此对话',
+  'Copy Trajectory ID': '复制轨迹 ID',
+  'Copy Config File Path': '复制配置文件路径',
+  'Remove From Split': '从分屏中移除',
+  'Remove from Split': '从分屏中移除',
+  'Remove from Recent': '从最近记录中移除',
+  'Find References': '查找引用',
+  'Open on phone': '在手机上打开',
+  'Open on another device': '在其他设备上打开',
+  'Coordinator settings': '协调器设置',
 };
 function translateMenu(menuItem) {
   if (menuItem.label && menuTranslationMap[menuItem.label]) {

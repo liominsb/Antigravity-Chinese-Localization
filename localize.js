@@ -14,8 +14,8 @@ const {
   findAvailablePatch
 } = require('./auto-restore');
 
-const CURRENT_VERSION = '2.32.1';
-const RELEASE_VERSION = '2.32.1.2'; // 补丁发版追踪号；CURRENT_VERSION 保持与目标客户端及 app.asar.ready 一致
+const CURRENT_VERSION = '2.32.2';
+const RELEASE_VERSION = '2.32.2'; // 补丁发版追踪号；CURRENT_VERSION 保持与目标客户端及 app.asar.ready 一致 // 补丁发版追踪号；CURRENT_VERSION 保持与目标客户端及 app.asar.ready 一致
 
 function compareVersions(v1, v2) {
   const parse = (v) => (v || '').replace(/^[vV]/, '').split('.').map(n => parseInt(n, 10) || 0);
@@ -5303,6 +5303,147 @@ const DOM_TRANSLATOR_INJECTION = `
     "Enter your feedback here...": "在此输入你的反馈...",
     "Unnamed rule": "未命名规则",
     "Untitled project": "未命名项目",
+    // ===== 2.32.2 新增与深度补全词条 =====
+    "Robotics": "Robotics（机器人开发）",
+    "Robotics skills for any robot: 3D perception, collision-free motion planning, visual servoing, robot bring-up, sim2real, agent iteration, MuJoCo simulation, SimReady 3D asset authoring and physics auditing, and a live MuJoCo Studio 3D web sidecar.": "适用于各类机器人的专业技能套件：涵盖 3D 感知、无碰撞运动规划、视觉伺服、机器人底层启动调试、Sim2Real 虚实迁移、智能体迭代、MuJoCo 物理仿真、SimReady 3D 资产构建与物理审计，以及实时 MuJoCo Studio 3D Web 侧边栏。",
+    "Localize the target object in 3D from RGB-only cameras": "仅通过 RGB 相机在 3D 空间中定位目标物体",
+    "Plan a collision-free joint trajectory in MuJoCo": "在 MuJoCo 中规划无碰撞关节运动轨迹",
+    "Run closed-loop eye-in-hand visual servoing": "运行闭环眼在手上（Eye-in-Hand）视觉伺服控制",
+    "Run the Sim-to-Real Gauntlet and compare paired CRN controller candidates": "运行 Sim-to-Real 严苛测试并对比配对的 CRN 控制器候选方案",
+    "Use mujoco-playground with motion-planning, rgb-object-localization, and visual-servoing to pick a block on YAM or SO-101 in sim and zero-shot to real": "结合 mujoco-playground 与运动规划、RGB 物体定位及视觉伺服，在仿真环境中控制 YAM 或 SO-101 抓取物块并零样本迁移至真机",
+    "Use mujoco-playground-rl to create and train a quadruped joystick locomotion RL task on a new MuJoCo Menagerie robot": "使用 mujoco-playground-rl 在新的 MuJoCo Menagerie 机器人上创建并训练四足摇杆运动强化学习任务",
+    "Launch a live MuJoCo Studio simulation in this workspace": "在当前工作区中启动实时 MuJoCo Studio 物理仿真",
+    "Create a SimReady MuJoCo asset in Blender from a product URL or reference photo": "根据产品链接或参考照片在 Blender 中创建 SimReady MuJoCo 3D 资产",
+    "Audit an existing MuJoCo model.xml with the 10-scenario physics suite and fix any defects": "使用 10 场景物理测试套件审计现有的 MuJoCo model.xml 并修复所有物理缺陷",
+    "Organizations": "组织",
+    "+ Add Organization policy": "+ 添加组织策略",
+    "A comma-separated list like org-a, org-b, or * for all.": "以逗号分隔的列表（如 org-a, org-b），或输入 * 代表全部。",
+    "e.g. google or *": "例如：google 或 *",
+    "Repositories": "代码仓库",
+    "+ Add Repository policy": "+ 添加仓库策略",
+    "A comma-separated list like repo-a, repo-b, or * for all.": "以逗号分隔的列表（如 repo-a, repo-b），或输入 * 代表全部。",
+    "e.g. jetski or *": "例如：jetski 或 *",
+    "Contents": "仓库内容",
+    "Read access to code, refs, commits, and other repository contents.": "读取代码、引用 (refs)、提交记录及其他仓库内容的权限。",
+    "Read access": "读取权限",
+    "Issues": "议题 (Issues)",
+    "Grant the selected actions on the listed issue numbers — a comma-separated list like 1, 2, 3, or * for all.": "对列出的议题编号授予所选操作权限——输入以逗号分隔的列表（如 1, 2, 3），或输入 * 代表全部。",
+    "Issue numbers": "议题编号",
+    "Issue actions": "议题操作",
+    "+ Add issue policy": "+ 添加议题策略",
+    "Pull Requests": "拉取请求 (PR)",
+    "Grant the selected actions on the listed pull request numbers — a comma-separated list like 1, 2, 3, or * for all.": "对列出的拉取请求编号授予所选操作权限——输入以逗号分隔的列表（如 1, 2, 3），或输入 * 代表全部。",
+    "Pull request numbers": "拉取请求编号",
+    "Pull request actions": "拉取请求操作",
+    "+ Add pull request policy": "+ 添加拉取请求策略",
+    "Remote branches": "远程分支",
+    "Grant create, update, or delete access to specific branches.": "授予对特定分支的创建、更新或删除权限。",
+    "Grant the selected actions on the listed branch names — a comma-separated list like main, dev, prod (glob patterns like fix-* allowed), or * for all.": "对列出的分支名称授予所选操作权限——输入以逗号分隔的列表（如 main, dev, prod，支持 fix-* 等通配模式），或输入 * 代表全部。",
+    "Branch names": "分支名称",
+    "Branch actions": "分支操作",
+    "+ Add branch policy": "+ 添加分支策略",
+    "Workflow runs": "工作流运行",
+    "Grant read access to workflow runs and allow dispatching workflows on specific files and refs.": "授予工作流运行记录的读取权限，并允许在特定工作流文件和分支引用上触发工作流。",
+    "Each rule lets the agent run the listed workflow files on the listed refs — each a comma-separated list like ci.yml, deploy.yml and main, dev (glob patterns like fix-* allowed), or * for all. Both fields must be set for a rule to grant anything.": "每条规则允许智能体在指定的分支引用上运行列出的工作流文件——两者均支持以逗号分隔的列表（如 ci.yml, deploy.yml 与 main, dev，支持 fix-* 等通配符）或用 * 代表全部。两个字段必须同时填写才会生效。",
+    "+ Add workflow run policy": "+ 添加工作流运行策略",
+    "Agent can": "允许智能体",
+    "Agent can run": "允许智能体运行",
+    "Workflow files": "工作流文件",
+    "e.g. ci.yml,deploy.yml or *": "例如：ci.yml,deploy.yml 或 *",
+    "at ref": "目标分支/引用",
+    "Workflow refs": "工作流引用",
+    "e.g. main,dev or *": "例如：main,dev 或 *",
+    "Not signed in": "未登录",
+    "GitHub: not signed in": "GitHub：未登录",
+    "Account connection was not completed.": "账号连接未完成。",
+    "New Coordinator": "新建协调器",
+    "Create Coordinator": "创建协调器",
+    "Coordinator settings": "协调器设置",
+    "Coordinator name": "协调器名称",
+    "Coordinator goal": "协调器目标",
+    "What should this coordinator accomplish?": "此协调器需要完成什么目标？",
+    "e.g. Release helper": "例如：发版助手",
+    "Couldn't create the coordinator. Try again.": "无法创建协调器，请重试。",
+    "Choose icon and color": "选择图标与颜色",
+    "Resources": "资源",
+    "Open on phone": "在手机上打开",
+    "Open on another device": "在其他设备上打开",
+    "Pick up this remote conversation on your phone or in any browser. Scan the QR code or open the link below.": "在手机或任意浏览器中继续此远程对话。请扫描二维码或打开下方链接。",
+    "Conversation link": "对话链接",
+    "Remote Control link": "远程控制链接",
+    "Remote Control isn't active on this instance. Enable it in": "当前实例未启用远程控制。请前往",
+    ", then reopen this dialog.": "启用后再重新打开此对话框。",
+    "New Side Question": "新建侧边提问",
+    "Side Question: ": "侧边提问：",
+    "Remove from Split": "从分屏中移除",
+    "Copy Conversation Markdown": "复制对话 Markdown",
+    "Pin This Conversation": "置顶此对话",
+    "Unpin This Conversation": "取消置顶此对话",
+    "Rename This Conversation": "重命名此对话",
+    "Copy Trajectory ID": "复制轨迹 ID",
+    "Copy Config File Path": "复制配置文件路径",
+    "Paste authorization code": "粘贴授权码",
+    "Pinned Actions": "置顶操作",
+    "More Actions": "更多操作",
+    "Custom View": "自定义视图",
+    "Where it runs": "运行位置",
+    "Where should it run?": "它应该在哪里运行？",
+    "When should it run?": "它应该在何时运行？",
+    "What should the agent do on each run? For example: summarize new bugs assigned to me and anything that changed overnight.": "智能体在每次运行时需要做什么？例如：总结分配给我的新 Bug 以及夜间发生的所有变更。",
+    "Uses your local files and tools. Schedules only.": "使用您的本地文件与工具。仅支持定时计划。",
+    "Runs even when your computer is off. Schedules and events.": "即使您的电脑关机也能自动运行。支持定时计划与事件触发。",
+    "Runs even when your computer is off. Schedules only.": "即使您的电脑关机也能自动运行。仅支持定时计划。",
+    "Select workspace": "选择工作区",
+    "Create a project first.": "请先创建一个项目。",
+    "Trigger": "触发器",
+    "Remove trigger": "移除触发器",
+    "Add schedule": "添加定时计划",
+    "Add trigger": "添加触发器",
+    "Search triggers…": "搜索触发器…",
+    "Machine": "机器实例",
+    "Runs as": "运行身份",
+    "Steps": "步骤",
+    "Creating…": "正在创建…",
+    "No instructions.": "暂无指令。",
+    "Show all": "显示全部",
+    "All runs": "全部运行记录",
+    "No runs yet": "暂无运行记录",
+    "Loading runs…": "正在加载运行记录…",
+    "No upcoming run.": "暂无后续运行计划。",
+    "Paused. Resume it to schedule the next run.": "已暂停。恢复后将安排下一次运行。",
+    "Pick a model to change it.": "请选择一个模型进行更换。",
+    "on this computer.": "（在此电脑上运行）。",
+    "How often": "执行频率",
+    "Day of the week": "星期几",
+    "Number of hours": "间隔小时数",
+    "Repeat unit": "重复周期单位",
+    "Day of the month": "每月几号",
+    "Repeat every": "重复间隔：每",
+    "Custom schedule": "自定义计划",
+    "Automation saved": "自动化已保存",
+    "Failed to save changes.": "保存更改失败。",
+    "Match when the principal belongs to the specified MDB group.": "当主体属于指定的 MDB 组时匹配。",
+    "Match when the principal equals any listed username or belongs to any listed mdb/ group.": "当主体等于列出的任意用户名或属于列出的任意 mdb/ 组时匹配。",
+    "Ignore events triggered by the automation owner to avoid self-trigger loops.": "忽略由自动化所有者触发的事件，以避免自触发死循环。",
+    "Match when any modified file path starts with the given depot prefix.": "当任意修改的文件路径以给定的仓库路径前缀开头时匹配。",
+    "Match when the issue component equals or is under the given Buganizer component ID.": "当问题组件等于或隶属于给定的 Buganizer 组件 ID 时匹配。",
+    "Configure the agent's visual theme and display preferences.": "配置智能体的视觉主题与显示偏好设置。",
+    "Configure the agent's visual theme and display preferences": "配置智能体的视觉主题与显示偏好设置",
+    "Notification Preferences": "通知偏好设置",
+    "Plan upgrade required": "需要升级订阅方案",
+    "Failed to unarchive local project": "取消归档本地项目失败",
+    "Failed to clone project locally": "在本地克隆项目失败",
+    "Resume this agent where it paused": "从暂停处恢复此智能体",
+    "Stop this agent": "停止此智能体",
+    "You should not enter any sensitive information on this site (for example, passwords or credit cards), because it could be stolen by attackers.": "请勿在此网站上输入任何敏感信息（例如密码或信用卡信息），因为这些信息可能会被攻击者窃取。",
+    "Enter a URL (e.g. http://localhost:8080)": "输入 URL（例如 http://localhost:8080）",
+    "Filter rows...": "筛选行...",
+    "Filter files...": "筛选文件...",
+    "Find References": "查找引用",
+    "Invalid Media": "无效的媒体文件",
+    "Remove from Recent": "从最近记录中移除",
+    "View MCP servers": "查看 MCP 服务器",
+    "MCP server error": "MCP 服务器错误",
   };
 
   const coreWords = {
@@ -5843,6 +5984,60 @@ const DOM_TRANSLATOR_INJECTION = `
 
     if (/^Stop the Antigravity server on (.+?)\?$/i.test(trimmed)) {
       const fixed = trimmed.replace(/^Stop the Antigravity server on (.+?)\?$/i, '停止 $1 上的 Antigravity 服务端？');
+      if (stringCache.size < MAX_STRING_CACHE) stringCache.set(trimmed, fixed);
+      return text.replace(trimmed, fixed);
+    }
+
+    // ===== 2.32.2 自动化调度、分步向导与侧边提问动态保障 =====
+    if (/^Step\s+(\d+)\s+of\s+(\d+)$/i.test(trimmed)) {
+      const fixed = trimmed.replace(/^Step\s+(\d+)\s+of\s+(\d+)$/i, '第 $1 步，共 $2 步');
+      if (stringCache.size < MAX_STRING_CACHE) stringCache.set(trimmed, fixed);
+      return text.replace(trimmed, fixed);
+    }
+
+    if (/^Edit side question title:\s*(.+)$/i.test(trimmed)) {
+      const fixed = trimmed.replace(/^Edit side question title:\s*(.+)$/i, '编辑侧边提问标题：$1');
+      if (stringCache.size < MAX_STRING_CACHE) stringCache.set(trimmed, fixed);
+      return text.replace(trimmed, fixed);
+    }
+
+    if (/^(?:New|Create)\s+(automation|scheduled task)$/i.test(trimmed)) {
+      const isCreate = /^Create/i.test(trimmed);
+      const isAuto = /automation$/i.test(trimmed);
+      const fixed = (isCreate ? '创建' : '新建') + (isAuto ? '自动化' : '定时任务');
+      if (stringCache.size < MAX_STRING_CACHE) stringCache.set(trimmed, fixed);
+      return text.replace(trimmed, fixed);
+    }
+
+    if (/^Next run (today|tomorrow) around (.+)$/i.test(trimmed)) {
+      const fixed = trimmed.replace(/^Next run (today|tomorrow) around (.+)$/i, (_m, d, t) => '下次运行：' + (/today/i.test(d) ? '今天 ' : '明天 ') + t + ' 左右');
+      if (stringCache.size < MAX_STRING_CACHE) stringCache.set(trimmed, fixed);
+      return text.replace(trimmed, fixed);
+    }
+
+    if (/^Next run on (.+?) around (.+)$/i.test(trimmed)) {
+      const fixed = trimmed.replace(/^Next run on (.+?) around (.+)$/i, '下次运行：$1 $2 左右');
+      if (stringCache.size < MAX_STRING_CACHE) stringCache.set(trimmed, fixed);
+      return text.replace(trimmed, fixed);
+    }
+
+    if (/^Every (\d+) (hours?|minutes?)(?: on (.+))?$/i.test(trimmed)) {
+      const fixed = trimmed.replace(/^Every (\d+) (hours?|minutes?)(?: on (.+))?$/i, (_m, n, u, d) => '每 ' + n + (/hour/i.test(u) ? ' 小时' : ' 分钟') + (d ? '（' + d + '）' : ''));
+      if (stringCache.size < MAX_STRING_CACHE) stringCache.set(trimmed, fixed);
+      return text.replace(trimmed, fixed);
+    }
+
+    if (/^(Daily|Weekdays|Weekends) at (.+)$/i.test(trimmed)) {
+      const fixed = trimmed.replace(/^(Daily|Weekdays|Weekends) at (.+)$/i, (_m, p, t) => {
+        const map = { daily: '每天 ', weekdays: '每个工作日 ', weekends: '每个周末 ' };
+        return (map[p.toLowerCase()] || p + ' ') + t;
+      });
+      if (stringCache.size < MAX_STRING_CACHE) stringCache.set(trimmed, fixed);
+      return text.replace(trimmed, fixed);
+    }
+
+    if (/^Monthly on the (\d+)(?:st|nd|rd|th) at (.+)$/i.test(trimmed)) {
+      const fixed = trimmed.replace(/^Monthly on the (\d+)(?:st|nd|rd|th) at (.+)$/i, '每月 $1 日 $2');
       if (stringCache.size < MAX_STRING_CACHE) stringCache.set(trimmed, fixed);
       return text.replace(trimmed, fixed);
     }
@@ -7724,12 +7919,16 @@ function replaceInFile(filePath, target, replacement) {
     throw new Error(`找不到要修改的文件: ${filePath}`);
   }
   let content = fs.readFileSync(filePath, 'utf-8');
-  if (content.includes(replacement)) {
+  if (replacement.includes(target) && content.includes(replacement)) {
     log(`文件 ${path.basename(filePath)} 已经应用过此汉化修改，跳过。`);
     return;
   }
   if (!content.includes(target)) {
-    log(`提示：文件 ${path.basename(filePath)} 未找到匹配目标内容，跳过。`);
+    if (content.includes(replacement)) {
+      log(`文件 ${path.basename(filePath)} 已经应用过此汉化修改，跳过。`);
+    } else {
+      log(`提示：文件 ${path.basename(filePath)} 未找到匹配目标内容，跳过。`);
+    }
     return;
   }
   content = content.split(target).join(replacement);
@@ -7894,6 +8093,20 @@ const menuTranslationMap = {
   'Remove from Group': '从分组中移除',
   'Delete Permanently': '永久删除',
   'Proceed with Plan': '按计划继续',
+  // 2.32.2 新增菜单与分屏/远程操作
+  'Copy Conversation Markdown': '复制对话 Markdown',
+  'Pin This Conversation': '置顶此对话',
+  'Unpin This Conversation': '取消置顶此对话',
+  'Rename This Conversation': '重命名此对话',
+  'Copy Trajectory ID': '复制轨迹 ID',
+  'Copy Config File Path': '复制配置文件路径',
+  'Remove From Split': '从分屏中移除',
+  'Remove from Split': '从分屏中移除',
+  'Remove from Recent': '从最近记录中移除',
+  'Find References': '查找引用',
+  'Open on phone': '在手机上打开',
+  'Open on another device': '在其他设备上打开',
+  'Coordinator settings': '协调器设置',
 };
 function translateMenu(menuItem) {
   if (menuItem.label && menuTranslationMap[menuItem.label]) {
@@ -8118,6 +8331,20 @@ const contextMenuTranslationMap = {
   'Remove from Group': '从分组中移除',
   'Delete Permanently': '永久删除',
   'Proceed with Plan': '按计划继续',
+  // 2.32.2 新增上下文菜单与分屏/远程操作
+  'Copy Conversation Markdown': '复制对话 Markdown',
+  'Pin This Conversation': '置顶此对话',
+  'Unpin This Conversation': '取消置顶此对话',
+  'Rename This Conversation': '重命名此对话',
+  'Copy Trajectory ID': '复制轨迹 ID',
+  'Copy Config File Path': '复制配置文件路径',
+  'Remove From Split': '从分屏中移除',
+  'Remove from Split': '从分屏中移除',
+  'Remove from Recent': '从最近记录中移除',
+  'Find References': '查找引用',
+  'Open on phone': '在手机上打开',
+  'Open on another device': '在其他设备上打开',
+  'Coordinator settings': '协调器设置',
 };
 function translateContextLabel(lbl) {
   if (!lbl) return '';

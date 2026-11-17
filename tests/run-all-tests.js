@@ -39,6 +39,7 @@ const tests = [
   'ticket-36-v2321-features.test.js',
   'ticket-37-home-greeting-and-notice.test.js',
   'ticket-38-settings-ui-copy.test.js',
+  'ticket-39-v2322-features.test.js',
   'check-injection-syntax.js',
   'asar-version.test.js',
   'process-check.test.js',

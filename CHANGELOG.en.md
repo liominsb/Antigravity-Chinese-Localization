@@ -4,6 +4,17 @@ This document tracks all version releases, core architecture adaptations, and fe
 
 ---
 
+## v2.32.2 (2026-11-17) — Full Support for Official v2.32.2, Robotics Plugin, GitHub Fine-Grained Policies & Automation Schedule Editor
+
+### New Features & Core Improvements
+- **Zero-Day Support for Official v2.32.2**: Synchronized version metadata, pre-packaged `app.asar.ready`, and `extracted/` source tree with official Antigravity `v2.32.2`.
+- **Official Robotics Plugin Localization**: Full Chinese localization for the newly added official `Robotics` marketplace plugin description and all 9 suggested prompts (3D RGB localization, MuJoCo trajectory planning, eye-in-hand visual servoing, Sim-to-Real Gauntlet, quadruped RL, and SimReady asset authoring).
+- **GitHub Fine-Grained Permissions & Policies**: Complete coverage for `GitHub Policies` and `GitHub Permissions` settings UI (Organizations, Repositories, Contents, Issues, Pull Requests, Remote branches, and Workflow runs access rules).
+- **Coordinator, Cross-Device Handoff & Automation Schedule Editor**: Added **140** new unique dictionary entries, **9** dynamic regex rules, and **13** native menu mappings for `New Coordinator`, `Open on phone` / `Open on another device`, `New Side Question`, and the step-by-step Automation creation & schedule editor.
+- **Static Injection Engine Fix**: Improved `replaceInFile` idempotency check when multiple distinct English targets share the same Chinese replacement in the same file, ensuring `Open workspaces` in `dist/ipcHandlers.js` is translated cleanly.
+
+---
+
 ## v2.32.1.2 (2026-11-16)
 
 ### 1. Context Menus, Settings Copy, Bilingual Themes & Quota Regex Completion

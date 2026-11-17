@@ -39,14 +39,23 @@ function check(desc, actual, expected) {
 
 // 1. 版本元数据校验
 console.log('--- 1. 2.32.1 版本元数据校验 ---');
-check('localize.js CURRENT_VERSION 为 2.32.1', /const CURRENT_VERSION = '2\.32\.1';/.test(localizeSource), true);
-check('extracted/package.json version 为 2.32.1', packageJson.version, '2.32.1');
-check('index.html 控制中心显示 v2.32.1', indexSource.includes('控制中心 v2.32.1'), true);
-check('README.md 包含 v2.32.1+', readmeSource.includes('Antigravity v2.32.1+'), true);
-check('README.en.md 包含 v2.32.1+', readmeEnSource.includes('Antigravity v2.32.1+'), true);
+function isVerGte2321(v) {
+  if (!v) return false;
+  const parts = String(v).split('.').map(Number);
+  if (parts[0] > 2) return true;
+  if (parts[0] === 2 && parts[1] > 32) return true;
+  if (parts[0] === 2 && parts[1] === 32 && parts[2] >= 1) return true;
+  return false;
+}
+const currentVerMatch = localizeSource.match(/const CURRENT_VERSION = ['"]([^'"]+)['"];/);
+check('localize.js CURRENT_VERSION >= 2.32.1', isVerGte2321(currentVerMatch ? currentVerMatch[1] : ''), true);
+check('extracted/package.json version >= 2.32.1', isVerGte2321(packageJson.version), true);
+check('index.html 控制中心显示 v2.32.1 或更高', /控制中心 v2\.(3[2-9]|[4-9]\d)\./.test(indexSource), true);
+check('README.md 包含 v2.32.1+ 或更高', /Antigravity v2\.(3[2-9]|[4-9]\d)\./.test(readmeSource), true);
+check('README.en.md 包含 v2.32.1+ 或更高', /Antigravity v2\.(3[2-9]|[4-9]\d)\./.test(readmeEnSource), true);
 check('CHANGELOG.md 包含 v2.32.1 章节', changelogSource.includes('## v2.32.1 (2026-11-14)'), true);
 check('CHANGELOG.en.md 包含 v2.32.1 章节', changelogEnSource.includes('## v2.32.1 (2026-11-14)'), true);
-check('app.asar.ready package.json 版本为 2.32.1', readAsarPackageVersion(readyAsarPath), '2.32.1');
+check('app.asar.ready package.json 版本 >= 2.32.1', isVerGte2321(readAsarPackageVersion(readyAsarPath)), true);
 
 // 2. Remote SSH 远程开发子系统原生注入与汉化校验
 console.log('\n--- 2. Remote SSH 远程开发子系统原生注入与汉化校验 ---');

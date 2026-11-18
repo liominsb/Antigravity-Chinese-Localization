@@ -29,6 +29,28 @@ function withTimeout(p, ms, msg) {
 const isNodeIdp = (u, o) => (0, guestFramePolicy_1.isProtectedIdpFrameUrl)(u || '') || (0, guestFramePolicy_1.isProtectedIdpFrameUrl)(o || '');
 const isMainOnIdp = (wc) => (0, guestFramePolicy_1.isProtectedIdpFrameUrl)(wc.getURL?.() || '') ||
     isNodeIdp(wc.mainFrame?.url, wc.mainFrame?.origin);
+const CHROME_EXT_SCHEME_RE = /^(?:blob:|filesystem:)?chrome-extension:/i;
+const CHROME_EXT_BLOCKED = 'ERR_DISALLOWED_URL: Cannot execute in chrome-extension: frame';
+// Chromium's built-in PDF viewer extension, which hosts every inline PDF.
+const BUILTIN_PDF_VIEWER_EXT_URL_RE = /^chrome-extension:\/\/mhjfbmdgcfjbbpaeojofohoefgiehjai(?:\/|$)/i;
+const isChromeExt = (raw) => CHROME_EXT_SCHEME_RE.test((raw ?? '').trim());
+const isNodeChromeExt = (isExt, u, o) => isExt(u) || isExt(o);
+const isMainOnChromeExt = (isExt, wc) => isExt(wc.getURL?.()) ||
+    isNodeChromeExt(isExt, wc.mainFrame?.url, wc.mainFrame?.origin);
+// The outer `application/pdf` frame carries the PDF's URL, origin, and full
+// container rect, so the viewer subtree Chromium attaches under it adds no
+// policy information and must not be reported as a cross-origin subframe.
+const isBuiltinPdfViewerChild = (parent, child) => parent.mimeType.trim().toLowerCase() === 'application/pdf' &&
+    BUILTIN_PDF_VIEWER_EXT_URL_RE.test(child.url.trim());
+const NO_FENCE = {
+    isChromeExt: () => false,
+    prunesChild: () => false,
+};
+const PDF_UNMASK_FENCE = {
+    isChromeExt,
+    prunesChild: isBuiltinPdfViewerChild,
+};
+const fenceFor = (pdfViewerUnmask) => pdfViewerUnmask ? PDF_UNMASK_FENCE : NO_FENCE;
 function cdp(dbg, sid, method, params = {}) {
     if (typeof dbg.sendCommand !== 'function') {
         return Promise.reject(new Error('CDP sendCommand is unavailable'));
@@ -268,6 +290,7 @@ class GuestFrameBridgeController {
                 url: String(f?.url ?? ''),
                 securityOrigin: String(f?.securityOrigin ?? ''),
                 name: String(f?.name ?? ''),
+                mimeType: String(f?.mimeType ?? ''),
                 execSid: sid,
                 ownerSid,
                 children: [],
@@ -336,13 +359,24 @@ class GuestFrameBridgeController {
             }
         }).catch(() => undefined);
     }
-    async listFrames(wc) {
-        const ok = Boolean(wc && !wc.isDestroyed?.() && !isMainOnIdp(wc));
+    /**
+     * Lists the guest's cross-origin subframes. The PDF-viewer unmask guards
+     * apply only when `options` carries `pdfViewerUnmask: true`.
+     */
+    async listFrames(wc, options) {
+        const fence = fenceFor((0, guestFramePolicy_1.parseFrameBridgeOptions)(options));
+        const ok = Boolean(wc &&
+            !wc.isDestroyed?.() &&
+            !isMainOnIdp(wc) &&
+            !isMainOnChromeExt(fence.isChromeExt, wc));
         const attached = ok ? await this.ensureAttached(wc) : null;
         const root = attached
             ? await this.collectTree(attached.dbg, attached.state)
             : null;
-        if (!attached || !root || isNodeIdp(root.url, root.securityOrigin)) {
+        if (!attached ||
+            !root ||
+            isNodeIdp(root.url, root.securityOrigin) ||
+            isNodeChromeExt(fence.isChromeExt, root.url, root.securityOrigin)) {
             return guestFramePolicy_1.EMPTY_FRAME_TREE;
         }
         const mainOrigin = (0, guestFramePolicy_1.extractFrameOrigin)(root.securityOrigin, root.url) ||
@@ -350,6 +384,9 @@ class GuestFrameBridgeController {
         const frames = [];
         const walk = async (parent, scopeFid, scopeOrigin, scopeRect) => {
             for (const ch of parent.children) {
+                if (fence.prunesChild(parent, ch)) {
+                    continue;
+                }
                 const chOrigin = (0, guestFramePolicy_1.extractFrameOrigin)(ch.securityOrigin, ch.url);
                 const opaque = (0, guestFramePolicy_1.isOpaqueOrigin)(ch.securityOrigin);
                 const idp = isNodeIdp(ch.url, ch.securityOrigin);
@@ -378,7 +415,10 @@ class GuestFrameBridgeController {
                     ...(geom ? { ownerDomPath: geom.domPath } : {}),
                     ...(rect ? { viewportRect: rect } : {}),
                 });
-                if (!idp) {
+                // Descending would create an isolated world inside the extension frame;
+                // its already-reported outer rect masks everything beneath it.
+                if (!idp &&
+                    !isNodeChromeExt(fence.isChromeExt, ch.url, ch.securityOrigin)) {
                     const hide = { ...scopeRect, width: 0, height: 0, visible: false };
                     await walk(ch, ch.id, chOrigin, rect ?? hide);
                 }
@@ -402,9 +442,11 @@ class GuestFrameBridgeController {
      * Runs `code` in the page-agent isolated world of `frameId`. When
      * `expectedOrigin` is given, throws FRAME_ORIGIN_CHANGED if the frame's
      * current document has a different origin. IdP and origin checks run both
-     * against the CDP frame tree and inside the target context itself.
+     * against the CDP frame tree and inside the target context itself. When
+     * `options` carries `pdfViewerUnmask: true`, throws ERR_DISALLOWED_URL for a
+     * frame in or under a `chrome-extension:` document.
      */
-    async executeInFrameIsolatedWorld(wc, frameId, code, expectedOrigin) {
+    async executeInFrameIsolatedWorld(wc, frameId, code, expectedOrigin, options) {
         if (typeof frameId !== 'string' || !frameId.trim()) {
             throw new Error('frameId must be a non-empty string');
         }
@@ -412,8 +454,12 @@ class GuestFrameBridgeController {
             throw new Error('code must be a string');
         }
         const expected = (0, guestFramePolicy_1.normalizeExpectedOrigin)(expectedOrigin);
+        const fence = fenceFor((0, guestFramePolicy_1.parseFrameBridgeOptions)(options));
         if (!wc || wc.isDestroyed?.() || isMainOnIdp(wc)) {
             throw new Error('IDP_BLOCKED: Guest unavailable or on protected IdP');
+        }
+        if (isMainOnChromeExt(fence.isChromeExt, wc)) {
+            throw new Error(CHROME_EXT_BLOCKED);
         }
         const attached = await this.ensureAttached(wc);
         if (!attached) {
@@ -423,6 +469,9 @@ class GuestFrameBridgeController {
         const resolveTarget = async () => {
             if (wc.isDestroyed?.() || isMainOnIdp(wc)) {
                 throw new Error('IDP_BLOCKED: Guest unavailable or on protected IdP');
+            }
+            if (isMainOnChromeExt(fence.isChromeExt, wc)) {
+                throw new Error(CHROME_EXT_BLOCKED);
             }
             const root = await this.collectTree(dbg, state);
             if (!root) {
@@ -434,6 +483,9 @@ class GuestFrameBridgeController {
             }
             if (chain.some((f) => isNodeIdp(f.url, f.securityOrigin))) {
                 throw new Error('IDP_BLOCKED: Protected Identity Provider frame');
+            }
+            if (chain.some((f) => isNodeChromeExt(fence.isChromeExt, f.url, f.securityOrigin))) {
+                throw new Error(CHROME_EXT_BLOCKED);
             }
             const t = chain[chain.length - 1];
             if (expected !== undefined) {

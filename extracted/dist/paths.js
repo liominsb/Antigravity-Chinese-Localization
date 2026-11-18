@@ -44,6 +44,7 @@ exports.getAppStoragePath = getAppStoragePath;
 exports.getWindowStatePath = getWindowStatePath;
 exports.getActivePortFilePath = getActivePortFilePath;
 exports.tightenActivePortPermissions = tightenActivePortPermissions;
+exports.removeStaleActivePortFile = removeStaleActivePortFile;
 exports.getLsLogPath = getLsLogPath;
 const electron_1 = require("electron");
 const fs = __importStar(require("fs"));
@@ -106,6 +107,25 @@ function tightenActivePortPermissions(userDataDir, activePortFile) {
         catch {
             // Missing path or foreign filesystem: leave as is.
         }
+    }
+}
+/**
+ * Best-effort removal of a leftover `DevToolsActivePort` file when remote
+ * debugging is disabled. On POSIX, skips files not owned by the current user.
+ * Never throws.
+ */
+function removeStaleActivePortFile(activePortFile) {
+    try {
+        if (process.platform !== 'win32' && typeof process.getuid === 'function') {
+            const st = fs.lstatSync(activePortFile);
+            if (st.uid !== process.getuid()) {
+                return;
+            }
+        }
+        fs.rmSync(activePortFile, { force: true });
+    }
+    catch {
+        // Missing file, foreign filesystem, or partial fs mock: leave as is.
     }
 }
 function getLsLogPath() {

@@ -4,9 +4,7 @@
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <title>Antigravity 汉化</title>
-  <link rel="preconnect" href="https://fonts.googleapis.com">
-  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-  <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700;800&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+  <meta name="localizer-csrf" content="__LOCALIZER_CSRF_TOKEN__">
   <style>
     * {
       margin: 0;
@@ -83,7 +81,7 @@
     }
 
     body {
-      font-family: 'Outfit', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'PingFang SC', 'Hiragino Sans GB', 'Microsoft YaHei', Roboto, sans-serif;
       background: linear-gradient(135deg, var(--bg-gradient-1), var(--bg-gradient-2));
       color: var(--text-main);
       min-height: 100vh;
@@ -651,7 +649,7 @@
     }
 
     .console-body {
-      font-family: 'JetBrains Mono', 'Courier New', Courier, monospace;
+      font-family: 'JetBrains Mono', 'Cascadia Code', Consolas, 'SFMono-Regular', Menlo, monospace;
       font-size: 0.85rem;
       color: #8be9fd;
       height: 200px;
@@ -1057,7 +1055,7 @@
         <div><h1>Antigravity 汉化</h1><p class="subtitle">选择版本，轻松安装。</p></div>
       </div>
       <div class="top-bar-actions">
-<div class="repo-badge"><span class="pulse-indicator" id="repo-status-dot" hidden></span><span id="version-display">控制中心 v2.32.2</span></div>
+<div class="repo-badge"><span class="pulse-indicator" id="repo-status-dot" hidden></span><span id="version-display">控制中心 v2.33.0</span></div>
         <button class="icon-tool-btn" id="btn-theme-toggle" onclick="toggleTheme()" title="切换亮暗外观模式">
           <svg id="theme-icon" viewBox="0 0 24 24">
             <!-- Dynamic SVG icon -->
@@ -1185,7 +1183,7 @@
         <div class="input-group">
           <label for="tgt-win-owner" id="lbl-win-owner">Windows 账户名</label>
           <!-- 采用 readonly 焦点激活防御 + new-password 声明 + 诱饵混淆，彻底终结任何密码管理器在失焦或鼠标移出时的强制篡改 -->
-          <input type="text" id="tgt-win-owner" name="tgt-win-owner" placeholder="例如: 11215" 
+          <input type="text" id="tgt-win-owner" name="tgt-win-owner" placeholder="例如: Administrator" 
                  autocomplete="new-password" autocorrect="off" autocapitalize="off" spellcheck="false" 
                  readonly onfocus="this.removeAttribute('readonly')" onblur="this.setAttribute('readonly', true)"
                  oninput="saveSettings()" onchange="saveAndTriggerStatus()">
@@ -1211,6 +1209,7 @@
           <input type="text" id="input-custom-path" name="custom-app-dir" placeholder="C:\Users\用户名\AppData\Local\Programs\antigravity" autocomplete="off" autocorrect="off" autocapitalize="off" spellcheck="false" oninput="saveAndTriggerStatus()">
         </div>
       </div>
+      <p class="release-meta" id="macos-codesign-tip" hidden style="margin-top: 12px;">macOS Apple Silicon 提示：替换内部归档后若系统拦截提示“已损坏”，请在终端执行 <code>xattr -cr "/Applications/Antigravity.app" &amp;&amp; codesign --force --deep --sign - "/Applications/Antigravity.app"</code> 进行本地重签（注：重签可能重置 macOS 本地权限授权）。</p>
     </div>
 
     <!-- Actions -->
@@ -1278,7 +1277,18 @@
   </div>
 
   <script>
-    const API_BASE = ['http:', 'https:'].includes(location.protocol) ? location.origin : 'http://localhost:3388';
+    const API_BASE = ['http:', 'https:'].includes(location.protocol) ? location.origin : 'http://127.0.0.1:3388';
+    const CSRF_TOKEN = (document.querySelector('meta[name="localizer-csrf"]')?.getAttribute('content') || '').trim();
+    function buildApiHeaders(extraHeaders = {}, method = 'GET') {
+      const headers = { ...extraHeaders };
+      if (CSRF_TOKEN && CSRF_TOKEN !== '__LOCALIZER_CSRF_TOKEN__') {
+        headers['X-Localizer-Token'] = CSRF_TOKEN;
+      }
+      if (['POST', 'DELETE', 'PUT', 'PATCH'].includes(String(method).toUpperCase()) && !headers['Content-Type']) {
+        headers['Content-Type'] = 'application/json';
+      }
+      return headers;
+    }
     const consoleEl = document.getElementById('console');
     let localScriptVersion = '';
     let statusRevision = 0;
@@ -1377,14 +1387,18 @@
       }, duration);
     }
 
+    let confirmModalQueue = Promise.resolve();
     function showConfirm(title, desc, confirmText = '确认') {
-      return new Promise((resolve) => {
+      const next = confirmModalQueue.then(() => new Promise((resolve) => {
+        let settled = false;
         modalTitleText.textContent = title;
         modalDescText.textContent = desc;
         modalBtnConfirm.textContent = confirmText;
         modalOverlay.classList.add('active');
 
         function cleanup(result) {
+          if (settled) return;
+          settled = true;
           modalOverlay.classList.remove('active');
           modalBtnConfirm.removeEventListener('click', onConfirm);
           modalBtnCancel.removeEventListener('click', onCancel);
@@ -1406,7 +1420,9 @@
         modalBtnCancel.addEventListener('click', onCancel);
         modalOverlay.addEventListener('click', onOverlayClick);
         window.addEventListener('keydown', onKeyDown);
-      });
+      }));
+      confirmModalQueue = next.catch(() => {});
+      return next;
     }
 
     // ==========================================
@@ -1510,16 +1526,21 @@
 
       try {
         const queryStr = `?username=${encodeURIComponent(params.username)}&useDefault=${params.useDefault}&customPath=${encodeURIComponent(params.customPath)}`;
-        const res = await fetch(`${API_BASE}/api/status${queryStr}`);
+        const res = await fetch(`${API_BASE}/api/status${queryStr}`, { headers: buildApiHeaders({}, 'GET') });
         if (!res.ok) throw new Error();
         const data = await res.json();
         if (revision !== statusRevision) return;
         
         const isWin = data.platform === 'win32';
-        const sysLabel = isWin ? 'Windows' : (data.platform === 'linux' ? 'Linux' : data.platform);
+        const isMac = data.platform === 'darwin';
+        const sysLabel = isWin ? 'Windows' : (isMac ? 'macOS' : (data.platform === 'linux' ? 'Linux' : data.platform));
         
         document.getElementById('lbl-win-owner').textContent = `${sysLabel} 账户名`;
         document.getElementById('lbl-default-path').textContent = `使用 ${sysLabel} 默认安装路径`;
+        const ownerGroup = inputUsername.closest('.input-group');
+        if (ownerGroup) ownerGroup.hidden = isMac;
+        const macosTip = document.getElementById('macos-codesign-tip');
+        if (macosTip) macosTip.hidden = !isMac;
         
         if (data.defaultUsername) {
           inputUsername.placeholder = `例如: ${data.defaultUsername}`;
@@ -1531,16 +1552,19 @@
         
         if (isWin) {
           inputCustomPath.placeholder = "C:\\Users\\用户名\\AppData\\Local\\Programs\\antigravity";
+        } else if (isMac) {
+          inputCustomPath.placeholder = "/Applications/Antigravity.app";
         } else {
           inputCustomPath.placeholder = "/home/用户名/Antigravity/Antigravity-x64";
         }
         
         // Dynamic Version Sync
-        if (data.currentVersion) {
-          setLocalScriptVersion(data.currentVersion);
+        const panelVer = data.releaseVersion || data.currentVersion;
+        if (panelVer) {
+          setLocalScriptVersion(panelVer);
           const vEl = document.getElementById('version-display');
           if (vEl && !vEl.textContent.includes('发现新版')) {
-            vEl.textContent = `控制中心 v${data.currentVersion}`;
+            vEl.textContent = `控制中心 v${String(panelVer).replace(/^[vV]/, '')}`;
           }
         }
         const packageVersionEl = document.getElementById('release-installed-version');
@@ -1626,7 +1650,7 @@
 
     async function fetchLogs() {
       try {
-        const res = await fetch(`${API_BASE}/api/logs`);
+        const res = await fetch(`${API_BASE}/api/logs`, { headers: buildApiHeaders({}, 'GET') });
         if (!res.ok) throw new Error();
         const data = await res.json();
         
@@ -1664,7 +1688,11 @@
         btn.disabled = true;
         btn.classList.add('is-loading');
         btn.dataset.originalHtml = btn.innerHTML;
-        btn.innerHTML = `<span class="loader-ring"></span> <span>${loadingText}</span>`;
+        const ring = document.createElement('span');
+        ring.className = 'loader-ring';
+        const txt = document.createElement('span');
+        txt.textContent = loadingText;
+        btn.replaceChildren(ring, document.createTextNode(' '), txt);
       } else {
         btn.disabled = false;
         btn.classList.remove('is-loading');
@@ -1690,7 +1718,7 @@
         const params = getParams();
         const res = await fetch(`${API_BASE}/api/localize`, {
           method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
+          headers: buildApiHeaders({}, 'POST'),
           body: JSON.stringify(params)
         });
         const data = await res.json();
@@ -1712,7 +1740,7 @@
     async function restore() {
       const confirmed = await showConfirm(
         '还原英文原版确认',
-        '确定要从安全备份 app.asar.bak 还原为官方纯英文原版吗？此操作将抹除汉化修改。'
+        '确定要从本地官方安全备份还原为纯英文原版吗？此操作将移除当前汉化修改。'
       );
       if (!confirmed) return;
 
@@ -1722,7 +1750,7 @@
         const params = getParams();
         const res = await fetch(`${API_BASE}/api/restore`, {
           method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
+          headers: buildApiHeaders({}, 'POST'),
           body: JSON.stringify(params)
         });
         const data = await res.json();
@@ -1742,8 +1770,17 @@
     }
 
     async function triggerAutoRestore() {
+      const params = getParams();
       const runEl = document.getElementById('status-running');
-      const isRunning = runEl && runEl.textContent.includes('运行中');
+      let isRunning = Boolean(runEl && runEl.textContent.includes('运行中'));
+      try {
+        const queryStr = `?username=${encodeURIComponent(params.username)}&useDefault=${params.useDefault}&customPath=${encodeURIComponent(params.customPath)}`;
+        const statusRes = await fetch(`${API_BASE}/api/status${queryStr}`, { headers: buildApiHeaders({}, 'GET') });
+        if (statusRes.ok) {
+          const freshStatus = await statusRes.json();
+          isRunning = Boolean(freshStatus.isRunning);
+        }
+      } catch (_) {}
       if (isRunning) {
         const confirmed = await showConfirm(
           '恢复汉化确认',
@@ -1759,10 +1796,9 @@
       }
       setFastPolling(true);
       try {
-        const params = getParams();
         const res = await fetch(`${API_BASE}/api/auto-restore`, {
           method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
+          headers: buildApiHeaders({}, 'POST'),
           body: JSON.stringify(params)
         });
         const data = await res.json();
@@ -1789,7 +1825,7 @@
         const params = getParams();
         const res = await fetch(`${API_BASE}/api/launch`, {
           method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
+          headers: buildApiHeaders({}, 'POST'),
           body: JSON.stringify(params)
         });
         const data = await res.json();
@@ -1815,7 +1851,7 @@
 
       setButtonLoading('btn-kill', true, '正在释放占用...');
       try {
-        const res = await fetch(`${API_BASE}/api/kill`, { method: 'POST' });
+        const res = await fetch(`${API_BASE}/api/kill`, { method: 'POST', headers: buildApiHeaders({}, 'POST'), body: '{}' });
         const data = await res.json();
         await fetchLogs();
         if (data.success) {
@@ -1843,7 +1879,7 @@
         const params = getParams();
         const res = await fetch(`${API_BASE}/api/clean-cache`, {
           method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
+          headers: buildApiHeaders({}, 'POST'),
           body: JSON.stringify(params)
         });
         const data = await res.json();
@@ -1958,7 +1994,9 @@
       const controller = new AbortController();
       const timeout = setTimeout(() => controller.abort(), 30000);
       try {
-        const response = await fetch(`${API_BASE}${endpoint}`, { ...options, signal: controller.signal });
+        const method = (options && options.method) || 'GET';
+        const mergedHeaders = buildApiHeaders((options && options.headers) || {}, method);
+        const response = await fetch(`${API_BASE}${endpoint}`, { ...options, headers: mergedHeaders, signal: controller.signal });
         let data;
         try { data = await response.json(); }
         catch (_) { throw new Error('本地服务未返回有效数据，请确认已启动新版控制中心服务。'); }
@@ -2375,20 +2413,21 @@
     }
 
     async function checkReleaseUpdate(isSilent = false) {
-      if (!isSilent) { openReleasePanel(); return; }
+      if (!isSilent) { openReleasePanel(); }
       if (isCheckingRelease) return;
       isCheckingRelease = true;
       const dot = document.getElementById('repo-status-dot');
       const versionDisplay = document.getElementById('version-display');
       try {
         const data = await releaseRequest('/api/check-release');
-        if (data.currentVersion) setLocalScriptVersion(data.currentVersion);
+        const panelVer = data.releaseVersion || data.currentVersion;
+        if (panelVer) setLocalScriptVersion(panelVer);
         if (data.hasUpdate) {
-          if (dot) dot.style.backgroundColor = 'var(--accent)';
+          if (dot) { dot.hidden = false; dot.style.backgroundColor = 'var(--accent)'; }
           if (versionDisplay) versionDisplay.textContent = `发现新版 v${data.latestVersion}（控制中心 v${localScriptVersion}）`;
           showToast(`发现新版本 v${data.latestVersion}，可在版本列表中选择安装。`, 'info', 5000);
         } else {
-          if (dot) dot.style.backgroundColor = 'var(--success)';
+          if (dot) { dot.hidden = false; dot.style.backgroundColor = 'var(--success)'; }
           if (versionDisplay && localScriptVersion) versionDisplay.textContent = `控制中心 v${localScriptVersion}`;
         }
       } catch (err) {

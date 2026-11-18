@@ -147,7 +147,7 @@ check('动态数字短语: 3 files, 2 commands, 1 file',
 // 药丸白名单校验
 const isActionPillRegexMatch = engineCode.match(/const isActionPill\s*=\s*textContent\.length\s*<=\s*\d+\s*&&\s*(\/[^/]+\/i)\.test/);
 assert.ok(isActionPillRegexMatch, 'isActionPill 正则必须存在于注入代码中');
-const actionPillRegex = eval(isActionPillRegexMatch[1]);
+const actionPillRegex = vm.runInNewContext(isActionPillRegexMatch[1]);
 check('isActionPill 放行 Run', actionPillRegex.test('Run'), true);
 check('isActionPill 放行 Running', actionPillRegex.test('Running'), true);
 check('isActionPill 放行 Ran', actionPillRegex.test('Ran'), true);

@@ -3,7 +3,9 @@ const path = require('path');
 const assert = require('assert');
 
 // 1. 读取当前 localize.js 源码与 extracted/package.json
-const localizeSource = fs.readFileSync(path.join(__dirname, '..', 'localize.js'), 'utf-8');
+const { getCombinedSource, loadTranslatorSandbox } = require('./helpers/translator-loader');
+const localizeSource = getCombinedSource();
+const { translateString } = loadTranslatorSandbox();
 const packageJson = JSON.parse(fs.readFileSync(path.join(__dirname, '..', 'extracted', 'package.json'), 'utf-8'));
 
 let passed = 0;
@@ -81,7 +83,7 @@ check('preload.js 包含 Good response 映射', preloadSource.includes('"Good re
 check('preload.js 包含 Bad response 映射', preloadSource.includes('"Bad response": "差评回复"'), true);
 check('preload.js 包含 More actions 映射', preloadSource.includes('"More actions": "更多操作"'), true);
 check('preload.js 包含 Pin conversation 映射', preloadSource.includes('"Pin conversation": "置顶对话"'), true);
-check('preload.js 包含 Undo to this point 映射', preloadSource.includes('"Undo to this point": "撤销到此处"'), true);
+check('preload.js 包含 Undo to this point 映射', preloadSource.includes('"Undo to this point": "撤销至此处"'), true);
 check('preload.js 包含 Copy code 映射', preloadSource.includes('"Copy code": "复制代码"'), true);
 check('preload.js 包含 At mention code block 映射', preloadSource.includes('"At mention code block": "提及代码块"'), true);
 check('preload.js 包含 Add inline comment 映射', preloadSource.includes('"Add inline comment": "添加行内注释"'), true);
@@ -113,7 +115,7 @@ check('localize.js 包含 Security Preset 映射', localizeSource.includes('"Sec
 // 9. 高级设置与差异视图操作校验 (Advanced Settings & Diff Review Actions)
 console.log('\n--- 高级设置与差异视图操作校验 ---');
 check('preload.js 包含 Advanced Settings 映射', preloadSource.includes('"Advanced Settings": "高级设置"'), true);
-check('preload.js 包含 Advanced 设置 映射', preloadSource.includes('"Advanced 设置": "高级设置"'), true);
+check('引擎自愈映射: Advanced 设置 -> 高级设置', translateString('Advanced 设置'), '高级设置');
 check('preload.js 包含 Automatic Check for Updates 映射', preloadSource.includes('"Automatic Check for Updates": "自动检查更新"'), true);
 check('preload.js 包含 Collapse All 映射', preloadSource.includes('"Collapse All": "全部折叠"'), true);
 check('preload.js 包含 Expand All 映射', preloadSource.includes('"Expand All": "全部展开"'), true);
@@ -124,7 +126,7 @@ check('preload.js 包含 Hide Whitespace Changes 映射', preloadSource.includes
 check('preload.js 包含 Collapse All Folders 映射', preloadSource.includes('"Collapse All Folders": "折叠所有文件夹"'), true);
 
 check('localize.js 包含 Advanced Settings 映射', localizeSource.includes('"Advanced Settings": "高级设置"'), true);
-check('localize.js 包含 Advanced 设置 映射', localizeSource.includes('"Advanced 设置": "高级设置"'), true);
+check('源码包含 Advanced 设置 自愈映射', localizeSource.includes('Advanced 设置'), true);
 check('localize.js 包含 Automatic Check for Updates 映射', localizeSource.includes('"Automatic Check for Updates": "自动检查更新"'), true);
 check('localize.js 包含 Collapse All 映射', localizeSource.includes('"Collapse All": "全部折叠"'), true);
 check('localize.js 包含 Expand All 映射', localizeSource.includes('"Expand All": "全部展开"'), true);
@@ -138,19 +140,23 @@ check('localize.js 包含 Collapse All Folders 映射', localizeSource.includes(
 console.log('\n--- 项目专属权限与全局继承校验 ---');
 check('preload.js 包含 Inherit Global 映射', preloadSource.includes('"Inherit Global": "继承全局"'), true);
 check('preload.js 包含 Inherits your Global Permissions 选项简介映射', preloadSource.includes('"Inherits your Global Permissions when working in this project.": "在此项目中工作时继承您的全局权限。"'), true);
-check('preload.js 包含 Also includes 映射', preloadSource.includes('"Also includes": "在当前项目中工作时亦继承"'), true);
-check('preload.js 包含 when working in this project. 映射', preloadSource.includes('"when working in this project.": "配置。"'), true);
+check('preload.js 包含项目继承完整句映射', preloadSource.includes('"Also includes Global Permissions when working in this project."'), true);
+check('行为级校验: Also includes Global Permissions 完整句汉化', translateString('Also includes Global Permissions when working in this project.'), '在当前项目中工作时，亦继承全局权限配置。');
 check('preload.js 包含 Manually customize individual settings. 映射', preloadSource.includes('"Manually customize individual settings.": "手动自定义各项独立设置。"'), true);
 check('preload.js 包含 Permission Preset 映射', preloadSource.includes('"Permission Preset": "权限预设"'), true);
 check('preload.js 包含 Terminal Command Auto Execution 映射', preloadSource.includes('"Terminal Command Auto Execution": "终端命令自动执行"'), true);
 
 check('localize.js 包含 Inherit Global 映射', localizeSource.includes('"Inherit Global": "继承全局"'), true);
 check('localize.js 包含 Inherits your Global Permissions 选项简介映射', localizeSource.includes('"Inherits your Global Permissions when working in this project.": "在此项目中工作时继承您的全局权限。"'), true);
-check('localize.js 包含 Also includes 映射', localizeSource.includes('"Also includes": "在当前项目中工作时亦继承"'), true);
-check('localize.js 包含 when working in this project. 映射', localizeSource.includes('"when working in this project.": "配置。"'), true);
+check('模块化词库包含项目继承完整句映射', localizeSource.includes('"Also includes Global Permissions when working in this project."'), true);
+check('模块化词库已清除单残片全局污染键', !localizeSource.includes('"when working in this project.": "配置。"'), true);
 check('localize.js 包含 Manually customize individual settings. 映射', localizeSource.includes('"Manually customize individual settings.": "手动自定义各项独立设置。"'), true);
 check('localize.js 包含 Permission Preset 映射', localizeSource.includes('"Permission Preset": "权限预设"'), true);
 check('localize.js 包含 Terminal Command Auto Execution 映射', localizeSource.includes('"Terminal Command Auto Execution": "终端命令自动执行"'), true);
+
+
+check('行为级验证: See all (12) 动态翻译', translateString('See all (12)'), '查看全部 (12)');
+check('行为级验证: Fold lines 10-25 动态翻译', translateString('Fold lines 10-25'), '折叠第 10-25 行');
 
 console.log('\n========================================');
 console.log(`测试完成: ${passed}/${total} 通过 (${passed === total ? 'ALL PASS' : 'FAILED'})`);

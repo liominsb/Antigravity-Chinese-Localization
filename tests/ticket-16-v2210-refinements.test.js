@@ -134,7 +134,7 @@ assert.strictEqual(translate('Search customizations...'), '搜索自定义项...
 assert.strictEqual(translate('See 4 more'), '查看其余 4 项');
 assert.strictEqual(translate('See 10 more'), '查看其余 10 项');
 assert.strictEqual(translate('See less'), '收起');
-assert.strictEqual(translate('See more in Build with Google'), '在“Build with Google”中查看更多');
+assert.strictEqual(translate('See more in Build with Google'), '在“使用 Google 构建”中查看更多');
 assert.strictEqual(translate('Google Docs'), 'Google 文档');
 assert.strictEqual(translate('Google Sheets'), 'Google 表格');
 assert.strictEqual(translate('Google Slides'), 'Google 幻灯片');

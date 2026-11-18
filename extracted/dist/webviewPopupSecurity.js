@@ -41,40 +41,37 @@ function formatPopupSecurityLabel(state, displayUrl) {
 }
 const NOT_SECURE_SUMMARY = [
     '您与此网站的连接不安全',
-    'You should not enter any sensitive information on this site (for ' +
-        'example, passwords or credit cards), because it could be stolen by ' +
-        'attackers.',
+    '请勿在此网站输入任何敏感信息（例如密码或信用卡信息），否则可能会被攻击者窃取。',
 ];
 /** Chrome's page info wording for each level. */
 const SECURITY_LEVEL_SUMMARIES = {
     secure: [
         '连接安全',
-        'Your information (for example, passwords or credit card numbers) is ' +
-            'private when it is sent to this site.',
+        '您的信息（例如密码或信用卡号）在发送到此网站时受隐私保护。',
     ],
     insecure: NOT_SECURE_SUMMARY,
     dangerous: NOT_SECURE_SUMMARY,
     neutral: ['无法获取此页面的连接安全信息'],
 };
 function formatDate(ms) {
-    return ms > 0 ? new Date(ms).toLocaleString() : 'unknown';
+    return ms > 0 ? new Date(ms).toLocaleString() : '未知';
 }
 /** Formats `state` as the message and detail lines of a connection dialog. */
 function formatConnectionInfo(state) {
     const lines = [...SECURITY_LEVEL_SUMMARIES[state.level]];
     const certificate = state.certificate;
     if (certificate) {
-        lines.push('', state.level === 'secure' ? 'Certificate is valid' : 'Certificate details');
+        lines.push('', state.level === 'secure' ? '证书有效' : '证书详情');
         if (state.certificateError) {
-            lines.push(`Error: ${state.certificateError}`);
+            lines.push(`错误：${state.certificateError}`);
         }
-        lines.push(`Issued to: ${certificate.subjectName}`, `Issued by: ${certificate.issuer}`, `Valid from: ${formatDate(certificate.validFromMs)}`, `Valid until: ${formatDate(certificate.validToMs)}`);
+        lines.push(`颁发给：${certificate.subjectName}`, `颁发者：${certificate.issuer}`, `有效期自：${formatDate(certificate.validFromMs)}`, `有效期至：${formatDate(certificate.validToMs)}`);
         if (certificate.protocol) {
-            lines.push(`Protocol: ${certificate.protocol}`);
+            lines.push(`协议：${certificate.protocol}`);
         }
     }
     return {
-        message: extractOrigin(state.url) ?? (state.url || 'This page'),
+        message: extractOrigin(state.url) ?? (state.url || '此页面'),
         detail: lines.join('\n'),
     };
 }
@@ -102,10 +99,10 @@ function attachPopupConnectionInfoMenu(popup, contents, getState) {
         const canSelectAll = params === undefined ? true : (params.editFlags?.canSelectAll ?? true);
         const window = popup;
         electron_1.Menu.buildFromTemplate([
-            { role: 'cut', enabled: canCut },
-            { role: 'copy', enabled: canCopy },
-            { role: 'paste', enabled: canPaste },
-            { role: 'selectAll', enabled: canSelectAll },
+            { role: 'cut', label: '剪切', enabled: canCut },
+            { role: 'copy', label: '复制', enabled: canCopy },
+            { role: 'paste', label: '粘贴', enabled: canPaste },
+            { role: 'selectAll', label: '全选', enabled: canSelectAll },
             { type: 'separator' },
             {
                 label: '连接信息…',

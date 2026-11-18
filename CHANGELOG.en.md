@@ -4,6 +4,20 @@ This document tracks all version releases, core architecture adaptations, and fe
 
 ---
 
+## v2.33.0 (2026-11-18) — Full Official v2.33.0 Support: Computer Use & Agents Live Preview, Remote SSH Lifecycle Upgrade, 9 New Voices & Dictation, Marketplace Bundles & Modular Hardening
+
+### 1. Comprehensive Localization for Official v2.33.0 Features
+- **Computer Use Desktop HUD & Agents Live Preview**: Full native and web localization for the new desktop control HUD (`dist/computer/hud.js`, `hudState.js`, `hudAgents.js`, `overlay.js`), `Agents Live` streaming tiles, pause/takeover banners, pointer intent badges, and macOS Screen Recording / Privacy permission cards.
+- **Remote SSH Subsystem Expansion**: Adapted to refactored server-restarting/disconnected pages (`disconnectedPage.js`), unified password/passphrase/PIN/host-key prompts (`sshPrompts.js`), shared-home takeover & version-mismatch restart sheets (`remoteManager.js`), remote microphone access & sign-in confirmation dialogs, SSH config BOM/UTF-16/permission diagnostics (`sshConfigHosts.js`), and OAuth callback pages (`signInCallback.js`).
+- **9 Gemini Live Voices & Voice Dictation**: Added all 9 voice profiles (`Arlo, Cleo, Finn, Fola, Gero, Lora, Neno, Olin, Tari`) to `VOICE_NAMES` and covered live audio transcription states and 12 host microphone diagnostic notices.
+- **Browser Per-Site Cookies, Keybinding Schemes & Marketplace Bundles**: Localized built-in browser `Browsing Data` & `Cookies by Site` management, `VS Code Default` vs `Antigravity (AGY) Style` keybinding schemes (with chord conflict notices), Marketplace `Bundles` & source-review modals, Step Plan progress pills, `Setup Routine` statuses, sidebar `Repo` grouping, and `NEW` model badges.
+
+### 2. Modular Engine Refactoring & End-to-End Security Hardening
+- **Modular `src/` Engine & Dictionary Deduplication**: Decoupled `src/dictionary.js`, `src/dom-translator.js`, and `src/build-injection.js`; eliminated all 619 duplicate keys; hoisted `O(1)` exact dictionary lookup ahead of dynamic regexes; enforced leaf-TextNode React Fiber safety and 100%-hit `coreWords` anti-Chinglish guards, keeping `app.asar.ready` compact at ~`7.08 MB`.
+- **Loopback Security & Cross-Platform Tooling**: Enforced `127.0.0.1` binding, `Host`/`Origin` + per-session CSRF token validation, explicit TLS verification, unified version-checked backups, fail-closed process checks, PowerShell ASAR version guards in offline `.bat` fallback, and reproducible UTF-8/POSIX ZIP packaging; **51/51 TDD test suites 100% ALL GREEN**.
+
+---
+
 ## v2.32.2.1 (2026-11-17) — Conversation Page `Send all (N)` Button, Model Effort Tiers (`Extra`/`Max`) & Confirm Undo Completion
 
 ### New Features & Fixes

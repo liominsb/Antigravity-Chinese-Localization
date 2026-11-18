@@ -5,16 +5,48 @@ const fsp = fs.promises;
 const path = require('path');
 const crypto = require('crypto');
 const { readAsarPackageVersion } = require('./asar-version');
+const { findValidOfficialBackup, normalizeVersion } = require('./src/backup-utils');
 
-// 特征指纹检测：判断 asar 文件是否已经注入汉化代码
+const LOCALIZED_CACHE_MAX = 128;
+const localizedAsarCache = new Map();
+const MARKER_ENGINE = Buffer.from('// Antigravity 2.0 Chinese Localization Engine');
+const MARKER_MENU = Buffer.from('menuTranslationMap');
+const MARKER_DOM = Buffer.from('DOM_TRANSLATOR_INJECTION');
+
+// 特征指纹检测：判断 asar 文件是否已经注入汉化代码（带 statSync { size, mtimeMs, ctimeMs } LRU 缓存，上限 128 项）
 function isLocalizedAsar(filePath) {
-  if (!fs.existsSync(filePath)) return false;
+  if (typeof filePath !== 'string' || !filePath) return false;
+  const resolved = path.resolve(filePath);
   try {
-    const buf = fs.readFileSync(filePath);
-    return buf.includes(Buffer.from('// Antigravity 2.0 Chinese Localization Engine')) ||
-           buf.includes(Buffer.from('menuTranslationMap')) ||
-           buf.includes(Buffer.from('DOM_TRANSLATOR_INJECTION'));
+    const stat = fs.statSync(resolved);
+    if (!stat.isFile()) return false;
+    const cached = localizedAsarCache.get(resolved);
+    if (cached &&
+        cached.size === stat.size &&
+        cached.mtimeMs === stat.mtimeMs &&
+        cached.ctimeMs === stat.ctimeMs) {
+      localizedAsarCache.delete(resolved);
+      localizedAsarCache.set(resolved, cached);
+      return cached.localized;
+    }
+    const buf = fs.readFileSync(resolved);
+    const localized = buf.includes(MARKER_ENGINE) ||
+                      buf.includes(MARKER_MENU) ||
+                      buf.includes(MARKER_DOM);
+    if (localizedAsarCache.has(resolved)) {
+      localizedAsarCache.delete(resolved);
+    } else if (localizedAsarCache.size >= LOCALIZED_CACHE_MAX) {
+      localizedAsarCache.delete(localizedAsarCache.keys().next().value);
+    }
+    localizedAsarCache.set(resolved, {
+      size: stat.size,
+      mtimeMs: stat.mtimeMs,
+      ctimeMs: stat.ctimeMs,
+      localized
+    });
+    return localized;
   } catch (_) {
+    localizedAsarCache.delete(resolved);
     return false;
   }
 }
@@ -26,12 +58,6 @@ async function hashFile(filePath) {
     hash.update(chunk);
   }
   return hash.digest('hex');
-}
-
-// 标准化版本字符串（移除前缀 v/V 与空白）
-function normalizeVersion(ver) {
-  if (!ver || typeof ver !== 'string') return '';
-  return ver.trim().replace(/^[vV]/, '');
 }
 
 /**
@@ -150,7 +176,7 @@ async function findAvailablePatch({ workspaceDir, targetVersion, releaseManager 
 }
 
 /**
- * 诊断客户端当前状态
+ * 诊断客户端当前状态（复用 src/backup-utils.js 统一发现 app.asar.bak 与 app.asar.backup-*）
  */
 async function checkClientStatus({ appDir, getResourcesDir } = {}) {
   if (!appDir) {
@@ -159,7 +185,7 @@ async function checkClientStatus({ appDir, getResourcesDir } = {}) {
   const resDirFn = getResourcesDir || (dir => path.join(dir, 'resources'));
   const resourcesDir = path.resolve(resDirFn(appDir));
   const asarPath = path.join(resourcesDir, 'app.asar');
-  const backupPath = path.join(resourcesDir, 'app.asar.bak');
+  const defaultBackupPath = path.join(resourcesDir, 'app.asar.bak');
 
   const isInstalled = fs.existsSync(asarPath);
   if (!isInstalled) {
@@ -171,13 +197,20 @@ async function checkClientStatus({ appDir, getResourcesDir } = {}) {
       appVersion: null,
       isLocalized: false,
       hasBackup: false,
+      staleBackups: [],
       isUpdateOverwritten: false
     };
   }
 
   const appVersion = readAsarPackageVersion(asarPath);
   const isLocalized = isLocalizedAsar(asarPath);
-  const hasBackup = fs.existsSync(backupPath) && !isLocalizedAsar(backupPath);
+  const backupLookup = findValidOfficialBackup({
+    resourcesDir,
+    targetVersion: appVersion,
+    isLocalizedAsar
+  });
+  const hasBackup = Boolean(backupLookup.match);
+  const backupPath = backupLookup.match ? backupLookup.match.path : defaultBackupPath;
   // 当程序已安装但未汉化时，说明是官方原版安装或官方更新覆盖
   const isUpdateOverwritten = !isLocalized;
 
@@ -190,6 +223,7 @@ async function checkClientStatus({ appDir, getResourcesDir } = {}) {
     appVersion,
     isLocalized,
     hasBackup,
+    staleBackups: backupLookup.staleBackups,
     isUpdateOverwritten
   };
 }
@@ -273,12 +307,18 @@ async function executeAutoRestore({
     };
   }
 
-  // 检查并关闭运行中进程
+  // 检查并关闭运行中进程（Fail-closed：进程检测异常时严禁当作未运行强行覆盖 [H-10]）
   if (typeof isAppRunning === 'function') {
     let running = false;
     try {
-      running = await isAppRunning();
-    } catch (_) {}
+      running = Boolean(await isAppRunning());
+    } catch (err) {
+      return {
+        success: false,
+        code: 'PROCESS_CHECK_FAILED',
+        message: `无法确认 Antigravity 进程状态，已安全中止覆盖: ${err && err.message ? err.message : String(err)}`
+      };
+    }
 
     if (running) {
       if (!forceStop) {
@@ -288,26 +328,47 @@ async function executeAutoRestore({
           message: 'Antigravity 正在运行中，请退出客户端后再执行恢复。'
         };
       }
-      if (typeof stopProcesses === 'function') {
+      if (typeof stopProcesses !== 'function') {
+        return {
+          success: false,
+          code: 'APP_RUNNING',
+          message: 'Antigravity 正在运行中，请退出客户端后再执行恢复。'
+        };
+      }
+      try {
+        await stopProcesses();
+      } catch (_) {}
+      const deadline = Date.now() + stopTimeoutMs;
+      while (Date.now() < deadline) {
+        let stillRunning;
         try {
-          await stopProcesses();
-        } catch (_) {}
-        const deadline = Date.now() + stopTimeoutMs;
-        while (Date.now() < deadline) {
-          try {
-            if (!await isAppRunning()) break;
-          } catch (_) { break; }
-          await new Promise(r => setTimeout(r, 100));
+          stillRunning = Boolean(await isAppRunning());
+        } catch (err) {
+          return {
+            success: false,
+            code: 'PROCESS_CHECK_FAILED',
+            message: `无法确认 Antigravity 进程状态，已安全中止覆盖: ${err && err.message ? err.message : String(err)}`
+          };
         }
-        try {
-          if (await isAppRunning()) {
-            return {
-              success: false,
-              code: 'APP_RUNNING',
-              message: '未能成功退出 Antigravity 客户端，文件仍在被占用，请先手动退出后再执行恢复。'
-            };
-          }
-        } catch (_) {}
+        if (!stillRunning) break;
+        await new Promise(r => setTimeout(r, 100));
+      }
+      let finalRunning;
+      try {
+        finalRunning = Boolean(await isAppRunning());
+      } catch (err) {
+        return {
+          success: false,
+          code: 'PROCESS_CHECK_FAILED',
+          message: `无法确认 Antigravity 进程状态，已安全中止覆盖: ${err && err.message ? err.message : String(err)}`
+        };
+      }
+      if (finalRunning) {
+        return {
+          success: false,
+          code: 'APP_RUNNING',
+          message: '未能成功退出 Antigravity 客户端，文件仍在被占用，请先手动退出后再执行恢复。'
+        };
       }
     }
   }
@@ -322,7 +383,8 @@ async function executeAutoRestore({
     const backupExists = fs.existsSync(standardBackup);
     const backupLocalized = backupExists && isLocalizedAsar(standardBackup);
     const backupVersion = backupExists ? readAsarPackageVersion(standardBackup) : null;
-    const isDifferentVersion = backupExists && status.appVersion && backupVersion && (status.appVersion !== backupVersion);
+    const isDifferentVersion = backupExists && status.appVersion && backupVersion &&
+      (normalizeVersion(status.appVersion) !== normalizeVersion(backupVersion));
 
     // 如果备份不存在、已被汉化污染、或备份版本与当前官方原版不一致（官方更新覆盖了新版本原版）
     if (!backupExists || backupLocalized || isDifferentVersion) {

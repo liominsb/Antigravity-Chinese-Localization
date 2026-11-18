@@ -6,6 +6,8 @@
 import { ISSUE_UTILS } from '../devtools/issueDescriptions.js';
 import { DevTools } from '../third_party/index.js';
 import { logger } from '../utils/logger.js';
+import { substitutePlaceholders } from '../utils/text.js';
+const parsedDescriptionCache = new WeakMap();
 export class IssueFormatter {
     #issue;
     #options;
@@ -85,7 +87,7 @@ export class IssueFormatter {
             delete data.frameId;
             affectedResources.push({
                 uid,
-                data: data,
+                data,
                 request,
             });
         }
@@ -94,53 +96,52 @@ export class IssueFormatter {
     isValid() {
         return this.#getTitle() !== undefined;
     }
-    // Helper to extract title
-    #getTitle() {
+    #getParsedDescription() {
+        const cached = parsedDescriptionCache.get(this.#issue);
+        if (cached) {
+            return cached;
+        }
         const markdownDescription = this.#issue.getDescription();
         const filename = markdownDescription?.file;
         if (!filename) {
             logger?.(`no description found for issue:` + this.#issue.code());
-            return undefined;
+            const empty = {};
+            parsedDescriptionCache.set(this.#issue, empty);
+            return empty;
         }
-        // We already have the description logic in #getDescription, but title extraction is separate
-        // We can reuse the logic or cache it.
-        // Ideally we should process markdown once.
         const rawMarkdown = ISSUE_UTILS.getIssueDescription(filename);
         if (!rawMarkdown) {
             logger?.(`no markdown ${filename} found for issue:` + this.#issue.code());
-            return undefined;
+            const empty = {};
+            parsedDescriptionCache.set(this.#issue, empty);
+            return empty;
         }
         try {
-            const processedMarkdown = DevTools.MarkdownIssueDescription.substitutePlaceholders(rawMarkdown, markdownDescription?.substitutions);
-            const markdownAst = DevTools.Marked.Marked.lexer(processedMarkdown);
-            const title = DevTools.MarkdownIssueDescription.findTitleFromMarkdownAst(markdownAst);
-            if (!title) {
-                logger?.('cannot read issue title from ' + filename);
-                return undefined;
-            }
-            return title;
+            const description = DevTools.MarkdownIssueDescription.createIssueDescriptionFromRawMarkdown(rawMarkdown, {
+                file: filename,
+                links: markdownDescription?.links || [],
+                substitutions: markdownDescription?.substitutions,
+            });
+            const parsed = {
+                title: description.title,
+                description: substitutePlaceholders(rawMarkdown, markdownDescription?.substitutions),
+            };
+            parsedDescriptionCache.set(this.#issue, parsed);
+            return parsed;
         }
         catch {
             logger?.('error parsing markdown for issue ' + this.#issue.code());
-            return undefined;
+            const empty = {};
+            parsedDescriptionCache.set(this.#issue, empty);
+            return empty;
         }
     }
+    // Helper to extract title
+    #getTitle() {
+        return this.#getParsedDescription().title;
+    }
     #getDescription() {
-        const markdownDescription = this.#issue.getDescription();
-        const filename = markdownDescription?.file;
-        if (!filename) {
-            return undefined;
-        }
-        const rawMarkdown = ISSUE_UTILS.getIssueDescription(filename);
-        if (!rawMarkdown) {
-            return undefined;
-        }
-        try {
-            return DevTools.MarkdownIssueDescription.substitutePlaceholders(rawMarkdown, markdownDescription?.substitutions);
-        }
-        catch {
-            return undefined;
-        }
+        return this.#getParsedDescription().description;
     }
 }
 function convertIssueConciseToString(issue) {

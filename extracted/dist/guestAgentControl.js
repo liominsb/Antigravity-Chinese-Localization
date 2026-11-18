@@ -3,8 +3,16 @@ Object.defineProperty(exports, "__esModule", { value: true });
 exports.registerGuestAgentControlPredicate = registerGuestAgentControlPredicate;
 exports.registerGuestAgentOwnershipPredicate = registerGuestAgentOwnershipPredicate;
 exports.isGuestAgentOwned = isGuestAgentOwned;
+exports.onGuestAgentControlArmed = onGuestAgentControlArmed;
+exports.notifyGuestAgentControlArmed = notifyGuestAgentControlArmed;
 exports.isGuestAgentControlled = isGuestAgentControlled;
 const predicates = new Set();
+const armedListeners = new Set();
+function isValidWebContentsId(webContentsId) {
+    return (typeof webContentsId === 'number' &&
+        Number.isInteger(webContentsId) &&
+        webContentsId > 0);
+}
 /**
  * Registers a predicate consulted by {@link isGuestAgentControlled} and returns
  * an idempotent callback that removes the registration.
@@ -51,13 +59,40 @@ function isGuestAgentOwned(webContentsId) {
     return false;
 }
 /**
+ * Subscribes to notifications emitted when active agent control is (re)asserted
+ * on a guest; listeners must be idempotent. Returns an idempotent unsubscribe
+ * callback.
+ */
+function onGuestAgentControlArmed(listener) {
+    armedListeners.add(listener);
+    return () => {
+        armedListeners.delete(listener);
+    };
+}
+/**
+ * Notifies registered {@link onGuestAgentControlArmed} listeners that active
+ * agent control is (re)asserted on guest `webContentsId`; listeners must be
+ * idempotent.
+ */
+function notifyGuestAgentControlArmed(webContentsId) {
+    if (!isValidWebContentsId(webContentsId)) {
+        return;
+    }
+    for (const listener of [...armedListeners]) {
+        try {
+            listener(webContentsId);
+        }
+        catch {
+            // Ignore listener errors so remaining subscribers still run.
+        }
+    }
+}
+/**
  * Returns `true` when `webContentsId` is a positive integer marked as
  * agent-controlled by at least one registered predicate.
  */
 function isGuestAgentControlled(webContentsId) {
-    if (typeof webContentsId !== 'number' ||
-        !Number.isInteger(webContentsId) ||
-        webContentsId <= 0) {
+    if (!isValidWebContentsId(webContentsId)) {
         return false;
     }
     for (const predicate of predicates) {

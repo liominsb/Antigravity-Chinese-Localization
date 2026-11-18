@@ -1478,7 +1478,7 @@ function buildCableQrModalHtml(rpId, qrSvg) {
       <div class="qr-centered-view">${qrSvg}</div>
     </div>
     <div class="sheet-footer">
-      <button type="button" class="cancel-btn" onclick="window.close()">Cancel</button>
+      <button type="button" class="cancel-btn" onclick="window.close()">取消</button>
     </div>
   </div>
   <script>

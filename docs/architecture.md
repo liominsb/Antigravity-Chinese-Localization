@@ -9,8 +9,8 @@
 ```text
 [ Antigravity 启动 ]
         │
-        ├─► [ 原生层: dist/loadingOverlay.js ] ──► 本地化启动遮罩动画
-        ├─► [ 原生层: dist/menu.js & tray.js ] ──► 本地化原生菜单栏与系统托盘
+        ├─► [ 原生层: dist/menu.js & updater.js ] ──► 本地化原生菜单栏与更新状态机
+        ├─► [ 原生层: dist/tray.js & ipcHandlers.js ] ──► 本地化系统托盘与全量右键菜单
         │
         └─► [ Web 容器: dist/preload.js ]
                     │
@@ -136,13 +136,13 @@
 
 ## 六、打包瘦身与热升级机制 (Packaging & Upgrades)
 
-### 1. 官方基准瘦身原理（v2.12.0 基线 4.53 MB / v2.32.1 约 6.3 MB）
+### 1. 官方基准瘦身原理（v2.12.0 基线 4.53 MB / v2.33.0 约 6.23 MB）
 官方 Antigravity 在打包时将 `chrome-devtools-mcp` 等原生依赖模块存放在 `resources/app.asar.unpacked/` 中。若重新打包时不加过滤，打包工具会将外置文件冗余压缩进 `app.asar` 导致体积大幅膨胀至 21MB+。  
 本项目在重打包命令中严谨注入：
 ```bash
-npx --yes asar pack "<extract_dir>" "<output_asar>" --unpack-dir "**/chrome-devtools-mcp/**"
+npx --yes @electron/asar@3.2.18 pack "<extract_dir>" "<output_asar>" --unpack-dir "**/chrome-devtools-mcp/**"
 ```
-保持外置目录解耦，使输出的 `app.asar` 物理体积严格对齐各版本的官方原生轻量基准（v2.12.0 基线 4.53 MB，当前 v2.32.1 约 6.3 MB）。
+保持外置目录解耦，使输出的 `app.asar` 物理体积严格对齐各版本的官方原生轻量基准（v2.12.0 基线 4.53 MB，当前 v2.33.0 约 6.23 MB）。同时前端词典与运行时引擎已解耦为 `src/dictionary.js`、`src/dom-translator.js` 与 `src/build-injection.js` 模块化架构，杜绝单文件模板字符串转义腐蚀。
 
 ### 2. `injectOrUpdate` 平滑升级机制
 摒弃检测到标记即跳过的旧版逻辑，采用正确定位与截断技术：
@@ -161,12 +161,12 @@ if (markerIndex !== -1) {
 ### 1. 架构权衡背景 (Trade-off: 体验 vs 仓库体积)
 为了让非技术用户享受“解压即用、零环境依赖”的极致体验，工程在 PR #42 中将预编译补丁包 `app.asar.ready` 纳入了 Git 版本追踪。
 - **核心收益**：用户从 GitHub 点击 "Download ZIP" 下载源码包或克隆后，目录内直接包含预制补丁镜像，双击批处理无需安装 Node.js/asar 编译工具链即可一键无缝替换。
-- **物理代价**：Git 作为内容寻址数据库，无法对二进制打包文件（.asar）进行有效的行级差分压缩（Delta Compression）。每次发版更新 `app.asar.ready` 时，Git 会向 `.git/objects` 历史树中写入一个约 4.8 MB ~ 5.1 MB 的完整独立 Blob 对象，使 Git 提交历史呈现线性膨胀。
+- **物理代价**：Git 作为内容寻址数据库，无法对二进制打包文件（.asar）进行有效的行级差分压缩（Delta Compression）。每次发版更新 `app.asar.ready` 时，Git 会向 `.git/objects` 历史树中写入一个约 6.35 MiB（约 6.66 MB）的完整独立 Blob 对象，使 Git 提交历史呈现线性膨胀。
 
 ### 2. 影响范围清晰界定
 - **终端用户（完全不受影响）**：
-  1. 通过 GitHub Releases 页面下载 `app.asar` 或 `default.zip` 的用户：仅包含当前版本纯净文件，不含 Git 历史，体积恒定为 4.5 MB ~ 5.1 MB；
-  2. 通过 GitHub 网页点击 "Download ZIP" 下载源码的用户：GitHub 动态打包当前分支的快照（Snapshot），不含 `.git` 目录，体积恒定为约 5 MB；
+  1. 通过 GitHub Releases 页面下载 `app.asar` 或 `default.zip` 的用户：仅包含当前版本纯净文件，不含 Git 历史，体积恒定为约 6.35 MiB（~6.66 MB）；
+  2. 通过 GitHub 网页点击 "Download ZIP" 下载源码的用户：GitHub 动态打包当前分支的快照（Snapshot），不含 `.git` 目录，体积恒定为单版本快照大小；
   3. 本地安装与更新目录：工作区始终只保留最新一份物理文件，不产生历史冗余。
 - **开发者与源码克隆者（受历史累加影响）**：
   使用完整 `git clone` 拉取全部提交历史时，下载体积会随迭代版本数量逐渐累加（每次迭代增加约 5 MB 历史包）。

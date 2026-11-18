@@ -20,6 +20,14 @@ const isDragButton = (v) => v === 'left' || v === 'middle' || v === 'right';
 const isClickCount = (v) => v === 1 || v === 2 || v === 3;
 const isDragPhase = (v) => v === 'enter' || v === 'over' || v === 'leave' || v === 'drop';
 const isStr = (v, max) => typeof v === 'string' && v.length > 0 && v.length <= max;
+// Toolkit tab keys are `builtin-browser:<conversationId>:<tabId>` (~90 chars);
+// 256 matches this file's other identifier-string caps.
+const isTabKey = (v) => isStr(v, 256);
+const isFindOptions = (v) => isPlainObject(v) &&
+    typeof v.forward === 'boolean' &&
+    typeof v.findNext === 'boolean' &&
+    typeof v.matchCase === 'boolean';
+const isStopFindAction = (v) => v === 'clearSelection' || v === 'keepSelection' || v === 'activateSelection';
 const isList = (v, max, fn) => Array.isArray(v) && v.length <= max && v.every(fn);
 const isDropFile = (f) => isStr(f, 4096) && !f.includes('\0');
 const isDropItem = (it) => isPlainObject(it) &&
@@ -184,6 +192,36 @@ function hubCssToDip(event, boundsCss) {
     };
 }
 /**
+ * Validates renderer-supplied `WcvBoundsOptions` and scales the content size
+ * from hub CSS px to DIP. Returns undefined when no valid field remains.
+ */
+function hubCssBoundsOptionsToDip(event, rawOptions) {
+    if (!isPlainObject(rawOptions)) {
+        return undefined;
+    }
+    const zoom = resolveHubSenderZoomFactor(event);
+    const toDip = (v) => {
+        const dip = isFiniteNum(v) && v > 0
+            ? Math.min(wcvZOrderController_1.MAX_VIEWPORT_DIMENSION, Math.round(v * zoom))
+            : 0;
+        return dip > 0 ? dip : undefined;
+    };
+    const contentWidth = toDip(rawOptions.contentWidth);
+    const contentHeight = toDip(rawOptions.contentHeight);
+    const { isTransitioning } = rawOptions;
+    const options = {};
+    if (contentWidth !== undefined) {
+        options.contentWidth = contentWidth;
+    }
+    if (contentHeight !== undefined) {
+        options.contentHeight = contentHeight;
+    }
+    if (typeof isTransitioning === 'boolean') {
+        options.isTransitioning = isTransitioning;
+    }
+    return Object.keys(options).length > 0 ? options : undefined;
+}
+/**
  * Converts `WcvCdpMouseParams` measured in hub renderer CSS pixels into guest
  * DIP when `coordSpace === 'hub-css'`, leaving guest-DIP or untagged payloads
  * untouched.
@@ -260,18 +298,24 @@ function registerWcvIpcHandlers(registry = wcvBrowserRegistry_1.wcvBrowserRegist
             return snap;
         });
     });
-    registerHandle('wcv:show', (event, tabKey, boundsCss) => {
+    registerHandle('wcv:show', (event, tabKey, boundsCss, optionsCss) => {
         const { win, sender } = assertAuthorizedWcvCaller(event, registry, tabKey);
         const boundsDip = hubCssToDip(event, boundsCss);
-        const snap = registry.show(tabKey, boundsDip, win);
+        // Two-layer windows have no clip to slide, so they ignore options.
+        const optionsDip = (0, utils_1.getHubClipView)(win) || (0, utils_1.getHubCatcherView)(win)
+            ? hubCssBoundsOptionsToDip(event, optionsCss)
+            : undefined;
+        const snap = optionsDip !== undefined
+            ? registry.show(tabKey, boundsDip, win, optionsDip)
+            : registry.show(tabKey, boundsDip, win);
         controller.reconcileWindow(win, 'tab-shown');
         if (snap) {
             return snap;
         }
         if (registry.hasEvicted(tabKey, sender.id)) {
-            return registry
-                .rehydrateEvictedAndShow(win, sender, tabKey, boundsDip)
-                .then((rehydrated) => {
+            return (optionsDip !== undefined
+                ? registry.rehydrateEvictedAndShow(win, sender, tabKey, boundsDip, optionsDip)
+                : registry.rehydrateEvictedAndShow(win, sender, tabKey, boundsDip)).then((rehydrated) => {
                 controller.reconcileWindow(win, 'tab-shown');
                 return rehydrated;
             });
@@ -284,10 +328,21 @@ function registerWcvIpcHandlers(registry = wcvBrowserRegistry_1.wcvBrowserRegist
         controller.revokeFocusGrant(tabKey);
         controller.reconcileWindow(win, 'tab-hidden');
     });
-    registerOn('wcv:set-bounds-sync', (event, tabKey, boundsCss) => {
+    registerOn('wcv:set-bounds-sync', (event, tabKey, boundsCss, optionsCss) => {
         try {
             const { win, entry } = assertAuthorizedWcvCaller(event, registry, tabKey);
-            const apply = () => registry.setBounds(tabKey, hubCssToDip(event, boundsCss));
+            const apply = () => {
+                const boundsDip = hubCssToDip(event, boundsCss);
+                const optionsDip = (0, utils_1.getHubClipView)(win) || (0, utils_1.getHubCatcherView)(win)
+                    ? hubCssBoundsOptionsToDip(event, optionsCss)
+                    : undefined;
+                if (optionsDip !== undefined) {
+                    registry.setBounds(tabKey, boundsDip, optionsDip);
+                }
+                else {
+                    registry.setBounds(tabKey, boundsDip);
+                }
+            };
             if (!(0, utils_1.getHubCatcherView)(win)) {
                 apply();
                 return;
@@ -358,6 +413,30 @@ function registerWcvIpcHandlers(registry = wcvBrowserRegistry_1.wcvBrowserRegist
     registerHandle('wcv:demote', (event, tabKey, reason) => {
         assertAuthorizedWcvCaller(event, registry, tabKey);
         return controller.demote(tabKey, reason);
+    });
+    registerHandle('wcv:find', (event, tabKey, text, options, token) => {
+        assertAuthorizedWcvCaller(event, registry, isTabKey(tabKey) ? tabKey : undefined);
+        if (!isTabKey(tabKey) ||
+            !isStr(text, wcvBrowserRegistry_1.MAX_WCV_FIND_TEXT_LENGTH) ||
+            !isFindOptions(options) ||
+            !isFiniteNum(token)) {
+            throw new Error('Invalid WCV find request');
+        }
+        registry.find(tabKey, text, options, token);
+    });
+    registerHandle('wcv:stop-find', (event, tabKey, action) => {
+        assertAuthorizedWcvCaller(event, registry, isTabKey(tabKey) ? tabKey : undefined);
+        if (!isTabKey(tabKey) || !isStopFindAction(action)) {
+            throw new Error('Invalid WCV stop-find request');
+        }
+        registry.stopFind(tabKey, action);
+    });
+    registerHandle('wcv:focus-hub', (event, tabKey) => {
+        assertAuthorizedWcvCaller(event, registry, isTabKey(tabKey) ? tabKey : undefined);
+        if (!isTabKey(tabKey)) {
+            throw new Error('Invalid WCV focus-hub request');
+        }
+        controller.focusHub(tabKey);
     });
     registerHandle('wcv:navigate', async (event, tabKey, url) => {
         return runOnLiveAgentTab(event, registry, tabKey, () => controller.navigate(tabKey, url));

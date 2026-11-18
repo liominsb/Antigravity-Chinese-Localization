@@ -1,6 +1,6 @@
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
-exports.wcvZOrderController = exports.WcvZOrderController = exports.NON_ELEVATED_POPUP_SUPPRESSION_CSS = exports.POPUP_GUARD_ISOLATED_WORLD_ID = exports.PRESS_OP_TIMEOUT_MS = exports.POINTERDOWN_PROBE_TIMEOUT_MS = exports.HOVER_PROBE_TIMEOUT_MS = exports.PINCH_GESTURE_TIMEOUT_MS = exports.CDP_CAPTURE_TIMEOUT_MS = exports.CAPTURE_RETRY_MS = exports.WCV_HUB_PROBE_POINT_RESPONSE_CHANNEL = exports.WCV_HUB_PROBE_POINT_CHANNEL = exports.WCV_HUB_CURSOR_HOLE_STATE_CHANNEL = exports.WCV_CURSOR_CHANGED_CHANNEL = exports.WCV_SHORTCUT_FORWARDED_CHANNEL = exports.WCV_Z_ORDER_CHANGED_CHANNEL = void 0;
+exports.wcvZOrderController = exports.WcvZOrderController = exports.MAX_VIEWPORT_DIMENSION = exports.NON_ELEVATED_POPUP_SUPPRESSION_CSS = exports.POPUP_GUARD_ISOLATED_WORLD_ID = exports.PRESS_OP_TIMEOUT_MS = exports.POINTERDOWN_PROBE_TIMEOUT_MS = exports.HOVER_PROBE_TIMEOUT_MS = exports.PINCH_GESTURE_TIMEOUT_MS = exports.CDP_CAPTURE_TIMEOUT_MS = exports.CAPTURE_RETRY_MS = exports.WCV_HUB_PROBE_POINT_RESPONSE_CHANNEL = exports.WCV_HUB_PROBE_POINT_CHANNEL = exports.WCV_HUB_CURSOR_HOLE_STATE_CHANNEL = exports.WCV_CURSOR_CHANGED_CHANNEL = exports.WCV_SHORTCUT_FORWARDED_CHANNEL = exports.WCV_Z_ORDER_CHANGED_CHANNEL = void 0;
 exports.resolveMacEditingCommands = resolveMacEditingCommands;
 exports.mapElectronCursorToCss = mapElectronCursorToCss;
 const electron_1 = require("electron");
@@ -13,6 +13,7 @@ const utils_1 = require("./utils");
 const hubZoom_1 = require("./hubZoom");
 const webviewBrowser_1 = require("./webviewBrowser");
 const wcvBrowserRegistry_1 = require("./wcvBrowserRegistry");
+const guestAgentControl_1 = require("./guestAgentControl");
 const webviewUploadValidation_1 = require("./webviewUploadValidation");
 exports.WCV_Z_ORDER_CHANGED_CHANNEL = 'wcv:z-order-changed';
 exports.WCV_SHORTCUT_FORWARDED_CHANNEL = 'wcv:shortcut-forwarded';
@@ -99,7 +100,7 @@ function buildIsolatedWorldPopupGuardScript(suppress, allowFileChooser = false) 
   })()`;
 }
 const MIN_VIEWPORT_DIMENSION = 1;
-const MAX_VIEWPORT_DIMENSION = 8192;
+exports.MAX_VIEWPORT_DIMENSION = 8192;
 const VIEWPORT_INVALIDATE_SETTLE_MS = 34;
 /**
  * Returns `true` when a viewport override must not apply to `rawUrl`: external-only
@@ -344,6 +345,7 @@ const toMods = (v) => (isNum(v) ? v & 15 : 0);
 const toClicks = (v) => (v === 2 || v === 3 ? v : 1);
 const toInputMods = (v) => MOD_NAMES.filter((_, i) => Boolean((toMods(v) >> i) & 1));
 const sameRect = (a, b) => a?.x === b.x && a.y === b.y && a.width === b.width && a.height === b.height;
+const inRect = (p, r) => Boolean(p && p.x >= r.x && p.x < r.x + r.width && p.y >= r.y && p.y < r.y + r.height);
 const isNonEmptyStr = (v) => typeof v === 'string' && v.length > 0;
 const sameTabRef = (a, b, seq) => Boolean(a &&
     b &&
@@ -392,6 +394,7 @@ class WcvZOrderController {
         this.viewportOverrides = new Map();
         this.windowPortalOpen = new WeakMap();
         this.windowCatcherCursor = new WeakMap();
+        this.windowHubHiddenForFullscreen = new Set();
         this.catcherStates = new Map();
         this.disposers = new Set();
         this.trackedWindows = new WeakSet();
@@ -441,7 +444,16 @@ class WcvZOrderController {
                 await this.syncDragInterception(entry, existingRec);
             }
         });
-        [u1, u2, u3].forEach((fn) => fn && this.disposers.add(fn));
+        // Clears find highlights whenever any source arms agent control (including
+        // this controller's own `setAgentControlling`), so captures never show them.
+        // Arms repeat during one takeover, so only tabs with a live find session stop.
+        const u4 = (0, guestAgentControl_1.onGuestAgentControlArmed)((webContentsId) => {
+            const entry = this.registry.getEntryByWebContentsId(webContentsId);
+            if (entry && this.registry.hasActiveFind(entry.tabKey)) {
+                this.registry.stopFind(entry.tabKey, 'clearSelection');
+            }
+        });
+        [u1, u2, u3, u4].forEach((fn) => fn && this.disposers.add(fn));
     }
     syncMenuShortcutSuppression(entry, rec) {
         const wc = entry.view.webContents;
@@ -452,6 +464,9 @@ class WcvZOrderController {
     }
     handleHtmlFullscreenChanged(entry, active) {
         if (entry.view.webContents.isDestroyed()) {
+            if (!active && !entry.parentWindow.isDestroyed?.()) {
+                this.reconcileWindow(entry.parentWindow, 'leave-html-full-screen');
+            }
             return;
         }
         const rec = this.ensureRecord(entry);
@@ -505,6 +520,7 @@ class WcvZOrderController {
             rec.webContentsId = entry.webContentsId;
             rec.zOrder = 0;
             rec.userElevationLatch = false;
+            rec.pendingLeaveBlur = false;
             rec.cdpMouseInFlight = 0;
             rec.guestCssCursor = 'default';
             this.resetTabPinchState(rec);
@@ -600,14 +616,19 @@ class WcvZOrderController {
         const cv = contentViewOf(win);
         const hubView = (0, utils_1.getHubView)(win);
         const clipView = (0, utils_1.getHubClipView)(win);
+        const hasCatcher = Boolean((0, utils_1.getHubCatcherView)(win));
         const dismissedIds = clipView ? new Set() : undefined;
         let windowDesired = 0;
         let anyTabVisible = false;
+        let hasFullscreenClipGuest = false;
+        let focusRevoked = false;
         for (const entry of this.registry.getEntriesForWindow(win)) {
             const rec = this.ensureRecord(entry);
             const skipCrashedClipGuest = this.isCrashedClipEntry(entry);
             if (!entry.visible || entry.view.webContents.isDestroyed()) {
                 const prev = rec.zOrder;
+                const rev = hasCatcher && rec.userElevationLatch;
+                focusRevoked || (focusRevoked = this.blurOnHide(entry, rec, rev));
                 rec.zOrder = 0;
                 rec.userElevationLatch = false;
                 if (prev === 1) {
@@ -629,21 +650,25 @@ class WcvZOrderController {
                 }
                 continue;
             }
-            anyTabVisible = true;
+            anyTabVisible || (anyTabVisible = !clipView || this.registry.hasClipSurface(entry));
             if (!skipCrashedClipGuest &&
                 (clipView || this.viewportOverrides.has(entry.tabKey))) {
                 void this.applyViewportOverride(entry).catch(() => undefined);
             }
             const hadUserLatch = rec.userElevationLatch;
             if (clipView && !this.registry.isClipEntryRevealed(entry)) {
+                focusRevoked || (focusRevoked = this.blurOnHide(entry, rec, hasCatcher && hadUserLatch));
                 rec.userElevationLatch = false;
             }
             if (clipView && !skipCrashedClipGuest) {
                 this.syncTabFocusEmulation(entry, rec);
             }
             const desired = this.isElevationBlocked(entry, rec) ? 0 : 1;
-            if (clipView && desired === 1) {
+            if (clipView && !hasCatcher && desired === 1) {
                 windowDesired = 1;
+            }
+            if (hasCatcher && desired === 1 && entry.htmlFullscreen) {
+                hasFullscreenClipGuest = true;
             }
             const kids = !clipView ? cv?.children : undefined;
             if (cv && hubView && Array.isArray(kids)) {
@@ -677,12 +702,13 @@ class WcvZOrderController {
                 });
                 dismissedIds?.add(entry.webContentsId);
             }
-            if (clipView && hadUserLatch && desired === 0 && entry.crashed) {
-                const hubContents = (0, utils_1.getHubWebContents)(win);
-                if (hubContents && !hubContents.isDestroyed?.()) {
-                    hubContents.focus?.();
-                }
-            }
+            focusRevoked || (focusRevoked = Boolean(clipView && hadUserLatch && desired === 0 && entry.crashed));
+        }
+        const hub = focusRevoked && !this.findFocusGrantedVisibleTab(win)
+            ? (0, utils_1.getHubWebContents)(win)
+            : undefined;
+        if (hub && !hub.isDestroyed?.()) {
+            hub.focus?.();
         }
         if (clipView && cv && hubView && Array.isArray(cv.children)) {
             const hubIdx = cv.children.indexOf(hubView);
@@ -693,14 +719,56 @@ class WcvZOrderController {
                 placeAt(cv, clipView, windowDesired === 1 ? idx + 1 : idx);
             }
         }
-        // Keep `hubWcv` see-through only while a tab is visible; an opaque
+        // Keep `hubWcv` see-through only while a tab shows through it; an opaque
         // `hubWcv` saves the OS compositor a full-window blend on every frame.
         (0, utils_1.setHubSurfaceTransparent)(win, anyTabVisible);
+        if (hasFullscreenClipGuest && !this.windowHubHiddenForFullscreen.has(win)) {
+            this.windowHubHiddenForFullscreen.add(win);
+            hubView?.setVisible?.(false);
+        }
+        else if (!hasFullscreenClipGuest &&
+            this.windowHubHiddenForFullscreen.delete(win)) {
+            hubView?.setVisible?.(true);
+            if (this.liveCatcher(win)) {
+                this.attachWindowHooks(win);
+                let st = this.catcherStates.get(win);
+                if (!st) {
+                    st = makeCatcherState();
+                    this.catcherStates.set(win, st);
+                }
+                st.lastCursorDip =
+                    this.resolveLiveWindowCursorDip(win) ?? st.lastCursorDip;
+                st.needsRecoveryProbe = true;
+            }
+        }
         this.syncCatcher(win, dismissedIds);
         this.syncWindowCatcherCursor(win);
     }
     liveCatcher(w) {
         return !this.disposed && !w?.isDestroyed?.() && !!(0, utils_1.getHubCatcherView)(w);
+    }
+    clearRecovery(st) {
+        if (st) {
+            st.needsRecoveryProbe = false;
+            st.recoveryProbe = undefined;
+        }
+    }
+    resolveLiveWindowCursorDip(w) {
+        const getPt = electron_1.screen?.getCursorScreenPoint;
+        if (w && !w.isDestroyed?.() && typeof getPt === 'function') {
+            try {
+                const c = getPt.call(electron_1.screen);
+                const cw = w;
+                const b = cw.getContentBounds?.() ?? w.getBounds?.();
+                if (isNum(c?.x) && isNum(c?.y) && isNum(b?.x) && isNum(b?.y)) {
+                    return { x: toDip(c.x - b.x), y: toDip(c.y - b.y) };
+                }
+            }
+            catch {
+                // Ignore screen/window coordinate read errors.
+            }
+        }
+        return undefined;
     }
     onWinClosed(win, fn) {
         const run = () => {
@@ -718,15 +786,21 @@ class WcvZOrderController {
             this.tabStates.get(k).queuedHoverMove = undefined;
         }
     }
-    fireHover(k, x, y, m, oob = false) {
+    fireHover(k, x, y, m, oob = false, done) {
         const e = !this.disposed ? this.registry.getEntry(k) : undefined;
         const isOk = () => Boolean(e && !e.crashed && !e.view.webContents.isDestroyed());
         if (!isOk() || (!oob && !e.visible)) {
+            if (done) {
+                void Promise.resolve().then(done);
+            }
             return;
         }
         const [rec, wcId] = [this.ensureRecord(e), e.webContentsId];
         if (rec.hoverInFlight) {
             rec.queuedHoverMove = { x, y, modifiers: m, oob };
+            if (done) {
+                void rec.hoverInFlight.then(done);
+            }
             return;
         }
         const send = (mx, my, mm, mo = false) => {
@@ -765,6 +839,9 @@ class WcvZOrderController {
             }
         })();
         rec.hoverInFlight = p;
+        if (done) {
+            void p.then(done);
+        }
     }
     liveHub(w) {
         const hub = !w.isDestroyed?.() ? (0, utils_1.getHubWebContents)(w) : undefined;
@@ -911,16 +988,23 @@ class WcvZOrderController {
         const [leave, hover] = [st.deferredLeave, st.deferredHover];
         [st.deferredLeave, st.deferredHover] = [false, undefined];
         if (leave || !st.lastKnownIsHole) {
+            if (leave) {
+                this.clearRecovery(st);
+            }
             st.lastKnownIsHole = false;
             this.syncCatcher(w);
         }
         else if (hover) {
             this.applyHoverMove(w, hover.x, hover.y, hover.modifiers);
         }
+        else if (!st.slotBoundsDip) {
+            this.syncCatcher(w);
+        }
     }
     abortProbes(w, st) {
         st.catcherEpoch += 1;
         [st.hoverProbeId, st.queuedHoverDip] = [undefined, undefined];
+        st.recoveryProbe = undefined;
         [st.deferredHover, st.deferredLeave] = [undefined, false];
         st.latestAppliedProbeId = st.probeSeq;
         this.resetPressChain(st);
@@ -963,18 +1047,40 @@ class WcvZOrderController {
             this.cancelQueuedHover(k);
         }
         const e = k !== undefined ? this.registry.getEntry(k) : undefined;
+        const rec = k !== undefined ? this.tabStates.get(k) : undefined;
+        const finishBlur = () => {
+            if (e && rec?.pendingLeaveBlur && rec.webContentsId === id) {
+                rec.pendingLeaveBlur = false;
+                const wc = e.view.webContents;
+                if (!this.disposed && !w.isDestroyed?.() && !wc.isDestroyed()) {
+                    const hasGrant = Boolean(this.findFocusGrantedVisibleTab(w));
+                    const hub = hasGrant ? null : (0, utils_1.getHubWebContents)(w);
+                    if (hub && !hub.isDestroyed?.() && !hub.isFocused?.()) {
+                        wc.focus?.();
+                        hub.focus?.();
+                    }
+                    this.syncTabFocusEmulation(e, rec);
+                }
+            }
+        };
         if (e &&
             e.webContentsId === id &&
             !e.crashed &&
             !e.view.webContents.isDestroyed()) {
             if (!o?.noHover && !e.htmlFullscreen) {
-                this.fireHover(e.tabKey, -1, -1, undefined, true);
+                this.fireHover(e.tabKey, -1, -1, undefined, true, finishBlur);
+            }
+            else {
+                finishBlur();
             }
             if (!o?.skip?.has(e.webContentsId)) {
                 const shouldStillDismiss = () => !this.isCatcherVisible(w);
                 const popOpts = { onlyPopupControls: true, shouldStillDismiss };
                 (0, isolatedWorldExec_1.dismissNativeGuestPopups)(e.view.webContents, popOpts);
             }
+        }
+        else if (rec?.pendingLeaveBlur && rec.webContentsId === id) {
+            rec.pendingLeaveBlur = false;
         }
     }
     syncCatcher(w, skip, noHover = false) {
@@ -1001,19 +1107,37 @@ class WcvZOrderController {
         const slot = tab?.boundsDip ? { ...tab.boundsDip } : undefined;
         const same = tab?.tabKey === st.visibleTabKey &&
             tab?.webContentsId === st.visibleWebContentsId;
+        const cv = contentViewOf(w);
+        const kids = cv?.children;
+        const attached = !Array.isArray(kids) || kids.indexOf(catcher) >= 0;
         const nonHole = !st.lastKnownIsHole && !this.hasActiveHoldOrReplay(st);
         if ((st.slotBoundsDip && !same) || !tab || !slot || nonHole) {
             if (st.slotBoundsDip) {
+                if (!same || !tab || !slot) {
+                    st.needsRecoveryProbe = true;
+                }
                 this.hideCatcher(w, st, { skip });
+            }
+            const canProbe = attached && tab && slot && this.isPressIdle(st);
+            if (!st.slotBoundsDip && st.needsRecoveryProbe && canProbe) {
+                st.needsRecoveryProbe = false;
+                const pt = this.resolveLiveWindowCursorDip(w) ?? st.lastCursorDip;
+                const hub = pt && inRect(pt, slot) ? (0, utils_1.getHubWebContents)(w) : null;
+                const send = !hub?.isDestroyed?.() ? hub?.send : undefined;
+                if (pt && hub && typeof send === 'function') {
+                    const requestId = ++st.probeSeq;
+                    st.recoveryProbe = { requestId, epoch: st.catcherEpoch, pt };
+                    const msg = { requestId, dipX: pt.x, dipY: pt.y };
+                    hub.send(exports.WCV_HUB_PROBE_POINT_CHANNEL, msg);
+                }
             }
             return;
         }
-        const cv = contentViewOf(w);
-        const kids = cv?.children;
         if (cv && Array.isArray(kids)) {
             const idx = kids.indexOf(catcher);
             if (idx < 0) {
                 if (st.slotBoundsDip) {
+                    st.needsRecoveryProbe = true;
                     this.hideCatcher(w, st, { noIpc: true, skip });
                 }
                 return;
@@ -1063,6 +1187,7 @@ class WcvZOrderController {
                 st.lastCursorDip = pt ?? st.lastCursorDip;
                 st.latestAppliedProbeId = st.probeSeq;
                 st.lastKnownIsHole = false;
+                this.clearRecovery(st);
                 if (this.canPreemptChain(st)) {
                     this.syncNonHole(w, st);
                 }
@@ -1081,6 +1206,7 @@ class WcvZOrderController {
             st.latestAppliedProbeId = st.probeSeq;
             st.lastKnownIsHole = true;
             st.deferredLeave = false;
+            this.clearRecovery(st);
             this.syncCatcher(w, undefined, noHover);
             if (!noHover &&
                 wasVis &&
@@ -1100,7 +1226,24 @@ class WcvZOrderController {
         if (st && pending && id) {
             st.pendingProbes.delete(id);
             clearTimeout(pending.timer);
+            if (pending.epoch === st.catcherEpoch && !p.isHole) {
+                this.clearRecovery(st);
+            }
             pending.onSettle(pending.epoch === st.catcherEpoch ? p.isHole : null, true);
+        }
+        else if (st && id && st.recoveryProbe?.requestId === id) {
+            const recProbe = st.recoveryProbe;
+            st.recoveryProbe = undefined;
+            if (this.isEpochLive(w, st, recProbe.epoch)) {
+                if (id >= st.latestAppliedProbeId) {
+                    [st.latestAppliedProbeId, st.lastKnownIsHole] = [id, p.isHole];
+                }
+                st.needsRecoveryProbe = p.isHole ? st.needsRecoveryProbe : false;
+                st.lastCursorDip = p.isHole ? recProbe.pt : st.lastCursorDip;
+                if (p.isHole && this.isPressIdle(st)) {
+                    this.syncCatcher(w);
+                }
+            }
         }
     }
     startProbe(w, st, pt, ms, onDone, onTo = () => null, isDown = false) {
@@ -1262,6 +1405,7 @@ class WcvZOrderController {
                 }
                 if (!isHole) {
                     st.lastKnownIsHole = false;
+                    this.clearRecovery(st);
                     this.revokeWindowFocusGrants(w);
                     this.syncNonHole(w, st);
                     return;
@@ -1384,6 +1528,7 @@ class WcvZOrderController {
             }
             if (!isHole) {
                 st.lastKnownIsHole = false;
+                this.clearRecovery(st);
                 this.revokeWindowFocusGrants(w);
                 const vis = st.visibleTabKey
                     ? this.registry.getEntry(st.visibleTabKey)
@@ -1593,6 +1738,7 @@ class WcvZOrderController {
                         clickCount,
                         ...m,
                     });
+                    this.clearRecovery(st);
                     st.lastKnownIsHole = false;
                     [st.deferredHover, st.deferredLeave] = [undefined, false];
                     if (!this.hasActiveHoldOrReplay(st)) {
@@ -1646,6 +1792,7 @@ class WcvZOrderController {
                 await withPressTimeout(this.dispatchMouseEvent(curTab.tabKey, ev, { allowOutOfBounds: true }));
             }
             if (oob && wasLive && this.isEpochLive(w, st, press.epoch)) {
+                this.clearRecovery(st);
                 st.lastKnownIsHole = false;
                 [st.deferredHover, st.deferredLeave] = [undefined, false];
             }
@@ -1658,6 +1805,7 @@ class WcvZOrderController {
             st.deferredHover = undefined;
         }
         else if (st) {
+            this.clearRecovery(st);
             st.lastKnownIsHole = false;
             this.syncNonHole(w, st);
         }
@@ -1668,6 +1816,12 @@ class WcvZOrderController {
                 this.hideCatcher(w, st, { noHover: true });
             }
             this.catcherStates.clear();
+            for (const w of [...this.windowHubHiddenForFullscreen]) {
+                if (!w.isDestroyed?.()) {
+                    (0, utils_1.getHubView)(w)?.setVisible?.(true);
+                }
+            }
+            this.windowHubHiddenForFullscreen.clear();
             this.disposed = true;
             this.tabStates.forEach((rec) => this.clearTabInputQueues(rec));
             [...this.disposers].forEach((fn) => fn());
@@ -1705,6 +1859,9 @@ class WcvZOrderController {
                 }
                 const st = this.catcherStates.get(win);
                 if (st) {
+                    if (st.slotBoundsDip && (0, utils_1.getHubCatcherView)(win)) {
+                        st.needsRecoveryProbe = true;
+                    }
                     this.hideCatcher(win, st, { noIpc: true });
                 }
                 if (!(0, utils_1.getHubCatcherView)(win)) {
@@ -1766,8 +1923,23 @@ class WcvZOrderController {
             catcherContents.send?.(catcherChannels_1.WCV_CATCHER_SET_CURSOR_CHANNEL, desired);
         }
     }
+    blurOnHide(e, r, on) {
+        const w = on ? e?.parentWindow : undefined;
+        const st = w && (0, utils_1.getHubCatcherView)(w) ? this.catcherStates.get(w) : null;
+        const hit = st?.slotBoundsDip &&
+            st.visibleTabKey === e?.tabKey &&
+            st.visibleWebContentsId === e?.webContentsId;
+        const live = e && !e.htmlFullscreen && !e.view.webContents.isDestroyed();
+        const ok = live && !this.isCrashedClipEntry(e);
+        if (w && hit && ok && this.eligibleTab(w)?.tabKey !== e.tabKey) {
+            r.pendingLeaveBlur = true;
+        }
+        return on && !r.pendingLeaveBlur;
+    }
     setUserElevationLatch(entry, rec, latched) {
+        this.blurOnHide(entry, rec, !latched && rec.userElevationLatch);
         rec.userElevationLatch = latched;
+        rec.pendingLeaveBlur = latched ? false : rec.pendingLeaveBlur;
         if (entry && (0, utils_1.getHubClipView)(entry.parentWindow)) {
             this.syncTabFocusEmulation(entry, rec);
         }
@@ -1829,6 +2001,30 @@ class WcvZOrderController {
         this.setUserElevationLatch(entry, rec, false);
         return this.getState(tabKey);
     }
+    /**
+     * Revokes `tabKey`'s guest focus grant and focuses the parent Hub
+     * `WebContents` when `tabKey` is visible and not under agent control.
+     */
+    focusHub(tabKey) {
+        const entry = this.registry.getEntry(tabKey);
+        if (!entry ||
+            !entry.visible ||
+            entry.isAgentStepActive ||
+            (0, guestAgentControl_1.isGuestAgentControlled)(entry.webContentsId) ||
+            entry.view.webContents.isDestroyed() ||
+            entry.parentWindow.isDestroyed?.()) {
+            return;
+        }
+        if (entry.htmlFullscreen) {
+            this.registry.exitHtmlFullscreen?.(tabKey);
+        }
+        const rec = this.ensureRecord(entry);
+        this.setUserElevationLatch(entry, rec, false);
+        const hubContents = (0, utils_1.getHubWebContents)(entry.parentWindow);
+        if (hubContents && !hubContents.isDestroyed?.()) {
+            hubContents.focus?.();
+        }
+    }
     clearWindowElevationBlockers(win, reason) {
         const entriesSnapshot = this.registry
             .getEntriesForWindow(win)
@@ -1870,6 +2066,7 @@ class WcvZOrderController {
             }
         }
         this.reconcileWindow(win, reason);
+        this.clearRecovery(catcherSt);
     }
     setOverlayActive(tabKey, active) {
         const entry = this.registry.getEntry(tabKey);
@@ -2057,7 +2254,8 @@ class WcvZOrderController {
      * view focus.
      */
     async syncFocusEmulation(entry, rec) {
-        if (!rec.cdpAttached ||
+        if (rec.pendingLeaveBlur ||
+            !rec.cdpAttached ||
             entry.view.webContents.isDestroyed() ||
             this.isCrashedClipEntry(entry)) {
             return;
@@ -2572,8 +2770,8 @@ class WcvZOrderController {
             return false;
         }
         const normalized = {
-            width: Math.min(MAX_VIEWPORT_DIMENSION, Math.max(MIN_VIEWPORT_DIMENSION, Math.round(size.width))),
-            height: Math.min(MAX_VIEWPORT_DIMENSION, Math.max(MIN_VIEWPORT_DIMENSION, Math.round(size.height))),
+            width: Math.min(exports.MAX_VIEWPORT_DIMENSION, Math.max(MIN_VIEWPORT_DIMENSION, Math.round(size.width))),
+            height: Math.min(exports.MAX_VIEWPORT_DIMENSION, Math.max(MIN_VIEWPORT_DIMENSION, Math.round(size.height))),
         };
         await this.applyViewportOverride(entry, { caller: normalized });
         return true;
@@ -3080,6 +3278,7 @@ class WcvZOrderController {
             hubContents?.off?.('focus', onHubFocus);
             hubContents?.off?.('did-start-navigation', onHubDidStartNavigation);
             hubContents?.off?.('render-process-gone', onHubRenderProcessGone);
+            this.windowHubHiddenForFullscreen.delete(win);
             this.dropCatcherState(win);
         });
     }
@@ -3229,6 +3428,7 @@ class WcvZOrderController {
                 rec.cdpAttachEpoch = (rec.cdpAttachEpoch ?? 0) + 1;
                 rec.cdpAttachInFlight = undefined;
                 rec.cdpAttached = false;
+                rec.pendingLeaveBlur = false;
                 rec.focusEmulationEnabled = undefined;
                 rec.focusEmulationSeq = 0;
                 [rec.dragInterceptionEnabled, rec.dragInterceptionSeq] = [undefined, 0];
@@ -3506,6 +3706,14 @@ class WcvZOrderController {
         onWc('did-frame-finish-load', (_event, isMainFrame) => {
             if (isMainFrame === false && !wc.isDestroyed?.()) {
                 void Promise.all(this.syncSubframePopupSuppression(wc, this.shouldSuppressNativePopups(entry, rec)));
+            }
+        });
+        onWc('devtools-closed', () => {
+            if (rec.webContentsId === entry.webContentsId &&
+                !wc.isDestroyed?.() &&
+                entry.isAgentStepActive &&
+                (!rec.cdpAttached || !wc.debugger?.isAttached?.())) {
+                void this.ensureCdpAttached(entry);
             }
         });
         const dbg = wc.debugger;

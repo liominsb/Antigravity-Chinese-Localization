@@ -4,6 +4,20 @@
 
 ---
 
+## v2.33.0 (2026-11-18) — 全面适配官方 2.33.0 大版本：Computer Use 桌面操控与实时预览、Remote SSH 全生命周期升级、9 款新音色与语音听写、插件组合包及模块化安全重构
+
+### 1. 官方 v2.33.0 新特性全量深度汉化
+- **Computer Use 桌面操控与 Agents Live 实时预览**：全面覆盖主进程新增的桌面操控悬浮窗（`dist/computer/hud.js`、`hudState.js`、`hudAgents.js`、`overlay.js`）及前端 `Agents Live` 视频流窗格、智能体暂停接管横幅、游标意图胶囊与 macOS 屏幕录制/辅助功能权限引导卡片。
+- **Remote SSH 远程子系统重磅升级**：跟进 `v2.33.0` 重构后的断连/重启过渡页 (`disconnectedPage.js`)、统一交互式密码/密钥口令/PIN/主机密钥提示 (`sshPrompts.js`)、共享主目录冲突接管与服务端版本重启弹窗 (`remoteManager.js`)、远程麦克风授权与登录归属确认、SSH 配置文件编码/权限诊断 (`sshConfigHosts.js`) 及 OAuth 本地回调页 (`signInCallback.js`)。
+- **新版 9 款 Gemini Live 音色与实时语音听写 (Voice Dictation)**：扩充 `Arlo / Cleo / Finn / Fola / Gero / Lora / Neno / Olin / Tari` 全部 9 款音色白名单与选择计数规则，全量覆盖实时语音转写状态及 12 类宿主机麦克风/系统权限诊断提示。
+- **内置浏览器按站点 Cookie 管理、双模快捷键方案与扩展市场插件组合包 (Bundles)**：新增浏览数据清理与按站点删除 Cookie 面板、`VS Code Default` 与 `Antigravity (AGY) Style` 双模快捷键方案（含冲突检测提示）、扩展市场 `Bundles` 组合包与第三方/实验性源码安全审查弹窗、Step Plan 步骤进度胶囊、配置例程 (`Setup Routine`) 及侧栏分组 `Repo`（`仓库`）与模型角标 `NEW`（`新`）精细化区分。
+
+### 2. 模块化引擎重构与全栈安全加固
+- **前端翻译引擎物理模块化与词库去重瘦身**：拆分为 `src/dictionary.js`、`src/dom-translator.js` 与 `src/build-injection.js`，清零 619 组历史重复键，前置 `O(1)` 词典精确匹配消除宽泛正则截胡，修复 React Fiber 空状态子节点保护与侧栏项目拖拽坐标计算，加入 `coreWords` 100% 实词命中防夹生守卫，预制包体积精简至 ~`7.08 MB`。
+- **本地服务安全装甲与全平台脚本加固**：控制中心强制绑定 `127.0.0.1` 并接入 `Host`/`Origin` + 一次性 CSRF Token 鉴权、强制 TLS 证书校验、双轨备份版本防白屏门禁与进程 Fail-closed 保护；Windows 离线批处理新增 PowerShell 二进制 ASAR 版本门禁，`.command`/`.sh` 强制纯 LF 与 UTF-8/POSIX 权限可复现打包；全工程 **51 组 TDD 自动化测试套件 100% ALL GREEN**。
+
+---
+
 ## v2.32.2.1 (2026-11-17) — 对话页排队发送按钮 (`Send all (N)`)、模型思考档位 (`Extra`/`Max`) 与撤销确认弹窗深度补全
 
 ### 新特性与核心修复

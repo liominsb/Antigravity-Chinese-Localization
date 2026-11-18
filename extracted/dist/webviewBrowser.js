@@ -824,6 +824,15 @@ function formatPopupWindowTitle(rawUrl, pageTitle, securityLabel) {
 }
 const configuredWebviewContents = new WeakSet();
 const configuredWebviewById = new Map();
+function closeGuestDevToolsIfOpen(contents) {
+    if (contents && !contents.isDestroyed?.() && contents.isDevToolsOpened?.()) {
+        console.info(`[WebviewBrowser] Closing guest DevTools (webContentsId=${String(contents.id)}) while under agent control`);
+        contents.closeDevTools?.();
+    }
+}
+(0, guestAgentControl_1.onGuestAgentControlArmed)((webContentsId) => {
+    closeGuestDevToolsIfOpen(configuredWebviewById.get(webContentsId));
+});
 const configuredWebviewInitialOriginById = new Map();
 /**
  * Consume-once getter for a guest's in-flight armed main-frame directory.
@@ -2268,6 +2277,14 @@ function configureWebviewBrowserContents(contents, options) {
         }
         return customAgentControlled || (0, guestAgentControl_1.isGuestAgentControlled)(webContentsId);
     };
+    if (isOpenerCurrentlyAgentControlled()) {
+        closeGuestDevToolsIfOpen(contents);
+    }
+    contents.on?.('devtools-opened', () => {
+        if (isOpenerCurrentlyAgentControlled()) {
+            closeGuestDevToolsIfOpen(contents);
+        }
+    });
     const getParentWindow = options?.getParentWindow ??
         (() => {
             if (host && typeof electron_1.BrowserWindow?.fromWebContents === 'function') {

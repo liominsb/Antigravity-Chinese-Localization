@@ -15,6 +15,7 @@ class RemoteError extends Error {
         this.userCancelled = options.userCancelled ?? false;
         this.couldPrompt = options.couldPrompt ?? false;
         this.explainsItself = options.explainsItself ?? false;
+        this.otherHost = options.otherHost;
     }
 }
 exports.RemoteError = RemoteError;

@@ -1,6 +1,6 @@
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
-exports.webUtils = exports.screen = exports.webFrame = exports.webContents = exports.session = exports.ipcRenderer = exports.contextBridge = exports.systemPreferences = exports.shell = exports.Notification = exports.Menu = exports.MenuItem = exports.Tray = exports.nativeImage = exports.protocol = exports.ipcMain = exports.dialog = exports.MessageChannelMain = exports.WebContentsView = exports.View = exports.BrowserWindow = exports.BaseWindow = exports.app = void 0;
+exports.autoUpdater = exports.webUtils = exports.screen = exports.webFrame = exports.webContents = exports.session = exports.ipcRenderer = exports.contextBridge = exports.systemPreferences = exports.shell = exports.Notification = exports.Menu = exports.MenuItem = exports.Tray = exports.nativeImage = exports.protocol = exports.ipcMain = exports.dialog = exports.MessageChannelMain = exports.WebContentsView = exports.View = exports.BrowserWindow = exports.BaseWindow = exports.app = void 0;
 /**
  * Shared Electron mock for all test files.
  *
@@ -38,6 +38,7 @@ exports.app = {
         setIcon: vitest_1.vi.fn(),
         setMenu: vitest_1.vi.fn(),
     },
+    setActivationPolicy: vitest_1.vi.fn(),
     requestSingleInstanceLock: vitest_1.vi.fn().mockReturnValue(true),
     isDefaultProtocolClient: vitest_1.vi.fn().mockReturnValue(false),
     setAsDefaultProtocolClient: vitest_1.vi.fn().mockReturnValue(true),
@@ -85,6 +86,7 @@ const _mockBrowserWindowInstance = {
     once: vitest_1.vi.fn(),
     close: vitest_1.vi.fn(),
     show: vitest_1.vi.fn(),
+    showInactive: vitest_1.vi.fn(),
     focus: vitest_1.vi.fn(),
     setTitle: vitest_1.vi.fn(),
     isMinimized: vitest_1.vi.fn().mockReturnValue(false),
@@ -289,6 +291,7 @@ exports.shell = {
 };
 exports.systemPreferences = {
     getMediaAccessStatus: vitest_1.vi.fn().mockReturnValue('granted'),
+    isTrustedAccessibilityClient: vitest_1.vi.fn().mockReturnValue(true),
     askForMediaAccess: vitest_1.vi.fn().mockResolvedValue(true),
 };
 exports.contextBridge = {
@@ -363,4 +366,11 @@ exports.screen = {
 };
 exports.webUtils = {
     getPathForFile: vitest_1.vi.fn().mockReturnValue('/mock/file/path'),
+};
+/** Electron's own updater; electron-updater emits 'before-quit-for-update' on it. */
+exports.autoUpdater = {
+    on: vitest_1.vi.fn(),
+    once: vitest_1.vi.fn(),
+    off: vitest_1.vi.fn(),
+    emit: vitest_1.vi.fn(),
 };

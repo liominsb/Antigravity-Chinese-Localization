@@ -389,6 +389,9 @@ class GuestDialogController {
             rec.fallbackContext = fallbackContext;
         }
         this.attachListenersIfNeeded(rec);
+        if (this.isInterceptionArmed(rec)) {
+            (0, guestAgentControl_1.notifyGuestAgentControlArmed)(wc.id);
+        }
     }
     async syncFallbackContext(wc) {
         if (!wc || typeof wc.id !== 'number') {
@@ -405,6 +408,7 @@ class GuestDialogController {
             }
             return true;
         }
+        (0, guestAgentControl_1.notifyGuestAgentControlArmed)(wc.id);
         guestPromptController_1.guestPromptController.cancelForGuest(wc.id);
         if (!this.supportsMainWorldInterception(rec)) {
             return true;
@@ -423,6 +427,7 @@ class GuestDialogController {
             }
             return true;
         }
+        (0, guestAgentControl_1.notifyGuestAgentControlArmed)(wc.id);
         guestPromptController_1.guestPromptController.cancelForGuest(wc.id);
         return this.ensureArmedDomainAndSync(rec);
     }
@@ -431,11 +436,13 @@ class GuestDialogController {
         if (!dbg || rec.wc.isDestroyed?.()) {
             return false;
         }
+        // Register navigation and `devtools-closed` hooks before attaching so an
+        // asynchronously closing DevTools frontend still re-arms dialog interception.
+        this.attachListenersIfNeeded(rec);
+        this.attachNavigationListenersIfNeeded(rec);
         if (!(0, guestDebugger_1.ensureGuestDebuggerAttached)(dbg)) {
             return false;
         }
-        this.attachListenersIfNeeded(rec);
-        this.attachNavigationListenersIfNeeded(rec);
         if (!rec.pageDomainEnabled) {
             if (isGuestOnBlankOrEmptyUrl(rec.wc)) {
                 return true;
@@ -726,11 +733,21 @@ class GuestDialogController {
                 void this.syncMainWorldInterceptor(rec);
             }
         };
+        const onDevToolsClosed = () => {
+            if (!rec.wc.isDestroyed?.() &&
+                this.isInterceptionArmed(rec) &&
+                (!rec.wc.debugger?.isAttached?.() ||
+                    (!rec.pageDomainEnabled && !isGuestOnBlankOrEmptyUrl(rec.wc)))) {
+                void this.ensureArmedDomainAndSync(rec);
+            }
+        };
         rec.wc.on('did-start-navigation', onDidStartNavigation);
         rec.wc.on('did-navigate', onDidNavigate);
+        rec.wc.on('devtools-closed', onDevToolsClosed);
         rec.detachNavListeners = () => {
             rec.wc.removeListener?.('did-start-navigation', onDidStartNavigation);
             rec.wc.removeListener?.('did-navigate', onDidNavigate);
+            rec.wc.removeListener?.('devtools-closed', onDevToolsClosed);
             rec.detachNavListeners = undefined;
         };
     }

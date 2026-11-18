@@ -1,6 +1,7 @@
-# Force shell scripts to always use LF line endings,
+# Force shell scripts and macOS command launchers to always use LF line endings,
 # even on Windows, to ensure compatibility with macOS/Linux.
 *.sh text eol=lf
+*.command text eol=lf
 
 # Force Windows batch scripts to always use CRLF line endings,
 # to prevent cmd.exe command parsing truncation and EOF issues.

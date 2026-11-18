@@ -22,11 +22,10 @@ const wizardAPI = {
 };
 electron_1.contextBridge.exposeInMainWorld('wizardAPI', wizardAPI);
 
-
 // Antigravity 2.0 Chinese Localization Engine Enhanced
 (function() {
+  // 2.29.1 扩展市场全量插件、提示词与生态卡片汉化
   const dictionary = {
-    // Top Bar & Menus
     "File": "文件",
     "Edit": "编辑",
     "View": "视图",
@@ -36,7 +35,7 @@ electron_1.contextBridge.exposeInMainWorld('wizardAPI', wizardAPI);
     "Docs": "文档",
     "Docs & API Reference": "文档与 API 参考",
     "Toggle Developer Tools": "开发者工具",
-    "New Window": "新窗口",
+    "New Window": "新建窗口",
     "Quit": "退出",
     "Cancel": "取消",
     "Confirm Quit": "确认退出",
@@ -46,7 +45,6 @@ electron_1.contextBridge.exposeInMainWorld('wizardAPI', wizardAPI);
     "Reopen Locally": "本地重新打开",
     "WSL": "WSL",
     "WSL Environment": "WSL 环境",
-    "WSL environment": "WSL 环境",
     "Distro": "发行版",
     "Distros": "发行版",
     "Default Distro": "默认发行版",
@@ -59,12 +57,11 @@ electron_1.contextBridge.exposeInMainWorld('wizardAPI', wizardAPI);
     "Cannot open folder": "无法打开文件夹",
     "WSL distro not found": "未找到 WSL 发行版",
     "WSL setup failed": "WSL 配置失败",
-    "Open workspace": "打开工作区",
-    "Open workspaces": "打开工作区",
     "Open Workspace": "打开工作区",
+    "Open workspace": "打开工作区",
     "Open Workspaces": "打开工作区",
     "Welcome to the new Antigravity!": "欢迎使用全新 Antigravity！",
-    "Antigravity has been redesigned to put agents first with new capabilities. If you'd still like a code editor, you can download it as a separate app named": "Antigravity 已经重构为以智能体为核心的全新平台。如果您仍需要代码编辑器，可以将其作为名为以下的独立应用下载：",
+    "Antigravity has been redesigned to put agents first with new capabilities. If you'd still like a code editor, you can download it as a separate app named": "Antigravity 经过全面重构，赋予智能体更强大的原生能力。如果您仍需要代码编辑器，可单独下载独立应用",
     "Antigravity IDE": "Antigravity IDE 编辑器",
     "Download the Antigravity IDE": "下载 Antigravity IDE",
     "Explore the new Antigravity": "探索全新 Antigravity",
@@ -90,7 +87,7 @@ electron_1.contextBridge.exposeInMainWorld('wizardAPI', wizardAPI);
     "Error": "错误",
     "Success": "成功",
     "Pending": "等待中",
-    "Running": "运行中",
+    "Running": "正在运行",
     "Completed": "已完成",
     "Failed": "已失败",
     "Branch": "分支",
@@ -101,7 +98,6 @@ electron_1.contextBridge.exposeInMainWorld('wizardAPI', wizardAPI);
     "Grep Search": "全局搜索",
     "Active Agents": "活跃智能体",
     "No agents running": "没有运行中的智能体",
-    "active workspace": "活动工作区",
     "Active Workspace": "活动工作区",
     "Search": "搜索",
     "Search...": "搜索...",
@@ -129,12 +125,9 @@ electron_1.contextBridge.exposeInMainWorld('wizardAPI', wizardAPI);
     "Select a folder": "选择文件夹",
     "Open Folder": "打开文件夹",
     "Create Project": "创建项目",
-    "create project": "创建项目",
     "New Project": "新建项目",
-    "new project": "新建项目",
     "Create New Project": "创建新项目",
     "Open Project": "打开项目",
-    "open project": "打开项目",
     "Reset Zoom": "重置缩放",
     "Toggle Fullscreen": "切换全屏",
     "Antigravity": "Antigravity",
@@ -160,14 +153,11 @@ electron_1.contextBridge.exposeInMainWorld('wizardAPI', wizardAPI);
     "timer": "定时器",
     "Timers": "定时器",
     "Cron Jobs": "计划任务",
-    "Schedule": "调度",
+    "Schedule": "计划调度",
     "Directory analysis": "目录分析",
-    "Web search": "网页搜索",
     "File edit": "文件编辑",
     "Command execution": "命令执行",
     "Semantic search": "语义搜索",
-
-    // Added sentences & refined for user experience
     "Permissions": "权限",
     "Configure global allowed and denied resource permissions. Learn more.": "配置全局允许与拒绝的资源访问权限。了解更多。",
     "Configure global allowed and denied resource permissions.": "配置全局允许与拒绝的资源访问权限。",
@@ -185,15 +175,13 @@ electron_1.contextBridge.exposeInMainWorld('wizardAPI', wizardAPI);
     "Network Permissions": "网络权限",
     "Network Access Rules": "网络访问规则",
     "Configure allowed and denied URLs for reading.": "配置允许或禁止读取的 URL。",
-    "Terminal & Tooling Permissions": "终端和工具权限",
+    "Terminal & Tooling Permissions": "终端与工具权限",
     "Terminal Commands": "终端命令",
     "Configure allowed terminal commands.": "配置允许执行的终端命令。",
     "Commands Outside Sandbox": "沙盒外命令",
     "Configure allowed commands outside the sandbox.": "配置允许在沙盒外执行的终端命令。",
     "MCP Tools": "MCP 工具",
     "Tool Permissions": "工具权限",
-    "Tool permissions": "工具权限",
-    "工具 Permissions": "工具权限",
     "Configure external tools via Model Context Protocol.": "通过模型上下文协议 (MCP) 配置外部工具。",
     "Global": "全局",
     "Sandbox": "沙盒",
@@ -204,8 +192,6 @@ electron_1.contextBridge.exposeInMainWorld('wizardAPI', wizardAPI);
     "Paths": "路径",
     "URLs": "URL",
     "Tools": "工具",
-
-    // Appearance & Settings
     "Appearance": "外观",
     "Configure the Agent's visual theme and display preferences.": "配置智能体的视觉主题与显示偏好。",
     "Chat Settings": "聊天设置",
@@ -222,8 +208,6 @@ electron_1.contextBridge.exposeInMainWorld('wizardAPI', wizardAPI);
     "Accent": "强调色",
     "Dark Theme": "深色主题",
     "Default Dark": "默认深色",
-    
-    // Customizations
     "Customizations": "自定义",
     "Configure default behaviors, skills, and MCP servers.": "配置默认行为、技能以及 MCP 服务器。",
     "Token Usage": "Token 使用详情",
@@ -242,22 +226,17 @@ electron_1.contextBridge.exposeInMainWorld('wizardAPI', wizardAPI);
     "No MCP Servers": "无已安装的 MCP 服务器",
     "You currently don't have any MCP Servers installed.": "您当前未安装任何 MCP 服务器。",
     "Add an MCP server above": "在上方添加一个 MCP 服务器",
-    // Build With Google Plugins & 官方插件生态
     "Build With Google Plugins": "使用 Google 插件构建",
-    "Build with Google Plugins": "使用 Google 插件构建",
-    "build with google plugins": "使用 Google 插件构建",
     "Google Plugins": "Google 插件",
-    "Google plugins": "Google 插件",
     "Official Google plugins": "Google 官方插件",
     "Official Google plugins designed for Antigravity.": "专为 Antigravity 设计的 Google 官方扩展插件。",
-    "Plugins are packaged collections of skills and MCPs to help the Agent in Antigravity work with Google developer products. You can always change your choices in Settings.": "插件是技能和 MCP 的打包集合，用于协助 Antigravity 中的智能体使用 Google 开发者产品。你可以随时在设置中更改你的选择。",
+    "Plugins are packaged collections of skills and MCPs to help the Agent in Antigravity work with Google developer products. You can always change your choices in Settings.": "插件是技能与 MCP 服务器的打包集合，用于帮助 Antigravity 中的智能体更好地协同 Google 开发者产品。您可以随时在设置中更改配置。",
     "Plugins are packaged collections of skills and MCPs to help the Agent in Antigravity work with Google developer products. You can always change your choices in Settings": "插件是技能和 MCP 的打包集合，用于协助 Antigravity 中的智能体使用 Google 开发者产品。你可以随时在设置中更改你的选择",
-    "Plugins are packaged collections of skills and MCPs to help the Agent in Antigravity work with Google developer products.": "插件是技能和 MCP 的打包集合，用于协助 Antigravity 中的智能体使用 Google 开发者产品。",
+    "Plugins are packaged collections of skills and MCPs to help the Agent in Antigravity work with Google developer products.": "插件是技能与 MCP 服务器的打包集合，用于帮助 Antigravity 中的智能体更好地协同 Google 开发者产品。",
     "Plugins are packaged collections of skills and MCPs to help the Agent in Antigravity work with Google developer products": "插件是技能和 MCP 的打包集合，用于协助 Antigravity 中的智能体使用 Google 开发者产品",
-    "You can always change your choices in Settings.": "你可以随时在设置中更改你的选择。",
+    "You can always change your choices in Settings.": "您可以随时在设置中更改配置。",
     "You can always change your choices in Settings": "你可以随时在设置中更改你的选择",
     "Plugins are packaged collections of skills and MCPs to help the Agent in": "插件是技能和 MCP 的打包集合，用于协助智能体在",
-    "Plugins are packaged collections of skills and MCPs to help the Agent in ": "插件是技能和 MCP 的打包集合，用于协助智能体在 ",
     "Antigravity work with Google developer products. You can always change your choices in Settings.": "Antigravity 中协同 Google 开发者产品工作。你可以随时在设置中更改你的选择。",
     "Antigravity work with Google developer products. You can always change your choices in Settings": "Antigravity 中协同 Google 开发者产品工作。你可以随时在设置中更改你的选择",
     "Antigravity work with Google developer products.": "Antigravity 中协同 Google 开发者产品工作。",
@@ -289,18 +268,10 @@ electron_1.contextBridge.exposeInMainWorld('wizardAPI', wizardAPI);
     "Plugin details": "插件详情",
     "View details": "查看详情",
     "View Documentation": "查看文档",
-    "View documentation": "查看文档",
     "Bundled Skills": "内置技能",
-    "Bundled skills": "内置技能",
-    "bundled skills": "内置技能",
     "Bundled Rules": "内置规则",
-    "Bundled rules": "内置规则",
-    "bundled rules": "内置规则",
     "Bundled MCP Servers": "内置 MCP 服务器",
-    "Bundled MCP servers": "内置 MCP 服务器",
-    "bundled MCP servers": "内置 MCP 服务器",
     "Bundled Hooks": "内置生命周期钩子",
-    "bundled hooks": "内置生命周期钩子",
     "Skills included": "包含技能",
     "Rules included": "包含规则",
     "MCP servers included": "包含 MCP 服务器",
@@ -313,90 +284,53 @@ electron_1.contextBridge.exposeInMainWorld('wizardAPI', wizardAPI);
     "No MCP servers installed": "未安装任何 MCP 服务器",
     "Add MCP": "添加 MCP",
     "Open MCP Config": "打开 MCP 配置文件",
-    "Guidelines for interacting with GitHub and request permissions from the user when commands fail due to restrictions in the agent environment.": "与 GitHub 交互的执行规范；当命令因智能体环境受限失败时，向用户提请权限确认的指南。",
-    // 官方 Firebase 与 Google Cloud 扩展插件深度汉化
+    "Guidelines for interacting with GitHub and request permissions from the user when commands fail due to restrictions in the agent environment.": "与 GitHub 交互的操作准则，当命令因智能体环境限制执行失败时向用户申请授权。",
     "Skills and MCP servers for building with Firebase.": "用于基于 Firebase 构建应用的专属技能与 MCP 服务器。",
     "Skills and MCP servers for building with Firebase": "用于基于 Firebase 构建应用的专属技能与 MCP 服务器",
     "Skills and MCP servers for working with Google Cloud.": "用于在 Google Cloud 云平台上进行开发的技能与 MCP 服务器。",
     "Skills and MCP servers for working with Google Cloud": "用于在 Google Cloud 云平台上进行开发的技能与 MCP 服务器",
     "Configure agent execution, queued message delivery, and permissions.": "配置智能体执行策略、消息队列发送机制以及安全权限。",
     "Configure agent execution, queued message delivery, and permissions": "配置智能体执行策略、消息队列发送机制以及安全权限",
-    "Configure 智能体 执行, queued 消息 delivery, and 权限。": "配置智能体执行策略、消息队列发送机制以及安全权限。",
-    "Configure 智能体 执行, queued 消息 delivery, and 权限": "配置智能体执行策略、消息队列发送机制以及安全权限",
     "Use Build With Google Plugins": "使用 Google 插件构建",
-    "Use Build with Google Plugins": "使用 Google 插件构建",
     "Use Build With Google Plugins to": "使用 Google 插件构建以",
     "queued message delivery": "消息队列发送",
     "queued message": "排队消息",
-    "queued messages": "排队消息",
-
-    // ===== 官方插件市场 (Build with Antigravity Plugins) 深度全量汉化 =====
-    "Build with Antigravity Plugins": "使用 Antigravity 插件构建",
-    "Build with Antigravity plugins": "使用 Antigravity 插件构建",
+    "Queued Messages": "排队消息",
     "Build With Antigravity Plugins": "使用 Antigravity 插件构建",
-    "Build with Antigravity 插件": "使用 Antigravity 插件构建",
-    "Plugins are packaged collections of skills and MCPs to help the Agent in Antigravity work with Google developer products. You can always change your choices in Settings.": "插件是技能与 MCP 服务器的打包集合，用于帮助 Antigravity 中的智能体更好地协同 Google 开发者产品。您可以随时在设置中更改配置。",
-    "Plugins are packaged collections of skills and MCPs to help the Agent in Antigravity work with Google developer products.": "插件是技能与 MCP 服务器的打包集合，用于帮助 Antigravity 中的智能体更好地协同 Google 开发者产品。",
-    "You can always change your choices in Settings.": "您可以随时在设置中更改配置。",
-
-    // 1. Android
     "Core tools and knowledge required to develop for Android.": "面向 Android 应用开发所需的核心工具集与专业领域知识。",
     "Core tools and knowledge required to develop for Android": "面向 Android 应用开发所需的核心工具集与专业领域知识",
-    "Core 工具 and knowledge required to develop 持续 Android": "面向 Android 应用开发所需的核心工具集与专业领域知识",
     "develop for Android": "Android 应用开发",
-
-    // 2. Modern Web Guidance
     "Modern Web Guidance": "现代 Web 开发指南",
     "Keep your coding agent up to date with the latest web best practices.": "让您的编码智能体紧跟最新的 Web 最佳实践与现代技术规范。",
     "Keep your coding agent up to date with the latest web best practices": "让您的编码智能体紧跟最新的 Web 最佳实践与现代技术规范",
-    "Keep your coding 智能体 已是最新版本 with the latest web best practices。": "让您的编码智能体紧跟最新的 Web 最佳实践与现代技术规范。",
-    "Keep your coding 智能体 已是最新版本 with the latest web best practices": "让您的编码智能体紧跟最新的 Web 最佳实践与现代技术规范",
     "latest web best practices": "最新的 Web 最佳实践",
-
-    // 3. Google Antigravity SDK
     "Google Antigravity SDK": "Google Antigravity SDK",
     "Using the Antigravity Python SDK to build AI agents.": "使用官方 Antigravity Python SDK 构建自定义 AI 智能体。",
     "Using the Antigravity Python SDK to build AI agents": "使用官方 Antigravity Python SDK 构建自定义 AI 智能体",
-    "Using the Antigravity Python SDK to build AI 智能体": "使用官方 Antigravity Python SDK 构建自定义 AI 智能体",
     "build AI agents": "构建 AI 智能体",
-
-    // 4. Science
     "Science": "科学研究",
     "Curated collection of agent skills for science.": "专为科学计算、学术研究与实验探索精选的智能体技能集合。",
     "Curated collection of agent skills for science": "专为科学计算、学术研究与实验探索精选的智能体技能集合",
     "agent skills for science": "科学研究智能体技能",
-
-    // 5. Firebase
     "Prototype, build & run modern apps users love with Firebase's backend, AI, and operational infrastructure.": "借助 Firebase 强大的后端、AI 与运维基础设施，原型设计、构建并运行深受用户喜爱的现代应用程序。",
     "Prototype, build & run modern apps users love with Firebase's backend, AI, and operational infrastructure": "借助 Firebase 强大的后端、AI 与运维基础设施，原型设计、构建并运行深受用户喜爱的现代应用程序",
     "backend, AI, and operational infrastructure": "后端、AI 与运维基础设施",
-
-    // 6. Chrome DevTools
     "Reliable automation, in-depth debugging, and performance analysis in Chrome using Chrome DevTools and Puppeteer.": "在 Chrome 中结合 Chrome DevTools 与 Puppeteer，实现高可靠的自动化操作、深度调试与性能分析。",
     "Reliable automation, in-depth debugging, and performance analysis in Chrome using Chrome DevTools and Puppeteer": "在 Chrome 中结合 Chrome DevTools 与 Puppeteer，实现高可靠的自动化操作、深度调试与性能分析",
     "in-depth debugging, and performance analysis in Chrome": "在 Chrome 中进行深度调试与性能分析",
-
-    // 7. Dart and Flutter
     "Dart and Flutter": "Dart 与 Flutter",
     "Skills providing tailored instructions for happy path Dart and Flutter development workflows.": "为流畅、标准的 Dart 与 Flutter 开发工作流提供定制化指令与实践技能。",
     "Skills providing tailored instructions for happy path Dart and Flutter development workflows": "为流畅、标准的 Dart 与 Flutter 开发工作流提供定制化指令与实践技能",
     "happy path Dart and Flutter development workflows": "标准的 Dart 与 Flutter 开发工作流",
-
-    // 8. Google Maps Platform
-    "Google Maps Platform": "Google Maps Platform",
+    "Google Maps Platform": "Google Maps 平台",
     "Build and prototype location-aware applications with Google Maps Platform. Integrate interactive maps, search and inspect Places details, calculate optimal routes.": "基于 Google Maps Platform 构建并原型设计位置感知应用。支持集成交互式地图、搜索与查看地点详情、计算最优行车路线。",
     "Build and prototype location-aware applications with Google Maps Platform. Integrate interactive maps, search and inspect Places details, calculate optimal routes": "基于 Google Maps Platform 构建并原型设计位置感知应用。支持集成交互式地图、搜索与查看地点详情、计算最优行车路线",
     "Integrate interactive maps, search and inspect Places details, calculate optimal routes.": "集成交互式地图、搜索与查看地点详情、计算最优行车路线。",
     "Integrate interactive maps, search and inspect Places details, calculate optimal routes": "集成交互式地图、搜索与查看地点详情、计算最优行车路线",
-
-    // 9. Data Agent Kit
     "Data Agent Kit": "数据智能体套件",
-    "Data 智能体 Kit": "数据智能体套件",
     "Specialized suite of skills for data engineers and database practitioners on Google Cloud.": "专为 Google Cloud 上的数据工程师与数据库从业者打造的专业技能套件。",
     "Specialized suite of skills for data engineers and database practitioners on Google Cloud": "专为 Google Cloud 上的数据工程师与数据库从业者打造的专业技能套件",
     "data engineers and database practitioners on Google Cloud": "Google Cloud 数据工程师与数据库从业者",
-
-    // 官方首发插件 (gemini-api 及扩展体系) 长句深度汉化
     "Build applications with the Gemini Interactions API and Live API, including text generation, multi-turn chat, streaming, function calling, managed agents, and real-time audio/video.": "使用 Gemini Interactions API 和 Live API 构建应用，包括文本生成、多轮对话、流式响应、函数调用、托管智能体以及实时音视频处理。",
     "Use this skill when building applications with Gemini API hosted models, including Gemini and Gemma 4, working with multimodal content (text, images, audio, video), implementing function calling, using structured outputs, or needing current model specifications. Covers SDK usage (google-genai for Python, @google/genai for JavaScript/TypeScript, com.google.genai:google-genai for Java, google.golang.org/genai for Go), model selection, and API capabilities.": "在使用 Gemini API 托管模型（包括 Gemini 与 Gemma 4）构建应用、处理多模态内容（文本/图像/音频/视频）、实现函数调用、使用结构化输出或需要当前模型规格时使用此技能。覆盖各主流语言 SDK 使用、模型选择及 API 核心能力。",
     "Use this skill when writing code that calls the Gemini API for text generation, multi-turn chat, multimodal understanding, image generation, video generation, streaming responses, background research tasks, function calling, structured output, or migrating from the old generateContent API. This skill covers the Interactions API, the recommended way to use Gemini models and agents in Python and TypeScript.": "在编写调用 Gemini API 进行文本生成、多轮对话、多模态理解、图像/视频生成、流式响应、后台调研、函数调用、结构化输出或从旧版迁移时使用此技能。本技能覆盖 Interactions API，这是在 Python 和 TypeScript 中使用 Gemini 模型与智能体的官方推荐方式。",
@@ -405,7 +339,6 @@ electron_1.contextBridge.exposeInMainWorld('wizardAPI', wizardAPI);
     "How to render rich interactive HTML widgets inline in the chat or as standalone artifacts. Use this skill when you want to show the user diagrams, data visualizations, interactive controls, educational walkthroughs, or any rich visual content beyond plain text and markdown.": "如何在对话中以内联方式或作为独立工件渲染丰富的交互式 HTML 小部件。当需要向用户展示架构图表、数据可视化、交互式控件、教程回顾或超出纯文本与 Markdown 的丰富视觉内容时使用此技能。",
     "Comprehensive guide and reference for the Antigravity Customization System. Use to explain how customizations work, their loading priority, discovery mechanisms, and to guide the creation of skills, rules, plugins, hooks, and MCP servers.": "Antigravity 自定义扩展系统的完整指南与技术参考。用于阐述自定义项的工作机制、加载优先级、自动发现机制，并指导技能、规则、插件、钩子及 MCP 服务器的创建。",
     "Provides a comprehensive guide, quick reference, and sitemap for Google Antigravity (AGY), including the Antigravity CLI (agy), Antigravity 2.0, Antigravity IDE, Python SDK, slash commands, keybindings, and customizations (skills, rules, MCP, sidecars). Activate this skill when the user asks questions about how to use, configure, or customize Antigravity, AGY, the agy CLI, the Antigravity IDE, or Antigravity 2.0.": "提供 Google Antigravity (AGY) 的完整指南、速查参考与系统导航，涵盖 Antigravity CLI (agy)、Antigravity 2.0、Antigravity IDE、Python SDK、斜杠命令、快捷键及自定义扩展（技能、规则、MCP、Sidecar）。",
-    // Account
     "Account": "账号",
     "Manage your plan, credentials, and general preferences.": "管理您的计划、凭据和常规偏好。",
     "Enable Telemetry": "启用遥测",
@@ -420,8 +353,6 @@ electron_1.contextBridge.exposeInMainWorld('wizardAPI', wizardAPI);
     "For help, visit": "如需帮助，请访问",
     "Follow the guide at": "请参考此指南：",
     "to back up your data and run the migration.": "以备份您的数据并执行迁移。",
-    
-    // Browser & App Settings
     "Browser Settings": "浏览器设置",
     "Configure the browser subagent. It requires Google Chrome to be installed. The browser subagent can be invoked by typing /browser in the conversation input box.": "配置浏览器子智能体。这需要安装 Google Chrome。可以在对话输入框中输入 /browser 来调用浏览器子智能体。",
     "Configure the browser subagent. It requires Google Chrome to be installed. The browser subagent can be invoked by typing": "配置浏览器子智能体。这需要安装 Google Chrome。可以通过输入",
@@ -429,7 +360,7 @@ electron_1.contextBridge.exposeInMainWorld('wizardAPI', wizardAPI);
     "in the conversation input box.": "在对话输入框中调用该子智能体。",
     "Browser Javascript Execution Policy": "浏览器 JavaScript 执行策略",
     "Controls whether the agent can run custom JavaScript to automate complex browser actions.": "控制智能体是否可以运行自定义 JavaScript 以自动化复杂的浏览器操作。",
-    "Request Review": "需要人工审核",
+    "Request Review": "请求人工审查",
     "Disabled": "已禁用",
     "Block all browser JavaScript execution.": "禁止执行所有浏览器 JavaScript。",
     "Prompt for approval before running browser scripts.": "在运行浏览器脚本前需人工批准。",
@@ -445,8 +376,6 @@ electron_1.contextBridge.exposeInMainWorld('wizardAPI', wizardAPI);
     "Notifications": "通知",
     "Notification Settings": "通知设置",
     "To modify notification settings, open your operating system's system preferences.": "如需修改通知设置，请打开您操作系统的系统偏好设置。",
-
-    // Agent Settings
     "Agent Settings": "智能体设置",
     "Security Preset": "安全预设",
     "Choose a predefined security preset for the agent. This controls terminal auto-execution policy, and file access policy.": "为智能体选择预定义的安全预设。这将控制终端自动执行策略和文件访问策略。",
@@ -459,31 +388,19 @@ electron_1.contextBridge.exposeInMainWorld('wizardAPI', wizardAPI);
     "Specifies agent's behavior when asking for review on artifacts, which are documents it creates to enable a richer conversation experience.": "设置智能体在请求审核工件时的行为方式。工件是其为提供更丰富对话体验而创建的文档。",
     "Always Ask": "始终询问",
     "Plan Review": "计划审核",
-    "Plan review": "计划审核",
     "Plan Review Policy": "计划审核策略",
-    "Plan review policy": "计划审核策略",
     "Policy": "策略",
-    "policy": "策略",
     "Type / and select plan to have the agent generate a plan.": "输入 / 并选择 plan 来让智能体生成计划。",
     "Type / and select plan to have the agent generate a plan": "输入 / 并选择 plan 来让智能体生成计划",
     "Type / and select 'plan' to have the agent generate a plan.": "输入 / 并选择 'plan' 来让智能体生成计划。",
     "Type / and select 'plan' to have the agent generate a plan": "输入 / 并选择 'plan' 来让智能体生成计划",
-    "Type / and 选择 plan to have the agent generate a plan.": "输入 / 并选择 plan 来让智能体生成计划。",
-    "Type / and 选择 plan to have the agent generate a plan": "输入 / 并选择 plan 来让智能体生成计划",
-    "Type / and 选择 'plan' to have the agent generate a plan.": "输入 / 并选择 'plan' 来让智能体生成计划。",
-    "Type / and 选择 'plan' to have the agent generate a plan": "输入 / 并选择 'plan' 来让智能体生成计划",
     "Type / and": "输入 / 并",
-    "Type / and ": "输入 / 并 ",
     "Type / and select": "输入 / 并选择",
-    "Type / and select ": "输入 / 并选择 ",
-    "Type / and 选择": "输入 / 并选择",
-    "Type / and 选择 ": "输入 / 并选择 ",
     "Type /": "输入 /",
-    "Type / ": "输入 / ",
     "to have the agent generate a plan.": "来让智能体生成计划。",
     "to have the agent generate a plan": "来让智能体生成计划",
-    "have the agent generate a plan.": "让智能体生成计划。",
-    "have the agent generate a plan": "让智能体生成计划",
+    "have the agent generate a plan.": "来让智能体生成计划。",
+    "have the agent generate a plan": "来让智能体生成计划",
     "generate a plan.": "生成计划。",
     "generate a plan": "生成计划",
     "plan to have the agent generate a plan.": "plan 来让智能体生成计划。",
@@ -494,7 +411,7 @@ electron_1.contextBridge.exposeInMainWorld('wizardAPI', wizardAPI);
     "Manual": "手动",
     "Ask": "询问",
     "Binary not found": "未找到核心二进制组件",
-    "No updates available": "当前已是最新版本，暂无可用更新。",
+    "No updates available": "当前已是最新版本",
     "No updates available.": "当前已是最新版本，暂无可用更新。",
     "Up to date": "已是最新版本",
     "Permission denied": "权限不足 / 无访问权限",
@@ -517,15 +434,13 @@ electron_1.contextBridge.exposeInMainWorld('wizardAPI', wizardAPI);
     "Local permissions have higher priority.": "项目专属权限具有更高的优先级。",
     "Danger Zone": "危险区域",
     "Delete Project": "删除项目",
-    "Permanently delete this project and all of its conversations.": "永久删除当前项目及其包含的所有历史对话。",
-    
-    // Additional Agent Settings & Context Menu
+    "Permanently delete this project and all of its conversations.": "永久删除当前项目及其所有历史对话。",
     "Custom": "自定义",
-    "Outside of folders file access policy": "文件夹外文件访问策略",
-    "Configures how the agent tries to access files outside of its working folders.": "配置智能体如何尝试访问其工作文件夹外部的文件。",
-    "Terminal command Auto execution": "终端命令自动执行",
-    "Controls whether terminal commands require your approval before running.": "控制终端命令在运行前是否需要您批准。",
-    "Require Review": "需要审核",
+    "Outside of folders file access policy": "工作文件夹外文件访问策略",
+    "Configures how the agent tries to access files outside of its working folders.": "配置智能体尝试访问其工作文件夹之外的文件时的访问策略。",
+    "Terminal Command Auto Execution": "终端命令自动执行",
+    "Controls whether terminal commands require your approval before running.": "控制终端命令在运行前是否需要您的批准。",
+    "Require Review": "需要审查",
     "Add Context": "添加上下文",
     "Media": "媒体",
     "Mentions": "提及",
@@ -544,17 +459,13 @@ electron_1.contextBridge.exposeInMainWorld('wizardAPI', wizardAPI);
     "Agent settings and permissions for conversations outside of projects.": "项目外部对话的智能体设置和权限配置。",
     "Not in Project": "不在项目中",
     "Manage project folders, agent settings, and permissions.": "管理项目文件夹、智能体设置和专属权限。",
-
-    // Security Presets
-    "Requires manual review for all terminal commands and file accesses outside of the working folders.": "运行终端命令以及访问工作区外的文件时，均需手动人工审核。",
+    "Requires manual review for all terminal commands and file accesses outside of the working folders.": "对所有终端命令以及工作区文件夹之外的文件访问均需要手动审查。",
     "Full Machine": "完整本机访问",
-    "All terminal commands require review. The agent can read or write to any file in the machine.": "所有终端命令均需审核，智能体可读写本机上的任意文件。",
+    "All terminal commands require review. The agent can read or write to any file in the machine.": "所有终端命令均需审查。智能体可以读写本机上的任意文件。",
     "Unrestricted": "无限制模式",
-    "Disables all safety barriers for maximal iteration velocity.": "禁用所有安全屏障以获得极致的迭代效率。",
-    "Manually customize individual settings.": "手动自定义各项具体设置。",
-    "Always Proceed": "自动继续",
-
-    // Themes
+    "Disables all safety barriers for maximal iteration velocity.": "禁用所有安全防护以换取最快的迭代速度。",
+    "Manually customize individual settings.": "手动自定义各项独立设置。",
+    "Always Proceed": "总是直接执行",
     "One Light": "One Light（One 浅色）",
     "Solarized Light": "Solarized Light（Solarized 浅色）",
     "One Dark Pro": "One Dark Pro（One 深色 Pro）",
@@ -565,8 +476,6 @@ electron_1.contextBridge.exposeInMainWorld('wizardAPI', wizardAPI);
     "Monokai": "Monokai（莫奈高彩）",
     "Tokyo Night": "霓虹夜幕（深靛蓝）",
     "Vesper": "Vesper（暮星）",
-    
-    // Models
     "Configure AI models and view your quota.": "配置 AI 模型并查看您的配额与可用点数。",
     "Refresh": "刷新",
     "Model Credits": "模型额度",
@@ -574,8 +483,6 @@ electron_1.contextBridge.exposeInMainWorld('wizardAPI', wizardAPI);
     "When toggled on, Antigravity will use your AI credits to fulfill model requests once you're out of model quota. Antigravity will always use your model quota first before using AI credits.": "开启后，当您的免费配额耗尽时，Antigravity 将使用您的 AI 点数来满足请求。系统会优先扣除免费模型配额，配额不足时再使用点数。",
     "Model Quota": "模型配额",
     "View your available model quota and AI credits. Model quota refreshes periodically based on your plan. Enable AI Credit Overages to continue using models when your quota is exhausted.": "查看您的可用模型配额与 AI 账户额度。模型配额会根据您的订阅计划定期刷新。额度耗尽后，可开启 AI 额度超限使用以继续体验。",
-
-    // Shortcuts & UI
     "Shortcuts": "快捷键",
     "Keyboard shortcuts for quick navigation and control.": "用于快速导航与控制的键盘快捷键。",
     "Recommended": "推荐",
@@ -593,7 +500,6 @@ electron_1.contextBridge.exposeInMainWorld('wizardAPI', wizardAPI);
     "Open Settings": "打开设置",
     "Conversation": "对话",
     "Conversation History": "历史对话",
-    "Conversation history": "历史对话",
     "Toggle Model Selector": "切换模型选择器",
     "Toggle Voice Recording": "切换录音",
     "Find in Pane": "在窗格中查找",
@@ -602,18 +508,10 @@ electron_1.contextBridge.exposeInMainWorld('wizardAPI', wizardAPI);
     "Toggle Auxiliary Pane": "切换辅助窗格",
     "Zoom In": "放大",
     "Zoom Out": "缩小",
-    "Reset Zoom": "重置缩放",
-
-    // Feedback
     "Give Feedback": "提供反馈",
-    "Give feedback": "提供反馈",
-    "give feedback": "提供反馈",
     "Send Feedback": "发送反馈",
-    "Send feedback": "发送反馈",
     "Share Feedback": "分享反馈",
-    "Share feedback": "分享反馈",
     "Provide Feedback": "提供反馈",
-    "Provide feedback": "提供反馈",
     "Feedback Type": "反馈类型",
     "Bug Report": "Bug 报告",
     "Feature Request": "功能请求",
@@ -628,25 +526,17 @@ electron_1.contextBridge.exposeInMainWorld('wizardAPI', wizardAPI);
     "Attach Antigravity server logs": "附带 Antigravity 服务器日志",
     "Send feedback as": "发送反馈身份",
     "We recommend attaching logs. Attaching logs will help the Antigravity team act on and prioritize your feedback.": "我们建议附带日志。这将有助于 Antigravity 团队更快速、更有针对性地处理您的问题。",
-
-    // Automatic Update Menus
     "Checking for Updates...": "正在检查更新...",
     "Downloading Update...": "正在下载更新...",
     "Restart to Update": "重启以应用更新",
     "Check for Updates": "检查更新",
-    "No updates available": "当前已是最新版本",
     "Update available": "发现新版本",
     "Downloading...": "正在下载...",
     "Update downloaded": "更新已下载完成",
     "Error checking for updates": "检查更新失败",
-
-    // ===== 2.2.1 新增 UI 文本补充 =====
-    // 窗口与原生 UI
     "Window": "窗口",
     "Install IDE": "安装 IDE",
     "App": "应用",
-
-    // 偏好设置区
     "Inherits from": "继承自",
     "Rules": "规则",
     "Skills": "技能",
@@ -654,22 +544,16 @@ electron_1.contextBridge.exposeInMainWorld('wizardAPI', wizardAPI);
     "Plugins": "插件",
     "Customize": "自定义",
     "Setup": "设置",
-
-    // 账号区
     "Google AI Pro": "Google AI Pro",
     "Upgrade": "升级",
     "Sign Out": "退出登录",
     "By using this app, you agree to its": "使用本应用即表示您同意其",
     "Terms of Service": "服务条款",
     "Google Drive integration not available": "Google 云端硬盘集成不可用",
-
-    // 外观与编辑器
     "Select light, dark, or inherit system settings.": "选择浅色、深色，或继承系统设置。",
     "Configure editor-specific behaviors and shortcuts.": "配置编辑器专属行为与快捷键。",
     "Tab": "制表符",
     "Configure tab completion, suggestions, and navigation behavior.": "配置 Tab 补全、建议以及导航行为。",
-
-    // 编辑器与市场
     "Marketplace": "扩展市场",
     "Marketplace Item URL": "扩展市场项目 URL",
     "Marketplace Gallery URL": "扩展市场图库 URL",
@@ -679,19 +563,11 @@ electron_1.contextBridge.exposeInMainWorld('wizardAPI', wizardAPI);
     "Editor": "编辑器",
     "Editor Settings": "编辑器设置",
     "Open Editor Settings": "打开编辑器设置",
-
-    // 浏览器子智能体
     "Configure the browser subagent.": "配置浏览器子智能体。",
-    "Configure the browser subagent. It requires": "配置浏览器子智能体。这需要",
     "It requires": "它需要",
     "Google Chrome to be installed.": "安装 Google Chrome。",
     "The browser subagent can be invoked by typing": "可以通过输入",
     "/browser": "/browser",
-    "in the conversation input box.": "在对话输入框中调用浏览器子智能体。",
-
-    // 提及菜单 (@ Mentions)
-    "Rules": "规则",
-    "Conversation": "对话",
     "PDF Document": "PDF 文档",
     "MCP Resource": "MCP 资源",
     "Browser Page": "浏览器页面",
@@ -699,19 +575,13 @@ electron_1.contextBridge.exposeInMainWorld('wizardAPI', wizardAPI);
     "Git Commit": "Git 提交",
     "Git Diff": "Git 差异",
     "Directory": "目录",
-
-    // 对话区
-    "Conversation Width": "对话宽度",
+    "Conversation Width": "对话区宽度",
     "Configure the maximum width of the conversation panel.": "配置对话面板的最大宽度。",
     "New Conversation in Project": "项目内新建对话",
     "Show": "显示",
     "all": "全部",
-
-    // 分解统计
     "breakdown": "明细",
     "breakdowns": "明细",
-
-    // Google Chat / Jetski
     "Configure a chat bot so you can use Jetski directly from Google Chat.": "配置一个聊天机器人，以便您可以直接在 Google Chat 中使用 Jetski。",
     "Jetski Chat": "Jetski 聊天",
     "Setup Jetski Chat": "设置 Jetski 聊天",
@@ -721,8 +591,6 @@ electron_1.contextBridge.exposeInMainWorld('wizardAPI', wizardAPI);
     "Enter avatar URL (optional)": "输入头像 URL（可选）",
     "Chat Space": "聊天空间",
     "Continue to help, visit": "如需继续获取帮助，请访问",
-
-    // 反馈区
     "Please describe the issue in detail. The more actionable your feedback, the quicker our team can address your request. Some helpful information includes:": "请详细描述您遇到的问题。反馈越具可操作性，我们的团队就能越快处理您的请求。以下是一些有用的信息：",
     "Steps to reproduce the issue": "问题复现步骤",
     "Expected behavior": "预期行为",
@@ -733,23 +601,12 @@ electron_1.contextBridge.exposeInMainWorld('wizardAPI', wizardAPI);
     "Submit": "提交",
     "Describe the bug you encountered...": "请描述您遇到的 Bug...",
     "Please list the steps to reproduce the issue": "请列出复现该问题的步骤",
-
-    // 通知与其他
     "Manage your notification preferences.": "管理您的通知偏好。",
     "Manage application settings.": "管理应用设置。",
     "Refresh quota and credits data": "刷新配额与额度数据",
-
-    // 权限与提示
-    "Local permissions have higher priority.": "项目专属权限具有更高的优先级。",
     "No conversations yet": "暂无对话",
     "No conversation yet": "暂无对话",
-    "of the customization budget is available.": "的自定义额度可用。",
-
-    // MCP 相关
-    "Add MCP": "添加 MCP",
     "Add an MCP Server": "添加 MCP 服务器",
-
-    // 单词补充(2.2.1 新出现的)
     "width": "宽度",
     "priority": "优先级",
     "quota": "配额",
@@ -757,22 +614,16 @@ electron_1.contextBridge.exposeInMainWorld('wizardAPI', wizardAPI);
     "preference": "偏好",
     "preferences": "偏好",
     "application": "应用",
-    "subagent": "子智能体",
     "notification": "通知",
-    "notifications": "通知",
     "bot": "机器人",
     "space": "空间",
     "visit": "访问",
-    "editor": "编辑器",
-    "marketplace": "扩展市场",
     "avatar": "头像",
     "name": "名称",
     "messages": "消息",
     "message": "消息",
-
-    // ===== 第2轮验证新增 (2.2.1 配额/限额/aria-label) =====
     "Weekly Limit": "每周限额",
-    "Five Hour Limit": "五小时限额",
+    "Five Hour Limit": "5 小时限额",
     "Hourly Limit": "每小时限额",
     "Daily Limit": "每日限额",
     "Monthly Limit": "每月限额",
@@ -783,19 +634,14 @@ electron_1.contextBridge.exposeInMainWorld('wizardAPI', wizardAPI);
     "customization": "自定义",
     "budget": "额度",
     "available": "可用",
-
-    // 浏览器设置残片补全
     "to be installed.": "需要安装。",
     "to be installed": "需要安装",
     "or join the": "或加入",
-
-    // 智能体执行标签与步骤状态 (Agent Execution Labels)
     "Ran command": "已运行命令",
     "Ran commands": "已运行命令",
     "Running command": "正在运行命令",
     "Running commands": "正在运行命令",
     "Run command": "运行命令",
-    "Run commands": "运行命令",
     "Explored files, ran commands, edited files": "已探索文件、已执行命令、已编辑文件",
     "Explored files, ran commands, edited artifact": "已探索文件、已执行命令、已编辑工件",
     "Explored files, ran commands, edited artifacts": "已探索文件、已执行命令、已编辑工件",
@@ -823,14 +669,10 @@ electron_1.contextBridge.exposeInMainWorld('wizardAPI', wizardAPI);
     "Read URL": "读取 URL",
     "Searched web": "网页搜索",
     "Invoked subagent": "调用子智能体",
-    "Git commit": "Git 提交",
     "Searched for files": "搜索文件",
     "Searched files": "已搜索文件",
     "Code search": "代码搜索",
     "Internal search": "内部搜索",
-
-    // ===== 2.26.0 界面文案补充（依据 Web UI bundle 全量比对 + 运行时 DOM 抓取）=====
-    // 环境 / 选择器
     "Select Environment": "选择环境",
     "Local": "本地",
     "Toggle Environment Selector": "切换环境选择器",
@@ -879,7 +721,6 @@ electron_1.contextBridge.exposeInMainWorld('wizardAPI', wizardAPI);
     "Open in Side Pane": "在侧边窗格中打开",
     "Open in Tab": "在标签页中打开",
     "Open in Notebook View": "在笔记本视图中打开",
-    "Open in external browser": "在外部浏览器中打开",
     "Open in Critique": "在 Critique 中打开",
     "Open link": "打开链接",
     "Open plugin page": "打开插件页面",
@@ -1036,7 +877,6 @@ electron_1.contextBridge.exposeInMainWorld('wizardAPI', wizardAPI);
     "Search results": "搜索结果",
     "Find in Conversation": "在对话中查找",
     "Clear Search": "清除搜索",
-    "Clear search": "清除搜索",
     "Clear filter": "清除筛选",
     "Clear all": "全部清除",
     "Filter resources...": "筛选资源...",
@@ -1074,14 +914,12 @@ electron_1.contextBridge.exposeInMainWorld('wizardAPI', wizardAPI);
     "Accept Step": "接受步骤",
     "Reject Step": "拒绝步骤",
     "Cancel Step": "取消步骤",
-    "Cancel step": "取消步骤",
     "Cancel All Tasks": "取消所有任务",
     "Cancel Generation": "取消生成",
     "Cancel recording": "取消录音",
     "Cancel Sending Message": "取消发送消息",
     "Stop All Subagents": "停止所有子智能体",
     "Stop Subagent": "停止子智能体",
-    "Stop subagent": "停止子智能体",
     "Stop Task": "停止任务",
     "Stop Voice Recording": "停止语音录制",
     "Stop recording": "停止录音",
@@ -1182,7 +1020,7 @@ electron_1.contextBridge.exposeInMainWorld('wizardAPI', wizardAPI);
     "Commit staged changes": "提交已暂存的更改",
     "Commit succeeded": "提交成功",
     "Push succeeded": "推送成功",
-    "Pull requests": "拉取请求",
+    "Pull Requests": "拉取请求 (PR)",
     "Pull request creation": "创建拉取请求",
     "Open a pull request": "打开拉取请求",
     "Open a merge request": "打开合并请求",
@@ -1199,16 +1037,13 @@ electron_1.contextBridge.exposeInMainWorld('wizardAPI', wizardAPI);
     "Upload to Agent": "上传给智能体",
     "Upload to Google Drive": "上传到 Google 云端硬盘",
     "Upload Debug Bundle": "上传调试包",
-    "Upload debug bundle": "上传调试包",
     "Show in File Explorer": "在文件资源管理器中显示",
     "Show in File Manager": "在文件管理器中显示",
     "Read Files": "读取文件",
-    "Read files": "读取文件",
     "Read URLs": "读取网址",
-    "Read page": "读取页面",
+    "Read page": "已读取页面",
     "Read Browser Page in Browser": "在浏览器中读取页面",
     "Export Artifact": "导出构件",
-    "Export artifact": "导出构件",
     "Install Update": "安装更新",
     "Update Anyway": "仍然更新",
     "Reload app": "重新加载应用",
@@ -1234,8 +1069,7 @@ electron_1.contextBridge.exposeInMainWorld('wizardAPI', wizardAPI);
     "Log back in": "重新登录",
     "Log in to use the agent": "登录以使用智能体",
     "Refresh Skills": "刷新技能",
-    "Refresh skills": "刷新技能",
-    "Refresh all credentials": "刷新所有凭据",
+    "Refresh all credentials": "刷新全部凭据",
     "Refresh custom agents": "刷新自定义智能体",
     "Refresh customizations": "刷新自定义项",
     "Refresh skills paths": "刷新技能路径",
@@ -1243,7 +1077,6 @@ electron_1.contextBridge.exposeInMainWorld('wizardAPI', wizardAPI);
     "Write and edit docs": "编写和编辑文档",
     "Save Comment": "保存评论",
     "Edit Comment": "编辑评论",
-    "Edit comment": "编辑评论",
     "Submit comment": "提交评论",
     "Submit Appeal": "提交申诉",
     "Pick at most 2 reasons": "最多选择 2 个原因",
@@ -1258,18 +1091,14 @@ electron_1.contextBridge.exposeInMainWorld('wizardAPI', wizardAPI);
     "read access to this path": "对此路径的读取权限",
     "terminal auto execution policy value": "终端自动执行策略值",
     "lint error": "Lint 错误",
-    // ===== 2.26.0 补充：作者漏翻 + React 片段化整句 =====
     "Models within this group": "本组内的模型",
     "Windows Subsystem for Linux": "适用于 Linux 的 Windows 子系统",
     "Run the app against a Linux environment. Connecting relaunches the app into the selected WSL distro.": "在 Linux 环境中运行应用。连接后会将应用重新启动到所选的 WSL 发行版。",
-    // ===== 2.28.0 新增：内置浏览器、通行密钥、安全沙箱与标签页 =====
     "Choose a Passkey": "选择通行密钥 (Passkey)",
-    "Choose a passkey": "选择通行密钥",
     "Select a passkey account to continue:": "选择通行密钥账号以继续：",
     "Select a passkey account to continue": "选择通行密钥账号以继续",
     "Passkey": "通行密钥",
     "Passkeys": "通行密钥",
-    "Passkey QR code": "通行密钥二维码",
     "Passkey QR Code": "通行密钥二维码",
     "Scan with your phone": "使用手机扫码",
     "Use a phone or tablet": "使用手机或平板电脑",
@@ -1281,36 +1110,23 @@ electron_1.contextBridge.exposeInMainWorld('wizardAPI', wizardAPI);
     "Certificate valid": "证书有效",
     "Certificate invalid": "证书无效",
     "Script Jail": "脚本安全沙箱",
-    "Script jail": "脚本安全沙箱",
     "Script execution failed": "脚本执行失败",
     "Script aborted by host": "脚本已被宿主中止",
     "Webview Browser": "内置浏览器",
-    "Open in Browser": "在浏览器中打开",
     "Open in Default Browser": "在默认浏览器中打开",
-    "Open in New Window": "在新窗口中打开",
     "Open Link in New Tab": "在新标签页中打开链接",
-    "Open link in new tab": "在新标签页中打开链接",
     "New Tab": "新标签页",
-    "Close Tab": "关闭标签页",
-    "Close Other Tabs": "关闭其他标签页",
-    "Close Tabs to the Right": "关闭右侧标签页",
     "Reload Tab": "重新加载标签页",
     "Duplicate Tab": "复制标签页",
-    "Pin Tab": "固定标签页",
-    "Unpin Tab": "取消固定标签页",
     "Mute Tab": "静音标签页",
     "Unmute Tab": "取消静音标签页",
-    "Back": "后退",
+    "Back": "返回",
     "Forward": "前进",
     "Copy URL": "复制链接",
-    "Copy link address": "复制链接地址",
+    "Copy Link Address": "复制链接地址",
     "View Page Source": "查看网页源代码",
     "Inspect Element": "检查元素",
     "Zoom 100%": "缩放 100%",
-
-
-
-    // aria-label 无障碍标签 (这些会影响屏幕阅读器与提示)
     "Sidebar": "侧边栏",
     "Display Options": "显示选项",
     "Message input": "消息输入框",
@@ -1319,14 +1135,10 @@ electron_1.contextBridge.exposeInMainWorld('wizardAPI', wizardAPI);
     "voice memo": "语音备忘",
     "memo": "备忘",
     "typeahead": "预输入",
-
-    // ===== 第3轮验证补充 =====
     "current": "当前",
     "Choose a model": "选择模型",
     "Select model": "选择模型",
     "current model": "当前模型",
-
-    // ===== 第4轮验证补充 (显示选项下拉菜单) =====
     "Group By": "分组方式",
     "Last Updated": "最近更新",
     "Alphabetical (A-Z)": "字母顺序 (A-Z)",
@@ -1340,78 +1152,52 @@ electron_1.contextBridge.exposeInMainWorld('wizardAPI', wizardAPI);
     "Fast": "快速",
     "Sort Conversations": "对话排序",
     "Last Prompt": "最新提示词",
-    "Last prompt": "最新提示词",
     "Archived Only": "仅已归档",
     "Active Only": "仅活跃",
     "Pinned Only": "仅置顶",
     "Unarchived Only": "仅未归档",
-    "Last 7 days": "最近 7 天",
-    "Last 24 hours": "最近 24 小时",
-    "Last 30 days": "最近 30 天",
+    "Last 7 Days": "最近 7 天",
+    "Last 24 Hours": "最近 24 小时",
+    "Last 30 Days": "最近 30 天",
     "Display": "显示",
-
-    // 第5轮: 单数形式补全 (分组选项)
     "Project": "项目",
-    "project": "项目",
-    "projects": "项目",
-    "Conversation": "对话",
-    "conversation": "对话",
-    "Workspace": "工作区",
-    "workspace": "工作区",
-
-    // ===== 第6轮彻底验证补充 =====
-    // 窗口控制
+    "Repo": "仓库",
+    "Repo default": "仓库默认",
+    "Remote Projects": "远程项目",
     "Minimize": "最小化",
     "Maximize": "最大化",
-    "Back": "返回",
-    // 计划任务
     "No scheduled tasks configured.": "暂无已配置的计划任务。",
-    // 配额提示 (含动态时间,用部分匹配)
     "You have used some of your weekly limit": "您已使用部分每周限额",
     "You have used some of your weekly limit.": "您已使用部分每周限额。",
     "You have used some of your 5-hour limit": "您已使用部分 5 小时限额",
     "You have used some of your 5-hour limit.": "您已使用部分 5 小时限额。",
     "You have used some of your Five Hour Limit": "您已使用部分 5 小时限额",
     "You have used some of your five-hour limit": "您已使用部分 5 小时限额",
-    "You have used some of your five hour limit": "您已使用部分 5 小时限额",
     "it will fully refresh in": "它将在以下时间后完全刷新：",
     "hours": "小时",
     "minutes": "分钟",
     "days": "天",
-    // 文件夹与权限
     "Folders": "文件夹",
-    "folders": "文件夹",
     "including": "包括",
     "Allow/deny agent read access to specific files or directories.": "允许/拒绝智能体读取特定文件或目录。",
     "Allow/deny agent write access to specific files or directories.": "允许/拒绝智能体写入特定文件或目录。",
-    "Allow/deny": "允许/拒绝",
-    "read access": "读取权限",
+    "Allow/Deny": "允许/拒绝",
+    "Read access": "读取权限",
     "write access": "写入权限",
     "specific files or directories": "特定文件或目录",
-    // 浏览器子智能体说明(完整句)
     "The browser subagent can be invoked by typing /browser in the conversation input box.": "可以在对话输入框中输入 /browser 来调用浏览器子智能体。",
-
-    // ===== 第7轮验证补充 (项目/文件夹状态提示) =====
     "Missing": "缺失",
-    "Missing folder": "缺失文件夹",
     "Missing Folder": "缺失文件夹",
     "does not exist": "不存在",
-    "not found": "未找到",
     "Not Found": "未找到",
     "No longer available": "已不可用",
     "Path": "路径",
-
-    // ===== Antigravity 2.12.0+ 深度汉化补充 =====
-    // 规划模式 (Planning Mode)
     "Planning Mode": "规划模式",
-    "planning mode": "规划模式",
     "Planning Mode is ON": "规划模式已开启",
     "Planning Mode is OFF": "规划模式已关闭",
     "Implementation Plan": "实施计划",
-    "implementation plan": "实施计划",
     "implementation_plan.md": "实施计划.md",
     "Walkthrough": "变更回顾",
-    "walkthrough": "变更回顾",
     "walkthrough.md": "变更回顾.md",
     "User Review Required": "需用户审批",
     "Open Questions": "待确认问题",
@@ -1436,44 +1222,22 @@ electron_1.contextBridge.exposeInMainWorld('wizardAPI', wizardAPI);
     "Plan": "计划",
     "Goal Description": "目标描述",
     "Component Name": "组件名称",
-
     "Default model": "默认模型",
     "Inherit model": "继承模型",
     "Select a model": "选择模型",
     "Model tier": "模型级别",
     "Remaining tokens": "剩余 Token",
     "Remaining": "剩余",
-    "remaining": "剩余",
-    "Weekly limit remaining": "每周限额剩余",
-    "Weekly limit Remaining": "每周限额剩余",
     "Weekly Limit Remaining": "每周限额剩余",
-    "5-hour limit remaining": "5 小时限额剩余",
-    "5-hour limit Remaining": "5 小时限额剩余",
     "5-Hour Limit Remaining": "5 小时限额剩余",
     "Five Hour Limit Remaining": "5 小时限额剩余",
-    "Five Hour Limit remaining": "5 小时限额剩余",
-    "Five hour limit remaining": "5 小时限额剩余",
     "Five-Hour Limit Remaining": "5 小时限额剩余",
-    "Five-hour limit remaining": "5 小时限额剩余",
-    "Five Hour Limit": "5 小时限额",
-    "Five hour limit": "5 小时限额",
     "Five-Hour Limit": "5 小时限额",
-    "Five-hour limit": "5 小时限额",
-    "每周限额 Remaining": "每周限额剩余",
-    "五小时限额 Remaining": "5 小时限额剩余",
-    "Weekly limit": "每周限额",
-    "weekly limit": "每周限额",
-    "Weekly Limit": "每周限额",
-    "5-hour limit": "5 小时限额",
     "5-Hour Limit": "5 小时限额",
-    "5h limit": "5 小时限额",
     "5h Limit": "5 小时限额",
-    "5 hour limit": "5 小时限额",
+    "5h limit": "5 小时限额",
     "5 Hour Limit": "5 小时限额",
-    "Claude and GPT models": "Claude 与 GPT 模型",
     "Claude and GPT Models": "Claude 与 GPT 模型",
-    "Claude and GPT 模型": "Claude 与 GPT 模型",
-    "Gemini models": "Gemini 模型",
     "Gemini Models": "Gemini 模型",
     "Gemini 3.8 Flash": "Gemini 3.8 Flash",
     "Gemini 3.8 Flash using ADC in AGY Enterprise": "AGY 企业版通过 ADC 使用 Gemini 3.8 Flash",
@@ -1482,66 +1246,37 @@ electron_1.contextBridge.exposeInMainWorld('wizardAPI', wizardAPI);
     "Application Default Credentials": "应用默认凭据 (ADC)",
     "Application Default Credentials (ADC)": "应用默认凭据 (ADC)",
     "Quoting, /boost, and improved Settings": "划词引用、/boost 与设置优化",
-
-    // 会话管理与右键/操作菜单 (Conversation Management & Context Menu)
     "Rename": "重命名",
-    "rename": "重命名",
     "Mark Unread": "标记为未读",
-    "Mark unread": "标记为未读",
-    "mark unread": "标记为未读",
     "Mark as Unread": "标记为未读",
-    "Mark as unread": "标记为未读",
     "Mark Read": "标记为已读",
-    "Mark read": "标记为已读",
-    "mark read": "标记为已读",
     "Mark as Read": "标记为已读",
-    "Mark as read": "标记为已读",
     "Pin": "置顶",
-    "pin": "置顶",
     "Unpin": "取消置顶",
-    "unpin": "取消置顶",
     "Archive": "归档",
-    "archive": "归档",
     "Unarchive": "取消归档",
-    "unarchive": "取消归档",
     "Copy Conversation Name": "复制对话名称",
-    "Copy conversation name": "复制对话名称",
     "Copy Conversation ID": "复制对话 ID",
-    "Copy conversation id": "复制对话 ID",
     "Copy Project Name": "复制项目名称",
-    "Copy project name": "复制项目名称",
     "Copy Terminal": "复制终端命令",
-    "Copy terminal": "复制终端命令",
     "Copy terminal command": "复制终端命令",
-    "Conversation name": "对话名称",
     "Conversation Name": "对话名称",
     "Conversation ID": "对话 ID",
-    "conversation id": "对话 ID",
     "Workspace Name": "工作区名称",
-    "workspace name": "工作区名称",
     "Worktree Name": "Worktree 名称",
-    "worktree name": "Worktree 名称",
     "Project Name": "项目名称",
-    "project name": "项目名称",
     "Copy": "复制",
-    "copy": "复制",
     "Copied": "已复制",
-    "copied": "已复制",
     "Copied!": "已复制！",
     "Copy Content": "复制内容",
-    "Copy content": "复制内容",
     "Copy Link": "复制链接",
-    "Copy link": "复制链接",
     "Copy Path": "复制路径",
-    "Copy path": "复制路径",
     "Copy Image": "复制图片",
-    "Copy image": "复制图片",
     "Copy prompt": "复制提示词",
     "Copy Command": "复制命令",
-    "Copy command": "复制命令",
     "Copy error": "复制错误信息",
     "Copy error to clipboard": "复制错误信息到剪贴板",
-    "Copy config file path": "复制配置文件路径",
+    "Copy Config File Path": "复制配置文件路径",
     "Copy full URL to clipboard": "复制完整 URL 到剪贴板",
     "Copy to clipboard": "复制到剪贴板",
     "Copy File Path": "复制文件路径",
@@ -1549,8 +1284,8 @@ electron_1.contextBridge.exposeInMainWorld('wizardAPI', wizardAPI);
     "Copy workspace": "复制工作区",
     "Copy project": "复制项目",
     "Copy debug info": "复制调试信息",
-    "Copy conversation markdown": "复制对话 Markdown",
-    "Copy trajectory ID": "复制轨迹 ID",
+    "Copy Conversation Markdown": "复制对话 Markdown",
+    "Copy Trajectory ID": "复制轨迹 ID",
     "Copy the trajectory ID": "复制轨迹 ID",
     "Trajectory ID": "轨迹 ID",
     "Attach the trajectory ID to the feedback form": "将轨迹 ID 附加到反馈表单中",
@@ -1558,36 +1293,21 @@ electron_1.contextBridge.exposeInMainWorld('wizardAPI', wizardAPI);
     "Trajectory Metadata": "轨迹元数据",
     "No trajectory metadata available": "暂无轨迹元数据",
     "Delete Conversation": "删除对话",
-    "delete conversation": "删除对话",
     "Updated": "已更新",
-    "updated": "已更新",
     "Action Required": "需要操作",
-    "action required": "需要操作",
     "Unread": "未读",
-    "unread": "未读",
     "Active": "活跃",
-    "active": "活跃",
     "Idle": "空闲",
-    "idle": "空闲",
     "Canceling": "正在取消",
-    "canceling": "正在取消",
-
-    // ===== Antigravity 2.13.0+ 深度汉化补充 =====
-    // 侧边问答与表单交互 (Side Question & Questionnaire)
     "Side Question": "侧边提问",
-    "side question": "侧边提问",
-    "Side question": "侧边提问",
     "Side question answered.": "侧边提问已回答。",
     "Side question answered": "侧边提问已回答",
     "View side question": "查看侧边提问",
     "Minimize side question": "最小化侧边提问",
-    "Delete side question": "删除侧边提问",
+    "Delete Side Question": "删除侧边提问",
     "Cancel questionnaire": "取消问答",
     "Cancel questionnaire and stop the agent": "取消问答并停止智能体",
-
-    // Git Amend 追加提交 (Git Version Control)
     "Amend": "追加提交",
-    "amend": "追加提交",
     "Amending...": "正在追加提交...",
     "Amend staged changes into the current commit": "将已暂存改动追加合并至当前提交",
     "Stage and amend all changes into the current commit": "暂存并将所有改动追加合并至当前提交",
@@ -1596,8 +1316,6 @@ electron_1.contextBridge.exposeInMainWorld('wizardAPI', wizardAPI);
     "No changes to amend": "没有可追加的改动",
     "No commit to amend": "没有可追加的目标提交",
     "Resolve conflicts first": "请先解决冲突",
-
-    // 设置中心高级迁移 (Settings Restructuring & Advanced)
     "Best of N settings have moved": "Best of N 设置已迁移",
     "Best of N settings have moved to the Advanced section of General settings.": "Best of N 设置已移至通用设置中的“高级”区域。",
     "CitC settings have moved": "CitC 设置已迁移",
@@ -1606,23 +1324,17 @@ electron_1.contextBridge.exposeInMainWorld('wizardAPI', wizardAPI);
     "Labs settings have moved to the Advanced section of General settings.": "实验室设置已移至通用设置中的“高级”区域。",
     "Change VCS in General settings, under Advanced": "在通用设置的“高级”区域中更改版本控制系统",
     "Skills and rules settings": "技能与规则设置",
-
-    // 产物与表格宽度自定义 (Display & Artifact Settings)
     "Markdown Artifact Width": "Markdown 产物宽度",
     "Configure the default width of markdown artifacts.": "配置 Markdown 产物的默认显示宽度。",
     "Table Width": "表格宽度",
     "Configure the default width of tables.": "配置表格的默认显示宽度。",
     "Fit to content": "适应内容",
     "Fit to width": "适应宽度",
-
-    // Windows 管理员权限 (UAC Elevation)
     "Administrator access (UAC)": "管理员权限 (UAC)",
     "Grant administrator access for": "授予管理员权限至",
     "Grant one-time administrator access": "授予一次性管理员权限",
     "Requesting a one-time administrator (UAC) elevation": "正在请求一次性管理员 (UAC) 权限提升",
     "Yes, allow": "允许授权",
-
-    // 插件、技能与自定义扩展 (Customizations & Plugins)
     "Create plugin": "创建插件",
     "Describe a plugin and the agent builds it": "描述插件功能，智能体将自动构建",
     "Delete Skill": "删除技能",
@@ -1639,20 +1351,12 @@ electron_1.contextBridge.exposeInMainWorld('wizardAPI', wizardAPI);
     "No skills or rules yet.": "暂无技能或规则。",
     "Pre-installed": "预置",
     "Builtin": "内置",
-
-    // 分屏 (Split) 交互与子菜单
     "Split": "分屏",
-    "split": "分屏",
     "Split Right": "向右分屏",
-    "split right": "向右分屏",
     "Split Down": "向下分屏",
-    "split down": "向下分屏",
     "Replace With New": "替换为新建",
-    "replace with new": "替换为新建",
     "Remove From Split": "从分屏中移除",
-    "remove from split": "从分屏中移除",
     "Split Terminal": "拆分终端",
-    "split terminal": "拆分终端",
     "Split Conversation Vertically": "垂直分屏对话",
     "Split Conversation Horizontally": "水平分屏对话",
     "Equalize Split Panes": "均分分屏窗格",
@@ -1660,10 +1364,7 @@ electron_1.contextBridge.exposeInMainWorld('wizardAPI', wizardAPI);
     "Close split view and go to forked conversation": "关闭分屏视图并转到派生的对话",
     "View Split Diff": "查看分屏差异",
     "Resize terminal panes": "调整终端窗格大小",
-
-    // 派生 (Fork) 交互与子菜单
     "Fork": "派生",
-    "fork": "派生",
     "Fork Conversation": "派生对话",
     "Create fork in current workspace": "在当前工作区创建派生",
     "Create fork in shared workspace": "在共享工作区创建派生",
@@ -1672,54 +1373,29 @@ electron_1.contextBridge.exposeInMainWorld('wizardAPI', wizardAPI);
     "Forked from": "派生自",
     "Fork Environment Notice": "派生环境提示",
     "The server returned no conversation to fork into.": "服务器未返回可供派生的对话。",
-
-    // 对话分组 (Conversation Groups)
     "Move to Group": "移动到分组",
-    "Move to group": "移动到分组",
     "New Group": "新建分组",
-    "new group": "新建分组",
     "Create Group": "创建分组",
-    "create group": "创建分组",
     "Delete Group": "删除分组",
     "Rename Group": "重命名分组",
     "Remove from Group": "从分组中移除",
     "No groups yet": "暂无分组",
-    "Group name": "分组名称",
     "Group Name": "分组名称",
     "Enter group name": "输入分组名称",
     "A group with this name already exists.": "已存在同名分组。",
-    "Group By": "分组方式",
     "Group By Project": "按项目分组",
     "Group By Workspace": "按工作区分组",
     "Sidebar grouped by project": "侧边栏已按项目分组",
     "Sidebar grouped by workspace": "侧边栏已按工作区分组",
     "New chats will be grouped by workspace.": "新会话将按工作区进行分组。",
-
-    // 窗格与插件扩展 (Panes & Extensions)
     "Maximize Pane": "最大化窗格",
     "Restore Pane": "恢复窗格",
     "Auxiliary Pane": "辅助窗格",
-    "Toggle Auxiliary Pane": "切换辅助窗格",
     "Open in Preview Pane": "在预览窗格中打开",
-    "No plugins available": "暂无可用插件",
-
-    // 分屏与分组自愈修正 (Self-healing fallbacks)
-    "Replace With 新建": "替换为新建",
-    "移除 From Split": "从分屏中移除",
-    "Split 终端": "拆分终端",
-    "新建 Group": "新建分组",
-    "创建 Group": "创建分组",
-    "移动到 Group": "移动到分组",
-    "重命名 Group": "重命名分组",
-    "删除 Group": "删除分组",
-    "从 Group 中移除": "从分组中移除",
-    "向右 Split": "向右分屏",
-    "向下 Split": "向下分屏",
-
-    // 会话管理、暂存文件与比对器 (Conversations, Scratch & Diff)
-    "Pin this conversation": "置顶此对话",
-    "Unpin this conversation": "取消置顶此对话",
-    "Rename this conversation": "重命名此对话",
+    "No Plugins Available": "暂无可用插件",
+    "Pin This Conversation": "置顶此对话",
+    "Unpin This Conversation": "取消置顶此对话",
+    "Rename This Conversation": "重命名此对话",
     "Forked conversation": "派生的对话",
     "Scratch Files": "暂存文件",
     "No scratch files": "暂无暂存文件",
@@ -1738,7 +1414,7 @@ electron_1.contextBridge.exposeInMainWorld('wizardAPI', wizardAPI);
     "Failed to display native context menu:": "无法显示原生上下文菜单：",
     "Failed to load media": "加载媒体资源失败",
     "Failed to parse settings. Fix and restart.": "设置解析失败，请修正后重启软件。",
-    "Failed to save image: ": "保存图片失败：",
+    "Failed to save image:": "保存图片失败：",
     "Loading media...": "正在加载媒体...",
     "More info": "更多信息",
     "No documents": "暂无文档",
@@ -1747,22 +1423,15 @@ electron_1.contextBridge.exposeInMainWorld('wizardAPI', wizardAPI);
     "Remote Control channel closed": "远程控制通道已关闭",
     "This cannot be undone.": "此操作无法撤销。",
     "Vetted (Preview)": "官方审核 (预览版)",
-    "View side question": "查看侧边提问",
     "What counts as a document": "哪些内容属于文档",
     "Your changes were not saved. Please try again.": "您的更改未保存，请重试。",
-
-    // 企业级许可证与项目凭据 (Licensing & Cloud Project)
     "License Required": "需要许可证",
     "Project Required": "需要关联项目",
     "Manage License": "管理许可证",
     "A Google Cloud project is required to use Antigravity.": "使用 Antigravity 需要关联 Google Cloud 项目。",
     "A license or project selection is required to use Antigravity.": "使用 Antigravity 需要具备许可证或选择关联项目。",
-
-    // 多智能体协同与子智能体 (Subagents & Teamwork)
     "Teamwork": "团队协作",
-    "teamwork": "团队协作",
     "Manage Subagents": "管理子智能体",
-    "manage subagents": "管理子智能体",
     "Active Subagents": "活跃子智能体",
     "Invoke subagent": "调用子智能体",
     "Define subagent": "定义子智能体",
@@ -1771,13 +1440,10 @@ electron_1.contextBridge.exposeInMainWorld('wizardAPI', wizardAPI);
     "Waiting for input": "等待输入",
     "Waiting for dependents": "等待依赖任务",
     "Waiting for message": "等待消息",
-    "Canceling": "正在取消",
-    "Errored": "发生错误",
-    "Idle": "空闲",
+    "Errored": "已出错",
     "Unspecified": "未指定",
     "Research Agent": "调研智能体",
     "Codebase Researcher": "代码库调研员",
-    "Conversation ID": "对话 ID",
     "Conversation transcript": "对话记录",
     "Transcript logs": "转录日志",
     "Reactive Wakeup": "响应式唤醒",
@@ -1785,27 +1451,16 @@ electron_1.contextBridge.exposeInMainWorld('wizardAPI', wizardAPI);
     "Subagent conversation": "子智能体对话",
     "Parent agent": "父智能体",
     "Child agent": "子智能体",
-
-    // 工作区隔离与分支模式
-    "Branch Workspace": "分支隔离工作区",
-    "Share Workspace": "共享工作区",
-    "Inherit Workspace": "继承工作区",
     "Isolated branch": "隔离分支",
     "Shared repository": "共享仓库",
     "Workspace directory permissions": "工作区目录权限",
-    "Active workspace": "活动工作区",
     "Switch workspace": "切换工作区",
     "Add folder to workspace": "添加文件夹到工作区",
     "Remove from workspace": "从工作区移除",
-
-    // MCP 与扩展工具体系
     "MCP Servers": "MCP 服务器",
     "MCP Server": "MCP 服务器",
-    "MCP Tools": "MCP 工具",
-    "Call MCP Tools": "调用 MCP 工具",
     "Active MCPs": "活跃 MCP 服务",
     "Connectors": "连接器",
-    "Configure MCP server": "配置 MCP 服务器",
     "Inspect parameters": "检查参数",
     "Tool execution": "工具执行",
     "Tool call": "工具调用",
@@ -1814,25 +1469,15 @@ electron_1.contextBridge.exposeInMainWorld('wizardAPI', wizardAPI);
     "Tool action": "工具操作",
     "Built-in tools": "内置工具",
     "External tools": "外部工具",
-    "Running command": "运行命令",
     "Analyzing directory": "分析目录",
     "Analyzed directory": "分析目录",
-    "analyzed directory": "分析目录",
-    "Analyzed": "分析",
-    "analyzed": "分析",
+    "Analyzed": "已分析",
     "Searching the web": "搜索网页",
-    "Editing file": "编辑文件",
+    "Editing file": "正在编辑文件",
     "Viewing file": "查看文件",
     "Semantic searching": "语义搜索",
-
-    // 权限控制与沙盒增强
-    "Sandbox": "沙盒",
     "Sandboxed": "沙盒内",
     "Unsandboxed": "沙盒外",
-    "Commands Outside Sandbox": "沙盒外命令",
-    "Terminal & Tooling Permissions": "终端与工具权限",
-    "Network Access Rules": "网络访问规则",
-    "File Access Rules": "文件访问规则",
     "Allowed paths": "允许路径",
     "Denied paths": "拒绝路径",
     "Allowed commands": "允许命令",
@@ -1844,11 +1489,8 @@ electron_1.contextBridge.exposeInMainWorld('wizardAPI', wizardAPI);
     "Deny by default": "默认拒绝",
     "Allowlist": "白名单",
     "Denylist": "黑名单",
-    "Global permissions": "全局权限",
+    "Global Permissions": "全局权限",
     "Project permissions": "项目权限",
-
-    // 定时任务与调度 (Schedule & Cron)
-    "Schedule": "计划调度",
     "One-shot timer": "单次定时器",
     "Recurring cron": "循环定时任务",
     "Cron expression": "Cron 表达式",
@@ -1859,24 +1501,14 @@ electron_1.contextBridge.exposeInMainWorld('wizardAPI', wizardAPI);
     "Any message": "任何消息",
     "Specific sender": "特定发送者",
     "Expired": "已过期",
-
-    // 自定义技能与规则 (Customizations & Skills)
-    "Customizations": "自定义配置",
-    "Skills": "技能",
     "Skill": "技能",
-    "Rules": "规则",
     "Rule": "规则",
-    "Plugins": "插件",
     "Sidecars": "伴生进程 (Sidecars)",
     "Hooks": "钩子",
     "App Data Directory": "应用数据目录",
     "Artifact": "工件",
-    "Artifacts": "工件",
     "Artifact metadata": "工件元数据",
-
-    // 通用界面与交互
     "Loading Antigravity": "正在加载 Antigravity...",
-    "Setting up…": "正在启动/设置中...",
     "Setting up...": "正在启动/设置中...",
     "Recent Workspaces": "最近工作区",
     "Clear Cache": "清除缓存",
@@ -1884,132 +1516,66 @@ electron_1.contextBridge.exposeInMainWorld('wizardAPI', wizardAPI);
     "Log Out": "退出登录",
     "Sign In": "登录",
     "Sign in with Google": "使用 Google 账号登录",
-    "Signed in as": "当前登录为",
-    "Check for Updates": "检查更新",
-    "Checking for Updates...": "正在检查更新...",
-    "Downloading Update...": "正在下载更新...",
-    "Restart to Update": "重启以应用更新",
-    "Up to date": "已是最新版本",
+    "Signed in as": "当前登录账号",
     "New version available": "有新版本可用",
-    "Automatic 检查更新": "自动检查更新",
-    "Automatic check for updates": "自动检查更新",
     "Automatic Check for Updates": "自动检查更新",
     "Automatic Updates": "自动更新",
-    "Automatic updates": "自动更新",
-    "Automatically prompt you to restart the app when a new update is available. When disabled, you can check for updates manually from the app menu.": "当有新版本可用时，自动提示您重启应用以完成更新。禁用后，您仍可通过应用菜单手动检查更新。",
+    "Automatically prompt you to restart the app when a new update is available. When disabled, you can check for updates manually from the app menu.": "当有新版本可用时，自动提示您重启应用以完成更新。禁用后，您可以在应用菜单中手动检查更新。",
     "Automatically prompt you to restart the app when a new update is available. When disabled, you can check for updates manually from the app menu": "当有新版本可用时，自动提示您重启应用以完成更新。禁用后，您仍可通过应用菜单手动检查更新",
     "Automatically prompt you to restart the app when a new update is available.": "当有新版本可用时，自动提示您重启应用以完成更新。",
     "Automatically prompt you to restart the app when a new update is available": "当有新版本可用时，自动提示您重启应用以完成更新",
-    "When disabled, you can check for updates manually from the app menu.": "禁用后，您仍可通过应用菜单手动检查更新。",
+    "When disabled, you can check for updates manually from the app menu.": "禁用后，您可以在应用菜单中手动检查更新。",
     "When disabled, you can check for updates manually from the app menu": "禁用后，您仍可通过应用菜单手动检查更新",
     "Copy code": "复制代码",
-    "Copied!": "已复制！",
-    "Copied": "已复制",
     "Collapse": "折叠",
     "Expand": "展开",
     "Show more": "显示更多",
     "Show less": "显示更少",
     "Details": "详情",
-    "Overview": "概览",
-
-    // ===== 对话流步骤标签与执行状态 (用户定制方案 3) =====
-    "Run": "运行",
-    "run": "运行",
-    "Ran": "运行",
-    "ran": "运行",
-    "Running": "运行中",
-    "running": "运行中",
+    "Ran": "已运行",
     "Thought": "思考过程",
-    "thought": "思考过程",
     "Thinking...": "思考中...",
-    "thinking...": "思考中...",
-    "Thinking": "思考中",
-    "thinking": "思考中",
-    "Explored": "检索",
-    "explored": "检索",
-    "Exploring": "检索中",
-    "exploring": "检索中",
-    "Edited": "编辑",
-    "edited": "编辑",
-    "Editing": "编辑中",
-    "editing": "编辑中",
-    "Viewed": "查看",
-    "viewed": "查看",
-    "Viewing": "查看中",
-    "viewing": "查看中",
-    "Searched": "搜索",
-    "searched": "搜索",
-    "Searching": "搜索中",
-    "searching": "搜索中",
-    "Working...": "处理中...",
-    "working...": "处理中...",
-    "Working": "处理中",
-    "working": "处理中",
+    "Thinking": "深度思考",
+    "Explored": "已探索",
+    "Exploring": "正在探索",
+    "Edited": "已编辑",
+    "Editing": "正在编辑",
+    "Viewed": "已查看",
+    "Viewing": "正在查看",
+    "Searched": "已搜索",
+    "Searching": "正在搜索",
+    "Working...": "正在工作...",
+    "Working": "正在工作",
     "Load older messages": "加载更早消息",
     "Artifact not found": "未找到产物文件",
     "could not be opened": "无法打开",
     "Tool definitions": "工具定义",
     "Subagent definitions": "子智能体定义",
-
-    // ===== 顶部应用菜单与命令面板 (Application Menu & Command Palette) =====
     "Command Palette": "命令面板",
     "Command Palette...": "命令面板...",
-    "Command palette": "命令面板",
-    "command palette": "命令面板",
     "Palette": "面板",
-    "palette": "面板",
-    "命令palette": "命令面板",
-    "命令 Palette": "命令面板",
-    "命令 palette": "命令面板",
-    "New Window": "新建窗口",
-    "new window": "新建窗口",
-    "Open Folder": "打开文件夹",
-    "Open folder": "打开文件夹",
     "Open Folder...": "打开文件夹...",
-    "Open Workspace": "打开工作区",
-    "Open workspace": "打开工作区",
     "Open Workspace...": "打开工作区...",
     "Save As...": "另存为...",
     "Save As": "另存为",
-    "Save as": "另存为",
-    "Save all": "全部保存",
     "Save All": "全部保存",
     "Close Window": "关闭窗口",
-    "close window": "关闭窗口",
     "Close Workspace": "关闭工作区",
-    "close workspace": "关闭工作区",
     "Close Editor": "关闭编辑器",
-    "close editor": "关闭编辑器",
     "Close Folder": "关闭文件夹",
-    "close folder": "关闭文件夹",
     "Quit Antigravity": "退出 Antigravity",
     "Exit": "退出",
-    "exit": "退出",
-
-    // ===== 深度汉化补充：通用与应用设置 (General & App Settings) =====
-    "Appearance": "外观",
-    "appearance": "外观",
     "Theme": "主题",
-    "Themes": "主题",
-    "Theme mode": "主题模式",
     "Theme Mode": "主题模式",
-    "theme mode": "主题模式",
     "Color theme": "颜色主题",
     "Custom theme": "自定义主题",
-    "Light": "浅色",
-    "Dark": "深色",
     "System": "跟随系统",
     "Follow system": "跟随系统",
     "Inherit from system": "跟随系统设置",
-    "Conversation width": "对话区宽度",
-    "Conversation Width": "对话区宽度",
-    "conversation width": "对话区宽度",
     "Compact": "紧凑",
     "Comfortable": "适中",
     "Wide": "加宽",
-    "Full width": "全宽",
     "Full Width": "全宽",
-    "App Settings": "应用设置",
     "Keep computer awake": "保持电脑唤醒",
     "Keep computer awake while running tasks": "运行任务时防止电脑休眠",
     "Prevent the system from sleeping during long-running agent tasks.": "在智能体执行长时间任务期间防止系统进入休眠。",
@@ -2021,12 +1587,9 @@ electron_1.contextBridge.exposeInMainWorld('wizardAPI', wizardAPI);
     "Auto check for updates": "自动检查更新",
     "Automatically check for updates": "自动检查软件更新",
     "Automatically check for and notify about application updates.": "自动检查并提示新版本应用程序更新。",
-    "Notifications": "系统通知",
-    "Notification preferences": "通知偏好",
-    "Manage your notification preferences.": "管理您的通知偏好。",
+    "Notification Preferences": "通知偏好设置",
     "Manage your notification preferences": "管理您的通知偏好",
     "Enable Notifications for Agent": "启用智能体通知",
-    "Enable notifications for agent": "启用智能体通知",
     "Show system notifications when your action is needed or the agent finishes.": "当需要您的操作或智能体完成任务时显示系统通知。",
     "Show system notifications when your action is needed or the agent finishes": "当需要您的操作或智能体完成任务时显示系统通知",
     "Enable system notifications": "启用系统通知",
@@ -2036,41 +1599,24 @@ electron_1.contextBridge.exposeInMainWorld('wizardAPI', wizardAPI);
     "Play sound on task completion": "任务完成时播放提示音",
     "Sound effects": "声音效果",
     "Sound": "声音",
-    "sound": "声音",
     "Sounds": "声音",
-    "sounds": "声音",
     "Enable Sounds for Agent": "启用智能体提示音",
-    "Enable sounds for agent": "启用智能体提示音",
     "Play a sound when your action is needed or the agent finishes.": "当需要您的操作或智能体完成任务时播放提示音。",
     "Play a sound when your action is needed or the agent finishes": "当需要您的操作或智能体完成任务时播放提示音",
     "Volume": "音量",
-    "volume": "音量",
     "Set the volume of agent sounds.": "设置智能体提示音的音量。",
     "Set the volume of agent sounds": "设置智能体提示音的音量",
     "Agent sounds": "智能体提示音",
-    "agent sounds": "智能体提示音",
     "Agent sound": "智能体提示音",
-    "agent sound": "智能体提示音",
-
-    // ===== 深度汉化补充：v2.15.0 智能体控制、项目状态与键位导航 (v2.15.0 Features) =====
     "No Project": "无项目",
-    "No project": "无项目",
-    "no project": "无项目",
-    "Invalid tool call": "无效的工具调用",
     "Invalid Tool Call": "无效的工具调用",
-    "invalid tool call": "无效的工具调用",
+    "Invalid tool call": "无效的工具调用",
     "Main Agent": "主智能体",
-    "Main agent": "主智能体",
-    "main agent": "主智能体",
     "Main Agent (Default)": "主智能体 (默认)",
-    "Main agent (default)": "主智能体 (默认)",
-    "Default tools": "默认工具",
-    "default tools": "默认工具",
     "Default Tools": "默认工具",
+    "Default tools": "默认工具",
     "Default prompt sections": "默认提示词小节",
-    "default prompt sections": "默认提示词小节",
     "Default prompts": "默认提示词",
-    "default prompts": "默认提示词",
     "Switch off default tools": "关闭默认工具",
     "Switch off default prompts": "关闭默认提示词",
     "Switch off default prompt sections": "关闭默认提示词小节",
@@ -2084,152 +1630,86 @@ electron_1.contextBridge.exposeInMainWorld('wizardAPI', wizardAPI);
     "Cancelled on restart": "重启时已取消",
     "Working outside of a project": "在项目外部工作",
     "Working outside of a project.": "在项目外部工作。",
-
-    // ===== 深度汉化补充：高频交互操作、无障碍标签与反馈按钮 =====
     "Good response": "好评回复",
     "Bad response": "差评回复",
+    "More Actions": "更多操作",
     "More actions": "更多操作",
-    "more actions": "更多操作",
     "More options": "更多选项",
-    "more options": "更多选项",
+    "Pin Conversation": "置顶对话",
     "Pin conversation": "置顶对话",
-    "Unpin conversation": "取消置顶对话",
+    "Unpin Conversation": "取消置顶对话",
     "Archive conversation": "归档对话",
     "Pinned Conversations": "置顶对话",
-    "Pinned conversations": "置顶对话",
     "pinned conversations": "置顶对话",
-    "PINNED CONVERSATIONS": "置顶对话",
     "Pinned Conversation": "置顶对话",
-    "Pinned conversation": "置顶对话",
-    "pinned conversation": "置顶对话",
     "Pinned": "已置顶",
-    "pinned": "已置顶",
     "Unpinned": "未置顶",
-    "unpinned": "未置顶",
     "Recent Conversations": "最近对话",
-    "Recent conversations": "最近对话",
-    "recent conversations": "最近对话",
     "All Conversations": "全部对话",
-    "All conversations": "全部对话",
-    "all conversations": "全部对话",
     "Other Conversations": "其他对话",
-    "other conversations": "其他对话",
-    "Undo to this point": "撤销到此处",
-    "Copy code": "复制代码",
-    "copy code": "复制代码",
+    "Undo to this point": "撤销至此处",
     "At mention code block": "提及代码块",
     "Add inline comment": "添加行内注释",
     "Fold code block": "折叠代码块",
     "User message": "用户消息",
-    "user message": "用户消息",
     "Send message": "发送消息",
-    "send message": "发送消息",
     "Agent execution terminated due to error.": "智能体执行因错误而终止。",
     "Agent execution terminated due to error": "智能体执行因错误而终止",
     "Agent execution terminated": "智能体执行已终止",
     "See all": "查看全部",
-    "see all": "查看全部",
     "Media actions": "媒体操作",
     "Overview tab": "概览标签页",
     "Review tab": "评审标签页",
     "Terminal tab": "终端标签页",
     "Resolve Merge": "解决合并",
     "Add comment": "添加注释",
-
-    // ===== 深度汉化补充：远程控制 (Remote Control) =====
     "Open in Remote Control": "在远程控制中打开",
-    "Open in remote control": "在远程控制中打开",
-    "open in remote control": "在远程控制中打开",
     "Continue your work from another device with Remote Control. Scan the QR code or open the link below.": "借助远程控制从另一台设备继续工作。请扫描下方二维码或打开下方链接。",
     "Continue your work from another device with Remote Control. Scan the QR code or open the link below": "借助远程控制从另一台设备继续工作。请扫描下方二维码或打开下方链接",
     "Continue your work from another device with Remote Control.": "借助远程控制从另一台设备继续工作。",
     "Continue your work from another device with Remote Control": "借助远程控制从另一台设备继续工作",
-    "Continue your work from another device with remote control.": "借助远程控制从另一台设备继续工作。",
-    "Continue your work from another device with remote control": "借助远程控制从另一台设备继续工作",
     "Continue your work from another device": "从另一台设备继续工作",
-    "continue your work from another device": "从另一台设备继续工作",
     "Scan the QR code or open the link below.": "扫描二维码或打开下方链接。",
     "Scan the QR code or open the link below": "扫描二维码或打开下方链接",
     "Scan the QR code": "扫描二维码",
-    "scan the QR code": "扫描二维码",
     "open the link below.": "打开下方链接。",
     "open the link below": "打开下方链接",
     "Remote Control": "远程控制",
-    "Remote control": "远程控制",
-    "remote control": "远程控制",
-    "Scan the code to open this device in remote control, or copy link.": "扫描二维码以在远程控制中打开此设备，或复制链接。",
     "Scan the code to open this device in Remote Control, or copy link.": "扫描二维码以在远程控制中打开此设备，或复制链接。",
-    "Scan the code to open this device in remote control, or copy link": "扫描二维码以在远程控制中打开此设备，或复制链接",
     "Scan the code to open this device in Remote Control, or copy link": "扫描二维码以在远程控制中打开此设备，或复制链接",
-    "Scan the code to open this device in 远程控制, or copy link。": "扫描二维码以在远程控制中打开此设备，或复制链接。",
-    "Scan the code to open this device in 远程控制, or copy link.": "扫描二维码以在远程控制中打开此设备，或复制链接。",
-    "Scan the code to open this device in 远程控制, or copy link": "扫描二维码以在远程控制中打开此设备，或复制链接",
-    "Scan the code to 打开 this device in 远程控制, or copy link。": "扫描二维码以在远程控制中打开此设备，或复制链接。",
-    "Scan the code to 打开 this device in 远程控制, or copy link": "扫描二维码以在远程控制中打开此设备，或复制链接",
-    "Scan the code to 打开 this 设备 in 远程 Control, or 复制链接": "扫描二维码以在远程控制中打开此设备，或复制链接。",
-    "Scan the code to 打开 this 设备 in 远程 Control, or 复制链接。": "扫描二维码以在远程控制中打开此设备，或复制链接。",
-    "Scan the code to 打开 this 设备 in 远程 Control, or 复制链接.": "扫描二维码以在远程控制中打开此设备，或复制链接。",
-    "Scan the code to 打开 this 设备 in 远程 控制, or 复制链接": "扫描二维码以在远程控制中打开此设备，或复制链接。",
-    "Scan the code to 打开 this 设备 in 远程 控制, or 复制链接。": "扫描二维码以在远程控制中打开此设备，或复制链接。",
-    "Scan the code to 打开 this 设备 in 远程 控制, or 复制链接.": "扫描二维码以在远程控制中打开此设备，或复制链接。",
     "Scan the code to open this device in Remote Control, or": "扫描二维码以在远程控制中打开此设备，或",
-    "Scan the code to open this device in remote control, or": "扫描二维码以在远程控制中打开此设备，或",
-    "Scan the code to 打开 this 设备 in 远程 控制, or": "扫描二维码以在远程控制中打开此设备，或",
-    "Scan the code to 打开 this 设备 in 远程 Control, or": "扫描二维码以在远程控制中打开此设备，或",
-    "Scan the code to 打开 this device in 远程控制, or": "扫描二维码以在远程控制中打开此设备，或",
     "Scan the code to": "扫描二维码以",
-    "scan the code to": "扫描二维码以",
     "open this device in Remote Control": "在远程控制中打开此设备",
-    "open this device in remote control": "在远程控制中打开此设备",
     "this device in Remote Control": "在远程控制中的此设备",
     "Control": "控制",
-    "control": "控制",
     "Scan the code to open this device": "扫描二维码以打开此设备",
-    "in remote control": "在远程控制中",
     "in Remote Control": "在远程控制中",
     "or copy link.": "或复制链接。",
     "or copy link": "或复制链接",
-    "Copy link": "复制链接",
-    "copy link": "复制链接",
-    "Copy Link": "复制链接",
     "Link copied": "链接已复制",
     "Link copied!": "链接已复制！",
     "Scan the code": "扫描二维码",
-    "scan the code": "扫描二维码",
     "Scan code": "扫描二维码",
-    "QR code": "二维码",
     "QR Code": "二维码",
     "Connect device": "连接设备",
     "Connect your device": "连接您的设备",
     "Open on your mobile device": "在移动设备上打开",
     "Open on this device": "在此设备上打开",
     "This device": "此设备",
-    "this device": "此设备",
-
-    // ===== 深度汉化补充：工具执行与自动审批策略 (Tool Execution & Approval) =====
     "Tool Execution Policy": "工具执行策略",
-    "Tool execution policy": "工具执行策略",
     "Auto-Execution Policy": "自动执行策略",
     "Auto Execution Policy": "自动执行策略",
-    "auto-execution policy": "自动执行策略",
     "Execution Policy": "执行策略",
-    "execution policy": "执行策略",
     "Controls whether terminal commands require approval before running": "控制终端命令在运行前是否需要人工审批",
     "Controls whether terminal commands require approval before running.": "控制终端命令在运行前是否需要人工审批。",
-    "Always proceed": "总是直接执行",
-    "Always Proceed": "总是直接执行",
     "always-proceed": "总是直接执行",
     "Always proceed (Run without asking)": "总是直接执行 (无需询问)",
-    "Request review": "请求人工审查",
-    "Request Review": "请求人工审查",
     "request-review": "请求人工审查",
     "Request review (Ask before every command)": "请求人工审查 (每次运行命令前询问)",
-    "Proceed in sandbox": "在沙盒中直接执行",
-    "Proceed in Sandbox": "在沙盒中直接执行",
+    "Proceed in Sandbox": "在沙盒中执行",
     "proceed-in-sandbox": "在沙盒中直接执行",
     "Proceed in sandbox (Run in sandbox without asking)": "在沙盒中直接执行 (沙盒内无需询问)",
     "Strict": "严格模式",
-    "strict": "严格模式",
     "Strict (Ask for all tools)": "严格模式 (所有工具调用均需确认)",
     "Agent decides": "智能体自主决定",
     "agent-decides": "智能体自主决定",
@@ -2238,22 +1718,14 @@ electron_1.contextBridge.exposeInMainWorld('wizardAPI', wizardAPI);
     "Ask for review": "询问审查",
     "asks-for-review": "询问审查",
     "Turbo": "极速模式",
-    "turbo": "极速模式",
     "Turbo mode": "极速模式",
-    "turbo mode": "极速模式",
-    "极速模式 mode": "极速模式",
+    "Learn more about Turbo mode": "了解关于极速模式的更多信息",
     "Every command requires approval.": "每条命令都需要审批。",
     "Every command requires approval": "每条命令都需要审批",
-    "every command requires approval.": "每条命令都需要审批。",
-    "every command requires approval": "每条命令都需要审批",
     "Ask before sensitive operations.": "在执行敏感操作前询问。",
     "Ask before sensitive operations": "在执行敏感操作前询问",
-    "ask before sensitive operations.": "在执行敏感操作前询问。",
-    "ask before sensitive operations": "在执行敏感操作前询问",
     "Run all commands without restrictions.": "无限制运行所有命令。",
     "Run all commands without restrictions": "无限制运行所有命令",
-    "run all commands without restrictions.": "无限制运行所有命令。",
-    "run all commands without restrictions": "无限制运行所有命令",
     "Run all commands in sandbox without restrictions.": "在沙盒中无限制运行所有命令。",
     "Run all commands in sandbox without restrictions": "在沙盒中无限制运行所有命令",
     "Run in sandbox without asking.": "在沙盒中直接运行，无需询问。",
@@ -2261,166 +1733,82 @@ electron_1.contextBridge.exposeInMainWorld('wizardAPI', wizardAPI);
     "Every tool requires approval.": "每个工具调用均需审批。",
     "Every tool requires approval": "每个工具调用均需审批",
     "Learn more about": "了解更多关于",
-    "learn more about": "了解更多关于",
-    "了解更多 about": "了解更多关于",
-
-    // ===== 通用执行与排队消息策略 (Execution & Queued Messages) =====
     "Configure when follow-up messages are sent.": "配置后续跟进消息的发送时机。",
     "Configure when follow-up messages are sent": "配置后续跟进消息的发送时机",
     "Queue": "排队等待",
-    "queue": "排队等待",
     "Send Immediately": "立即发送",
-    "send immediately": "立即发送",
     "Steer": "实时插话指导",
-    "steer": "实时插话指导",
     "Interrupt": "中断当前执行",
-    "interrupt": "中断当前执行",
     "Controls the actions the agent can take.": "控制智能体可以执行的具体操作范围。",
     "Controls the actions the agent can take": "控制智能体可以执行的具体操作范围",
-    "Controls the 操作 the 智能体 can take。": "控制智能体可以执行的具体操作范围。",
-    "Controls the 操作 the 智能体 can take": "控制智能体可以执行的具体操作范围",
     "Whether the agent asks you to review its documents.": "控制智能体是否提请您审查其生成的文档工件。",
     "Whether the agent asks you to review its documents": "控制智能体是否提请您审查其生成的文档工件",
     "Modify permissions for files, terminal, and MCP tools.": "修改针对文件系统、终端命令以及 MCP 工具的安全权限。",
     "Modify permissions for files, terminal, and MCP tools": "修改针对文件系统、终端命令以及 MCP 工具的安全权限",
-    "Modify 权限 持续 文件, 终端, and MCP 工具。": "修改针对文件系统、终端命令以及 MCP 工具的安全权限。",
-    "Modify 权限 持续 文件, 终端, and MCP 工具": "修改针对文件系统、终端命令以及 MCP 工具的安全权限",
-    "Modify permissions for 文件, 终端, and MCP 工具。": "修改针对文件系统、终端命令以及 MCP 工具的安全权限。",
-    "Modify permissions for 文件, 终端, and MCP 工具": "修改针对文件系统、终端命令以及 MCP 工具的安全权限",
     "You can upgrade to a Google AI Ultra plan to receive higher rate limits.": "您可以升级至 Google AI Ultra 计划以获得更高额度的调用速率上限。",
     "You can upgrade to a Google AI Ultra plan to receive higher rate limits": "您可以升级至 Google AI Ultra 计划以获得更高额度的调用速率上限",
-    "You can 升级 to a Google AI Ultra 计划 to receive higher rate 限额。": "您可以升级至 Google AI Ultra 计划以获得更高额度的调用速率上限。",
-    "You can 升级 to a Google AI Ultra 计划 to receive higher rate 限额": "您可以升级至 Google AI Ultra 计划以获得更高额度的调用速率上限",
     "Keyboard Shortcuts": "键盘快捷键",
-    "keyboard shortcuts": "键盘快捷键",
-    "Keyboard 快捷键": "键盘快捷键",
     "Narrow": "紧凑",
-    "narrow": "紧凑",
-
-    // ===== 深度汉化补充：终端沙盒与安全隔离 (Terminal Sandbox & Security) =====
     "Terminal Sandbox": "终端沙盒",
-    "terminal sandbox": "终端沙盒",
     "Sandbox Mode": "沙盒模式",
-    "sandbox mode": "沙盒模式",
     "Enable Sandbox Mode (Preview)": "启用沙盒模式 (预览)",
-    "Enable Sandbox Mode (preview)": "启用沙盒模式 (预览)",
-    "enable sandbox mode (preview)": "启用沙盒模式 (预览)",
     "Enable Sandbox Mode": "启用沙盒模式",
-    "enable sandbox mode": "启用沙盒模式",
     "Sandbox Mode (Preview)": "沙盒模式 (预览)",
-    "sandbox mode (preview)": "沙盒模式 (预览)",
     "Enable Terminal Sandbox": "启用终端沙盒",
-    "enable terminal sandbox": "启用终端沙盒",
     "Restricts agent tools to a secure, isolated local sandbox.": "将智能体工具限制在安全、隔离的本地沙盒环境中。",
     "Restricts agent tools to a secure, isolated local sandbox": "将智能体工具限制在安全、隔离的本地沙盒环境中",
-    "restricts agent tools to a secure, isolated local sandbox.": "将智能体工具限制在安全、隔离的本地沙盒环境中。",
-    "restricts agent tools to a secure, isolated local sandbox": "将智能体工具限制在安全、隔离的本地沙盒环境中",
     "Run agent commands inside a restricted sandbox environment for added security.": "在受限沙盒环境中运行智能体命令以提高系统安全性。",
     "Run agent commands inside a restricted sandbox environment": "在受限沙盒环境中运行智能体命令",
     "for added security.": "以提高安全性。",
     "Commands executed outside the sandbox require approval.": "在沙盒外执行的命令必须经过用户明确批准。",
     "Commands executed outside the sandbox require explicit user confirmation.": "在沙盒外执行的命令需要用户显式确认。",
-    "Sandbox allowed domains": "沙盒允许访问的域名",
-    "Sandbox Allowed Domains": "沙盒允许域名",
-    "Security Preset": "安全预设",
-    "Security preset": "安全预设",
-    "security preset": "安全预设",
+    "Sandbox Allowed Domains": "沙盒允许访问的域名",
     "Security Presets": "安全预设",
-    "Security presets": "安全预设",
-    "security presets": "安全预设",
     "Custom Preset": "自定义预设",
     "Standard Preset": "标准预设",
     "Strict Preset": "严格预设",
-
-    // ===== 深度汉化补充：项目与对话权限继承 (Project & Conversation Permission Inheritance) =====
     "Inherit Global": "继承全局",
-    "inherit global": "继承全局",
     "Inherits Global": "继承全局",
-    "inherits global": "继承全局",
-    "Inherit global": "继承全局",
     "Inherit Global Permissions": "继承全局权限",
-    "inherit global permissions": "继承全局权限",
     "Inherit Global Permissions.": "继承全局权限。",
     "Inherits your Global Permissions when working in this project.": "在此项目中工作时继承您的全局权限。",
     "Inherits your Global Permissions when working in this project": "在此项目中工作时继承您的全局权限",
-    "inherits your global permissions when working in this project.": "在此项目中工作时继承您的全局权限。",
-    "inherits your global permissions when working in this project": "在此项目中工作时继承您的全局权限",
     "Inherits your Global Permissions": "继承您的全局权限",
-    "inherits your global permissions": "继承您的全局权限",
-    "Manually customize individual settings.": "手动自定义各项独立设置。",
     "Manually customize individual settings": "手动自定义各项独立设置",
-    "manually customize individual settings.": "手动自定义各项独立设置。",
-    "Also includes": "在当前项目中工作时亦继承",
     "also includes": "在当前项目中工作时亦继承",
-    "when working in this project.": "配置。",
-    "when working in this project": "配置",
     "When working in this project.": "在当前项目中工作时。",
     "When working in this project": "在当前项目中工作时",
     "This project was created for": "此项目创建用于",
     "automation. Automations do not inherit Global Permissions.": "自动化任务。自动化任务不会继承全局权限。",
     "Automations do not inherit Global Permissions.": "自动化任务不会继承全局权限。",
     "Automations do not inherit Global Permissions": "自动化任务不会继承全局权限",
-    "automations do not inherit global permissions.": "自动化任务不会继承全局权限。",
-    "Outside of folders file access policy": "工作文件夹外文件访问策略",
-    "Configures how the agent tries to access files outside of its working folders.": "配置智能体尝试访问其工作文件夹之外的文件时的访问策略。",
     "Configures how the agent tries to access files outside of its working folders": "配置智能体尝试访问其工作文件夹之外的文件时的访问策略",
-    "Terminal Command Auto Execution": "终端命令自动执行",
-    "Controls whether terminal commands require your approval before running.": "控制终端命令在运行前是否需要您的批准。",
     "Controls whether terminal commands require your approval before running": "控制终端命令在运行前是否需要您的批准",
-    "Proceed in Sandbox": "在沙盒中执行",
-    "proceed in sandbox": "在沙盒中执行",
-    "Require Review": "需要审查",
-    "require review": "需要审查",
     "Permission Preset": "权限预设",
-    "permission preset": "权限预设",
     "Permission Presets": "权限预设",
-    "permission presets": "权限预设",
     "Permission Settings": "权限设置",
-    "permission settings": "权限设置",
-    "Local Permissions": "本地权限",
-    "local permissions": "本地权限",
     "Agent Settings (For Project)": "智能体设置 (适用于项目)",
-    "Configure global allowed and denied resource permissions.": "配置全局允许或禁止的资源权限。",
-    "Requires manual review for all terminal commands and file accesses outside of the working folders.": "对所有终端命令以及工作区文件夹之外的文件访问均需要手动审查。",
     "Requires manual review for all terminal commands and file accesses outside of the working folders": "对所有终端命令以及工作区文件夹之外的文件访问均需要手动审查",
-    "All terminal commands require review. The agent can read or write to any file in the machine.": "所有终端命令均需审查。智能体可以读写本机上的任意文件。",
     "All terminal commands require review.": "所有终端命令均需审查。",
     "The agent can read or write to any file in the machine.": "智能体可以读写本机上的任意文件。",
-    "Disables all safety barriers for maximal iteration velocity.": "禁用所有安全防护以换取最快的迭代速度。",
-    "Full machine": "本机全部权限",
-    "full machine": "本机全部权限",
     "Useful for typical development with an emphasis on security. It prioritizes safety over speed by requiring manual approval for all terminal commands and files outside the project directory.": "适用于注重安全性的常规开发场景。通过要求对所有终端命令及项目目录之外的文件操作进行手动批准，将安全性置于速度之上。",
     "Useful for tasks that require file access across your full machine. The agent has full read and write access to all local files, but all proposed terminal commands require manual review and approval before running.": "适用于需要跨整台计算机访问文件的任务。智能体对所有本地文件拥有完全读写权限，但所有拟执行的终端命令在运行前均需手动审查与批准。",
     "A high-risk mode that disables all safety barriers. The agent operates with full system access, auto-executes all terminal commands, and reads or writes to all local files without review prompts.": "高风险模式，禁用所有安全防护。智能体拥有完整的系统访问权限，会自动执行所有终端命令，并在读写任意本地文件时均不弹出审查提示。",
     "managed by your organization": "由您的组织统一管理",
     "Disabled by organization policy": "已由组织策略禁用",
-
-    // ===== 深度汉化补充：文件与网络访问策略 (File & Network Access) =====
     "Non-Workspace File Access": "工作区外文件访问",
     "Non-Workspace File Access Policy": "工作区外文件访问策略",
-    "non-workspace file access policy": "工作区外文件访问策略",
     "File Access Policy": "文件访问策略",
-    "file access policy": "文件访问策略",
     "Controls whether the agent can read or write files outside the current workspace root": "控制智能体是否可以读写当前工作区根目录之外的文件",
     "Controls whether the agent can read or write files outside the current workspace root.": "控制智能体是否可以读写当前工作区根目录之外的文件。",
     "Internet Access Policy": "网络访问策略",
-    "internet access policy": "网络访问策略",
     "Controls whether the agent can make network requests": "控制智能体是否可以发起网络外部请求",
     "Controls whether the agent can make network requests.": "控制智能体是否可以发起网络外部请求。",
     "Allow agent access to .gitignore files": "允许智能体访问 .gitignore 忽略的文件",
     "Allow agent access to .gitignore files.": "允许智能体访问 .gitignore 忽略的文件。",
     "Allow": "允许",
-    "allow": "允许",
-    "Ask": "每次询问",
-    "ask": "每次询问",
     "Deny": "拒绝",
-    "deny": "拒绝",
-    "Allow/deny": "允许/拒绝",
-    "Allow/Deny": "允许/拒绝",
-
-    // ===== 深度汉化补充：权限规则、白名单与黑名单 (Permissions & Lists) =====
     "Permission Grants": "权限授予规则",
-    "permission grants": "权限授予规则",
     "Global permission grants": "全局权限规则",
     "Project-scoped permission grants": "项目专属权限规则",
     "Command Allowlist": "命令白名单",
@@ -2428,80 +1816,45 @@ electron_1.contextBridge.exposeInMainWorld('wizardAPI', wizardAPI);
     "Command Allowlist / Denylist": "命令白名单 / 黑名单",
     "Specify terminal commands that are always permitted or always blocked.": "指定始终允许直接执行或始终禁止执行的终端命令。",
     "Browser Allowlist": "浏览器白名单",
-    "browser allowlist": "浏览器白名单",
     "Restrict which domains the agent's browser tools can navigate to.": "限制智能体浏览器工具可以访问的域名范围。",
     "Define global allow/deny rules for specific files, commands, and URLs.": "为特定的文件路径、终端命令及网络 URL 定义全局允许/拒绝规则。",
-    "Add path": "添加路径",
     "Add Path": "添加路径",
-    "Add command": "添加命令",
     "Add Command": "添加命令",
     "Add URL": "添加 URL",
-    "Add domain": "添加域名",
     "Add Domain": "添加域名",
-    "Add rule": "添加规则",
     "Add Rule": "添加规则",
     "Edit rule": "编辑规则",
     "Remove rule": "移除规则",
     "Delete rule": "删除规则",
-
-    // ===== 深度汉化补充：工件审查模式 (Artifact Review Mode) =====
     "Artifact Review Mode": "工件审查模式",
-    "artifact review mode": "工件审查模式",
     "Artifact Review": "工件审查",
-    "artifact review": "工件审查",
     "Controls when the agent asks for artifact review": "控制智能体何时向用户提请工件审查",
     "Controls when the agent asks for artifact review.": "控制智能体何时向用户提请工件审查。",
     "Override artifact review behavior per project.": "在当前项目中覆盖工件审查行为设置。",
-
-    // ===== 深度汉化补充：浏览器 JS 执行策略 (Browser JS Execution) =====
     "Browser JavaScript Execution": "浏览器 JavaScript 执行策略",
-    "Browser JavaScript Execution Policy": "浏览器 JavaScript 执行策略",
     "Browser JS Execution Policy": "浏览器 JS 执行策略",
-    "browser js execution policy": "浏览器 JS 执行策略",
     "Controls whether the browser tool can execute JavaScript on web pages.": "控制浏览器工具是否可以在网页上执行 JavaScript 脚本。",
-
-    // ===== 深度汉化补充：远程控制 (Remote Control) =====
-    "Remote Control": "远程控制",
-    "remote control": "远程控制",
     "Enable Remote Control": "启用远程控制",
-    "enable remote control": "启用远程控制",
-    "Remote control hostname": "远程控制主机名",
     "Remote Control Hostname": "远程控制主机名",
     "Allow controlling this agent instance remotely via CLI or web.": "允许通过命令行工具或 Web 端远程控制当前智能体实例。",
     "Staying disconnected: Remote Control user setting is off": "保持断开：远程控制用户设置已关闭",
-
-    // ===== 深度汉化补充：数据存储、缓存与维护 (Data, Storage & Reset) =====
     "Data & Storage": "数据与存储",
     "Data and Storage": "数据与存储",
     "Storage": "存储空间",
-    "Clear cache": "清除缓存",
-    "Clear Cache": "清除缓存",
     "Clear temporary data and cached assets.": "清除临时数据和缓存资源。",
     "Reset all settings": "重置所有设置",
     "Reset all settings to default": "恢复所有设置为默认值",
-    "Reset Settings": "重置设置",
     "Restore all settings back to their factory default values.": "将所有配置选项还原为出厂默认设置。",
     "Open configuration folder": "打开配置所在文件夹",
     "Open application logs": "打开应用程序日志",
     "Open Logs Folder": "打开日志文件夹",
     "Data storage path": "数据存储路径",
-
-    // ===== 深度汉化补充：点数用量与账号 (Credits & Account) =====
     "AI Credits": "AI 点数",
-    "ai credits": "AI 点数",
     "Use AI credits": "使用个人 AI 点数",
-    "use ai credits": "使用个人 AI 点数",
     "Consume personal tier credits for faster inference and higher rate limits.": "使用个人等级点数以获得更快的推理速度和更高的调用限额。",
-    "Account": "账号",
     "Account & Profile": "账号与个人中心",
-    "Sign in with Google": "使用 Google 账号登录",
-    "Signed in as": "当前登录账号",
-    "Log out": "退出登录",
-    "Sign out": "退出登录",
     "Manage subscription": "管理订阅计划",
     "Manage Google account": "管理 Google 账号",
-
-    // ===== 深度汉化补充：通用偏好、系统托盘与远程控制 =====
     "Manage Antigravity app settings.": "管理 Antigravity 应用程序偏好设置。",
     "Keep the app accessible from the menu bar and running in the background when all windows are closed.": "关闭所有窗口后，保持应用常驻系统托盘并继续在后台运行。",
     "Work with local agents from another device.": "支持从其他设备远程协同与控制本地智能体。",
@@ -2512,14 +1865,12 @@ electron_1.contextBridge.exposeInMainWorld('wizardAPI', wizardAPI);
     "Manage your model quota and credits.": "管理您的模型配额与个人 AI 点数。",
     "Show Selection Actions": "显示划词快捷操作",
     "Show Selection Actions when selecting text": "选中文本时显示划词操作",
-    'Show "Edit" and "Chat" buttons when selecting text in the editor.': '在编辑器中选中代码或文本时，浮动显示“编辑”与“聊天”快捷按钮。',
+    "Show \"Edit\" and \"Chat\" buttons when selecting text in the editor.": "在编辑器中选中代码或文本时，浮动显示“编辑”与“聊天”快捷按钮。",
     "Selection Actions": "划词操作",
     "Previous Pane Tab": "切换到上一个窗格",
     "Next Pane Tab": "切换到下一个窗格",
     "Toggle Terminal": "切换终端面板",
     "Add to Chat/Quote": "添加到聊天引用",
-
-    // ===== 深度汉化补充：Labs 实验功能与开发者工具 =====
     "Try out early-stage features before they ship. These may change or be removed at any time.": "在正式发布前抢先体验早期新特性。这些功能可能会随时变更或移除。",
     "Experimental features": "实验性功能",
     "Conversation Sharing": "对话分享",
@@ -2535,8 +1886,6 @@ electron_1.contextBridge.exposeInMainWorld('wizardAPI', wizardAPI);
     "Google3 chats will be regrouped into their workspaces in the sidebar.": "侧边栏中的 Google3 对话将按所属工作区重新归类分组。",
     "This migration may mess up your settings, chats, and sidebar.": "此项迁移可能会影响您的偏好设置、对话记录及侧边栏布局。",
     "Follow the guide at go/jetski-project-migration to back up your data and run the migration.": "请按照相关指南备份您的数据后再执行迁移。",
-    // ===== 全量预置 MCP 服务器卡片与生态长句深度汉化 (63 款官方与社区 MCP) =====
-    // 1. MCP 标题与界面导航
     "Google Kubernetes Engine (Remote)": "Google Kubernetes Engine (远程)",
     "Google Cloud Bigtable Admin": "Google Cloud Bigtable 管理",
     "Google Cloud CLI (Preview)": "Google Cloud CLI (预览版)",
@@ -2560,29 +1909,22 @@ electron_1.contextBridge.exposeInMainWorld('wizardAPI', wizardAPI);
     "Google Cloud Quotas": "Google Cloud 配额管理",
     "Chrome DevTools for agents": "面向智能体的 Chrome DevTools",
     "Cloud Run": "Cloud Run",
-    "Cloud 运行": "Cloud Run",
     "Search MCP servers...": "搜索 MCP 服务器...",
     "Search MCP servers": "搜索 MCP 服务器",
     "Available MCP Servers": "可用 MCP 服务器",
-    "Available MCP servers": "可用 MCP 服务器",
     "All MCP Servers": "全部 MCP 服务器",
-    "All MCP servers": "全部 MCP 服务器",
     "Featured MCP Servers": "精选 MCP 服务器",
-    "Featured MCP servers": "精选 MCP 服务器",
     "Custom MCP Server": "自定义 MCP 服务器",
     "Add Custom MCP Server": "添加自定义 MCP 服务器",
-    "Add custom MCP server": "添加自定义 MCP 服务器",
     "Install MCP Server": "安装 MCP 服务器",
     "Add Server": "添加服务器",
     "Remove MCP Server": "移除 MCP 服务器",
     "Configured MCP Servers": "已配置的 MCP 服务器",
-
-    // 2. 预置 63 款 MCP 服务卡片描述长句
     "Investigate and fix software issues using AI-powered root cause analysis. This MCP server connects to your Antimetal account to search issues, read investigative reports with causal graphs, retrieve observability artifacts (logs, traces, metrics), and apply remediations—directly from your AI tools.": "利用 AI 驱动的根因分析调查并修复软件问题。该 MCP 服务器可连接到您的 Antimetal 账户，支持检索问题、阅读带因果关系图的调查报告、提取可观测性工件（日志、链路追踪、指标），并直接在您的 AI 工具中应用修复方案。",
     "Query and act on your marketing, analytics, CRM, e-commerce, and warehouse data across 325+ connectors (Meta Ads, Google Ads, TikTok Ads, GA4, HubSpot, Salesforce, Shopify, Stripe, BigQuery, Snowflake, and more) using natural language. Read live data and write changes back (pause or enable campaigns, set budgets, upload conversions) with no SQL and no custom integrations.": "通过自然语言查询并操作跨 325+ 个连接器（Meta Ads、Google Ads、TikTok Ads、GA4、HubSpot、Salesforce、Shopify、Stripe、BigQuery、Snowflake 等）的营销、分析、CRM、电商及数据仓库数据。无需编写 SQL 或定制集成，即可读取实时数据并回写变更（如暂停/启用营销活动、调整预算、上传转化数据）。",
     "Query your GitLab SDLC as a knowledge graph. Orbit indexes groups, projects, source code, merge requests, pipelines, work items, and security findings into a single graph so agents can answer blast radius, onboarding, and dependency mapping questions by traversing real relationships instead of grepping across separate systems.": "将您的 GitLab 软件开发生命周期 (SDLC) 作为知识图谱进行查询。Orbit 会将群组、项目、源码、合并请求 (MR)、流水线、工作项及安全漏洞索引到一个统一的图谱中，使智能体能通过遍历真实关联关系来解答影响范围 (blast radius)、新人上手以及依赖拓扑映射等问题，而无需在不同系统间进行机械 grep 搜索。",
     "Enable Antigravity to deploy apps to Google Cloud Run.": "让 Antigravity 能够直接将应用部署到 Google Cloud Run 无服务器容器平台。",
-    'Ask questions. Get answers. The MCP is a server your coding agent talks to. Ask a question in English. It runs the query against your PostHog data. The answer lands in your editor. No SQL. No dashboards. No tabs full of charts you forgot you opened. Try things like: - "How many unique users signed up in the last 7 days, broken down by day?" - "Create an A/B test for our pricing page that measures conversion to checkout." - "What are the top 5 errors in my project this week?"': "提出问题，获取答案。该 MCP 服务器为您的编程智能体提供数据对话能力。直接用自然语言提问，它将对您的 PostHog 数据执行查询，并直接在编辑器中返回结果。无需编写 SQL，无需翻找仪表盘，也无需打开一堆遗忘的图表标签页。您可以尝试提问：“过去 7 天每天有多少独立用户注册？”、“为定价页面创建 A/B 测试以衡量结账转化率”、“本周我项目中排名前 5 的错误是什么？”",
+    "Ask questions. Get answers. The MCP is a server your coding agent talks to. Ask a question in English. It runs the query against your PostHog data. The answer lands in your editor. No SQL. No dashboards. No tabs full of charts you forgot you opened. Try things like: - \"How many unique users signed up in the last 7 days, broken down by day?\" - \"Create an A/B test for our pricing page that measures conversion to checkout.\" - \"What are the top 5 errors in my project this week?\"": "提出问题，获取答案。该 MCP 服务器为您的编程智能体提供数据对话能力。直接用自然语言提问，它将对您的 PostHog 数据执行查询，并直接在编辑器中返回结果。无需编写 SQL，无需翻找仪表盘，也无需打开一堆遗忘的图表标签页。您可以尝试提问：“过去 7 天每天有多少独立用户注册？”、“为定价页面创建 A/B 测试以衡量结账转化率”、“本周我项目中排名前 5 的错误是什么？”",
     "Search and reference over 600,000 real-world app screens, user flows, and UI patterns from Mobbin directly within your AI tools.": "直接在您的 AI 工具中检索并参考来自 Mobbin 的 60 多万个真实移动应用界面、用户旅程流程及 UI 设计模式。",
     "Build, edit, deploy, and manage full-stack web apps with Lovable, the AI-powered app builder, using natural language. This MCP server connects your AI client to Lovable so you can create projects and workspaces, send build instructions to the Lovable agent, inspect generated code via diffs and file trees, read and write project knowledge, manage Postgres databases and connectors, and deploy apps directly from your AI tools.": "通过自然语言使用 AI 应用构建工具 Lovable 构建、编辑、部署和管理全栈 Web 应用。该 MCP 服务器将您的 AI 客户端连接至 Lovable，支持创建项目与工作区、向 Lovable 智能体发送构建指令、通过 Diff 和文件树审查生成代码、读写项目知识库、管理 Postgres 数据库与连接器，并直接在 AI 工具中完成应用部署。",
     "The GKE remote MCP server provides read write access to your GKE Kubernetes resources. It allows an AI agent to inspect and observe your environment.": "GKE 远程 MCP 服务器提供对您 GKE Kubernetes 资源的读写访问权限，允许 AI 智能体检查和观测您的集群与运行环境。",
@@ -2641,8 +1983,6 @@ electron_1.contextBridge.exposeInMainWorld('wizardAPI', wizardAPI);
     "Manage Pub/Sub resources and publish messages. Create, list, get, update, and delete Pub/Sub topics, subscriptions, and snapshots, as well as publish messages to topics.": "管理 Pub/Sub 资源并发布消息。支持创建、列出、获取、更新和删除 Pub/Sub 主题 (Topics)、订阅 (Subscriptions) 及快照，并向指定主题投递消息。",
     "The Cloud Quotas MCP server allows you to view quota allocations, request quota increases, and manage Quota Adjuster configurations.": "Cloud Quotas MCP 服务器允许您查看配额分配情况、申请提升服务配额，以及管理 Quota Adjuster 自动配额调整器配置。",
     "Enable Antigravity to control and inspect a live Chrome browser, with access to the full power of Chrome DevTools for reliable automation, in-depth debugging, and performance analysis.": "让 Antigravity 能够直接控制并检查运行中的 Chrome 浏览器，充分调用 Chrome DevTools 的强大能力，实现高可靠的自动化操作、深度调试与性能分析。",
-
-    // 斜杠命令（Slash Commands）原生说明、浮动卡片与简介汉化
     "Invoke the Boost multi-agent orchestrator for complex tasks.": "调用 Boost 多智能体编排器处理复杂任务。",
     "Run until the specified goal is completely finished.": "持续自主运行，直至指定目标彻底完成。",
     "Run an instruction on a recurring schedule or as a one-time timer.": "按周期循环计划或单次定时器执行指令。",
@@ -2655,11 +1995,9 @@ electron_1.contextBridge.exposeInMainWorld('wizardAPI', wizardAPI);
     "Experimental. Invoke the deep agent to plan, build, verify complex coding tasks.": "实验性。调用深度智能体进行复杂编程任务的规划、构建与验证。",
     "Ask a quick question without interrupting the main conversation.": "提出快速疑问，不中断主对话流程。",
     "enhance thinking effort by using a multi-agent reasoning pipeline.": "通过多智能体推理流水线增强深度思考能力。",
-
-    // 斜杠命令智能体推荐文案 (System / Language Server Recommendation Prompts)
     "Available slash commands you can recommend to the user:": "可推荐给用户的可用斜杠命令：",
     "You cannot execute these commands yourself. Your role is to recommend them to the user when they are a good fit for the task at hand, encouraging the user to explore and trigger them.": "您不能自行执行这些命令。您的职责是在命令契合当前任务时向用户推荐，引导用户主动探索并触发它们。",
-    'To recommend a slash command, suggest it clearly in your response (e.g., "You can use the \x60/goal\x60 command to...").': '如需推荐斜杠命令，请在回复中明确建议（例如："您可以使用 \x60/goal\x60 命令来..."）。',
+    "To recommend a slash command, suggest it clearly in your response (e.g., \"You can use the `/goal` command to...\").": "如需推荐斜杠命令，请在回复中明确建议（例如：\"您可以使用 `/goal` 命令来...\"）。",
     "Recommend this when the user has a complex coding or research project that requires deep thinking, strategic planning, multiple perspectives, and rigorous verification.": "当用户拥有需要深度思考、策略规划、多视角审视和严谨验证的复杂编程或调研项目时推荐此项。",
     "Recommend this when the user wants to run a long-running task (e.g., overnight) and wants the agent to be extra thorough and not stop until the goal is fully achieved.": "当用户希望执行长时间运行的任务（例如通宵运行），且要求智能体格外彻底并在目标完全达成前不停止时推荐此项。",
     "Recommend this when the user wants to run an instruction on a recurring schedule or set a one-time timer.": "当用户希望按周期循环计划运行指令或设置单次定时器时推荐此项。",
@@ -2667,74 +2005,29 @@ electron_1.contextBridge.exposeInMainWorld('wizardAPI', wizardAPI);
     "Recommend this when the user wants to align on a plan through an interactive interview to resolve design decisions.": "当用户希望通过交互式访谈对齐方案以敲定设计决策时推荐此项。",
     "Recommend this when the user has a large project that would benefit from a team of autonomous agents working together.": "当用户拥有适合由自主智能体团队协作推进的大型工程项目时推荐此项。",
     "Recommend this when the user has corrected the agent or solved a complex setup and wants the agent to persist this behavior for future tasks.": "当用户纠正了智能体或解决了复杂配置，并希望智能体在后续任务中持久复用该行为时推荐此项。",
-
-    // 内置技能（自动注入斜杠命令菜单）说明文案
     "Automatically migrate legacy workflows to modern skills across global and workspace configurations. Scans for existing workflows, creates target SKILL.md files, and safely archives old workflow files.": "在全局与工作区配置中将旧版工作流自动迁移为现代技能。扫描现有工作流，生成目标 SKILL.md 文件并安全归档旧文件。",
     "Use this skill when configuring, managing, or troubleshooting MCP (Model Context Protocol) tool permissions and whitelist authorizations in Antigravity. Covers syntax rules, config file locations, automatic whitelist injection, avoiding UI overwrite traps, and troubleshooting Windows environment gotchas.": "在 Antigravity 中配置、管理或排查 MCP 工具权限与白名单授权时使用此技能。涵盖语法规则、配置文件位置、自动白名单注入、规避 UI 覆盖陷阱以及 Windows 避坑指南。",
-    "Guidelines for interacting with GitHub and request permissions from the user when commands fail due to restrictions in the agent environment.": "与 GitHub 交互的操作准则，当命令因智能体环境限制执行失败时向用户申请授权。",
-    "Provides a comprehensive guide, quick reference, and sitemap for Google Antigravity (AGY), including the Antigravity CLI (agy), Antigravity 2.0, Antigravity IDE, Python SDK, slash commands, keybindings, and customizations (skills, rules, MCP, sidecars). Activate this skill when the user asks questions about how to use, configure, or customize Antigravity, AGY, the agy CLI, the Antigravity IDE, or Antigravity 2.0.": "提供 Google Antigravity (AGY) 的完整指南、速查参考与系统导航，涵盖 Antigravity CLI (agy)、Antigravity 2.0、Antigravity IDE、Python SDK、斜杠命令、快捷键及自定义扩展（技能、规则、MCP、Sidecar）。",
-    "Comprehensive guide and reference for the Antigravity Customization System. Use to explain how customizations work, their loading priority, discovery mechanisms, and to guide the creation of skills, rules, plugins, hooks, and MCP servers.": "Antigravity 自定义扩展系统的完整指南与技术参考。用于阐述自定义项的工作机制、加载优先级、自动发现机制，并指导技能、规则、插件、钩子及 MCP 服务器的创建。",
-    "How to render rich interactive HTML widgets inline in the chat or as standalone artifacts. Use this skill when you want to show the user diagrams, data visualizations, interactive controls, educational walkthroughs, or any rich visual content beyond plain text and markdown.": "如何在对话中以内联方式或作为独立工件渲染丰富的交互式 HTML 小部件。当需要向用户展示架构图表、数据可视化、交互式控件、教程回顾或超出纯文本与 Markdown 的丰富视觉内容时使用此技能。",
-
-    // 斜杠菜单与提及（Mention）下拉弹出容器状态与分组提示
-    "recently opened": "最近打开",
-    "Recently opened": "最近打开",
     "Recently Opened": "最近打开",
-    "file results": "文件结果",
-    "File results": "文件结果",
     "File Results": "文件结果",
     "No matching results": "无匹配结果",
     "Searching…": "搜索中…",
     "Searching...": "搜索中...",
-    "Mentions": "提及",
     "Commands": "命令",
-    "Skills": "技能",
     "Workflows": "工作流",
-
-    // ===== 深度汉化补充：高级设置与差异视图操作 (Advanced Settings & Diff Review Actions) =====
     "Advanced Settings": "高级设置",
-    "Advanced settings": "高级设置",
-    "advanced settings": "高级设置",
-    "Advanced 设置": "高级设置",
-    "advanced 设置": "高级设置",
-    "Advanced": "高级",
-    "advanced": "高级",
-    "Automatic Check for Updates": "自动检查更新",
-    "automatic check for updates": "自动检查更新",
-    "Automatically prompt you to restart the app when a new update is available. When disabled, you can check for updates manually from the app menu.": "当有新版本可用时，自动提示您重启应用以完成更新。禁用后，您可以在应用菜单中手动检查更新。",
-    "Automatically prompt you to restart the app when a new update is available.": "当有新版本可用时，自动提示您重启应用以完成更新。",
-    "When disabled, you can check for updates manually from the app menu.": "禁用后，您可以在应用菜单中手动检查更新。",
     "Collapse All": "全部折叠",
-    "collapse all": "全部折叠",
-    "Collapse all": "全部折叠",
     "Expand All": "全部展开",
-    "expand all": "全部展开",
-    "Expand all": "全部展开",
     "View Stacked Diff": "查看堆叠差异",
-    "view stacked diff": "查看堆叠差异",
-    "View Split Diff": "查看分屏差异",
-    "view split diff": "查看分屏差异",
-    "Show Whitespace Changes": "显示空白字符变动",
-    "show whitespace changes": "显示空白字符变动",
-    "Hide Whitespace Changes": "隐藏空白字符变动",
-    "hide whitespace changes": "隐藏空白字符变动",
     "Collapse All Folders": "折叠所有文件夹",
-    "collapse all folders": "折叠所有文件夹",
     "Expand All Folders": "展开所有文件夹",
-    "expand all folders": "展开所有文件夹",
     "Collapse folder": "折叠文件夹",
     "Expand folder": "展开文件夹",
     "Collapse file": "折叠文件",
     "Expand file": "展开文件",
     "Open in Code Search": "在代码搜索中打开",
-
-    // === 2.18.1 补全：向导截断容错 ===
-    "Antigravity has been redesigned to put agents first with new capabilities. If you'd still like a code editor, you can download it as a separate app named": "Antigravity 经过全面重构，赋予智能体更强大的原生能力。如果您仍需要代码编辑器，可单独下载独立应用",
     "If you'd still like a code editor, you can download it as a separate app named": "如果您仍需要代码编辑器，可单独下载独立应用",
     "separate app named Antigravity IDE": "名为 Antigravity IDE 的独立应用",
     "separate app named": "独立应用",
-
-    // === 2.18.1 补全：代码差异与 Diff 工具栏 ===
     "Insert into terminal": "插入至终端",
     "Run in terminal": "在终端中运行",
     "Apply diff": "应用改动",
@@ -2751,8 +2044,6 @@ electron_1.contextBridge.exposeInMainWorld('wizardAPI', wizardAPI);
     "Clear Conversation": "清除对话",
     "Export Conversation": "导出对话",
     "Share Conversation": "分享对话",
-
-    // === 2.18.1 补全：智能体运行态胶囊与状态提示 ===
     "Planning...": "正在制定计划...",
     "Generating plan...": "正在生成计划...",
     "Executing command...": "正在执行命令...",
@@ -2768,12 +2059,10 @@ electron_1.contextBridge.exposeInMainWorld('wizardAPI', wizardAPI);
     "Requires approval": "需要审批",
     "Stop generating": "停止生成",
     "Stop execution": "停止执行",
-    "Stop agent": "停止智能体",
+    "Stop Agent": "停止智能体",
     "Ask anything, @ to mention, / for workflows": "输入任何问题，输入 @ 提及，输入 / 调用工作流",
     "Type a message or press / for workflows": "输入消息或按 / 调用工作流",
     "Ask a question or describe a task...": "提出问题或描述任务...",
-
-    // === 2.18.1 补全：设置中心、权限沙箱与模型参数 ===
     "Terminal auto-execution policy": "终端自动执行策略",
     "Background terminal execution": "后台终端执行",
     "Terminal Execution": "终端执行",
@@ -2784,7 +2073,7 @@ electron_1.contextBridge.exposeInMainWorld('wizardAPI', wizardAPI);
     "Auto approve": "自动批准",
     "Require approval": "需要审批",
     "Allow background tasks": "允许后台任务",
-    "Cancel task": "取消任务",
+    "Cancel Task": "取消任务",
     "Kill task": "终止任务",
     "Task status": "任务状态",
     "Reasoning": "推理",
@@ -2824,8 +2113,6 @@ electron_1.contextBridge.exposeInMainWorld('wizardAPI', wizardAPI);
     "Enterprise tier": "企业版层级",
     "Quota exceeded": "配额超限",
     "Rate limit exceeded": "速率限制超限",
-
-    // === 2.18.1 补全：斜杠指令描述长句 ===
     "Run an autonomous, goal-driven agent loop until task completion": "自主目标驱动的智能体循环，直至彻底完成任务",
     "Schedule recurring workflows or set delayed reminders": "调度周期性工作流或设定延时提醒",
     "Generate a detailed step-by-step implementation plan": "生成详尽的分步实施计划",
@@ -2833,9 +2120,6 @@ electron_1.contextBridge.exposeInMainWorld('wizardAPI', wizardAPI);
     "Coordinate multiple autonomous subagents": "多子智能体并行协作预览模式",
     "Save corrected workflows and habits to long-term memory": "将纠正后的工作流与习惯沉淀至长期记忆",
     "Deep thinking and multi-perspective verification mode": "深度思考与多重视角交叉验证增强模式",
-
-    // === 2.21.0 深度补全：官方底座新特性、模型状态、操作卡片与设置中心全量词条 ===
-    // 1. 设置中心新版体验与 Token 明细
     "Choose the experience that fits how you work.": "选择适合您工作方式的操作体验。",
     "Choose the experience that fits how you work": "选择适合您工作方式的操作体验",
     "Choose between the Default and Project 4K experience.": "在默认体验与 4K 项目体验之间切换。",
@@ -2852,8 +2136,6 @@ electron_1.contextBridge.exposeInMainWorld('wizardAPI', wizardAPI);
     "Hide breakdowns": "隐藏明细",
     "File Reads": "文件读取",
     "File Writes": "文件写入",
-    "file reads": "文件读取",
-    "file writes": "文件写入",
     "Reads": "读取",
     "Writes": "写入",
     "Contrast": "对比度",
@@ -2867,38 +2149,25 @@ electron_1.contextBridge.exposeInMainWorld('wizardAPI', wizardAPI);
     "Legal Help": "法律帮助",
     "to ask for content changes for legal reasons.": "出于法律原因申请内容变更。",
     "Permanently delete": "永久删除",
-    "Permanently delete this project and all of its conversations.": "永久删除当前项目及其所有历史对话。",
     "Refreshing...": "正在刷新...",
     "Refreshing": "正在刷新",
     "App Version": "应用版本",
-    "Bug Report": "Bug 报告",
     "Remote Control Issue": "远程控制问题反馈",
-    "Attach Antigravity server logs": "附带 Antigravity 服务器日志",
-
-    // 2. 主聊天交互与按钮
     "Project options": "项目选项",
     "Agent response": "智能体回复",
-    "Undo to this point": "撤销至此处",
     "Explored files, ran commands": "已探索文件，已执行命令",
     "Exploring file, running commands, editing artifact": "正在探索文件、运行命令、编辑工件",
     "Exploring file, running commands, editing artifacts": "正在探索文件、运行命令、编辑工件",
     "Drag to select a region to comment": "拖动以选取区域进行评论",
     "Select a region to comment": "选取区域以进行评论",
     "Copy markdown": "复制 Markdown",
-    "Copy code": "复制代码",
     "Copy raw text": "复制纯文本",
-
-    // 3. 模型状态与官方插件
     "View Usage": "查看使用额度",
-    "View usage": "查看使用额度",
-    "view usage": "查看使用额度",
     "Leaving Soon": "即将下线",
-    "leaving soon": "即将下线",
     "Notice": "重要提示",
     "High": "高",
     "Medium": "中",
     "Low": "低",
-    "Thinking": "深度思考",
     "Build applications with the Gemini Interactions API and Live API, including text, image, video, and speech generation, managed agents, and real-time multimodal streaming.": "借助 Gemini Interactions API 与 Live API 构建应用程序，涵盖文本、图像、视频与语音生成，托管智能体以及实时多模态流式交互。",
     "Build applications with the Gemini Interactions API and Live API": "借助 Gemini Interactions API 与 Live API 构建应用程序",
     "Download": "下载",
@@ -2909,245 +2178,91 @@ electron_1.contextBridge.exposeInMainWorld('wizardAPI', wizardAPI);
     "Claude Sonnet 4.6 (Thinking)": "Claude Sonnet 4.6 (深度思考)",
     "Claude Opus 4.6 (Thinking)": "Claude Opus 4.6 (深度思考)",
     "GPT-OSS 120B (Medium)": "GPT-OSS 120B (中)",
-
-    // 4. 原生上下文菜单新增
     "Duplicate": "创建副本",
-    "Archive": "归档",
     "Share": "分享",
-    "Copy Link": "复制链接",
     "Export": "导出",
-    "Export Conversation": "导出对话",
     "Clear History": "清除历史",
-    "Message input": "消息输入框",
     "This plugin provides a specialized suite of skills for data engineers and database practitioners working on Google Cloud. It acts as an expert assistant, allowing you to use natural language prompts in your preferred coding agent to architect complex data pipelines, transform data with dbt, write Spark and BigQuery SQL notebooks, and orchestrate end-to-end workflows across GCP's data ecosystem.": "此插件为在 Google Cloud 上工作的数据工程师和数据库从业人员提供了专业技能套件。它充当专家助手，让您可以在首选的编码智能体中使用自然语言提示来构建复杂的数据管道、使用 dbt 转换数据、编写 Spark 和 BigQuery SQL 笔记本，并在 GCP 的数据生态系统中编排端到端工作流。",
     "This skill helps the agent generate or update orchestration pipeline definitions for Google Cloud Composer to initialize orchestration pipeline or update the orchestration definition for orchestration of various data pipelines, like dbt pipelines, notebooks, Spark jobs, Dataform, Python scripts or inline BigQuery SQL queries. This skill also helps deploy and trigger orchestration pipelines.": "此技能可帮助智能体为 Google Cloud Composer 生成或更新编排管道定义，以初始化编排管道或更新各种数据管道（如 dbt 管道、笔记本、Spark 作业、Dataform、Python 脚本或内联 BigQuery SQL 查询）的编排定义。此技能还有助于部署和触发编排管道。",
-
-    // 5. 侧边栏与系统导航：Automations (自动化)
     "Automations": "自动化",
-    "automations": "自动化",
     "Automation": "自动化",
-    "automation": "自动化",
     "New Automation": "新建自动化",
-    "new automation": "新建自动化",
     "Create Automation": "创建自动化",
-    "create automation": "创建自动化",
     "Scheduled Automations": "定时自动化",
-    "scheduled automations": "定时自动化",
     "Background Automations": "后台自动化",
-    "background automations": "后台自动化",
     "Active Automations": "活跃自动化",
-    "active automations": "活跃自动化",
     "Automation Settings": "自动化设置",
-    "automation settings": "自动化设置",
     "Automations Settings": "自动化设置",
-    "automations settings": "自动化设置",
     "No automations": "暂无自动化任务",
-    "no automations": "暂无自动化任务",
     "No automations found": "未找到自动化任务",
-    "no automations found": "未找到自动化任务",
     "Run Automation": "运行自动化",
     "Trigger Automation": "触发自动化",
     "Manage Automations": "管理自动化",
-
-    // 6. 自定义配置（Customizations）扩展市场与管理
     "Installed": "已安装",
-    "installed": "已安装",
-    "Marketplace": "扩展市场",
-    "marketplace": "扩展市场",
     "Browse the Marketplace": "浏览扩展市场",
-    "browse the marketplace": "浏览扩展市场",
     "Find skills, agents, and more in the Marketplace.": "在扩展市场中查找技能、智能体等。",
     "Search customizations...": "搜索自定义项...",
-    "Search customizations": "搜索自定义项",
-    "search customizations": "搜索自定义项",
+    "Search customizations": "搜索自定义项...",
     "Skills & Rules": "技能与规则",
-    "skills & rules": "技能与规则",
     "Built In": "内置",
-    "built in": "内置",
     "Built-in": "内置",
     "See less": "收起",
-    "see less": "收起",
     "Custom Agents": "自定义智能体",
-    "custom agents": "自定义智能体",
     "Loading plugin...": "正在加载插件...",
     "Loading plugin": "正在加载插件",
     "This is a preview of the plugin's source. Nothing below is active until you install it.": "这是此插件源码的预览。在您安装之前，以下内容均未激活生效。",
-
-    // 官方插件生态与详情
     "Connect to Google Workspace, including Docs, Sheets, Slides, Drive, and Calendar.": "连接至 Google Workspace，涵盖 Docs、Sheets、Slides、Drive 与 Calendar。",
     "Google Docs": "Google 文档",
     "Read, draft, and edit docs.": "阅读、起草和编辑文档。",
     "Read and write your Google Docs. Summarize any doc from its link, draft proposals and announcements in a new doc, and reply to and resolve open comments.": "阅读与编辑您的 Google 文档。通过链接总结任意文档内容，在新文档中起草提案与公告，并回复与解决未结评论。",
     "Read, create, edit, and manage Google Docs. Use when the user shares a docs.google.com URL, asks to summarize or extract content from a doc, wants a doc drafted, edited, formatted, or commented on, wants tables, images, or smart chips inserted, wants markdown imported or synchronized with a doc, or wants a doc exported. Requires a known document ID — use the gdrive skill to search for or locate documents. Don't use for Google Sheets, Slides, or Drive file management.": "读取、创建、编辑与管理 Google 文档。当用户分享 docs.google.com 链接、要求总结或提取文档内容、起草或修改文档排版评论、插入表格与图像智能芯片、导入导出 Markdown 时使用。",
-
     "Google Sheets": "Google 表格",
     "Read, write, and format spreadsheets.": "读取、编写和格式化电子表格。",
     "Read, create, edit, and manage Google Sheets spreadsheets. Use when the user shares a sheets.google.com URL, asks to summarize, inspect, or analyze spreadsheet data, wants sheets drafted, edited, formatted, cleared, or deleted, wants rows/columns inserted, appended, deleted, or sorted, wants cells updated, formulas added, charts created, or formatting applied, or wants CSV/tsv imported or synchronized with a sheet. Requires a known spreadsheet ID — use the gdrive skill to search for or locate spreadsheets. Don't use for Google Docs, Slides, or Drive file management.": "读取、创建、编辑与管理 Google 表格。当用户分享 sheets.google.com 链接、要求汇总分析表格数据、增删修改行列单元格、添加公式图表时使用。",
-
     "Google Slides": "Google 幻灯片",
     "Read, edit, and export presentations.": "阅读、编辑和导出演示文稿。",
-
     "Google Drive": "Google 云端硬盘",
     "Search, upload, download, and share files.": "搜索、上传、下载和共享文件。",
-
     "Google Calendar": "Google 日历",
     "Check availability, schedule events, and RSVP.": "查看空闲时间、安排活动日程并回复邀请。",
-
     "Build with Google": "使用 Google 构建",
     "Build on Google's developer platforms, including Android, Chrome, Gemini, and Google Cloud.": "基于 Google 开发者平台进行构建，涵盖 Android、Chrome、Gemini 与 Google Cloud。",
-
-    "Google Maps Platform": "Google Maps 平台",
     "Integration skill and tools for Google Maps Platform APIs": "用于 Google Maps Platform API 的集成技能与工具套件",
-
-    "Dart 与 Flutter": "Dart 与 Flutter",
     "Official plugin for Dart and Flutter that installs Flutter/Dart Skills, Rules, Custom Agents, and Dart MCP server for building natively compiled, visually stunning applications for mobile, web, desktop, and embedded devices from a single codebase": "Dart 与 Flutter 官方插件，提供 Flutter/Dart 技能、规则、自定义智能体与 Dart MCP 服务器，支持从单一代码库构建适用于移动端、Web、桌面及嵌入式设备的原生编译精美应用。",
-
     "Firebase": "Firebase",
     "Prototype, build & run modern apps that users love with Firebase's backend, AI, and operational infrastructure.": "借助 Firebase 的后端、AI 和运维基础设施，原型设计、构建并运行深受用户喜爱的现代化应用程序。",
-
     "Curated collection of agent skills for science tasks.": "精选的面向科学计算与科研任务的智能体技能套件。",
-    "Google Antigravity SDK": "Google Antigravity SDK",
     "Using the Google Antigravity Python SDK to build AI agents": "使用 Google Antigravity Python SDK 构建 AI 智能体",
-
-    // 内置技能说明
     "Interactive guide to design and create a scheduled background automation. Use this skill when the user wants to create an automated or recurring scheduled task (e.g. \"summarize my emails every morning\", \"every Monday send me a to-do list\"). Also triggered by the /automation slash command.": "设计与创建后台定时自动化的交互式指南。当用户需要创建定时或循环调度任务时使用（例如“每天早上总结我的邮件”、“每周一发送待办清单”）。亦可通过 /automation 斜杠命令触发。",
     "How to manage and create plugins — namespaced bundles of skills, agents, rules, MCP servers and hooks that install, enable and disable as a single unit. Use this skill when the user wants to enable, disable, install or uninstall a plugin, when they want to create a new plugin, or when a new customization should be packaged into a plugin rather than left loose. Also triggered by the /plugin slash command. Don't use for the underlying customization system itself — discovery roots, loading priority, or authoring a standalone skill, agent, rule, hook or MCP server outside a plugin; see the customizations guide skill for those.": "管理与创建插件的指南——插件是将技能、智能体、规则、MCP 服务器和钩子整合成具有独立命名空间的套件包，支持作为独立单元进行安装、启用与禁用。当用户需要管理插件、创建新插件或将扩展组件打包封装时使用。亦可通过 /plugin 斜杠命令触发。",
     "Build, package, run, and debug UI extensions for Antigravity: interactive web panels that render in the side pane, served by a Node.js sidecar using the built-in Sidecar SDK.": "构建、打包、运行与调试 Antigravity UI 扩展：在侧边窗格中渲染的交互式 Web 面板，由基于内置 Sidecar SDK 的 Node.js sidecar 提供服务。",
     "Discover UI plugin panels relevant to the current task and surface a one-click pill in chat to open (toggle) them in the side pane. Use when a running UI plugin's panel would help with what the user is doing, or right after the user enables a new UI plugin pane and a shortcut to open it is handy.": "发现与当前任务相关的 UI 插件面板，并在对话中提供一键展开胶囊按钮，以便在侧边窗格中快速切换显示。",
     "Guidelines for interacting with GitHub, prompting the user for approval when commands fail due to agent environment restrictions.": "与 GitHub 交互的操作准则，当命令因智能体环境限制执行失败时向用户申请授权。",
-
-    // 7. 显示选项与会话列表视图配置 (Display Options)
-    "Sort Conversations": "对话排序",
-    "sort conversations": "对话排序",
-    "Sort conversations": "对话排序",
-    "Last Prompt": "最新提示词",
-    "last prompt": "最新提示词",
-    "Last prompt": "最新提示词",
-    "Archived Only": "仅已归档",
-    "archived only": "仅已归档",
-    "Archived only": "仅已归档",
-    "Active Only": "仅活跃",
-    "active only": "仅活跃",
-    "Pinned Only": "仅置顶",
-    "pinned only": "仅置顶",
-    "Unarchived Only": "仅未归档",
-    "unarchived only": "仅未归档",
-    "Last 7 days": "最近 7 天",
-    "Last 7 Days": "最近 7 天",
-    "last 7 days": "最近 7 天",
-    "Last 24 hours": "最近 24 小时",
-    "Last 24 Hours": "最近 24 小时",
-    "last 24 hours": "最近 24 小时",
-    "Last 30 days": "最近 30 天",
-    "Last 30 Days": "最近 30 天",
-    "last 30 days": "最近 30 天",
     "Last week": "最近一周",
-    "last week": "最近一周",
     "Last month": "最近一个月",
-    "last month": "最近一个月",
-    "All time": "全部时间",
-    "all time": "全部时间",
     "All Time": "全部时间",
-    "Display": "显示",
-    "display": "显示",
-
-    // 8. 智能体执行标签与工具组聚合状态 (Agent Execution Labels & Tool Groups)
-    "Run": "运行",
-    "run": "运行",
-    "Running": "正在运行",
-    "running": "正在运行",
-    "Ran": "已运行",
-    "ran": "已运行",
-    "Working": "正在工作",
-    "working": "正在工作",
-    "Working...": "正在工作...",
     "Done": "已完成",
-    "done": "已完成",
     "Done.": "已完成。",
-    "Errored": "已出错",
-    "errored": "已出错",
     "Rejected": "已拒绝",
-    "rejected": "已拒绝",
     "Waiting": "等待中",
-    "waiting": "等待中",
     "Sent": "已发送",
-    "sent": "已发送",
     "Sending": "正在发送",
-    "sending": "正在发送",
-    "Analyzed": "已分析",
-    "analyzed": "已分析",
     "Analyzing": "正在分析",
-    "analyzing": "正在分析",
-    "Explored": "已探索",
-    "explored": "已探索",
-    "Exploring": "正在探索",
-    "exploring": "正在探索",
-    "Edited": "已编辑",
-    "edited": "已编辑",
-    "Editing": "正在编辑",
-    "editing": "正在编辑",
     "Created": "已创建",
-    "created": "已创建",
     "Creating": "正在创建",
-    "creating": "正在创建",
     "Deleted": "已删除",
-    "deleted": "已删除",
     "Deleting": "正在删除",
-    "deleting": "正在删除",
-    "Searched": "已搜索",
-    "searched": "已搜索",
-    "Searching": "正在搜索",
-    "searching": "正在搜索",
-    "Viewed": "已查看",
-    "viewed": "已查看",
-    "Viewing": "正在查看",
-    "viewing": "正在查看",
-
-    // 工具组与单复数完整短语
-    "Ran command": "已运行命令",
-    "ran command": "已运行命令",
-    "Ran commands": "已运行命令",
-    "ran commands": "已运行命令",
-    "Running command": "正在运行命令",
-    "running command": "正在运行命令",
-    "Running commands": "正在运行命令",
-    "running commands": "正在运行命令",
-    "Run command": "运行命令",
-    "run command": "运行命令",
-    "Run commands": "运行命令",
-    "run commands": "运行命令",
-    "Ran 命令": "已运行命令",
-    "Running 命令": "正在运行命令",
     "Explored files": "已探索文件",
-    "explored files": "已探索文件",
     "Exploring files": "正在探索文件",
-    "exploring files": "正在探索文件",
     "Explored file": "已探索文件",
-    "explored file": "已探索文件",
     "Exploring file": "正在探索文件",
-    "exploring file": "正在探索文件",
     "Edited files": "已编辑文件",
-    "edited files": "已编辑文件",
     "Editing files": "正在编辑文件",
-    "editing files": "正在编辑文件",
     "Edited file": "已编辑文件",
-    "edited file": "已编辑文件",
-    "Editing file": "正在编辑文件",
-    "editing file": "正在编辑文件",
     "Edited artifact": "已编辑工件",
-    "edited artifact": "已编辑工件",
     "Edited artifacts": "已编辑工件",
-    "edited artifacts": "已编辑工件",
     "Editing artifact": "正在编辑工件",
-    "editing artifact": "正在编辑工件",
     "Editing artifacts": "正在编辑工件",
-    "editing artifacts": "正在编辑工件",
-
-    // 复合动词组合短语 (全量收录 pqb 输出的所有组合)
-    "Explored files, ran commands, edited files": "已探索文件、已执行命令、已编辑文件",
-    "Explored files, ran commands, edited artifact": "已探索文件、已执行命令、已编辑工件",
-    "Explored files, ran commands, edited artifacts": "已探索文件、已执行命令、已编辑工件",
-    "Explored files, ran commands": "已探索文件、已执行命令",
     "Explored files, edited files": "已探索文件、已编辑文件",
     "Explored files, edited artifact": "已探索文件、已编辑工件",
     "Explored files, edited artifacts": "已探索文件、已编辑工件",
@@ -3157,477 +2272,10 @@ electron_1.contextBridge.exposeInMainWorld('wizardAPI', wizardAPI);
     "Exploring files, running commands, editing files": "正在探索文件、运行命令、编辑文件",
     "Exploring files, running commands, editing artifact": "正在探索文件、运行命令、编辑工件",
     "Exploring files, running commands, editing artifacts": "正在探索文件、运行命令、编辑工件",
-    "Exploring files, running commands": "正在探索文件、运行命令",
+    "Exploring files, running commands": "正在探索文件，正在运行命令",
     "Exploring files, editing files": "正在探索文件、编辑文件",
     "Exploring files, editing artifact": "正在探索文件、编辑工件",
     "Exploring files, editing artifacts": "正在探索文件、编辑工件",
-    "Running commands, editing files": "正在运行命令、编辑文件",
-    "Running commands, editing artifact": "正在运行命令、编辑工件",
-    "Running commands, editing artifacts": "正在运行命令、编辑工件",
-
-    // 步骤行具体动作前缀与通知状态
-    "Checking command status": "正在检查命令状态",
-    "Checked command status": "已检查命令状态",
-    "Analyzing Task Log": "正在分析任务日志",
-    "Analyzed Task Log": "已分析任务日志",
-    "Analyzing content": "正在分析内容",
-    "Analyzed content": "已分析内容",
-    "Unknown file edit": "未知文件编辑",
-    "termination request": "终止请求",
-    "User cancelled agent execution.": "用户已取消智能体执行。",
-    "User cancelled agent execution": "用户已取消智能体执行",
-    "Agent execution failed.": "智能体执行失败。",
-    "Agent execution failed": "智能体执行失败",
-    "The agent has encountered an internal error.": "智能体遇到了内部错误。",
-    "Used MCP tool": "调用 MCP 工具",
-    "Used tool": "调用工具",
-    "Generated image": "已生成图像",
-    "Browser task": "浏览器任务",
-    "Opened browser": "已打开浏览器",
-    "Read URL": "读取 URL",
-    "Searched web": "网页搜索",
-    "Invoked subagent": "调用子智能体",
-    "Git commit": "Git 提交",
-    "Searched for files": "搜索文件",
-    "Searched files": "已搜索文件",
-    "Code search": "代码搜索",
-    "Internal search": "内部搜索",
-
-    // ===== 2.26.0 界面文案补充（依据 Web UI bundle 全量比对 + 运行时 DOM 抓取）=====
-    // 环境 / 选择器
-    "Select Environment": "选择环境",
-    "Local": "本地",
-    "Toggle Environment Selector": "切换环境选择器",
-    "Toggle Project Selector": "切换项目选择器",
-    "Select Billing Model": "选择计费模型",
-    "Select Default Branch": "选择默认分支",
-    "Select All": "全选",
-    "Select Agent": "选择智能体",
-    "Select Project": "选择项目",
-    "Select Resource(s)": "选择资源",
-    "Select Theme": "选择主题",
-    "Select Workspace": "选择工作区",
-    "Select Worktree": "选择工作树",
-    "Select Folder(s)": "选择文件夹",
-    "Select category to search...": "选择要搜索的分类...",
-    "Select a model in the model selector": "在模型选择器中选择模型",
-    "Select a model to send message": "选择要发送消息的模型",
-    "Select workspace to send message": "选择要发送消息的工作区",
-    "Select your license": "选择你的许可证",
-    "Select an option": "选择一个选项",
-    "Choose Region": "选择区域",
-    "Choose a License": "选择许可证",
-    "Open Agent on Reload": "窗口重载时打开智能体面板",
-    "Open the agent panel on window reload": "窗口重载时打开智能体面板",
-    "Open Browser Setup": "打开浏览器设置",
-    "Open Command Palette": "打开命令面板",
-    "Open Commit Graph": "打开提交图",
-    "Open Conversation": "打开对话",
-    "Open Conversation History": "打开对话历史",
-    "Open File": "打开文件",
-    "Open Keyboard Shortcuts": "打开键盘快捷键",
-    "Open Preferences": "打开首选项",
-    "Open Preview": "打开预览",
-    "Open Project Picker": "打开项目选择器",
-    "Open Search": "打开搜索",
-    "Open Tabs": "打开标签页列表",
-    "Open Terminal": "打开终端",
-    "Open Workspace Selector": "打开工作区选择器",
-    "Open in Browser": "在浏览器中打开",
-    "Open in Built-in Browser": "在内置浏览器中打开",
-    "Open in External Browser": "在外部浏览器中打开",
-    "Open in New Tab": "在新标签页中打开",
-    "Open in New Window": "在新窗口中打开",
-    "Open in Preview": "在预览中打开",
-    "Open in Preview Tab": "在预览标签页中打开",
-    "Open in Side Pane": "在侧边窗格中打开",
-    "Open in Tab": "在标签页中打开",
-    "Open in Notebook View": "在笔记本视图中打开",
-    "Open in external browser": "在外部浏览器中打开",
-    "Open in Critique": "在 Critique 中打开",
-    "Open link": "打开链接",
-    "Open plugin page": "打开插件页面",
-    "Open project settings": "打开项目设置",
-    "Open settings menu": "打开设置菜单",
-    "Open skill page": "打开技能页面",
-    "Open the change": "打开该更改",
-    "Open the page in system browser": "在系统浏览器中打开该页面",
-    "Open search in external browser": "在外部浏览器中搜索",
-    "Open System Browser": "打开系统浏览器",
-    "Open System Preferences": "打开系统偏好设置",
-    "Open Launchpad": "打开 Launchpad",
-    "Open Hub": "打开 Hub",
-    "View Debug": "查看调试",
-    "View Diff": "查看差异",
-    "View File": "查看文件",
-    "View Logs": "查看日志",
-    "View Page": "查看页面",
-    "View comments": "查看评论",
-    "View network request": "查看网络请求",
-    "View network requests": "查看网络请求",
-    "View or edit comment": "查看或编辑评论",
-    "View archived in the sidebar": "在侧边栏中查看已归档",
-    "View full search results": "查看完整搜索结果",
-    "Toggle Editor": "切换编辑器",
-    "Toggle File Viewer": "切换文件查看器",
-    "Toggle Overview Panel": "切换概览面板",
-    "Toggle Status Bar": "切换状态栏",
-    "Toggle Thumbnails": "切换缩略图",
-    "Toggle Sidebar, conversations need attention": "切换侧边栏（有对话需要关注）",
-    "Show All": "显示全部",
-    "Show details": "显示详情",
-    "Show or Hide Plugins": "显示或隐藏插件",
-    "Show suggestions when typing in the editor": "在编辑器中输入时显示建议",
-    "Show temporary and forked workspaces": "显示临时及派生工作区",
-    "Show token": "显示令牌",
-    "Hide token": "隐藏令牌",
-    "Hide Thumbnail Sidebar": "隐藏缩略图侧边栏",
-    "Show Thumbnail Sidebar": "显示缩略图侧边栏",
-    "Show all resources": "显示全部资源",
-    "Show fewer resources": "显示更少资源",
-    "Show more results on Agent Market": "在智能体市场显示更多结果",
-    "Show settings anyway": "仍然显示设置",
-    "Close Sidebar": "关闭侧边栏",
-    "Close panel": "关闭面板",
-    "Close skills panel": "关闭技能面板",
-    "Close Logs Modal": "关闭日志弹窗",
-    "Close Other Tabs": "关闭其他标签页",
-    "Close Settings": "关闭设置",
-    "Close Tab": "关闭标签页",
-    "Close Tabs to the Right": "关闭右侧标签页",
-    "Close Terminal Tab": "关闭终端标签页",
-    "Pin Tab": "固定标签页",
-    "Unpin Tab": "取消固定标签页",
-    "Tab to Jump": "Tab 键跳转",
-    "Tab to Import": "Tab 键导入",
-    "Next Page": "下一页",
-    "Previous Page": "上一页",
-    "Next match": "下一个匹配",
-    "Previous match": "上一个匹配",
-    "Next question": "下一个问题",
-    "Previous question": "上一个问题",
-    "Next side question": "下一个侧边问题",
-    "Previous side question": "上一个侧边问题",
-    "Next Aux Pane Tab": "下一个辅助窗格标签",
-    "Previous Aux Pane Tab": "上一个辅助窗格标签",
-    "Next toast": "下一个通知",
-    "Previous toast": "上一个通知",
-    "Collapse Diffs": "折叠差异",
-    "Expand Diffs": "展开差异",
-    "Collapse queued messages": "折叠排队消息",
-    "Expand queued messages": "展开排队消息",
-    "Collapse subagents": "折叠子智能体",
-    "Expand subagents": "展开子智能体",
-    "Collapse idle": "折叠空闲项",
-    "Collapse string": "折叠字符串",
-    "Expand long string": "展开长字符串",
-    "Collapse toast": "折叠通知",
-    "Add All": "全部添加",
-    "Add Custom Model": "添加自定义模型",
-    "Add Model": "添加模型",
-    "Add Workspace": "添加工作区",
-    "Add Terminal": "添加终端",
-    "Add Folder": "添加文件夹",
-    "Add Resource": "添加资源",
-    "Add Handler": "添加处理器",
-    "Add Hook Card": "添加钩子卡片",
-    "Add to Chat": "添加到对话",
-    "Add to allowlist": "添加到允许列表",
-    "Create New": "新建",
-    "Create a Project": "创建项目",
-    "Create project from scratch": "从零开始创建项目",
-    "Create a Plugin with the Agent": "借助智能体创建插件",
-    "Create with Prompt": "使用提示词创建",
-    "Remove All": "全部移除",
-    "Remove audio": "移除音频",
-    "Remove policy": "移除策略",
-    "Remove resource": "移除资源",
-    "Delete Task": "删除任务",
-    "Delete Terminal": "删除终端",
-    "Delete agent": "删除智能体",
-    "Delete plugin": "删除插件",
-    "Delete workspace": "删除工作区",
-    "Delete Handler": "删除处理器",
-    "Delete Hook": "删除钩子",
-    "Delete comment": "删除评论",
-    "Delete Data Directory": "删除数据目录",
-    "Delete Permanently": "永久删除",
-    "Delete organization policy": "删除组织策略",
-    "Delete repository policy": "删除仓库策略",
-    "Rename Conversation": "重命名对话",
-    "Edit Conversation Title": "编辑对话标题",
-    "Restore Conversation": "恢复对话",
-    "Archive This Conversation": "归档此对话",
-    "Conversation Archived": "对话已归档",
-    "Conversation unavailable": "对话不可用",
-    "Conversation turns": "对话轮次",
-    "Conversation navigator off": "对话导航器已关闭",
-    "Conversation copied as Markdown to clipboard": "对话已以 Markdown 复制到剪贴板",
-    "Move Down": "下移",
-    "Move Up": "上移",
-    "Move to New Group": "移到新分组",
-    "Group Actions": "分组操作",
-    "Sort By": "排序方式",
-    "Sort By Input Model": "按输入模型排序",
-    "Sort Projects": "排序项目",
-    "Sort Workspaces": "排序工作区",
-    "Sort and filter conversations": "排序并筛选对话",
-    "Review pending conversations": "审查待处理的对话",
-    "Copy Message": "复制消息",
-    "Copy as Markdown": "复制为 Markdown",
-    "Copy output": "复制输出",
-    "Copy response": "复制回复",
-    "Copy value": "复制值",
-    "Copy email address": "复制邮箱地址",
-    "Copy sign-in link": "复制登录链接",
-    "Link copied to clipboard.": "链接已复制到剪贴板。",
-    "Paste code": "粘贴代码",
-    "Paste code here": "在此粘贴代码",
-    "Paste key": "粘贴密钥",
-    "Paste auth code": "粘贴认证码",
-    "Replace with": "替换为",
-    "Search conversations...": "搜索对话...",
-    "Search files...": "搜索文件...",
-    "Search across files...": "跨文件搜索...",
-    "Search projects...": "搜索项目...",
-    "Search workspaces...": "搜索工作区...",
-    "Search for commands...": "搜索命令...",
-    "Search for conversations...": "搜索对话...",
-    "Search for files in the project...": "在项目中搜索文件...",
-    "Search for content to open": "搜索要打开的内容",
-    "Search complete": "搜索完成",
-    "Search failed": "搜索失败",
-    "Search results": "搜索结果",
-    "Find in Conversation": "在对话中查找",
-    "Clear Search": "清除搜索",
-    "Clear search": "清除搜索",
-    "Clear filter": "清除筛选",
-    "Clear all": "全部清除",
-    "Filter resources...": "筛选资源...",
-    "Loading apps...": "正在加载应用...",
-    "Loading available plugins...": "正在加载可用插件...",
-    "Loading custom agents...": "正在加载自定义智能体...",
-    "Loading customizations...": "正在加载自定义项...",
-    "Loading events...": "正在加载事件...",
-    "Loading hooks...": "正在加载钩子...",
-    "Loading installed plugins...": "正在加载已安装插件...",
-    "Loading instances...": "正在加载实例...",
-    "Loading licenses...": "正在加载许可证...",
-    "Loading models...": "正在加载模型...",
-    "Loading page": "正在加载页面",
-    "Loading resources...": "正在加载资源...",
-    "Loading skills...": "正在加载技能...",
-    "Loading subagent...": "正在加载子智能体...",
-    "Loading token usage...": "正在加载令牌用量...",
-    "Loading trajectory...": "正在加载轨迹...",
-    "Loading workspace customizations...": "正在加载工作区自定义项...",
-    "Loading worktrees...": "正在加载工作树...",
-    "Loading Notebook View...": "正在加载笔记本视图...",
-    "Agent Auto-Fix Lints": "智能体自动修复 Lint",
-    "Agent Edits": "智能体编辑",
-    "Agent Team": "智能体团队",
-    "Agent options": "智能体选项",
-    "Agent Hooks Configuration": "智能体钩子配置",
-    "Agent Security Settings": "智能体安全设置",
-    "Agent security mode": "智能体安全模式",
-    "Agent finished": "智能体已完成",
-    "Agent stopped": "智能体已停止",
-    "Agent encountered an internal error.": "智能体遇到内部错误。",
-    "Agent terminated due to error": "智能体因错误而终止",
-    "Agent data is not available": "智能体数据不可用",
-    "Accept Step": "接受步骤",
-    "Reject Step": "拒绝步骤",
-    "Cancel Step": "取消步骤",
-    "Cancel step": "取消步骤",
-    "Cancel All Tasks": "取消所有任务",
-    "Cancel Generation": "取消生成",
-    "Cancel recording": "取消录音",
-    "Cancel Sending Message": "取消发送消息",
-    "Stop All Subagents": "停止所有子智能体",
-    "Stop Subagent": "停止子智能体",
-    "Stop subagent": "停止子智能体",
-    "Stop Task": "停止任务",
-    "Stop Voice Recording": "停止语音录制",
-    "Stop recording": "停止录音",
-    "Task Log": "任务日志",
-    "Task Logs": "任务日志",
-    "Task not found": "未找到任务",
-    "Continue Response": "继续回复",
-    "Explain and Fix": "解释并修复",
-    "Debug and fix": "调试并修复",
-    "Help me understand the current context.": "帮我理解当前上下文。",
-    "Run Now": "立即运行",
-    "Send Now": "立即发送",
-    "Stop Recording and Send": "停止录音并发送",
-    "Mute mic": "静音麦克风",
-    "Unmute mic": "取消静音麦克风",
-    "Project Settings": "项目设置",
-    "Project Folders": "项目文件夹",
-    "Project Agent": "项目智能体",
-    "Project not found": "未找到项目",
-    "Project already exists": "项目已存在",
-    "Project management is not available": "项目管理不可用",
-    "Workspace Settings": "工作区设置",
-    "Workspace Creation": "创建工作区",
-    "Workspace File Access": "工作区文件访问",
-    "Workspace Web Access": "工作区网络访问",
-    "Workspace Command Access": "工作区命令访问",
-    "Workspace File Explorer": "工作区文件浏览器",
-    "Workspace name cannot be empty": "工作区名称不能为空",
-    "Workspace setup warning": "工作区设置警告",
-    "Workspace mismatch actions": "工作区不匹配操作",
-    "Workspace folder suggestions": "工作区文件夹建议",
-    "Fork in Current Workspace": "在当前工作区中派生",
-    "Fork in New Workspace": "在新工作区中派生",
-    "Fork in Shared Workspace": "在共享工作区中派生",
-    "Fork conversation in this folder": "在此文件夹中派生对话",
-    "Fork warning": "派生警告",
-    "Archive Workspace": "归档工作区",
-    "Archive project": "归档项目",
-    "Allow List Terminal Commands": "终端命令允许列表",
-    "Deny List Terminal Commands": "终端命令拒绝列表",
-    "Advanced Command Access": "高级命令访问",
-    "Advanced File Access": "高级文件访问",
-    "Advanced Web Access": "高级网络访问",
-    "Agent Non-Workspace File Access": "智能体非工作区文件访问",
-    "Run terminal commands with sandbox restrictions.": "在沙盒限制下运行终端命令。",
-    "Terminal commands the agent can execute.": "智能体可执行的终端命令。",
-    "Review permissions": "审查权限",
-    "Confirm Browser Interaction": "确认浏览器交互",
-    "Manage Permissions": "管理权限",
-    "Manage Hooks": "管理钩子",
-    "Manage Skills": "管理技能",
-    "Configure Branches": "配置分支",
-    "Configure Worktree Branches": "配置工作树分支",
-    "Configure GitHub access policies.": "配置 GitHub 访问策略。",
-    "Review Policy": "审查策略",
-    "Enable Notifications": "启用通知",
-    "Enable Chat": "启用对话",
-    "Enable Overages": "启用超额用量",
-    "Enable Shell Integration": "启用 Shell 集成",
-    "Enable Text Selection": "启用文本选择",
-    "Disable Text Selection": "禁用文本选择",
-    "Font Size": "字号",
-    "Zoom Level": "缩放级别",
-    "Tab Speed": "标签建议速度",
-    "Debug Mode": "调试模式",
-    "General Compactor": "常规压缩器",
-    "General Punctuation": "常规标点",
-    "General work": "常规工作",
-    "Settings Unavailable": "设置不可用",
-    "Reset Onboarding": "重置引导流程",
-    "Reset to preset": "重置为预设",
-    "Switch to Dark Mode": "切换到深色模式",
-    "Switch to Light Mode": "切换到浅色模式",
-    "Switch Roles": "切换角色",
-    "Set the speed of tab suggestions": "设置标签建议速度",
-    "Set Project Name": "设置项目名称",
-    "Editor background color.": "编辑器背景色。",
-    "Editor default foreground color.": "编辑器默认前景色。",
-    "Input box background.": "输入框背景色。",
-    "Input box border.": "输入框边框色。",
-    "Input box foreground.": "输入框前景色。",
-    "Input box foreground color for placeholder text.": "输入框占位文本前景色。",
-    "Output view background color.": "输出视图背景色。",
-    "Output view sticky scroll background color.": "输出视图粘性滚动背景色。",
-    "Font size used for a label.": "标签使用的字号。",
-    "Layout Hierarchy": "布局层级",
-    "Layout Partition": "布局分区",
-    "Layout Partitioning": "布局分区",
-    "Debug view layout": "调试视图布局",
-    "Apply layout results": "应用布局结果",
-    "Find roots": "查找根目录",
-    "Branch Changes": "分支更改",
-    "Stage change": "暂存更改",
-    "Stage and commit all changes": "暂存并提交所有更改",
-    "Discard unstaged changes": "丢弃未暂存的更改",
-    "Revert file changes": "还原文件更改",
-    "Commit message cannot be empty": "提交信息不能为空",
-    "Commit staged changes": "提交已暂存的更改",
-    "Commit succeeded": "提交成功",
-    "Push succeeded": "推送成功",
-    "Pull requests": "拉取请求",
-    "Pull request creation": "创建拉取请求",
-    "Open a pull request": "打开拉取请求",
-    "Open a merge request": "打开合并请求",
-    "Merge Conflict": "合并冲突",
-    "Undo to Here": "撤销到此处",
-    "Run in a new worktree": "在新的工作树中运行",
-    "Run in a new git worktree": "在新的 Git 工作树中运行",
-    "Run in your current workspace": "在当前工作区中运行",
-    "Download File": "下载文件",
-    "Download image": "下载图片",
-    "Download video": "下载视频",
-    "Download Diagnostics": "下载诊断信息",
-    "Upload Files": "上传文件",
-    "Upload to Agent": "上传给智能体",
-    "Upload to Google Drive": "上传到 Google 云端硬盘",
-    "Upload Debug Bundle": "上传调试包",
-    "Upload debug bundle": "上传调试包",
-    "Show in File Explorer": "在文件资源管理器中显示",
-    "Show in File Manager": "在文件管理器中显示",
-    "Read Files": "读取文件",
-    "Read files": "读取文件",
-    "Read URLs": "读取网址",
-    "Read page": "读取页面",
-    "Read Browser Page in Browser": "在浏览器中读取页面",
-    "Export Artifact": "导出构件",
-    "Export artifact": "导出构件",
-    "Install Update": "安装更新",
-    "Update Anyway": "仍然更新",
-    "Reload app": "重新加载应用",
-    "Reload this window.": "重新加载此窗口。",
-    "Restart Main Language Server": "重启主语言服务器",
-    "Confirm Window Reload": "确认重载窗口",
-    "Confirm Undo": "确认撤销",
-    "Confirm Selection": "确认选择",
-    "Back to": "返回到",
-    "Back to home": "返回首页",
-    "Generate Share Link": "生成分享链接",
-    "Generate personalized rules": "生成个性化规则",
-    "Mention Page": "提及页面",
-    "Command Center": "命令中心",
-    "Command Setup Script": "命令设置脚本",
-    "Agent Market Search Results": "智能体市场搜索结果",
-    "Connect your account to browse": "连接账号以浏览",
-    "Continue with Google": "使用 Google 继续",
-    "Continue with Google Cloud": "使用 Google Cloud 继续",
-    "Continue with different account": "使用其他账号继续",
-    "Sign in again": "重新登录",
-    "Sign in with a different account": "使用其他账号登录",
-    "Log back in": "重新登录",
-    "Log in to use the agent": "登录以使用智能体",
-    "Refresh Skills": "刷新技能",
-    "Refresh skills": "刷新技能",
-    "Refresh all credentials": "刷新所有凭据",
-    "Refresh custom agents": "刷新自定义智能体",
-    "Refresh customizations": "刷新自定义项",
-    "Refresh skills paths": "刷新技能路径",
-    "Write a comment...": "写评论...",
-    "Write and edit docs": "编写和编辑文档",
-    "Save Comment": "保存评论",
-    "Edit Comment": "编辑评论",
-    "Edit comment": "编辑评论",
-    "Submit comment": "提交评论",
-    "Submit Appeal": "提交申诉",
-    "Pick at most 2 reasons": "最多选择 2 个原因",
-    "Input required": "需要输入",
-    "Model quota reached": "已达模型配额",
-    "Model selector loading": "正在加载模型选择器",
-    "Model Label": "模型标签",
-    "Add not supported on this list": "此列表不支持添加",
-    "Remove not supported on this list": "此列表不支持移除",
-    "Set not supported on this list": "此列表不支持设置",
-    "write access to this path": "对此路径的写入权限",
-    "read access to this path": "对此路径的读取权限",
-    "terminal auto execution policy value": "终端自动执行策略值",
-    "lint error": "Lint 错误",
-    // ===== 2.26.0 补充：作者漏翻 + React 片段化整句 =====
-    "Models within this group": "本组内的模型",
-    "Windows Subsystem for Linux": "适用于 Linux 的 Windows 子系统",
-    "Run the app against a Linux environment. Connecting relaunches the app into the selected WSL distro.": "在 Linux 环境中运行应用。连接后会将应用重新启动到所选的 WSL 发行版。",
-
-    // ===== 2.27.0 补充：浏览器工具与浏览器权限 =====
     "Browser Actuation Permissions": "浏览器操作权限",
     "Browser Configuration Required": "需要配置浏览器",
     "Browser Subagent Viewer": "浏览器子智能体查看器",
@@ -3660,13 +2308,10 @@ electron_1.contextBridge.exposeInMainWorld('wizardAPI', wizardAPI);
     "Add them to allow future interactions": "添加它们以允许后续交互",
     "Are you sure you want to delete": "确定要删除",
     "Are you sure you want to delete the": "确定要删除",
-
-    // ===== 2.27.0 补充：远程工作区 (ABFS / CitC / Cog / Fig / JJ) =====
     "Create ABFS Workspace (Alpha)": "创建 ABFS 工作区（Alpha）",
     "Select ABFS Workspace (Alpha)": "选择 ABFS 工作区（Alpha）",
     "Create CitC Workspace": "创建 CitC 工作区",
     "Select CitC Workspace": "选择 CitC 工作区",
-    "Select CitC workspace": "选择 CitC 工作区",
     "This is a CitC workspace (Fig share)": "这是一个 CitC 工作区（Fig 共享）",
     "Create a new project using normal folders and/or citc workspaces.": "使用普通文件夹和/或 CitC 工作区创建新项目。",
     "Your existing conversations in CitC are grouped under a": "你在 CitC 中的现有对话归类于",
@@ -3726,8 +2371,6 @@ electron_1.contextBridge.exposeInMainWorld('wizardAPI', wizardAPI);
     "The remote shared a link for this push.": "远程共享了此次推送的链接。",
     "No remote configured": "未配置远程仓库",
     "Not on a branch": "不在任何分支上",
-
-    // ===== 2.27.0 补充：登录 / SSO / 账号 =====
     "Continue with SSO": "使用 SSO 继续",
     "Sign In with SSO": "使用 SSO 登录",
     "Sign in required": "需要登录",
@@ -3771,8 +2414,6 @@ electron_1.contextBridge.exposeInMainWorld('wizardAPI', wizardAPI);
     "Access grants": "访问授权",
     "Access rules": "访问规则",
     "No access": "无访问权限",
-
-    // ===== 2.27.0 补充：MCP / 插件 / 技能 =====
     "Add MCP Servers": "添加 MCP 服务器",
     "Delete MCP Server": "删除 MCP 服务器",
     "Loading MCP servers...": "正在加载 MCP 服务器...",
@@ -3815,8 +2456,6 @@ electron_1.contextBridge.exposeInMainWorld('wizardAPI', wizardAPI);
     "No skills available": "没有可用的技能",
     "No skills loaded.": "没有加载任何技能。",
     "Default Customizations": "默认自定义项",
-
-    // ===== 2.27.0 补充：会话 / 任务 / 自动化 =====
     "No archived conversations": "没有已归档的对话",
     "No pinned conversations": "没有置顶的对话",
     "No conversations found": "未找到对话",
@@ -3882,8 +2521,6 @@ electron_1.contextBridge.exposeInMainWorld('wizardAPI', wizardAPI);
     "Model Summarization Failed": "模型摘要失败",
     "Debug bundle uploaded!": "调试包已上传！",
     "Download the bundle manually and share it instead:": "请手动下载该包并分享：",
-
-    // ===== 2.27.0 补充：Hook / 权限 / 终端 / 通用操作 =====
     "Configure hooks that run on agent lifecycle events.": "配置在智能体生命周期事件中运行的 Hook。",
     "Hook with this name already exists": "同名 Hook 已存在",
     "New hook name": "新 Hook 名称",
@@ -3934,7 +2571,6 @@ electron_1.contextBridge.exposeInMainWorld('wizardAPI', wizardAPI);
     "Save Image": "保存图片",
     "Save Video": "保存视频",
     "Copy Image Address": "复制图片地址",
-    "Copy Link Address": "复制链接地址",
     "Leave a comment": "留下评论",
     "No comments yet": "还没有评论",
     "File Comments": "文件评论",
@@ -3999,7 +2635,6 @@ electron_1.contextBridge.exposeInMainWorld('wizardAPI', wizardAPI);
     "Restore": "恢复",
     "Retry": "重试",
     "Try Again": "重试",
-    "Try again": "重试",
     "Not now": "暂不",
     "Not set": "未设置",
     "Not configured": "未配置",
@@ -4026,7 +2661,6 @@ electron_1.contextBridge.exposeInMainWorld('wizardAPI', wizardAPI);
     "Edit Custom Model": "编辑自定义模型",
     "Model URL": "模型 URL",
     "Model URL info": "模型 URL 信息",
-    "No models available": "没有可用模型",
     "Custom models are only supported on Linux machines.": "自定义模型仅在 Linux 机器上受支持。",
     "Your quota for this model is running low.": "此模型的配额即将用尽。",
     "Your AI credits balance is too low to continue.": "你的 AI 点数余额过低，无法继续。",
@@ -4051,7 +2685,6 @@ electron_1.contextBridge.exposeInMainWorld('wizardAPI', wizardAPI);
     "No results found": "未找到结果",
     "No results found.": "未找到结果。",
     "Size": "大小",
-    // ===== 2.28.0 补充：幕僚长 (Chief of Staff)、语音模式与反馈评估 =====
     "A fast Talker acks; Jetski answers; a Narrator reads it out.": "快速应答交给 Talker；回答交给 Jetski；朗读交给 Narrator。",
     "An error occurred while submitting your feedback. Please try again.": "提交反馈时出错，请重试。",
     "Bad clarification": "无效澄清",
@@ -4090,7 +2723,6 @@ electron_1.contextBridge.exposeInMainWorld('wizardAPI', wizardAPI);
     "Voice engine": "语音引擎",
     "Voice recording is unavailable while the Chief of Staff mic is on": "幕僚长麦克风开启时无法录制语音",
     "Whatever the voice-engine-addr flag serves you.": "由 voice-engine-addr 标志提供的任意地址。",
-    // ===== 2.28.0 补充：内置浏览器、浏览器工具与连接安全 =====
     "Absolute path to the Chrome/Chromium executable": "Chrome/Chromium 可执行文件的绝对路径",
     "Auto (Preview)": "自动（预览）",
     "Browser CDP Port": "浏览器 CDP 端口",
@@ -4130,7 +2762,6 @@ electron_1.contextBridge.exposeInMainWorld('wizardAPI', wizardAPI);
     "Target text in PDF...": "在 PDF 中查找文本...",
     "View site information": "查看站点信息",
     "Your connection to this site is not secure": "你与该网站的连接不安全",
-    // ===== 2.28.0 补充：远程工作区、执行模式、Hooks 与企业集成 =====
     "A shell setup script run before every command the agent executes in this project. Overrides the global script.": "在智能体于本项目中执行每条命令之前运行的 Shell 初始化脚本。会覆盖全局脚本。",
     "A shell setup script run before every command the agent executes.": "在智能体执行每条命令之前运行的 Shell 初始化脚本。",
     "ABFS Workspace (Alpha)": "ABFS 工作区（Alpha）",
@@ -4212,7 +2843,6 @@ electron_1.contextBridge.exposeInMainWorld('wizardAPI', wizardAPI);
     "Work in a Cog workspace.": "在 Cog 工作区中工作。",
     "Work in an ABFS workspace.": "在 ABFS 工作区中工作。",
     "Your information (for example, passwords or credit card numbers) is private when it is sent to this site.": "你的信息（例如密码或信用卡号）在发送到该网站时属于私密信息。",
-    // ===== 2.28.0 补充：终端、任务、版本控制与通用界面 =====
     "(Optional) Tell us more or type your reason...": "（可选）告诉我们更多，或输入你的原因……",
     "(empty)": "（空）",
     "// Greet a user by name": "// 按名称向用户问好",
@@ -4386,7 +3016,6 @@ electron_1.contextBridge.exposeInMainWorld('wizardAPI', wizardAPI);
     "Location": "位置",
     "MCP": "MCP",
     "MacOS": "macOS",
-    "Makes \color behave like LaTeX's 2-argument \textcolor, instead of LaTeX's one-argument \color mode change.": "使 \color 的行为与 LaTeX 的双参数 \textcolor 一致，而不是 LaTeX 单参数 \color 的模式切换。",
     "Manifest Changes": "清单变更",
     "Mark All as Read": "全部标为已读",
     "Mark This Conversation as Read": "将此对话标为已读",
@@ -4426,7 +3055,6 @@ electron_1.contextBridge.exposeInMainWorld('wizardAPI', wizardAPI);
     "Quote Selection": "引用选择",
     "Ready": "就绪",
     "Recent Files": "最近的文件",
-    "Recent files": "最近的文件",
     "Refreshed credentials for all automations.": "已刷新所有自动化的凭据。",
     "Remote Agents Data": "远程智能体数据",
     "Remove Shortcut": "移除快捷方式",
@@ -4472,7 +3100,6 @@ electron_1.contextBridge.exposeInMainWorld('wizardAPI', wizardAPI);
     "The full developer experience with code and tooling.": "完整的开发者体验，涵盖代码与工具。",
     "There was an error with your authentication. To log in, click": "身份验证时发生错误。要登录，请点击",
     "This Computer": "本机",
-    "This computer": "本机",
     "This conversation is also open in another app. Sending messages from both may cause conflicts.": "此对话也已在另一个应用中打开。从两处同时发送消息可能会导致冲突。",
     "Thumbnails": "缩略图",
     "Thursday": "星期四",
@@ -4487,7 +3114,6 @@ electron_1.contextBridge.exposeInMainWorld('wizardAPI', wizardAPI);
     "Type": "类型",
     "Type absolute path or navigate folders...": "输入绝对路径或浏览文件夹...",
     "UI Extensions": "UI 扩展",
-    "UI extensions": "UI 扩展",
     "Unauthenticated": "未认证",
     "Undercommunicated": "沟通不足",
     "Undo": "撤销",
@@ -4526,7 +3152,6 @@ electron_1.contextBridge.exposeInMainWorld('wizardAPI', wizardAPI);
     "Zoom in (+)": "放大 (+)",
     "Zoom out (-)": "缩小 (-)",
     "main (or e.g., sc-dev, sc-release)": "main（例如 sc-dev、sc-release）",
-    // ===== 2.29.0 补充：语音模式、录音与无障碍 =====
     "Accessibility": "无障碍",
     "Delete all recordings?": "删除所有录音？",
     "Files, folders, and repositories you connect are accessible to your agent in this project, including during background or scheduled runs.": "你连接的文件、文件夹和仓库，在此项目中可被你的智能体访问，包括在后台或计划运行期间。",
@@ -4543,9 +3168,8 @@ electron_1.contextBridge.exposeInMainWorld('wizardAPI', wizardAPI);
     "The voice used in Voice mode. Powered by Gemini Live.": "语音模式下使用的声音。由 Gemini Live 提供支持。",
     "The voice used in Voice mode. Powered by Gemini Live": "语音模式下使用的声音。由 Gemini Live 提供支持",
     "Type a voice variant name, such as rev27.": "输入语音变体名称，例如 rev27。",
-    "Voice mode": "语音模式",
     "Voice Mode": "语音模式",
-    // ===== 2.29.0 补充：远程智能体、云端环境与用量配额 =====
+    "Voice mode": "语音模式",
     "Browse MCP resources": "浏览 MCP 资源",
     "Browse rules": "浏览规则",
     "Browser Use": "浏览器使用",
@@ -4565,7 +3189,6 @@ electron_1.contextBridge.exposeInMainWorld('wizardAPI', wizardAPI);
     "Subscription": "订阅",
     "Too many environments running": "运行中的环境过多",
     "Your connection to this site is not fully secure": "你与此站点的连接并非完全安全",
-    // ===== 2.29.0 补充：内置浏览器、下载与站点信息 =====
     "Attackers might be able to see the images you're looking at on this site and trick you by modifying them.": "攻击者可能会看到你在此站点上浏览的图片，并通过篡改它们来欺骗你。",
     "Browsing History": "浏览历史",
     "Cancel download": "取消下载",
@@ -4581,7 +3204,6 @@ electron_1.contextBridge.exposeInMainWorld('wizardAPI', wizardAPI);
     "Website": "网站",
     "You're viewing a blank page": "你正在查看一个空白页面",
     "You're viewing a local or shared file": "你正在查看本地或共享文件",
-    // ===== 2.29.0 补充：自动化调度、对话与任务 =====
     "Attach terminal output": "附加终端输出",
     "Author": "作者",
     "Background tasks and terminals agents left running, across all conversations.": "所有对话中由智能体留下的后台任务和终端。",
@@ -4617,7 +3239,6 @@ electron_1.contextBridge.exposeInMainWorld('wizardAPI', wizardAPI);
     "Terminal Placement": "终端布局",
     "When something happens": "当有情况发生时",
     "Which workspace the New Conversation button and keyboard shortcut start you in.": "新建对话按钮和快捷键将在哪个工作区中启动。",
-    // ===== 2.29.0 补充：侧边面板、界面布局与通用操作 =====
     "Announcements and tips": "公告与提示",
     "Change model": "更改模型",
     "Close Tabs to the Left": "关闭左侧标签页",
@@ -4641,14 +3262,9 @@ electron_1.contextBridge.exposeInMainWorld('wizardAPI', wizardAPI);
     "What should the agent do on each run?": "智能体每次运行时应该做什么？",
     "When": "时间",
     "Where": "位置",
-        // ===== 2.29.1 置顶对话排序与选中文本引用气泡 =====
-    "Sort by": "排序方式",
-    "Last updated": "最近更新",
-    "Custom order": "自定义排序",
     "Quote": "引用",
     "Quote Ctrl+L": "引用 Ctrl+L",
     "Quote Cmd+L": "引用 Cmd+L",
-        // ===== 2.29.1 扩展市场货架分类与描述深度汉化 =====
     "Design, Creative & Media": "设计、创意与媒体",
     "Design, creative, and media tools.": "设计、创意与媒体工具。",
     "Productivity & Project Management": "生产力与项目管理",
@@ -4656,21 +3272,15 @@ electron_1.contextBridge.exposeInMainWorld('wizardAPI', wizardAPI);
     "Cloud Hosting & Deployment": "云托管与部署",
     "Deploy and host your apps, sites, and their backends.": "部署并托管你的应用程序、网站及其后端服务。",
     "Developer Tools": "开发者工具",
-    "Developer 工具": "开发者工具",
     "APIs, services, and tools to build, test, secure, and run your apps.": "用于构建、测试、保护和运行应用程序的 API、服务与工具。",
     "Business": "商业与商务",
     "Payments, CRM, accounting, data, identity, customer support, marketing, and workflow automation.": "支付、CRM、记账、数据、身份识别、客户支持、营销和工作流自动化。",
-        // ===== 2.29.1 扩展市场搜索框、第三方隐私声明与自动化空状态 =====
     "No automations yet": "暂无自动化",
-    "No 自动化 yet": "暂无自动化",
     "Run a prompt on a schedule, like a morning summary of yesterday's changes. Runs show up here.": "按计划定时运行提示词，例如每天早晨汇总昨天的更改。运行记录将显示在此处。",
     "Runs show up here.": "运行记录将显示在此处。",
     "Google does not control the availability or functionality of third party developer tools. Your data from third party developer tools connected to your Antigravity instance may be shared with Google. Google will protect any such data in accordance with the Google Privacy Policy, found here:": "Google 不控制第三方开发者工具的可用性或功能。连接到你的 Antigravity 实例的第三方开发者工具数据可能会与 Google 共享。Google 将根据 Google 隐私权政策保护此类数据，详情请参阅：",
     "Google does not control the availability or functionality of third party developer tools. Your data from third party developer tools connected to your Antigravity instance may be shared with Google. Google will protect any such data in accordance with the Google Privacy Policy, found here": "Google 不控制第三方开发者工具的可用性或功能。连接到你的 Antigravity 实例的第三方开发者工具数据可能会与 Google 共享。Google 将根据 Google 隐私权政策保护此类数据，详情请参阅",
-    // ===== 2.29.1 扩展市场全量插件、提示词与生态卡片汉化 (Marketplace & Plugins) =====
     "Split Conversation": "拆分对话",
-    "Stop Agent": "停止智能体",
-    // ===== 2.30.0 设置面板新增界面布局、对话布局、快捷键搜索与浏览器规则 =====
     "Interface Layout": "界面布局",
     "Knowledge Work": "知识工作",
     "Simplified interface for research, writing, and everyday tasks.": "专为调研、写作和日常任务打造的精简界面。",
@@ -4680,28 +3290,17 @@ electron_1.contextBridge.exposeInMainWorld('wizardAPI', wizardAPI);
     "Fill": "铺满",
     "Search shortcuts...": "搜索快捷键...",
     "Search shortcuts": "搜索快捷键",
-    "search shortcuts...": "搜索快捷键...",
-    "search shortcuts": "搜索快捷键",
-    "搜索 shortcuts...": "搜索快捷键...",
-    "搜索 shortcuts": "搜索快捷键",
     "Configure allowed and denied URLs for the browser subagent (invoked with /browser). Requires Google Chrome.": "配置浏览器子智能体（通过 /browser 调用）允许和拒绝访问的 URL。需要 Google Chrome。",
     "Configure allowed and denied URLs for the browser subagent (invoked with /browser). Requires Google Chrome": "配置浏览器子智能体（通过 /browser 调用）允许和拒绝访问的 URL。需要 Google Chrome",
-    "Configure allowed and denied URLs for the browser subagent (invoked with /browser). Requires ": "配置浏览器子智能体（通过 /browser 调用）允许和拒绝访问的 URL。需要 ",
     "Configure allowed and denied URLs for the browser subagent (invoked with /browser). Requires": "配置浏览器子智能体（通过 /browser 调用）允许和拒绝访问的 URL。需要",
     "Configure allowed and denied URLs for the browser subagent (invoked with /browser).": "配置浏览器子智能体（通过 /browser 调用）允许和拒绝访问的 URL。",
     "Requires Google Chrome.": "需要 Google Chrome。",
     "Requires Google Chrome": "需要 Google Chrome",
-    // ===== 2.30.0 语音模式选择与左侧过滤菜单 =====
     "Auto Pin": "自动置顶",
-    "Auto pin": "自动置顶",
-    "auto pin": "自动置顶",
     "Choose Antigravity's Voice": "选择 Antigravity 的声音",
-    "Choose Antigravity's voice": "选择 Antigravity 的声音",
     "Choose Antigravity Voice": "选择 Antigravity 的声音",
     "Clear and friendly": "清晰友好",
     "Clear and friendly.": "清晰友好。",
-    "清除 and friendly": "清晰友好",
-    "清除 and friendly.": "清晰友好。",
     "Calm and gentle": "沉稳温和",
     "Warm and expressive": "温暖生动",
     "Bright and clear": "明朗清晰",
@@ -4716,11 +3315,8 @@ electron_1.contextBridge.exposeInMainWorld('wizardAPI', wizardAPI);
     "Engaged, mid-range voice": "专注，中频音色",
     "Google does not control the availability or functionality of third party developer tools. Your data from third party developer tools connected to your Antigravity instance may be shared with Google. Google will protect any such data in accordance with the Google Privacy Policy, found here: https://policies.google.com/privacy": "Google 不控制第三方开发者工具的可用性或功能。连接到你的 Antigravity 实例的第三方开发者工具数据可能会与 Google 共享。Google 将根据 Google 隐私权政策保护此类数据，详情请参阅：https://policies.google.com/privacy",
     "Browse other marketplace customizations": "浏览其他市场自定义项",
-    "What's included": "包含内容",
     "What's Included": "包含内容",
-    "MCP server": "MCP 服务器",
     "Example Prompts": "示例提示词",
-    "Example prompts": "示例提示词",
     "Routing Rules": "路由规则",
     "Plugin in Action": "插件实战",
     "Network, Sandbox, and Permission Requirements": "网络、沙箱与权限要求",
@@ -4811,7 +3407,6 @@ electron_1.contextBridge.exposeInMainWorld('wizardAPI', wizardAPI);
     "Configure built-in browser, link opening, and browser subagent preferences": "配置内置浏览器、链接打开方式以及浏览器子智能体偏好设置",
     "Manage project folders and settings.": "管理项目文件夹与设置。",
     "Manage project folders and settings": "管理项目文件夹与设置",
-    // ===== 2.32.1 远程 SSH 开发与配置 =====
     "Connect to Host...": "连接到主机...",
     "Connect to Host": "连接到主机",
     "Connect to SSH Host...": "连接到 SSH 主机...",
@@ -4828,22 +3423,14 @@ electron_1.contextBridge.exposeInMainWorld('wizardAPI', wizardAPI);
     "SSH Remote": "SSH 远程",
     "SSH Configuration": "SSH 配置",
     "SSH Config": "SSH 配置",
-    "SSH config": "SSH 配置",
     "SSH Host": "SSH 主机",
     "SSH hosts": "SSH 主机",
     "Enter an SSH host": "输入 SSH 主机",
     "Choose an SSH config file": "选择 SSH 配置文件",
     "Touch your security key": "请轻触你的安全密钥",
-
-    // ===== 2.32.1 右键菜单子项与分屏补充 =====
-    "Replace with New": "替换为新建",
-    "Replace with new": "替换为新建",
     "Split Left": "向左分屏",
     "Split Up": "向上分屏",
     "Ask /btw": "通过 /btw 提问",
-
-    // ===== 2.32.1 扩展市场新增与更新插件全量汉化 =====
-    // 1. Google Workspace & 官方插件 (Official Plugins)
     "Connect to Google Workspace, including Docs, Sheets, Slides, Drive, Calendar, and Gmail.": "连接到 Google Workspace，包括 Google 文档、表格、幻灯片、云端硬盘、日历和 Gmail。",
     "Search, read, draft, and send emails in Gmail.": "在 Gmail 中搜索、阅读、起草和发送电子邮件。",
     "Summarize my unread emails from today": "总结我今天的未读邮件",
@@ -4853,87 +3440,55 @@ electron_1.contextBridge.exposeInMainWorld('wizardAPI', wizardAPI);
     "Read, search, send, and manage Gmail messages, drafts, labels, and emoji reactions using a Go CLI. Use when reading emails, searching inbox, sending messages, reacting to messages with emoji, managing drafts, forwarding, checking vacation responder, managing labels, downloading attachments, or decoding mail.google.com Web UI URLs. Don't use for Google Chat messages or Calendar invites.": "使用 Go CLI 阅读、搜索、发送和管理 Gmail 邮件、草稿、标签和表情反应。用于阅读邮件、搜索收件箱、发送邮件、使用表情回复、管理草稿、转发、检查自动回复设置、管理标签、下载附件或解析 mail.google.com Web UI 网址。请勿用于 Google Chat 消息或日历邀请。",
     "Build applications and shell workflows with the Gemini Interactions API, Decisions API, Live API, and Gemini API CLI, including text, image, video, and speech generation, managed agents, and real-time multimodal streaming.": "借助 Gemini Interactions API、Decisions API、Live API 以及 Gemini API CLI 构建应用程序与终端工作流，涵盖文本、图像、视频和语音生成、托管智能体以及实时多模态流式传输。",
     "Develop ideas with context and review documents with fresh eyes.": "结合上下文深入拓展构想，以全新视角审阅文档。",
-
-    // 2. 合作伙伴插件 (Partners Marketplace Plugins)
-    // Arize AX
     "Query Arize AX projects, traces, datasets, and experiments from Antigravity, with skills for tracing, evals, and prompt optimization.": "在 Antigravity 中查询 Arize AX 项目、链路追踪、数据集和实验，提供用于链路追踪、模型评估及提示词优化的专业技能。",
     "List my Arize projects and show recent traces with errors": "列出我的 Arize 项目并显示最近出错的追踪记录",
     "Add Arize tracing to this application": "为此应用程序添加 Arize 链路追踪",
     "Show the prompt version labeled production in my Arize Prompt Hub": "在我的 Arize Prompt Hub 中显示标记为生产环境的提示词版本",
-
-    // Atlassian Teamwork Graph CLI
     "Help me implement [JIRA-123]. Retrieve the requirements, acceptance criteria, and linked design decisions. Inspect this repository and propose an implementation plan before changing code.": "帮我实现 [JIRA-123]。获取需求、验收条件及关联的设计决策。检查此代码仓库，并在修改代码前提出实现计划。",
     "Investigate [JIRA-123] in this repository. Find related bugs, previous fixes, and relevant technical decisions. Recommend a fix and the tests needed to verify it.": "调查此仓库中的 [JIRA-123]。查找相关缺陷、历史修复方案与相关技术决策。提出修复建议及验证所需的测试。",
     "Review my current changes against [JIRA-123] and its linked specification. Flag missed requirements, conflicting decisions, and missing tests.": "根据 [JIRA-123] 及其关联规范审查我当前的更改。标记遗漏的需求、冲突的决策以及缺失的测试。",
-
-    // Better Stack
     "Investigate incidents, check who's on call, and query logs, metrics, traces, errors and RUM in Better Stack. Build dashboards and manage uptime monitors.": "在 Better Stack 中调查事件、查看值班人员并查询日志、指标、追踪、错误与 RUM。构建仪表盘并管理正常运行时间监控器。",
     "Show me all monitors that are currently down.": "显示当前处于离线状态的所有监控器。",
     "Who's on call right now?": "现在谁在值班？",
     "Create a dashboard showing error rates for my API service.": "创建一个显示我 API 服务错误率的仪表盘。",
-
-    // Cloudflare
     "Build, deploy and manage apps on Cloudflare Workers, storage and AI, with platform skills and the Cloudflare API through one MCP server.": "在 Cloudflare Workers、存储与 AI 上构建、部署和管理应用程序，通过单一 MCP 服务器提供平台技能并调用 Cloudflare API。",
     "Deploy this project to Cloudflare Workers": "将此项目部署到 Cloudflare Workers",
     "Which Cloudflare storage fits this app: D1, KV, R2 or Durable Objects?": "哪种 Cloudflare 存储方案最适合此应用：D1、KV、R2 还是 Durable Objects？",
     "List my Cloudflare zones and Workers and flag anything that needs attention": "列出我的 Cloudflare 区域和 Workers，并标出需要注意的事项",
-
-    // CodeRabbit
     "AI-powered code review, review-comment autofix, and repository configuration, powered by CodeRabbit.": "由 CodeRabbit 提供支持的 AI 代码审查、评审意见自动修复以及代码仓库配置。",
-
-    // Context7
     "Up-to-date documentation lookup. Pull version-specific documentation and code examples directly from source repositories into your coding agent's context.": "获取最新官方文档。直接将源仓库中特定版本的文档和代码示例提取到编码智能体的上下文中。",
     "How do I set up a proxy in the latest Next.js?": "如何在最新的 Next.js 中配置代理？",
     "Show me how to define relations in Prisma": "向我展示如何在 Prisma 中定义关联关系",
     "What are the Supabase auth methods?": "Supabase 都有哪些身份验证方法？",
-
-    // Grafana Cloud
     "Query Grafana Cloud metrics, logs, traces and profiles, manage dashboards, alerts and incidents, and ask Grafana Assistant through the hosted MCP server.": "查询 Grafana Cloud 指标、日志、追踪与性能剖析数据，管理仪表盘、告警和突发事件，并通过托管的 MCP 服务器向 Grafana Assistant 提问。",
     "Ask Grafana Assistant why checkout latency is spiking right now": "向 Grafana Assistant 询问为何结账延迟此时出现激增",
     "Investigate errors from the latest deployment": "排查最近一次部署出现的错误",
     "Summarize active incidents and related alerts": "汇总进行中的突发事件和相关告警",
-
-    // Granola
     "The AI notepad for meetings. Connect to your meeting history and use your conversation context to get things done.": "专为会议打造的 AI 记事本。连接您的会议历史，借助对话上下文高效完成各项任务。",
     "What did we decide in my meetings this week?": "我们本周的会议上都做出了哪些决定？",
     "What action items came out of my last meeting?": "我上次会议产生了哪些待办行动项？",
     "Summarize what my team discussed about this project": "总结我的团队关于该项目讨论的内容",
-
-    // incident.io
     "Respond to and investigate incidents, manage on-call schedules and escalations, and write runbooks and skills. Bundles the official incident.io MCP server.": "响应与调查突发事件、管理值班排班与升级策略，并编写运维手册与技能。捆绑官方 incident.io MCP 服务器。",
     "Run the extensions skill": "运行扩展技能",
     "What incidents are open right now?": "当前有哪些未关闭的突发事件？",
     "Who's on call this week?": "本周谁值班？",
-
-    // Levels.fyi
     "Real salaries and company levels from Levels.fyi: check if an offer is fair, compare offers, find jobs with pay shown and add your own salary.": "来自 Levels.fyi 的真实薪资与职级体系：评估 Offer 是否公允、对比多份 Offer、寻找标明薪资的职位并提交您的薪酬数据。",
     "I'm a Google L5 in Seattle making $190k base and $120k stock a year. Am I underpaid?": "我是西雅图的 Google L5，底薪 19 万美元，股票每年 12 万美元。我的薪酬偏低吗？",
     "I have a Stripe offer: $210k base, $400k RSUs over 4 years. Is it good?": "我拿到了 Stripe 的 Offer：底薪 21 万美元，4 年 40 万美元 RSU。这个待遇好吗？",
     "Find remote product manager jobs that pay at least $200k base.": "寻找底薪至少 20 万美元的远程产品经理职位。",
-
-    // SonarQube
     "SonarQube is the AI code quality and security verification platform used by millions of developers to catch bugs, vulnerabilities, and leaked secrets. This plugin enforces those standards in the agent coding loop: 7,500+ distinct issue types, secrets scanning, agentic analysis, and quality gates across 40+ languages.": "SonarQube 是受到数百万开发者信赖的 AI 代码质量与安全校验平台，用于捕获缺陷、漏洞与泄露的机密。该插件在智能体编码闭环中强制执行这些标准：涵盖 40 多种语言的 7,500+ 种问题类型、机密扫描、智能分析与质量门禁。",
-
-    // Spacefast
     "Turn an idea into a website, dashboard, report, or small web tool you can share. Build it in chat or bring your own work, and publish it with Spacefast.": "将灵感转化为可分享的网站、仪表盘、报告或轻量级 Web 工具。在对话中直接构建或导入现有成果，并使用 Spacefast 一键发布。",
     "Build a website for my project and publish it on Spacefast.": "为我的项目构建一个网站并在 Spacefast 上发布。",
     "Publish this dashboard and give me a link to share.": "发布此仪表盘并提供分享链接。",
     "Update the content and design of my existing Spacefast site.": "更新我现有的 Spacefast 网站内容与设计。",
-
-    // Tavily
     "Web search, content extraction, website crawling, URL discovery, and deep research for Antigravity via Tavily's hosted MCP server and skills.": "通过 Tavily 托管的 MCP 服务器和技能，为 Antigravity 提供网络搜索、内容提取、网站抓取、URL 发现与深度调研能力。",
     "Find key decision-makers at [company] and summarize their professional backgrounds.": "查找 [公司] 的核心决策者并总结他们的职业背景。",
     "Research [company], including its products, competitors, and latest news.": "调研 [公司]，包括其产品、竞品及最新动态。",
     "Find the latest documentation and code examples for integrating [API or library] into my project.": "查找将 [API 或库] 集成到我项目中的最新文档与代码示例。",
-
-    // ===== 自定义补充：设置页与配额提示残留词条 =====
-    "% left": "% 可用",
     "% Left": "% 可用",
     "Unlimited": "无限制",
     "See Activity": "查看活动记录",
     "Get More AI Credits": "获取更多 AI 点数",
-
-    // ===== 自定义补充：设置项与界面零散文案补充 =====
     "Toggle Word Wrap": "切换自动换行",
     "Connect to SSH Host…": "连接到 SSH 主机…",
     "Stop SSH Server…": "停止 SSH 服务器…",
@@ -4982,16 +3537,12 @@ electron_1.contextBridge.exposeInMainWorld('wizardAPI', wizardAPI);
     "Built to help, not hurt": "旨在帮助，而非伤害",
     "You are in control": "掌控权在你",
     "Stay up to date.": "保持最新状态。",
-
-    // ===== 自定义补充：设置项下拉/开关的选项说明（悬停浮层） =====
     "Interrupt the agent and send immediately.": "中断智能体并立即发送。",
     "Queue until after the current turn.": "在当前回合结束后排队。",
     "The agent never asks for confirmation before executing terminal commands (except those in the Deny list). This provides the agent with the maximum ability to operate over long periods without intervention, but also has the highest risk of the agent executing an unsafe terminal command.": "智能体在执行终端命令前不会请求确认（拒绝列表中的命令除外）。这让智能体能在长时间内以最大自主能力运行，但同时也是最高风险：智能体可能执行不安全的终端命令。",
     "Terminal commands automatically proceed inside the sandbox. A command that needs to leave the sandbox proceeds only if an agent judges it reversible, and otherwise requests review.": "终端命令会在沙箱内自动执行。需要离开沙箱的命令，只有智能体判断其可逆时才会继续，否则会请求审核。",
     "The agent always asks for confirmation before executing terminal commands (except those in the Allow list).": "智能体在执行终端命令前始终请求确认（允许列表中的命令除外）。",
     "Terminal command automatically proceeds if the command runs inside the sandbox. Otherwise, it requests review.": "终端命令如果在沙箱内运行，则自动执行；否则会请求审核。",
-
-    // ===== 自定义补充：声音选择弹窗（音色描述，Clear and friendly 上游已收录） =====
     "Confident and clear": "自信而清晰",
     "Warm and engaging": "温暖而有感染力",
     "Warm and approachable": "温暖而亲切",
@@ -5008,15 +3559,9 @@ electron_1.contextBridge.exposeInMainWorld('wizardAPI', wizardAPI);
     "Jump to Previous Prompt": "跳转到上一条提示词",
     "Jump to Next Prompt": "跳转到下一条提示词",
     "Pin / Unpin Conversation": "置顶 / 取消置顶对话",
-    "Pin Conversation": "置顶对话",
-    "Unpin Conversation": "取消置顶对话",
-
-    // ===== 自定义补充：右下角新模型发布弹窗公告（服务端下发） =====
     "Introducing Gemini 4 Hydrogen": "全新推出 Gemini 4 Hydrogen",
     "Our daily driver for rapid coding and dependable agentic execution!": "我们的日常主力模型，兼顾快速编码与可靠的智能体执行！",
     "Our daily driver for rapid coding and dependable agentic execution": "我们的日常主力模型，兼顾快速编码与可靠的智能体执行",
-
-    // ===== 自定义补充：右侧边栏、文件查看器、预设主题与设置页查漏补齐 =====
     "Customize Sections": "自定义分区",
     "Side Questions": "侧边提问",
     "Skills Used": "已使用的技能",
@@ -5036,17 +3581,13 @@ electron_1.contextBridge.exposeInMainWorld('wizardAPI', wizardAPI);
     "Legacy Dark": "经典深色",
     "Solarized Dark": "Solarized Dark（Solarized 深色）",
     "Send a message in the main conversation first to start a side question": "请先在主对话中发送一条消息，然后再发起侧边提问",
-    "Delete Side Question": "删除侧边提问",
     "Failed to delete side question": "删除侧边提问失败",
     "Are you sure you want to delete this side question? This action cannot be undone.": "确定要删除此侧边提问吗？此操作无法撤销。",
     "No background tasks": "暂无后台任务",
     "No subagents": "暂无子智能体",
     "Blocked, needs input": "已受阻，需要输入",
     "Needs attention": "需要关注",
-    "Cancel Task": "取消任务",
     "Toggle checkerboard background": "切换棋盘格背景",
-    "Zoom in": "放大",
-    "Zoom out": "缩小",
     "Annotate": "标注",
     "Pan": "平移",
     "Grid": "网格",
@@ -5056,7 +3597,6 @@ electron_1.contextBridge.exposeInMainWorld('wizardAPI', wizardAPI);
     "Notebook cell output": "Notebook 单元格输出",
     "Resume environment": "恢复环境",
     "Cloud Permissions": "云端权限",
-    "Global Permissions": "全局权限",
     "Blocked by organization policy": "已被组织策略阻止",
     "Terminal sandbox is not supported in this environment": "当前环境不支持终端沙盒",
     "Start without a workspace, for general questions.": "无工作区启动，适用于常规提问。",
@@ -5069,7 +3609,6 @@ electron_1.contextBridge.exposeInMainWorld('wizardAPI', wizardAPI);
     "Failed to open MCP config file": "打开 MCP 配置文件失败",
     "No method available to open MCP config file": "没有可用于打开 MCP 配置文件的方式",
     "Plugin operations are not supported in this environment.": "当前环境不支持插件操作。",
-    "No Plugins Available": "暂无可用插件",
     "No description available.": "暂无描述。",
     "Unknown Server": "未知服务器",
     "Unknown error": "未知错误",
@@ -5078,7 +3617,6 @@ electron_1.contextBridge.exposeInMainWorld('wizardAPI', wizardAPI);
     "Side Panel Preview": "侧边栏预览",
     "Bottom Panel": "底部面板",
     "Middle Click": "鼠标中键点击",
-    "Queued Messages": "排队消息",
     "Your Plan": "当前方案",
     "Choose a Subscription": "选择订阅方案",
     "Use Antigravity through your Gemini subscription.": "通过你的 Gemini 订阅使用 Antigravity。",
@@ -5094,7 +3632,6 @@ electron_1.contextBridge.exposeInMainWorld('wizardAPI', wizardAPI);
     "Reset overrides": "重置覆盖项",
     "Reset all shortcuts to defaults": "将所有快捷键重置为默认值",
     "No keyboard shortcuts found matching your filter.": "未找到匹配筛选条件的键盘快捷键。",
-    "Keyboard shortcuts": "键盘快捷键",
     "Press keys...": "请按下按键...",
     "This shortcut is reserved by browser tabs and may not trigger in Web mode. It works in the Desktop Hub or installed PWA.": "此快捷键已被浏览器标签页保留，在网页模式下可能无法触发。它在桌面客户端或已安装的 PWA 中可正常工作。",
     "Running (Dev only)": "运行中（仅开发者）",
@@ -5134,7 +3671,6 @@ electron_1.contextBridge.exposeInMainWorld('wizardAPI', wizardAPI);
     "Enter your feedback here...": "在此输入你的反馈...",
     "Unnamed rule": "未命名规则",
     "Untitled project": "未命名项目",
-    // ===== 2.32.2 新增与深度补全词条 =====
     "Robotics": "Robotics（机器人开发）",
     "Robotics skills for any robot: 3D perception, collision-free motion planning, visual servoing, robot bring-up, sim2real, agent iteration, MuJoCo simulation, SimReady 3D asset authoring and physics auditing, and a live MuJoCo Studio 3D web sidecar.": "适用于各类机器人的专业技能套件：涵盖 3D 感知、无碰撞运动规划、视觉伺服、机器人底层启动调试、Sim2Real 虚实迁移、智能体迭代、MuJoCo 物理仿真、SimReady 3D 资产构建与物理审计，以及实时 MuJoCo Studio 3D Web 侧边栏。",
     "Localize the target object in 3D from RGB-only cameras": "仅通过 RGB 相机在 3D 空间中定位目标物体",
@@ -5156,13 +3692,11 @@ electron_1.contextBridge.exposeInMainWorld('wizardAPI', wizardAPI);
     "e.g. jetski or *": "例如：jetski 或 *",
     "Contents": "仓库内容",
     "Read access to code, refs, commits, and other repository contents.": "读取代码、引用 (refs)、提交记录及其他仓库内容的权限。",
-    "Read access": "读取权限",
     "Issues": "议题 (Issues)",
     "Grant the selected actions on the listed issue numbers — a comma-separated list like 1, 2, 3, or * for all.": "对列出的议题编号授予所选操作权限——输入以逗号分隔的列表（如 1, 2, 3），或输入 * 代表全部。",
     "Issue numbers": "议题编号",
     "Issue actions": "议题操作",
     "+ Add issue policy": "+ 添加议题策略",
-    "Pull Requests": "拉取请求 (PR)",
     "Grant the selected actions on the listed pull request numbers — a comma-separated list like 1, 2, 3, or * for all.": "对列出的拉取请求编号授予所选操作权限——输入以逗号分隔的列表（如 1, 2, 3），或输入 * 代表全部。",
     "Pull request numbers": "拉取请求编号",
     "Pull request actions": "拉取请求操作",
@@ -5184,7 +3718,6 @@ electron_1.contextBridge.exposeInMainWorld('wizardAPI', wizardAPI);
     "at ref": "目标分支/引用",
     "Workflow refs": "工作流引用",
     "e.g. main,dev or *": "例如：main,dev 或 *",
-    "Not signed in": "未登录",
     "GitHub: not signed in": "GitHub：未登录",
     "Account connection was not completed.": "账号连接未完成。",
     "New Coordinator": "新建协调器",
@@ -5205,17 +3738,9 @@ electron_1.contextBridge.exposeInMainWorld('wizardAPI', wizardAPI);
     "Remote Control isn't active on this instance. Enable it in": "当前实例未启用远程控制。请前往",
     ", then reopen this dialog.": "启用后再重新打开此对话框。",
     "New Side Question": "新建侧边提问",
-    "Side Question: ": "侧边提问：",
-    "Remove from Split": "从分屏中移除",
-    "Copy Conversation Markdown": "复制对话 Markdown",
-    "Pin This Conversation": "置顶此对话",
-    "Unpin This Conversation": "取消置顶此对话",
-    "Rename This Conversation": "重命名此对话",
-    "Copy Trajectory ID": "复制轨迹 ID",
-    "Copy Config File Path": "复制配置文件路径",
+    "Side Question:": "侧边提问：",
     "Paste authorization code": "粘贴授权码",
-    "Pinned Actions": "置顶操作",
-    "More Actions": "更多操作",
+    "Pinned Actions": "置顶项操作",
     "Custom View": "自定义视图",
     "Where it runs": "运行位置",
     "Where should it run?": "它应该在哪里运行？",
@@ -5224,7 +3749,6 @@ electron_1.contextBridge.exposeInMainWorld('wizardAPI', wizardAPI);
     "Uses your local files and tools. Schedules only.": "使用您的本地文件与工具。仅支持定时计划。",
     "Runs even when your computer is off. Schedules and events.": "即使您的电脑关机也能自动运行。支持定时计划与事件触发。",
     "Runs even when your computer is off. Schedules only.": "即使您的电脑关机也能自动运行。仅支持定时计划。",
-    "Select workspace": "选择工作区",
     "Create a project first.": "请先创建一个项目。",
     "Trigger": "触发器",
     "Remove trigger": "移除触发器",
@@ -5236,7 +3760,6 @@ electron_1.contextBridge.exposeInMainWorld('wizardAPI', wizardAPI);
     "Steps": "步骤",
     "Creating…": "正在创建…",
     "No instructions.": "暂无指令。",
-    "Show all": "显示全部",
     "All runs": "全部运行记录",
     "No runs yet": "暂无运行记录",
     "Loading runs…": "正在加载运行记录…",
@@ -5258,9 +3781,7 @@ electron_1.contextBridge.exposeInMainWorld('wizardAPI', wizardAPI);
     "Ignore events triggered by the automation owner to avoid self-trigger loops.": "忽略由自动化所有者触发的事件，以避免自触发死循环。",
     "Match when any modified file path starts with the given depot prefix.": "当任意修改的文件路径以给定的仓库路径前缀开头时匹配。",
     "Match when the issue component equals or is under the given Buganizer component ID.": "当问题组件等于或隶属于给定的 Buganizer 组件 ID 时匹配。",
-    "Configure the agent's visual theme and display preferences.": "配置智能体的视觉主题与显示偏好设置。",
     "Configure the agent's visual theme and display preferences": "配置智能体的视觉主题与显示偏好设置",
-    "Notification Preferences": "通知偏好设置",
     "Plan upgrade required": "需要升级订阅方案",
     "Failed to unarchive local project": "取消归档本地项目失败",
     "Failed to clone project locally": "在本地克隆项目失败",
@@ -5275,7 +3796,6 @@ electron_1.contextBridge.exposeInMainWorld('wizardAPI', wizardAPI);
     "Remove from Recent": "从最近记录中移除",
     "View MCP servers": "查看 MCP 服务器",
     "MCP server error": "MCP 服务器错误",
-    // ===== 2.32.2.1 对话页排队发送、模型思考档位与撤销确认弹窗深度补全 =====
     "Send all": "全部发送",
     "Sends after agent finishes working": "智能体完成当前工作后发送",
     "Queued message deleted": "已删除排队消息",
@@ -5320,75 +3840,727 @@ electron_1.contextBridge.exposeInMainWorld('wizardAPI', wizardAPI);
     "The other model hallucinated": "另一个模型出现了幻觉",
     "Clearer writing & artifacts": "更清晰的表达与工件产出",
     "Faster response": "响应速度更快",
-  };
+    "Also includes Global Permissions when working in this project.": "在当前项目中工作时，亦继承全局权限配置。",
+    "Also includes Global Permissions when working in this project": "在当前项目中工作时，亦继承全局权限配置",
+    "Makes \\color behave like LaTeX's 2-argument \\textcolor, instead of LaTeX's one-argument \\color mode change.": "使 \\color 的行为与 LaTeX 的双参数 \\textcolor 一致，而不是 LaTeX 单参数 \\color 的模式切换。",
+    "Search customizations…": "搜索自定义项...",
+    "Toggle Terminal Panel": "切换终端面板",
+    "Insert in Terminal": "插入到终端",
+    "Starting terminal…": "正在启动终端…",
+    "Starting terminal...": "正在启动终端...",
+    "Markdown view mode": "Markdown 视图模式",
+    "Stop side question": "停止侧边提问",
+    "Filter files": "筛选文件",
+    "Clear file filter": "清除文件筛选",
+    "No matching files": "无匹配文件",
+    "Clear row filter": "清除行筛选",
+    "Toggle file diff": "切换文件差异",
+    "File path breadcrumbs": "文件路径面包屑",
+    "Close references": "关闭引用面板",
+    "Close downloads": "关闭下载列表",
+    "Remove from history": "从历史记录中移除",
+    "View Branches": "查看分支",
+    "Switch branch": "切换分支",
+    "Working copy": "工作副本",
+    "Open SSH Host": "打开 SSH 主机",
+    "Project location": "项目位置",
+    "Use Existing": "使用现有项",
+    "Use Default": "使用默认设置",
+    "Use Global Settings": "使用全局设置",
+    "Remote Control Instances": "远程控制实例",
+    "Filter agents": "筛选智能体",
+    "All agents": "全部智能体",
+    "Stop all agents": "停止全部智能体",
+    "Always on": "常驻运行",
+    "Next run": "下次运行",
+    "Last run": "上次运行",
+    "Runs a command": "运行命令",
+    "Schedule type": "调度类型",
+    "Execution Identity": "执行身份",
+    "Add filter": "添加筛选条件",
+    "Search filters…": "搜索筛选条件…",
+    "Search filters...": "搜索筛选条件...",
+    "Automation credentials expired": "自动化凭据已过期",
+    "Automation credentials expiring soon": "自动化凭据即将过期",
+    "Remote only": "仅限远程",
+    "Local only": "仅限本地",
+    "Fix with Agent": "交给智能体修复",
+    "Open Appearance": "打开外观设置",
+    "Command is required": "命令不能为空",
+    "Expand Questionnaire": "展开问卷",
+    "Collapse Questionnaire": "折叠问卷",
+    "Files to edit:": "待编辑文件：",
+    "Files to edit": "待编辑文件",
+    "Working directory:": "工作目录：",
+    "Working directory": "工作目录",
+    "Failed to execute": "执行失败",
+    "Failed to edit": "编辑失败",
+    "Failed to read": "读取失败",
+    "Hide earlier steps": "隐藏早期步骤",
+    "Show full command": "显示完整命令",
+    "Password Prompt Blocked": "密码输入提示已拦截",
+    "Parent Conversation": "父对话",
+    "Other Projects": "其他项目",
+    "Unknown Project": "未知项目",
+    "Copy version details": "复制版本详情",
+    "Create a token": "创建令牌",
+    "Full View": "完整视图",
+    "New Preview": "新建预览",
+    "Quick Start": "快速开始",
+    "View All": "查看全部",
+    "Close All": "全部关闭",
+    "UI view does not exist.": "UI 视图不存在。",
+    "UI view does not exist": "UI 视图不存在",
+    "View could not be opened": "无法打开视图",
+    "View could not be opened.": "无法打开视图。",
+    "See all (": "查看全部 (",
+    "Generation Steps (": "生成步骤 (",
+    "Show submitted (": "显示已提交 (",
+    "Show more (": "显示更多 (",
+    "Send all (": "全部发送 (",
+    "Show all (": "显示全部 (",
+    "Queue Message": "排队发送消息",
+    "Drop to attach": "拖放以添加附件",
+    "Message this chat": "向此对话发送消息",
+    "Write a message": "输入消息",
+    "Ask a side question without interrupting the main conversation": "在不打断主对话的情况下提出侧边问题",
+    "Ask a side question without interrupting the main conversation.": "在不打断主对话的情况下提出侧边问题。",
+    "Promote to conversation": "升级为主对话",
+    "Waiting for response... (Esc to minimize)": "正在等待回复...（按 Esc 最小化）",
+    "Waiting for response… (Esc to minimize)": "正在等待回复…（按 Esc 最小化）",
+    "Thought Process": "思考过程",
+    "Confirmation required to execute this step": "执行此步骤需要确认",
+    "Confirmation required to execute this step.": "执行此步骤需要确认。",
+    "Added to allowlist": "已添加到允许列表",
+    "Decline": "拒绝",
+    "Proceed Anyway": "仍然继续",
+    "Enable Best-of-2": "启用 Best-of-2",
+    "Tip: Complex tasks get better results with multiple responses.": "提示：复杂任务在生成多个候选回复时效果更佳。",
+    "Best of N mode is not available": "Best of N 模式不可用",
+    "Best of N mode is not available.": "Best of N 模式不可用。",
+    "Record Audio": "录制音频",
+    "Voice speed": "语速",
+    "Voice transcript": "语音转写记录",
+    "Live transcript": "实时转写记录",
+    "Live chat": "实时对话",
+    "End Live chat": "结束实时对话",
+    "End Voice mode": "结束语音模式",
+    "Nothing said yet": "尚未检测到语音",
+    "Finalizing transcription...": "正在完成转写...",
+    "Finalizing transcription…": "正在完成转写…",
+    "Sending transcribed message...": "正在发送转写消息...",
+    "Sending transcribed message…": "正在发送转写消息…",
+    "Switch mic": "切换麦克风",
+    "Using browser": "正在使用浏览器",
+    "Opening URL in Browser": "正在浏览器中打开 URL",
+    "Opened URL in Browser": "已在浏览器中打开 URL",
+    "Reading page": "正在读取页面",
+    "Created outline": "已生成大纲",
+    "Extracting DOM elements": "正在提取 DOM 元素",
+    "Extracted DOM elements": "已提取 DOM 元素",
+    "Fetching network requests": "正在获取网络请求",
+    "Fetched network requests": "已获取网络请求",
+    "Retrieving Browser Pages": "正在获取浏览器页面",
+    "Retrieved Browser Pages": "已获取浏览器页面",
+    "Retrieving Console Logs from Browser": "正在获取浏览器控制台日志",
+    "Retrieved Console Logs from Browser": "已获取浏览器控制台日志",
+    "Refreshing Browser page": "正在刷新浏览器页面",
+    "Refreshed Browser page": "已刷新浏览器页面",
+    "No browser pages open": "暂无打开的浏览器页面",
+    "Inspected commit": "已检查提交",
+    "Found references to": "已找到引用：",
+    "Cumulative Total": "累计总计",
+    "Grand Total": "总计",
+    "Click to view more": "点击查看更多",
+    "Pricing is based on public API pricing": "价格基于公开 API 定价估算",
+    "Pricing is based on public API pricing.": "价格基于公开 API 定价估算。",
+    "Untitled Conversation": "未命名对话",
+    "Only Unread": "仅看未读",
+    "Only Archived": "仅看已归档",
+    "Only Scheduled": "仅看定时任务",
+    "Drop to add to group": "拖放到此处以加入分组",
+    "Marked 1 conversation as read": "已将 1 个对话标为已读",
+    "Couldn't start the coordinator:": "无法启动协调器：",
+    "Couldn't start the coordinator": "无法启动协调器",
+    "No agent is working right now.": "当前没有正在工作的智能体。",
+    "No agent is working right now": "当前没有正在工作的智能体",
+    "Layout": "布局",
+    "Worktree Branches": "Worktree 分支",
+    "Work in a New Worktree": "在新建 Worktree 中工作",
+    "Keeps your checkout untouched": "保持当前检出分支不受影响",
+    "Couldn't load your SSH hosts": "无法加载您的 SSH 主机列表",
+    "Couldn't load your SSH hosts. You can still type one.": "无法加载您的 SSH 主机列表，您仍可手动输入主机地址。",
+    "Enter [user@]host[:port], or pick a host from your SSH config.": "输入 [user@]host[:port]，或从 SSH 配置中选择主机。",
+    "Hide from this list": "从此列表中隐藏",
+    "Show in the list again": "重新在列表中显示",
+    "Hidden hosts": "已隐藏的主机",
+    "Waiting for the SSH connection to finish": "正在等待 SSH 连接完成",
+    "Waiting for the SSH connection to finish…": "正在等待 SSH 连接完成…",
+    "Relaunches the app": "将重启应用",
+    "Switch To": "切换到",
+    "Show or Hide Extensions": "显示或隐藏扩展",
+    "Sign in needed": "需要登录",
+    "Needs reconnect": "需要重新连接",
+    "Needs re-auth": "需要重新授权",
+    "Accounts tab": "账号标签页",
+    "Paste a code instead": "改为粘贴授权码",
+    "Restart sign-in": "重新开始登录",
+    "Make default": "设为默认",
+    "Get API key": "获取 API 密钥",
+    "Apps": "应用",
+    "Apps connected to your account": "已连接到您账号的应用",
+    "Connections": "连接",
+    "What's in this bundle": "此套件包含的内容",
+    "Each plugin can be managed on its own.": "每个插件均可独立管理。",
+    "This bundle has no plugins yet.": "此套件暂无插件。",
+    "Replacing removes the currently installed plugin and installs the new one in its place.": "替换操作将移除当前已安装的插件，并在原位置安装新插件。",
+    "Side Pane UI Available": "提供侧边栏面板界面",
+    "Managed by plugin": "由插件托管",
+    "Configured servers": "已配置的服务器",
+    "Encountered an error while running the plugin.": "运行插件时遇到错误。",
+    "Pre Invocation": "调用前 (Pre Invocation)",
+    "Post Invocation": "调用后 (Post Invocation)",
+    "Must be positive": "必须为正数",
+    "No handlers configured for": "尚未配置处理程序：",
+    "Add New Handler to": "添加新处理程序至",
+    "Creates a local automation that runs on this computer": "创建在此计算机上运行的本地自动化任务",
+    "Creates a local automation that runs on this computer.": "创建在此计算机上运行的本地自动化任务。",
+    "Refreshing credentials...": "正在刷新凭据...",
+    "Refreshing credentials…": "正在刷新凭据…",
+    "Set at least one scope filter": "请至少设置一个范围筛选条件",
+    "Optional boolean filter": "可选布尔筛选表达式",
+    "Valid CEL": "有效的 CEL 表达式",
+    "CEL Reference": "CEL 参考文档",
+    "CEL Expression Reference": "CEL 表达式参考",
+    "One or more, comma-separated": "可填一项或多项，用逗号分隔",
+    "Scope": "范围",
+    "Target": "目标",
+    "Fields": "字段",
+    "Helpers": "辅助函数",
+    "Conditions": "条件",
+    "Events": "事件",
+    "Recent Events": "最近事件",
+    "No events recorded": "暂无事件记录",
+    "Web Preview": "网页预览",
+    "Embedding Limitations": "内嵌限制说明",
+    "Taking longer than usual to load": "加载耗时比平时更长",
+    "This site can’t be reached": "无法访问此网站",
+    "This site can't be reached": "无法访问此网站",
+    "This site cannot provide a secure connection.": "此网站无法提供安全连接。",
+    "This page isn’t working": "此页面无法正常运作",
+    "This page isn't working": "此页面无法正常运作",
+    "Your connection is not private": "您的连接不是私密连接",
+    "Back to safety": "返回安全页面",
+    "Certificate details": "证书详情",
+    "Certificate is valid": "证书有效",
+    "Certificate is not valid": "证书无效",
+    "Issued to": "颁发给",
+    "Issued by": "颁发者",
+    "Valid until": "有效期至",
+    "Valid from": "生效日期",
+    "Clear cookies and site data": "清除 Cookie 和网站数据",
+    "No recent downloads": "暂无最近下载记录",
+    "Inspect element to comment": "审查元素以添加批注",
+    "Exit inspect element mode (Esc)": "退出元素审查模式 (Esc)",
+    "Browser is currently being operated by this conversation in another Hub window": "当前对话正在另一个主窗口中操作内置浏览器",
+    "Browser is currently being operated by this conversation in another Hub window.": "当前对话正在另一个主窗口中操作内置浏览器。",
+    "Match Case (Aa)": "区分大小写 (Aa)",
+    "Match Whole Word (ab)": "全字匹配 (ab)",
+    "Use Regular Expression (.*)": "使用正则表达式 (.*)",
+    "Previous Match (Shift+Enter)": "上一个匹配项 (Shift+Enter)",
+    "Next Match (Enter)": "下一个匹配项 (Enter)",
+    "Viewing Diff": "正在查看差异",
+    "Failed to load some diffs": "部分差异加载失败",
+    "Failed to fetch diffs": "获取差异失败",
+    "Type to search file contents": "输入内容以搜索文件全文",
+    "Preview unavailable": "预览不可用",
+    "Directory not found": "目录未找到",
+    "Fit to Page": "适应页面",
+    "Enter Fullscreen": "进入全屏",
+    "Exit Fullscreen": "退出全屏",
+    "Light Mode": "浅色模式",
+    "Dark Mode": "深色模式",
+    "More toolbar actions": "更多工具栏操作",
+    "Environment Setup Script": "环境初始化脚本",
+    "Validate": "验证",
+    "Validating setup script…": "正在验证初始化脚本…",
+    "Validating setup script...": "正在验证初始化脚本...",
+    "Saving…": "正在保存…",
+    "Saving...": "正在保存...",
+    "Saved": "已保存",
+    "Couldn't delete your data. Try again.": "无法删除您的数据，请重试。",
+    "Validated with GitHub and stored in": "已通过 GitHub 验证并存储于",
+    "Authenticated as": "已认证身份：",
+    "Stage": "台前",
+    "Desktop": "桌面",
+    "Waiting for the agents’ windows…": "正在等待智能体窗口…",
+    "Pause": "暂停",
+    "Paused": "已暂停",
+    "Resume": "恢复",
+    "Pause this agent; it keeps its place and streams. Resume to continue.": "暂停此智能体；其当前位置与画面流将保持不变。点击“恢复”即可继续。",
+    "Focus this tile": "聚焦此视图",
+    "Back to all agents": "返回全部智能体",
+    "typing…": "正在输入…",
+    "Agent: unnamed": "智能体：未命名",
+    "Minimized": "已最小化",
+    "Hidden by policy": "已按策略隐藏",
+    "Starting preview…": "正在启动预览…",
+    "Loading preview…": "正在加载预览…",
+    "Stream ended": "画面流已结束",
+    "Waiting for video…": "正在等待视频流…",
+    "A password or secure field is on screen.": "屏幕上包含密码或安全输入字段。",
+    "This app is not allowed in previews.": "此应用不允许在预览中显示。",
+    "This page is not allowed in previews.": "此页面不允许在预览中显示。",
+    "The window title matches a privacy rule.": "窗口标题命中了隐私保护规则。",
+    "Hidden by the preview policy.": "已根据预览策略隐藏。",
+    "Granted ✓": "已授权 ✓",
+    "Needs relaunch": "需重启应用",
+    "Open ↗": "打开 ↗",
+    "Settings ↗": "设置 ↗",
+    "Open Screen Recording settings": "打开屏幕录制设置",
+    "Screen Recording settings": "屏幕录制设置",
+    "Relaunch the app once to activate Screen Recording.": "请重启一次应用以激活屏幕录制权限。",
+    "✓ macOS permissions granted": "✓ 已授予 macOS 权限",
+    "Click": "点击",
+    "to open macOS Privacy & Security.": "以打开 macOS“隐私与安全性”。",
+    "Click Open ↗ to open macOS Privacy & Security.": "点击 打开 ↗ 以打开 macOS“隐私与安全性”。",
+    "Relaunch ↻": "重启应用 ↻",
+    "Toggle Virtual Machine": "切换虚拟机面板",
+    "Browser: you took over": "浏览器：你已接管控制",
+    "Voices": "音色列表",
+    "Powered by Gemini Live ·": "由 Gemini Live 提供支持 ·",
+    "You can change this in": "你稍后可在",
+    "later.": "中更改。",
+    "You can change this in Settings later.": "你稍后可在设置中更改。",
+    "Powered by Gemini Live · You can change this in Settings later.": "由 Gemini Live 提供支持 · 你稍后可在设置中更改。",
+    "Voice dictation unavailable": "语音听写不可用",
+    "Transcribing audio…": "正在转写音频…",
+    "Stop transcription": "停止转写",
+    "Microphone silent": "麦克风无声音",
+    "Microphone problem": "麦克风异常",
+    "Check that the microphone is unmuted and the right input device is selected.": "请检查麦克风是否已取消静音，并确认已选择正确的输入设备。",
+    "Microphone access is blocked by your operating system. Grant microphone permission in System Settings and try again.": "麦克风访问已被操作系统拦截。请在系统设置中授予麦克风权限后重试。",
+    "No microphone was found on this machine. Connect or enable an input device and try again.": "未在此设备上检测到麦克风。请连接或启用音频输入设备后重试。",
+    "Microphone is already in use by another recording session.": "麦克风正被另一个录音会话占用。",
+    "Microphone capture is not supported in this environment.": "当前环境不支持麦克风音频采集。",
+    "Microphone capture failed.": "麦克风音频采集失败。",
+    "Microphone capture ended unexpectedly.": "麦克风音频采集意外中断。",
+    "Speech recognition service is failing, and the current model doesn't support direct audio file input.": "语音识别服务当前异常，且所选模型不支持直接输入音频文件。",
+    "Audio transcription session timed out waiting for ready": "音频转写会话等待就绪超时",
+    "Host microphone server is unavailable": "宿主机麦克风服务不可用",
+    "Failed to connect to host microphone server": "无法连接到宿主机麦克风服务",
+    "Timed out waiting for host microphone server ready": "等待宿主机麦克风服务就绪超时",
+    "Let the agent open URLs, read web pages, and interact with browser content. This gives the agent access to important (and often critical) knowledge and methods of validation, but any browser integration does increase exposure to external malicious parties for security exploits.": "允许智能体打开 URL、读取网页并与浏览器内容交互。这能让智能体获取重要的知识与验证手段，但任何浏览器集成都会增加遭受外部恶意安全攻击的风险暴露面。",
+    "Browsing Data": "浏览数据",
+    "Clear history, cookies and site data from the built-in browser, or manage cookies for each site.": "清除内置浏览器的历史记录、Cookie 与站点数据，或按站点管理 Cookie。",
+    "Cookies by Site": "按站点管理 Cookie",
+    "Clear Browsing Data?": "清除浏览数据？",
+    "Choose what to clear from the built-in browser. It can't be undone.": "选择要从内置浏览器中清除的数据。此操作无法撤销。",
+    "Visited URLs and autocomplete suggestions.": "已访问的 URL 与自动补全建议。",
+    "Cookies and other site data": "Cookie 及其他站点数据",
+    "Cookies, site storage and cache. Signs you out of all sites in the built-in browser and reloads its open tabs.": "包括 Cookie、站点存储与缓存。这会使你退出内置浏览器中的所有站点，并重新加载已打开的标签页。",
+    "An agent is using the built-in browser. Clearing its data signs the agent out of sites and may interrupt its task.": "当前有智能体正在使用内置浏览器。清除数据会使智能体退出站点登录状态，并可能中断其任务。",
+    "Couldn't clear browsing data. Try again.": "无法清除浏览数据，请重试。",
+    "Cleared built-in browser data": "已清除内置浏览器数据",
+    "Cleared built-in browser history": "已清除内置浏览器历史记录",
+    "Loading cookies…": "正在加载 Cookie…",
+    "Couldn't load cookies.": "无法加载 Cookie。",
+    "No sites have cookies in the built-in browser.": "内置浏览器中暂无保存了 Cookie 的站点。",
+    "Couldn't delete cookies for": "无法删除以下站点的 Cookie：",
+    ". Try again.": "。请重试。",
+    "No sites match “": "没有匹配的站点：“",
+    "Sites with cookies": "存有 Cookie 的站点",
+    "Cookies the built-in browser stores for each site. Deleting a site's cookies usually signs you out of it. Other site data (local storage, IndexedDB, cache) is cleared only by Browsing Data → Clear.": "内置浏览器为各站点存储的 Cookie。删除某站点的 Cookie 通常会使你退出该站点。其他站点数据（本地存储、IndexedDB、缓存）仅可通过“浏览数据 → 清除”清理。",
+    "Search sites...": "搜索站点...",
+    "Search sites": "搜索站点",
+    "Loading browser steps…": "正在加载浏览器步骤…",
+    "Browser task still running…": "浏览器任务仍在运行…",
+    "No browser steps recorded": "暂无记录到的浏览器步骤",
+    "Open browser screenshot": "打开浏览器截图",
+    "Browser screenshot": "浏览器截图",
+    "Manage your keybinding scheme and customize shortcuts in VS Code.": "管理你的快捷键方案，并在 VS Code 中自定义快捷键。",
+    "Keybinding Scheme": "快捷键方案",
+    "Choose between non-colliding VS Code defaults or standalone Antigravity chords.": "在无冲突的 VS Code 默认快捷键与独立版 Antigravity 组合键之间选择。",
+    "VS Code Default": "VS Code 默认方案",
+    "Antigravity (AGY) Style": "Antigravity (AGY) 风格",
+    "Honors standard VS Code shortcuts without collisions (e.g. ⌘L Focus Input, ⌘⇧L New Conversation, ⌘⇧A Picker, ⌘⇧, Settings).": "保留标准 VS Code 快捷键且不产生冲突（例如 ⌘L 聚焦输入框、⌘⇧L 新建对话、⌘⇧A 选择器、⌘⇧, 设置）。",
+    "Honors standard VS Code shortcuts without collisions (e.g. Ctrl+L Focus Input, Ctrl+Shift+L New Conversation, Ctrl+Shift+A Picker, Ctrl+Shift+, Settings).": "保留标准 VS Code 快捷键且不产生冲突（例如 Ctrl+L 聚焦输入框、Ctrl+Shift+L 新建对话、Ctrl+Shift+A 选择器、Ctrl+Shift+, 设置）。",
+    "Uses standalone Antigravity chords (e.g. ⌘I Focus Input, ⌘⇧O New Conversation, ⌘K Picker in chat, ⌘, Settings, ⌘[/] History). Replaces Go to Symbol (⌘⇧O) and Trigger Suggest (⌘I), and rebinds VS Code Settings to ⌘⌥,.": "使用独立版 Antigravity 快捷键（例如 ⌘I 聚焦输入框、⌘⇧O 新建对话、聊天中 ⌘K 唤起选择器、⌘, 设置、⌘[/] 历史记录）。将替换“转到符号”(⌘⇧O) 与“触发建议”(⌘I)，并将 VS Code 设置重新绑定为 ⌘⌥,。",
+    "Uses standalone Antigravity chords (e.g. Ctrl+I Focus Input, Ctrl+Shift+O New Conversation, Ctrl+K Picker in chat, Ctrl+, Settings, Ctrl+[/] History). Replaces Go to Symbol (Ctrl+Shift+O) and Trigger Suggest (Ctrl+I), and rebinds VS Code Settings to Ctrl+Alt+,.": "使用独立版 Antigravity 快捷键（例如 Ctrl+I 聚焦输入框、Ctrl+Shift+O 新建对话、聊天中 Ctrl+K 唤起选择器、Ctrl+, 设置、Ctrl+[/] 历史记录）。将替换“转到符号”(Ctrl+Shift+O) 与“触发建议”(Ctrl+I)，并将 VS Code 设置重新绑定为 Ctrl+Alt+,。",
+    "All active Antigravity shortcuts and user keybinding overrides are managed directly by VS Code.": "所有生效中的 Antigravity 快捷键及用户键位覆盖均由 VS Code 直接管理。",
+    "VS Code Keyboard Shortcuts": "VS Code 键盘快捷方式",
+    "Inspect live bindings or record custom key chords filtered to": "查看实时按键绑定或录制自定义快捷键，筛选范围：",
+    "Managed by application menu": "由应用程序菜单管理",
+    "Terminal: Select All": "终端：全选",
+    "Bundles": "插件组合包",
+    "Curated sets of plugins for common workflows and roles.": "面向常见工作流与角色精选的插件集合。",
+    "Add bundle": "添加组合包",
+    "Remove bundle": "移除组合包",
+    "Review bundle before adding": "添加前审查组合包",
+    "Review plugin before installing": "安装前审查插件",
+    "Review skill before installing": "安装前审查技能",
+    "No bundles available.": "暂无可用的插件组合包。",
+    "Loading bundles...": "正在加载插件组合包...",
+    "Loading bundle...": "正在加载插件组合包...",
+    "No bundle found for": "未找到对应的插件组合包：",
+    "Installed separately": "已单独安装",
+    "Disabling or removing this bundle doesn't affect it.": "禁用或移除此组合包不会影响该插件。",
+    "Removed from the marketplace. Stays installed until you uninstall it.": "已从扩展市场下架。在你手动卸载前仍会保持已安装状态。",
+    "Failed to load marketplace bundles. Please try again.": "加载扩展市场组合包失败，请重试。",
+    "Failed to add bundle.": "添加组合包失败。",
+    "Failed to add bundle. Please try again.": "添加组合包失败，请重试。",
+    "Failed to update the bundle.": "更新组合包失败。",
+    "Failed to update the bundle. Please try again.": "更新组合包失败，请重试。",
+    "Prototype": "原型",
+    "Experimental": "实验性",
+    "Third-party": "第三方",
+    "Add anyway": "仍然添加",
+    "Then create the project in its window.": "随后在其窗口中创建项目。",
+    "A host can't contain spaces.": "主机名不能包含空格。",
+    "~/.ssh/config (default)": "~/.ssh/config（默认）",
+    "Choose File…": "选择文件…",
+    "Couldn't connect to": "无法连接到",
+    "1 hidden host": "1 个已隐藏的主机",
+    "Loading hosts…": "正在加载主机…",
+    "Loading Hosts…": "正在加载主机…",
+    "No hosts in": "在",
+    "yet. Type one above.": "中暂无主机。请在上方输入主机地址。",
+    "The Hub sent an unexpected response.": "Hub 返回了意外响应。",
+    "the SSH host": "该 SSH 主机",
+    "Browser tools run on the SSH host this window is connected to, and Chrome there isn't accepting remote debugging. Complete these steps on the SSH host, not on this computer:": "浏览器工具运行在当前窗口所连接的 SSH 主机上，而该主机上的 Chrome 尚未开启远程调试。请在该 SSH 主机（而非本机）上完成以下步骤：",
+    "Not started": "未开始",
+    "Setup Script": "初始化脚本",
+    "Saving setup routine": "正在保存配置例程",
+    "Saved setup routine": "已保存配置例程",
+    "Canceled saving setup routine": "已取消保存配置例程",
+    "Deleting setup routine": "正在删除配置例程",
+    "Deleted setup routine": "已删除配置例程",
+    "Canceled deletion of setup routine": "已取消删除配置例程",
+    "Open in settings": "在设置中打开",
+    "Waiting for subagent": "正在等待子智能体",
+    "Side Question Selection": "针对所选内容发起侧边提问",
+    "Insert into main conversation": "插入到主对话",
+    "Unarchive the main conversation to insert": "请先取消归档主对话后再插入",
+    "The main conversation's input isn't available right now.": "主对话输入框当前不可用。",
+    "This side question isn't available in this conversation.": "此侧边提问在当前对话中不可用。",
+    "links without asking": "链接且不再询问",
+    "Access restricted": "访问受限",
+    "Checking access...": "正在检查访问权限...",
+    "Response actions": "回复操作",
+    "File exceeds the 200MB display limit, so it can't be opened or downloaded here.": "文件超出 200MB 显示上限，无法在此处打开或下载。",
+    "Checks": "检查",
+    "Commits": "提交",
+    "Initialized with": "初始化于",
+    "Declared by": "声明于",
+    "Command prompt": "命令提示符",
+    "Robot": "机器人",
+    "Hub": "中枢",
+    "Sliders": "滑块",
+    "Code": "代码",
+    "Sparkles": "星光",
+    "Wrench": "扳手",
+    "Shield": "盾牌",
+    "Speedometer": "速度计",
+    "Gauge": "仪表盘",
+    "Eye": "眼睛",
+    "Flask": "烧瓶",
+    "Radar": "雷达",
+    "Web (desktop, remote agents)": "Web（桌面端，远程智能体）",
+    "Web (desktop, remote agents, PWA)": "Web（桌面端，远程智能体，PWA）",
+    "Web (mobile, remote agents)": "Web（移动端，远程智能体）",
+    "Web (mobile, remote agents, PWA)": "Web（移动端，远程智能体，PWA）",
+    "Waiting for the agents' windows…": "正在等待智能体窗口…",
+    "Waiting for the agents' windows...": "正在等待智能体窗口...",
+    "Starting preview...": "正在启动预览...",
+    "Loading preview...": "正在加载预览...",
+    "Waiting for video...": "正在等待视频流...",
+    "Transcribing audio...": "正在转写音频...",
+    "Loading cookies...": "正在加载 Cookie...",
+    "Loading browser steps...": "正在加载浏览器步骤...",
+    "Browser task still running...": "浏览器任务仍在运行...",
+    "Choose File...": "选择文件...",
+    "Loading hosts...": "正在加载主机...",
+    "You are subscribed to the best Google AI plan.": "您已订阅最高等级的 Google AI 计划。",
+    "You are subscribed to the best Google AI plan": "您已订阅最高等级的 Google AI 计划",
+    "You're subscribed to the best Google AI plan.": "您已订阅最高等级的 Google AI 计划。",
+    "You're subscribed to the best Google AI plan": "您已订阅最高等级的 Google AI 计划",
+    "Your Plan: Google AI Ultra": "您的计划：Google AI Ultra",
+    "Your Plan: Google AI Plus": "您的计划：Google AI Plus",
+    "Carbon that may offload routine steps to Hydrogen. Same Carbon-level quality, fewer tokens used.": "由 Carbon 主导，可将常规步骤分流至 Hydrogen 执行。保持 Carbon 级输出质量，消耗更少 Token。",
+    "Argon that may offload routine steps to Hydrogen. Same Argon-level quality, fewer tokens used.": "由 Argon 主导，可将常规步骤分流至 Hydrogen 执行。保持 Argon 级输出质量，消耗更少 Token。",
+    "Not PII/NTK": "勿含敏感数据",
+    "Do not use for PII/NTK data.": "请勿用于 PII/NTK 敏感数据。"
+};
 
   const coreWords = {
-    "create": "创建", "delete": "删除", "new": "新建", "edit": "编辑", "save": "保存", "cancel": "取消", "confirm": "确认", "copy": "复制",
-    "close": "关闭", "open": "打开", "stop": "停止", "start": "启动", "add": "添加", "remove": "移除",
-    "update": "更新", "select": "选择", "clear": "清除", "search": "搜索", "find": "查找", "view": "查看", "show": "显示", "hide": "隐藏",
-    "agent": "智能体", "agents": "智能体", "subagent": "子智能体", "subagents": "子智能体", "task": "任务", "tasks": "任务",
-    "automation": "自动化", "automations": "自动化",
-    "workspace": "工作区", "workspaces": "工作区", "project": "项目", "projects": "项目", "directory": "目录", "folder": "文件夹", "file": "文件", "files": "文件",
-    "command": "命令", "commands": "命令", "palette": "面板", "terminal": "终端", "console": "控制台", "output": "输出", "input": "输入", "remote": "远程", "control": "控制", "device": "设备", "devices": "设备", "link": "链接",
-    "log": "日志", "logs": "日志", "setting": "设置", "settings": "设置", "preference": "偏好", "preferences": "偏好", "permission": "权限", "permissions": "权限",
-    "theme": "主题", "themes": "主题", "model": "模型", "models": "模型", "capability": "能力", "capabilities": "能力",
-    "run": "运行", "ran": "已运行", "running": "运行中", "completed": "已完成", "failed": "已失败", "pending": "等待中", "success": "成功", "error": "错误",
-    "system": "系统", "prompt": "提示词", "instructions": "指令", "description": "描述", "name": "名称", "version": "版本",
-    "active": "活跃", "background": "后台", "parent": "父级", "child": "子级", "branch": "分支", "share": "共享", "inherit": "继承",
-    "original": "原始", "backup": "备份", "duration": "持续时间", "seconds": "秒", "timer": "定时器", "timers": "定时器",
-    "schedule": "调度", "cron": "定时任务", "tools": "工具", "tool": "工具", "execute": "执行", "execution": "执行", "plan": "计划",
-    "policy": "策略", "policies": "策略", "never": "从不", "always": "总是",
-    "changed": "已更改", "review": "审核", "reviewing": "审核中", "reviewed": "已审核",
+    "create": "创建",
+    "delete": "删除",
+    "new": "新建",
+    "edit": "编辑",
+    "save": "保存",
+    "cancel": "取消",
+    "confirm": "确认",
+    "copy": "复制",
+    "close": "关闭",
+    "open": "打开",
+    "stop": "停止",
+    "start": "启动",
+    "add": "添加",
+    "remove": "移除",
+    "update": "更新",
+    "select": "选择",
+    "clear": "清除",
+    "search": "搜索",
+    "find": "查找",
+    "view": "查看",
+    "show": "显示",
+    "hide": "隐藏",
+    "agent": "智能体",
+    "agents": "智能体",
+    "subagent": "子智能体",
+    "subagents": "子智能体",
+    "task": "任务",
+    "tasks": "任务",
+    "automation": "自动化",
+    "automations": "自动化",
+    "workspace": "工作区",
+    "workspaces": "工作区",
+    "project": "项目",
+    "projects": "项目",
+    "directory": "目录",
+    "folder": "文件夹",
+    "file": "文件",
+    "files": "文件",
+    "command": "命令",
+    "commands": "命令",
+    "palette": "面板",
+    "terminal": "终端",
+    "console": "控制台",
+    "output": "输出",
+    "input": "输入",
+    "remote": "远程",
+    "control": "控制",
+    "device": "设备",
+    "devices": "设备",
+    "link": "链接",
+    "log": "日志",
+    "logs": "日志",
+    "setting": "设置",
+    "settings": "设置",
+    "preference": "偏好",
+    "preferences": "偏好",
+    "permission": "权限",
+    "permissions": "权限",
+    "theme": "主题",
+    "themes": "主题",
+    "model": "模型",
+    "models": "模型",
+    "capability": "能力",
+    "capabilities": "能力",
+    "run": "运行",
+    "ran": "已运行",
+    "running": "运行中",
+    "completed": "已完成",
+    "failed": "已失败",
+    "pending": "等待中",
+    "success": "成功",
+    "error": "错误",
+    "system": "系统",
+    "prompt": "提示词",
+    "instructions": "指令",
+    "description": "描述",
+    "name": "名称",
+    "version": "版本",
+    "active": "活跃",
+    "background": "后台",
+    "parent": "父级",
+    "child": "子级",
+    "branch": "分支",
+    "share": "共享",
+    "inherit": "继承",
+    "original": "原始",
+    "backup": "备份",
+    "duration": "持续时间",
+    "seconds": "秒",
+    "timer": "定时器",
+    "timers": "定时器",
+    "schedule": "调度",
+    "cron": "定时任务",
+    "tools": "工具",
+    "tool": "工具",
+    "execute": "执行",
+    "execution": "执行",
+    "plan": "计划",
+    "policy": "策略",
+    "policies": "策略",
+    "never": "从不",
+    "always": "总是",
+    "changed": "已更改",
+    "review": "审核",
+    "reviewing": "审核中",
+    "reviewed": "已审核",
     "canceled": "已取消",
-    "explore": "探索", "search": "搜索", "change": "更改", "changes": "更改",
-    "turn": "回合", "turns": "回合",
-    "analyzed": "分析", "analyzing": "分析",
-    "advanced": "高级", "collapse": "折叠", "expand": "展开",
-    "global": "全局", "inherits": "继承",
-    "wsl": "WSL", "distro": "发行版", "distros": "发行版"
-  };
+    "explore": "探索",
+    "change": "更改",
+    "changes": "更改",
+    "turn": "回合",
+    "turns": "回合",
+    "analyzed": "分析",
+    "analyzing": "分析",
+    "advanced": "高级",
+    "collapse": "折叠",
+    "expand": "展开",
+    "global": "全局",
+    "inherits": "继承",
+    "wsl": "WSL",
+    "distro": "发行版",
+    "distros": "发行版"
+};
 
-  const combinedDict = Object.assign({}, coreWords, dictionary);
-  // 性能优化 1：预先构建全小写字典 Map，将未命中小写查找由 O(N) 降低为 O(1)
+  // 预先构建全小写词典索引 Map，将大小写不敏感匹配降为 O(1)
   const lowerDictionary = new Map();
   for (const k in dictionary) {
-    const lk = k.toLowerCase();
-    if (!lowerDictionary.has(lk)) {
-      lowerDictionary.set(lk, dictionary[k]);
+    if (Object.prototype.hasOwnProperty.call(dictionary, k)) {
+      const lk = k.toLowerCase();
+      if (!lowerDictionary.has(lk)) {
+        lowerDictionary.set(lk, dictionary[k]);
+      }
     }
   }
 
+  // FIFO 有界字符串翻译缓存（彻底防止长期运行会话缓存锁死）
   const stringCache = new Map();
-  const MAX_STRING_CACHE = 5000;
+  const MAX_STRING_CACHE = 8000;
 
-  const escapeRegExp = (str) => {
-    const specials = ['[', ']', '(', ')', '{', '}', '*', '+', '?', '.', '^', '$', '|', '\\'];
-    return str.split('').map(c => specials.includes(c) ? '\\' + c : c).join('');
+  function cacheSet(key, val) {
+    if (stringCache.has(key)) {
+      stringCache.delete(key);
+    } else if (stringCache.size >= MAX_STRING_CACHE) {
+      const oldestKey = stringCache.keys().next().value;
+      if (oldestKey !== undefined) {
+        stringCache.delete(oldestKey);
+      }
+    }
+    stringCache.set(key, val);
+  }
+
+  // 安全首尾空白保留替换：使用 indexOf + slice 彻底根除 String.prototype.replace 的 $$ / $& 模板注入漏洞
+  function replaceTrimmed(text, trimmed, fixed) {
+    if (text === trimmed) return fixed;
+    const idx = text.indexOf(trimmed);
+    if (idx === -1) return fixed;
+    return text.slice(0, idx) + fixed + text.slice(idx + trimmed.length);
+  }
+
+  // 统一配额重置时长格式化（严格附带单词边界 \b，修复 "3 天ays" 并支持秒级单位）
+  function formatDurationCn(str) {
+    return String(str).trim()
+      .replace(/^<\s*1\s*m(?:in(?:ute)?s?)?$/i, '不到 1 分钟')
+      .replace(/(\d+)\s*d(?:ays?)?\b/gi, '$1 天 ')
+      .replace(/(\d+)\s*h(?:(?:ou)?rs?)?\b/gi, '$1 小时 ')
+      .replace(/(\d+)\s*m(?:in(?:ute)?s?)?\b(?!\s*o)/gi, '$1 分钟 ')
+      .replace(/(\d+)\s*s(?:ec(?:ond)?s?)?\b/gi, '$1 秒 ')
+      .replace(/\s+/g, ' ')
+      .trim();
+  }
+
+  // 历史半中半英残片自愈映射表（保持 dictionary 100% 纯净英文键的同时兼容旧版残片自愈）
+  const SELF_HEAL_MAP = {
+    'Replace With 新建': '替换为新建',
+    '移除 From Split': '从分屏中移除',
+    'Split 终端': '拆分终端',
+    '新建 Group': '新建分组',
+    '创建 Group': '创建分组',
+    '移动到 Group': '移动到分组',
+    '重命名 Group': '重命名分组',
+    '删除 Group': '删除分组',
+    '从 Group 中移除': '从分组中移除',
+    '向右 Split': '向右分屏',
+    '向下 Split': '向下分屏',
+    'Advanced 设置': '高级设置',
+    'advanced 设置': '高级设置',
+    'Developer 工具': '开发者工具',
+    'Custom 智能体': '自定义智能体',
+    'Ran 命令': '已运行命令',
+    'Running 命令': '正在运行命令',
+    'No 自动化 yet': '暂无自动化',
+    '搜索 shortcuts...': '搜索快捷键...',
+    '搜索 shortcuts': '搜索快捷键',
+    '清除 and friendly': '清晰友好',
+    '清除 and friendly.': '清晰友好。',
+    '工具 Permissions': '工具权限',
+    '命令 Palette': '命令面板',
+    '命令 palette': '命令面板',
+    '命令palette': '命令面板'
   };
 
-  // 性能优化 4：启动阶段一次性预编译单次联合分词正则，彻底消灭运行时 80 次循环迭代正则匹配
-  const sortedCoreKeys = Object.keys(coreWords)
-    .sort((a, b) => b.length - a.length)
-    .filter(w => w.length > 2 || /^[a-zA-Z0-9]+$/.test(w));
-  const escapedCoreUnion = sortedCoreKeys.map(w => escapeRegExp(w)).join('|');
-  const CORE_WORDS_UNION_REGEX = new RegExp('\\b(' + escapedCoreUnion + ')\\b', 'gi');
+  // Gemini Live 已知语音音色白名单（防止 Use Default / Use Existing / Use Sandbox 被误译）
+  const VOICE_NAMES = new Set([
+    'arlo', 'cleo', 'finn', 'fola', 'gero', 'lora', 'neno', 'olin', 'tari',
+    'aoede', 'charon', 'fenrir', 'kore', 'leda', 'orus', 'puck', 'zephyr',
+    'orbit', 'vale', 'pegasus', 'nova', 'dipper', 'ursa', 'vega', 'capella', 'sirius'
+  ]);
+
+  function formatShortcut(sc) {
+    if (!sc) return '';
+    return sc
+      .split('+')
+      .map(part => {
+        const lp = part.toLowerCase();
+        if (lp === 'ctrl') return 'Ctrl';
+        if (lp === 'cmd') return 'Cmd';
+        if (lp === 'shift') return 'Shift';
+        if (lp === 'alt' || lp === 'opt') return part.charAt(0).toUpperCase() + lp.slice(1);
+        return part.toUpperCase();
+      })
+      .join('+');
+  }
 
   function translateString(text) {
-    if (!text) return text;
+    if (!text || typeof text !== 'string') return text;
     const trimmed = text.trim();
     if (!trimmed) return text;
 
-    // 性能优化 2：极速短路。若文本完全不包含任何英文字母（纯中文/纯数字/纯标点），绝对无需查英文词典或跑正则，瞬间原样返回
+    // 极速短路：完全不含英文字母的字符串直接返回
     if (!/[a-zA-Z]/.test(trimmed)) {
       return text;
     }
 
-    // 0. 极速缓存查询（O(1) 命中瞬间返回）
+    // 1. O(1) FIFO 缓存命中
     if (stringCache.has(trimmed)) {
-      return text.replace(trimmed, stringCache.get(trimmed));
+      return replaceTrimmed(text, trimmed, stringCache.get(trimmed));
     }
 
-    // ===== 自定义补充：首页问候语（3 组模板 × 有/无用户名） =====
+    // 2. 精确区分全大写角标 "NEW"（译为 "新"）与常规按钮 "New"（译为 "新建"）
+    if (trimmed === 'NEW') {
+      const fixed = '新';
+      cacheSet(trimmed, fixed);
+      return replaceTrimmed(text, trimmed, fixed);
+    }
+
+    // 3. 前置精确词典查找（O(1)，彻底杜绝宽泛动态正则截胡已收录词典条目）
+    if (Object.prototype.hasOwnProperty.call(dictionary, trimmed)) {
+      const fixed = dictionary[trimmed];
+      cacheSet(trimmed, fixed);
+      return replaceTrimmed(text, trimmed, fixed);
+    }
+
+    const normalizedSpace = trimmed.replace(/\s+/g, ' ');
+    if (normalizedSpace !== trimmed && Object.prototype.hasOwnProperty.call(dictionary, normalizedSpace)) {
+      const fixed = dictionary[normalizedSpace];
+      cacheSet(trimmed, fixed);
+      return replaceTrimmed(text, trimmed, fixed);
+    }
+
+    if (Object.prototype.hasOwnProperty.call(SELF_HEAL_MAP, trimmed)) {
+      const fixed = SELF_HEAL_MAP[trimmed];
+      cacheSet(trimmed, fixed);
+      return replaceTrimmed(text, trimmed, fixed);
+    }
+
+    // 4. 动态正则匹配管线（全部标准原生正则字面量，命中统一写入 stringCache）
+
+    // ===== 首页问候语（3 组模板 × 有/无用户名） =====
     if (/^(?:Hey|Welcome back|Good to see you)/i.test(trimmed)) {
       const greetingRules = [
         [/^Hey there,\s*what should we build today\?$/i, () => '嘿，今天想构建点什么？'],
@@ -5400,32 +4572,32 @@ electron_1.contextBridge.exposeInMainWorld('wizardAPI', wizardAPI);
       ];
       for (let gi = 0; gi < greetingRules.length; gi++) {
         if (greetingRules[gi][0].test(trimmed)) {
-          const fixed = trimmed.replace(greetingRules[gi][0], (m, n) => greetingRules[gi][1](n));
-          if (stringCache.size < MAX_STRING_CACHE) stringCache.set(trimmed, fixed);
-          return text.replace(trimmed, fixed);
+          const fixed = trimmed.replace(greetingRules[gi][0], (_m, n) => greetingRules[gi][1](n));
+          cacheSet(trimmed, fixed);
+          return replaceTrimmed(text, trimmed, fixed);
         }
       }
     }
 
-    // ===== 自定义补充：账号方案提示（Your Plan: xxx） =====
+    // ===== 账号方案提示（Your Plan: xxx） =====
     if (/^Your Plan:\s*(.+)$/i.test(trimmed)) {
       const planMap = { 'antigravity starter quota': 'Antigravity 入门配额' };
-      const fixed = trimmed.replace(/^Your Plan:\s*(.+)$/i, (m, p) => '当前方案：' + (planMap[p.trim().toLowerCase()] || p));
-      if (stringCache.size < MAX_STRING_CACHE) stringCache.set(trimmed, fixed);
-      return text.replace(trimmed, fixed);
+      const fixed = trimmed.replace(/^Your Plan:\s*(.+)$/i, (_m, p) => '当前方案：' + (planMap[p.trim().toLowerCase()] || p));
+      cacheSet(trimmed, fixed);
+      return replaceTrimmed(text, trimmed, fixed);
     }
 
-    // ===== 自定义补充：第三方模型访问公告（服务端下发，兼容多种句式） =====
+    // ===== 第三方模型访问与下线公告 =====
     if (/^Changes to third-party model access$/i.test(trimmed)) {
       const fixed = '第三方模型访问方式调整';
-      if (stringCache.size < MAX_STRING_CACHE) stringCache.set(trimmed, fixed);
-      return text.replace(trimmed, fixed);
+      cacheSet(trimmed, fixed);
+      return replaceTrimmed(text, trimmed, fixed);
     }
 
     if (/^(.+?)\s+(?:is|are)\s+(?:now\s+)?available on paid Pro and Ultra plans\.\s*Third-party model access will no longer be available on your current plan starting on\s*(.+?)\.$/i.test(trimmed)) {
-      const fixed = trimmed.replace(/^(.+?)\s+(?:is|are)\s+(?:now\s+)?available on paid Pro and Ultra plans\.\s*Third-party model access will no longer be available on your current plan starting on\s*(.+?)\.$/i, (m, models, d) => {
+      const fixed = trimmed.replace(/^(.+?)\s+(?:is|are)\s+(?:now\s+)?available on paid Pro and Ultra plans\.\s*Third-party model access will no longer be available on your current plan starting on\s*(.+?)\.$/i, (_m, models, d) => {
         const months = { january: 1, february: 2, march: 3, april: 4, may: 5, june: 6, july: 7, august: 8, september: 9, october: 10, november: 11, december: 12 };
-        const cn = (d || '').replace(/^([A-Za-z]+)\s+(\d{1,2}),?\s*(\d{4})$/, (mm, mon, day, year) => {
+        const cn = (d || '').replace(/^([A-Za-z]+)\s+(\d{1,2}),?\s*(\d{4})$/, (_mm, mon, day, year) => {
           const idx = months[mon.toLowerCase()];
           return idx ? (year + ' 年 ' + idx + ' 月 ' + day + ' 日') : d;
         });
@@ -5433,36 +4605,50 @@ electron_1.contextBridge.exposeInMainWorld('wizardAPI', wizardAPI);
         const modelsCn = parts.length === 2 ? parts.join(' 与 ') : parts.join('、');
         return modelsCn + ' 现已在付费 Pro 与 Ultra 方案中提供。自 ' + cn + '起，你当前方案将不再提供第三方模型访问。';
       });
-      if (stringCache.size < MAX_STRING_CACHE) stringCache.set(trimmed, fixed);
-      return text.replace(trimmed, fixed);
+      cacheSet(trimmed, fixed);
+      return replaceTrimmed(text, trimmed, fixed);
     }
 
-    // ===== 自定义补充：模型下线公告（GPT-OSS will be removed from Antigravity on ...） =====
-    if (/^(.+?)\s+will be removed from Antigravity on\s+(.+?)\.$/i.test(trimmed)) {
-      const fixed = trimmed.replace(/^(.+?)\s+will be removed from Antigravity on\s+(.+?)\.$/i, (m, model, d) => {
+    if (/^(?:(.+?)\s+)?will be removed(?:\s+from Antigravity)?\s+on\s+(.+?)\.?$/i.test(trimmed)) {
+      const fixed = trimmed.replace(/^(?:(.+?)\s+)?will be removed(\s+from Antigravity)?\s+on\s+(.+?)\.?$/i, (_m, model, fromAgy, d) => {
         const months = { january: 1, february: 2, march: 3, april: 4, may: 5, june: 6, july: 7, august: 8, september: 9, october: 10, november: 11, december: 12 };
-        const cn = (d || '').replace(/^([A-Za-z]+)\s+(\d{1,2}),?\s*(\d{4})$/, (mm, mon, day, year) => {
+        const cn = (d || '').replace(/^([A-Za-z]+)\s+(\d{1,2}),?\s*(\d{4})$/, (_mm, mon, day, year) => {
           const idx = months[mon.toLowerCase()];
-          return idx ? (year + ' 年 ' + idx + ' 月 ' + day + ' 日') : d;
-        });
-        return model + ' 将于 ' + cn + '从 Antigravity 移除。';
+          return idx ? (year + ' 年 ' + idx + ' 月 ' + day + ' 日 ') : (d + ' ');
+        }).trim();
+        const subj = !model ? '' : (/^this model$/i.test(model.trim()) ? '此模型' : (model.trim() + ' '));
+        const suffix = fromAgy ? '从 Antigravity 移除。' : '移除。';
+        return subj + '将于 ' + cn + suffix;
       });
-      if (stringCache.size < MAX_STRING_CACHE) stringCache.set(trimmed, fixed);
-      return text.replace(trimmed, fixed);
+      cacheSet(trimmed, fixed);
+      return replaceTrimmed(text, trimmed, fixed);
     }
 
-    // ===== 自定义补充：新模型发布弹窗公告（Introducing Gemini 4 Hydrogen 等） =====
+    if (/^([A-Za-z0-9._ -]+?)\s+that\s+may\s+offload\s+routine\s+steps\s+to\s+([A-Za-z0-9._ -]+?)\.\s*Same\s+([A-Za-z0-9._ -]+?)-level\s+quality,\s*fewer\s+tokens\s+used\.?$/i.test(trimmed)) {
+      const fixed = trimmed.replace(
+        /^([A-Za-z0-9._ -]+?)\s+that\s+may\s+offload\s+routine\s+steps\s+to\s+([A-Za-z0-9._ -]+?)\.\s*Same\s+([A-Za-z0-9._ -]+?)-level\s+quality,\s*fewer\s+tokens\s+used\.?$/i,
+        '由 $1 主导，可将常规步骤分流至 $2 执行。保持 $3 级输出质量，消耗更少 Token。'
+      );
+      cacheSet(trimmed, fixed);
+      return replaceTrimmed(text, trimmed, fixed);
+    }
+
+    if (/^Effort isn't adjustable for\s+(.+?)\.?$/i.test(trimmed)) {
+      const fixed = trimmed.replace(/^Effort isn't adjustable for\s+(.+?)\.?$/i, '无法为 $1 调整思考档位。');
+      cacheSet(trimmed, fixed);
+      return replaceTrimmed(text, trimmed, fixed);
+    }
+
     if (/^Introducing\s+((?:Gemini|Claude|GPT|Gemma|Veo|Imagen)(?:\s+[A-Za-z0-9._-]+){1,5})([!.]?)$/i.test(trimmed)) {
       const fixed = trimmed.replace(/^Introducing\s+((?:Gemini|Claude|GPT|Gemma|Veo|Imagen)(?:\s+[A-Za-z0-9._-]+){1,5})([!.]?)$/i, (_m, model, punc) => {
         return '全新推出 ' + model + (punc === '!' ? '！' : '');
       });
-      if (stringCache.size < MAX_STRING_CACHE) stringCache.set(trimmed, fixed);
-      return text.replace(trimmed, fixed);
+      cacheSet(trimmed, fixed);
+      return replaceTrimmed(text, trimmed, fixed);
     }
 
-    // ===== 自定义补充：模型可用范围提示（仅向部分订阅方案开放） =====
     if (/^(.+?)\s+(?:is|are)\s+currently available to\s+(.+?)\s+subscribers?\.$/i.test(trimmed)) {
-      const fixed = trimmed.replace(/^(.+?)\s+(?:is|are)\s+currently available to\s+(.+?)\s+subscribers?\.$/i, (m, models, audience) => {
+      const fixed = trimmed.replace(/^(.+?)\s+(?:is|are)\s+currently available to\s+(.+?)\s+subscribers?\.$/i, (_m, models, audience) => {
         const a = String(audience)
           .replace(/\bUltra and paid Pro plans?\b/gi, 'Ultra 与付费 Pro 方案')
           .replace(/\bpaid Pro and Ultra plans?\b/gi, '付费 Pro 与 Ultra 方案')
@@ -5473,408 +4659,275 @@ electron_1.contextBridge.exposeInMainWorld('wizardAPI', wizardAPI);
         const tail = /[A-Za-z0-9]$/.test(a) ? ' ' : '';
         return models + ' 目前仅向' + lead + a + tail + '订阅用户提供。';
       });
-      if (stringCache.size < MAX_STRING_CACHE) stringCache.set(trimmed, fixed);
-      return text.replace(trimmed, fixed);
+      cacheSet(trimmed, fixed);
+      return replaceTrimmed(text, trimmed, fixed);
     }
 
-    // ===== 自定义补充：模型在当前方案不可用 =====
     if (/^(.+?)\s+(?:is|are)\s+not available (?:on|in) your (?:current )?plan\.$/i.test(trimmed)) {
-      const fixed = trimmed.replace(/^(.+?)\s+(?:is|are)\s+not available (?:on|in) your (?:current )?plan\.$/i, (m, model) => model + ' 在你当前方案中不可用。');
-      if (stringCache.size < MAX_STRING_CACHE) stringCache.set(trimmed, fixed);
-      return text.replace(trimmed, fixed);
+      const fixed = trimmed.replace(/^(.+?)\s+(?:is|are)\s+not available (?:on|in) your (?:current )?plan\.$/i, (_m, model) => model + ' 在你当前方案中不可用。');
+      cacheSet(trimmed, fixed);
+      return replaceTrimmed(text, trimmed, fixed);
     }
 
-    // ===== 自定义补充：用量窗口与重置时间（Weekly limit, resets in 6d 23h） =====
-    if (/^(.+?),\s*resets? in\s+(.+)$/i.test(trimmed)) {
-      const fixed = trimmed.replace(/^(.+?),\s*resets? in\s+(.+)$/i, (m, label, t) => {
-        const labelMap = { 'weekly limit': '每周限额', 'daily limit': '每日限额', 'hourly limit': '每小时限额', 'monthly limit': '每月限额' };
-        const labelCn = labelMap[label.trim().toLowerCase()] || label;
-        const dur = String(t).trim()
-          .replace(/^<\s*1\s*m$/i, '不到 1 分钟')
-          .replace(/(\d+)\s*d/gi, '$1 天')
-          .replace(/(\d+)\s*h/gi, '$1 小时')
-          .replace(/(\d+)\s*m(?!o)/gi, '$1 分钟')
-          .replace(/\s+/g, ' ')
-          .trim();
-        return labelCn + '，' + dur + '后重置';
+    // ===== 用量窗口与配额重置时间 =====
+    if (/^(.+?),\s*resets?\s+in\s+(.+)$/i.test(trimmed)) {
+      const fixed = trimmed.replace(/^(.+?),\s*resets?\s+in\s+(.+)$/i, (_m, label, t) => {
+        const labelMap = {
+          'weekly limit': '每周限额',
+          'daily limit': '每日限额',
+          'hourly limit': '每小时限额',
+          'monthly limit': '每月限额',
+          '5-hour limit': '5 小时限额',
+          'five-hour limit': '5 小时限额',
+          'five hour limit': '5 小时限额'
+        };
+        const labelCn = labelMap[label.trim().toLowerCase()] || translateString(label.trim());
+        return labelCn + '，' + formatDurationCn(t) + '后重置';
       });
-      if (stringCache.size < MAX_STRING_CACHE) stringCache.set(trimmed, fixed);
-      return text.replace(trimmed, fixed);
+      cacheSet(trimmed, fixed);
+      return replaceTrimmed(text, trimmed, fixed);
     }
 
-    if (/^resets? in\s+(.+)$/i.test(trimmed)) {
-      const fixed = trimmed.replace(/^resets? in\s+(.+)$/i, (m, t) => {
-        const dur = String(t).trim()
-          .replace(/^<\s*1\s*m$/i, '不到 1 分钟')
-          .replace(/(\d+)\s*d/gi, '$1 天')
-          .replace(/(\d+)\s*h/gi, '$1 小时')
-          .replace(/(\d+)\s*m(?!o)/gi, '$1 分钟')
-          .replace(/\s+/g, ' ')
-          .trim();
-        return dur + '后重置';
-      });
-      if (stringCache.size < MAX_STRING_CACHE) stringCache.set(trimmed, fixed);
-      return text.replace(trimmed, fixed);
+    if (/^Resets?\s+in\s+(.+)$/i.test(trimmed)) {
+      const fixed = trimmed.replace(/^Resets?\s+in\s+(.+)$/i, (_m, t) => formatDurationCn(t) + '后重置');
+      cacheSet(trimmed, fixed);
+      return replaceTrimmed(text, trimmed, fixed);
     }
 
     if (/^(\d+(?:\.\d+)?)%\s*left$/i.test(trimmed)) {
-      const fixed = trimmed.replace(/^(\d+(?:\.\d+)?)%\s*left$/i, (m, pct) => pct + '% 可用');
-      if (stringCache.size < MAX_STRING_CACHE) stringCache.set(trimmed, fixed);
-      return text.replace(trimmed, fixed);
+      const fixed = trimmed.replace(/^(\d+(?:\.\d+)?)%\s*left$/i, (_m, pct) => pct + '% 可用');
+      cacheSet(trimmed, fixed);
+      return replaceTrimmed(text, trimmed, fixed);
     }
-    // ===== 自定义补充：AI 点数余额（Available AI Credits: N） =====
+
+    if (/^(\d+(?:\.\d+)?)%\s+(?:remaining|left)$/i.test(trimmed)) {
+      const fixed = trimmed.replace(/^(\d+(?:\.\d+)?)%\s+(?:remaining|left)$/i, (_m, pct) => pct + '% 剩余');
+      cacheSet(trimmed, fixed);
+      return replaceTrimmed(text, trimmed, fixed);
+    }
+
     if (/^Available AI Credits:\s*(.+)$/i.test(trimmed)) {
-      const fixed = trimmed.replace(/^Available AI Credits:\s*(.+)$/i, (m, n) => '可用 AI 点数：' + n);
-      if (stringCache.size < MAX_STRING_CACHE) stringCache.set(trimmed, fixed);
-      return text.replace(trimmed, fixed);
+      const fixed = trimmed.replace(/^Available AI Credits:\s*(.+)$/i, (_m, n) => '可用 AI 点数：' + n);
+      cacheSet(trimmed, fixed);
+      return replaceTrimmed(text, trimmed, fixed);
     }
-    // ===== 自定义补充：声音选择弹窗按钮（Use Arlo） =====
-    if (/^Use\s+([A-Z][A-Za-z0-9-]*)$/.test(trimmed)) {
-      const fixed = trimmed.replace(/^Use\s+([A-Z][A-Za-z0-9-]*)$/, (m, name) => '使用 ' + name);
-      if (stringCache.size < MAX_STRING_CACHE) stringCache.set(trimmed, fixed);
-      return text.replace(trimmed, fixed);
+
+    // ===== 声音选择弹窗按钮（严格限定已知语音音色白名单，防止误伤 Use Default / Use Sandbox） =====
+    if (/^Use\s+([A-Za-z0-9_-]+)$/i.test(trimmed)) {
+      const voiceCandidate = trimmed.replace(/^Use\s+/i, '');
+      if (VOICE_NAMES.has(voiceCandidate.toLowerCase())) {
+        const fixed = '使用 ' + voiceCandidate;
+        cacheSet(trimmed, fixed);
+        return replaceTrimmed(text, trimmed, fixed);
+      }
     }
-    // ===== 自定义补充：声音弹窗 "Use " + 名字 被拆成两个文本节点 =====
+
     if (/^Use$/.test(trimmed)) {
-      const fixed = text.replace(/^(\s*)Use(\s*)$/, (m, a, b) => a + '使用' + b);
-      if (stringCache.size < MAX_STRING_CACHE) stringCache.set(trimmed, fixed);
-      return fixed;
+      const fixed = '使用';
+      cacheSet(trimmed, fixed);
+      return replaceTrimmed(text, trimmed, fixed);
     }
-    // ===== 自定义补充：键盘快捷键提示（Enter Queues after the turn 等） =====
+
+    // ===== 键盘快捷键排队提示 =====
     if (/^(.+?)\s+Queues after the turn$/.test(trimmed)) {
-      const fixed = trimmed.replace(/^(.+?)\s+Queues after the turn$/, (m, key) => key + ' 在当前回合结束后排队');
-      if (stringCache.size < MAX_STRING_CACHE) stringCache.set(trimmed, fixed);
-      return text.replace(trimmed, fixed);
+      const fixed = trimmed.replace(/^(.+?)\s+Queues after the turn$/, (_m, key) => key + ' 在当前回合结束后排队');
+      cacheSet(trimmed, fixed);
+      return replaceTrimmed(text, trimmed, fixed);
     }
 
     if (/^(.+?)\s+Sends immediately$/.test(trimmed)) {
-      const fixed = trimmed.replace(/^(.+?)\s+Sends immediately$/, (m, key) => key + ' 立即发送');
-      if (stringCache.size < MAX_STRING_CACHE) stringCache.set(trimmed, fixed);
-      return text.replace(trimmed, fixed);
+      const fixed = trimmed.replace(/^(.+?)\s+Sends immediately$/, (_m, key) => key + ' 立即发送');
+      cacheSet(trimmed, fixed);
+      return replaceTrimmed(text, trimmed, fixed);
     }
 
     if (/^(.+?)\s+On empty prompt, sends next in queue$/.test(trimmed)) {
-      const fixed = trimmed.replace(/^(.+?)\s+On empty prompt, sends next in queue$/, (m, key) => key + ' 输入框为空时，发送队列中的下一条');
-      if (stringCache.size < MAX_STRING_CACHE) stringCache.set(trimmed, fixed);
-      return text.replace(trimmed, fixed);
+      const fixed = trimmed.replace(/^(.+?)\s+On empty prompt, sends next in queue$/, (_m, key) => key + ' 输入框为空时，发送队列中的下一条');
+      cacheSet(trimmed, fixed);
+      return replaceTrimmed(text, trimmed, fixed);
     }
-    // ===== 自定义补充：开发者设置 workspaceUri 说明（原文含反引号，用通配匹配） =====
-    if (/^Sets the .workspaceUri. URL parameter and reloads, repointing the active workspace./.test(trimmed)) {
+
+    // ===== 开发者设置 workspaceUri 说明 =====
+    if (/^Sets the .workspaceUri. URL parameter and reloads, repointing the active workspace\./.test(trimmed)) {
       const fixed = '设置 workspaceUri URL 参数并重新加载，从而把当前工作区指向新的位置。可从已有项目中选择文件夹，或输入自定义 URI（例如 file:///path/to/workspace）。';
-      if (stringCache.size < MAX_STRING_CACHE) stringCache.set(trimmed, fixed);
-      return text.replace(trimmed, fixed);
+      cacheSet(trimmed, fixed);
+      return replaceTrimmed(text, trimmed, fixed);
     }
 
-        // ===== 2.29.1 对话区选中文本浮动引用按钮（自适应快捷键） =====
-    if (/^Quote(?:s+(Ctrl+[a-zA-Z0-9]+|Cmd+[a-zA-Z0-9]+))?$/i.test(trimmed)) {
-      const fixed = trimmed.replace(/^Quote(?:s+(Ctrl+[a-zA-Z0-9]+|Cmd+[a-zA-Z0-9]+))?$/i, (match, shortcut) => {
-        return shortcut ? ('引用 ' + shortcut.toUpperCase().replace('CTRL', 'Ctrl').replace('CMD', 'Cmd')) : '引用';
+    // ===== 对话区选中文本浮动引用按钮与 /btw 提问按钮（支持多修饰键如 Ctrl+Shift+L） =====
+    if (/^Quote(?:\s+((?:Ctrl|Cmd)(?:\+[a-zA-Z0-9]+)+))?$/i.test(trimmed)) {
+      const fixed = trimmed.replace(/^Quote(?:\s+((?:Ctrl|Cmd)(?:\+[a-zA-Z0-9]+)+))?$/i, (_m, shortcut) => {
+        return shortcut ? ('引用 ' + formatShortcut(shortcut)) : '引用';
       });
-      if (stringCache.size < MAX_STRING_CACHE) stringCache.set(trimmed, fixed);
-      return text.replace(trimmed, fixed);
+      cacheSet(trimmed, fixed);
+      return replaceTrimmed(text, trimmed, fixed);
     }
 
-    // ===== 2.32.1 对话区选中文本浮动提问按钮 (Ask /btw) =====
-    if (/^Ask(?:\s+|\s*\/\s*)btw(?:\s+(Ctrl\+[a-zA-Z0-9]+|Cmd\+[a-zA-Z0-9]+))?$/i.test(trimmed)) {
-      const fixed = trimmed.replace(/^Ask(?:\s+|\s*\/\s*)btw(?:\s+(Ctrl\+[a-zA-Z0-9]+|Cmd\+[a-zA-Z0-9]+))?$/i, (match, shortcut) => {
-        return shortcut ? ('通过 /btw 提问 ' + shortcut.toUpperCase().replace('CTRL', 'Ctrl').replace('CMD', 'Cmd')) : '通过 /btw 提问';
+    if (/^Ask(?:\s+|\s*\/\s*)btw(?:\s+((?:Ctrl|Cmd)(?:\+[a-zA-Z0-9]+)+))?$/i.test(trimmed)) {
+      const fixed = trimmed.replace(/^Ask(?:\s+|\s*\/\s*)btw(?:\s+((?:Ctrl|Cmd)(?:\+[a-zA-Z0-9]+)+))?$/i, (_m, shortcut) => {
+        return shortcut ? ('通过 /btw 提问 ' + formatShortcut(shortcut)) : '通过 /btw 提问';
       });
-      if (stringCache.size < MAX_STRING_CACHE) stringCache.set(trimmed, fixed);
-      return text.replace(trimmed, fixed);
+      cacheSet(trimmed, fixed);
+      return replaceTrimmed(text, trimmed, fixed);
     }
 
-    // ===== 2.29.1 置顶对话排序菜单动态双重保障 =====
-    if (/^(?:Sort By|Sort by)$/i.test(trimmed)) {
+    // ===== 置顶对话排序菜单动态双重保障 =====
+    if (/^Sort By$/i.test(trimmed)) {
       const fixed = '排序方式';
-      if (stringCache.size < MAX_STRING_CACHE) stringCache.set(trimmed, fixed);
-      return text.replace(trimmed, fixed);
+      cacheSet(trimmed, fixed);
+      return replaceTrimmed(text, trimmed, fixed);
     }
-
-    if (/^(?:Last Updated|Last updated)$/i.test(trimmed)) {
+    if (/^Last Updated$/i.test(trimmed)) {
       const fixed = '最近更新';
-      if (stringCache.size < MAX_STRING_CACHE) stringCache.set(trimmed, fixed);
-      return text.replace(trimmed, fixed);
+      cacheSet(trimmed, fixed);
+      return replaceTrimmed(text, trimmed, fixed);
     }
-
-    if (/^(?:Custom Order|Custom order)$/i.test(trimmed)) {
+    if (/^Custom Order$/i.test(trimmed)) {
       const fixed = '自定义排序';
-      if (stringCache.size < MAX_STRING_CACHE) stringCache.set(trimmed, fixed);
-      return text.replace(trimmed, fixed);
+      cacheSet(trimmed, fixed);
+      return replaceTrimmed(text, trimmed, fixed);
     }
 
-        // ===== 2.29.1 扩展市场分类货架与描述动态双重保障 =====
-    if (/^Design,\s*Creative\s*&\s*Media$/i.test(trimmed)) {
-      const fixed = '设计、创意与媒体';
-      if (stringCache.size < MAX_STRING_CACHE) stringCache.set(trimmed, fixed);
-      return text.replace(trimmed, fixed);
-    }
-
-    if (/^Productivity\s*&\s*Project\s*Management$/i.test(trimmed)) {
-      const fixed = '生产力与项目管理';
-      if (stringCache.size < MAX_STRING_CACHE) stringCache.set(trimmed, fixed);
-      return text.replace(trimmed, fixed);
-    }
-
-    if (/^Cloud\s*Hosting\s*&\s*Deployment$/i.test(trimmed)) {
-      const fixed = '云托管与部署';
-      if (stringCache.size < MAX_STRING_CACHE) stringCache.set(trimmed, fixed);
-      return text.replace(trimmed, fixed);
-    }
-
+    // ===== 扩展市场分类货架与自动化面板动态保障 =====
     if (/^Developer\s+(?:Tools|工具)$/i.test(trimmed)) {
       const fixed = '开发者工具';
-      if (stringCache.size < MAX_STRING_CACHE) stringCache.set(trimmed, fixed);
-      return text.replace(trimmed, fixed);
+      cacheSet(trimmed, fixed);
+      return replaceTrimmed(text, trimmed, fixed);
     }
 
-    if (/^Business$/i.test(trimmed)) {
-      const fixed = '商业与商务';
-      if (stringCache.size < MAX_STRING_CACHE) stringCache.set(trimmed, fixed);
-      return text.replace(trimmed, fixed);
-    }
-
-    if (/^Design,\s*creative,\s*and\s*media\s*tools[.。]?$/i.test(trimmed)) {
-      const fixed = '设计、创意与媒体工具。';
-      if (stringCache.size < MAX_STRING_CACHE) stringCache.set(trimmed, fixed);
-      return text.replace(trimmed, fixed);
-    }
-
-    if (/^Plan\s*work,\s*track\s*issues,\s*sign\s*documents,\s*and\s*manage\s*your\s*notes\s*and\s*files[.。]?$/i.test(trimmed)) {
-      const fixed = '规划工作、跟踪事务、签署文档并管理笔记与文件。';
-      if (stringCache.size < MAX_STRING_CACHE) stringCache.set(trimmed, fixed);
-      return text.replace(trimmed, fixed);
-    }
-
-    if (/^Deploy\s*and\s*host\s*your\s*apps,\s*sites,\s*and\s*their\s*backends[.。]?$/i.test(trimmed)) {
-      const fixed = '部署并托管你的应用程序、网站及其后端服务。';
-      if (stringCache.size < MAX_STRING_CACHE) stringCache.set(trimmed, fixed);
-      return text.replace(trimmed, fixed);
-    }
-
-    if (/^APIs,\s*services,\s*and\s*tools\s*to\s*build,\s*test,\s*secure,\s*and\s*run\s*your\s*apps[.。]?$/i.test(trimmed)) {
-      const fixed = '用于构建、测试、保护和运行应用程序的 API、服务与工具。';
-      if (stringCache.size < MAX_STRING_CACHE) stringCache.set(trimmed, fixed);
-      return text.replace(trimmed, fixed);
-    }
-
-    if (/^Payments,\s*CRM,\s*accounting,\s*data,\s*identity,\s*customer\s*support,\s*marketing,\s*and\s*workflow\s*automation[.。]?$/i.test(trimmed)) {
-      const fixed = '支付、CRM、记账、数据、身份识别、客户支持、营销和工作流自动化。';
-      if (stringCache.size < MAX_STRING_CACHE) stringCache.set(trimmed, fixed);
-      return text.replace(trimmed, fixed);
-    }
-
-        // ===== 2.29.1+ 自动化面板空状态与第三方免责声明动态双重保障 =====
     if (/^No\s+(?:automations?|自动化)\s+yet$/i.test(trimmed)) {
       const fixed = '暂无自动化';
-      if (stringCache.size < MAX_STRING_CACHE) stringCache.set(trimmed, fixed);
-      return text.replace(trimmed, fixed);
+      cacheSet(trimmed, fixed);
+      return replaceTrimmed(text, trimmed, fixed);
     }
 
-    if (/^Run a prompt on a schedule, like a morning summary of yesterday's changes\.\s*Runs show up here[.。]?$/i.test(trimmed)) {
-      const fixed = '按计划定时运行提示词，例如每天早晨汇总昨天的更改。运行记录将显示在此处。';
-      if (stringCache.size < MAX_STRING_CACHE) stringCache.set(trimmed, fixed);
-      return text.replace(trimmed, fixed);
-    }
-
-    if (/^Google does not control the availability or functionality of third party developer tools\./i.test(trimmed)) {
+    if (/^Google does not control the availability or functionality of third party developer tools\..*found here:\s*$/i.test(trimmed)) {
       const fixed = 'Google 不控制第三方开发者工具的可用性或功能。连接到你的 Antigravity 实例的第三方开发者工具数据可能会与 Google 共享。Google 将根据 Google 隐私权政策保护此类数据，详情请参阅：';
-      if (stringCache.size < MAX_STRING_CACHE) stringCache.set(trimmed, fixed);
-      return text.replace(trimmed, fixed);
+      cacheSet(trimmed, fixed);
+      return replaceTrimmed(text, trimmed, fixed);
     }
 
-    // ===== 2.30.0 扩展市场搜索框占位符动态双重保障 =====
-    if (/^Search customizations\.{0,3}$/i.test(trimmed)) {
+    if (/^Search customizations\.{1,3}$/i.test(trimmed)) {
       const fixed = '搜索自定义项...';
-      if (stringCache.size < MAX_STRING_CACHE) stringCache.set(trimmed, fixed);
-      return text.replace(trimmed, fixed);
+      cacheSet(trimmed, fixed);
+      return replaceTrimmed(text, trimmed, fixed);
     }
 
-    // ===== 2.30.0 设置面板新增动态双重保障 (界面布局/对话布局/快捷键搜索/浏览器规则) =====
-    if (/^Interface\s+Layout$/i.test(trimmed)) {
-      const fixed = '界面布局';
-      if (stringCache.size < MAX_STRING_CACHE) stringCache.set(trimmed, fixed);
-      return text.replace(trimmed, fixed);
-    }
-
-    if (/^Knowledge\s+Work$/i.test(trimmed)) {
-      const fixed = '知识工作';
-      if (stringCache.size < MAX_STRING_CACHE) stringCache.set(trimmed, fixed);
-      return text.replace(trimmed, fixed);
-    }
-
-    if (/^Software\s+Engineering$/i.test(trimmed)) {
-      const fixed = '软件工程';
-      if (stringCache.size < MAX_STRING_CACHE) stringCache.set(trimmed, fixed);
-      return text.replace(trimmed, fixed);
-    }
-
-    if (/^Simplified\s+interface\s+for\s+research,\s*writing,\s*and\s+everyday\s+tasks[.。]?$/i.test(trimmed)) {
-      const fixed = '专为调研、写作和日常任务打造的精简界面。';
-      if (stringCache.size < MAX_STRING_CACHE) stringCache.set(trimmed, fixed);
-      return text.replace(trimmed, fixed);
-    }
-
-    if (/^Full\s+interface\s+for\s+coding,\s*developer\s+tools,\s*and\s+managing\s+agents[.。]?$/i.test(trimmed)) {
-      const fixed = '涵盖编程、开发者工具与智能体管理的完整界面。';
-      if (stringCache.size < MAX_STRING_CACHE) stringCache.set(trimmed, fixed);
-      return text.replace(trimmed, fixed);
-    }
-
-    if (/^Chat\s+Layout$/i.test(trimmed)) {
-      const fixed = '对话布局';
-      if (stringCache.size < MAX_STRING_CACHE) stringCache.set(trimmed, fixed);
-      return text.replace(trimmed, fixed);
-    }
-
-    if (/^Fill$/i.test(trimmed)) {
-      const fixed = '铺满';
-      if (stringCache.size < MAX_STRING_CACHE) stringCache.set(trimmed, fixed);
-      return text.replace(trimmed, fixed);
-    }
-
-    if (/^(?:Search|搜索)\s+shortcuts\.{0,3}$/i.test(trimmed)) {
+    if (/^(?:Search|搜索)\s+shortcuts\.{1,3}$/i.test(trimmed)) {
       const fixed = '搜索快捷键...';
-      if (stringCache.size < MAX_STRING_CACHE) stringCache.set(trimmed, fixed);
-      return text.replace(trimmed, fixed);
+      cacheSet(trimmed, fixed);
+      return replaceTrimmed(text, trimmed, fixed);
     }
 
-    if (/^Configure\s+allowed\s+and\s+denied\s+URLs\s+for\s+the\s+browser\s+subagent/i.test(trimmed)) {
-      const fixed = trimmed.includes('Google Chrome')
-        ? '配置浏览器子智能体（通过 /browser 调用）允许和拒绝访问的 URL。需要 Google Chrome。'
-        : '配置浏览器子智能体（通过 /browser 调用）允许和拒绝访问的 URL。需要 ';
-      if (stringCache.size < MAX_STRING_CACHE) stringCache.set(trimmed, fixed);
-      return text.replace(trimmed, fixed);
-    }
-
-    // ===== 2.30.0 语音选择器与过滤菜单动态保障 =====
-    if (/^Auto\s+Pin$/i.test(trimmed)) {
-      const fixed = '自动置顶';
-      if (stringCache.size < MAX_STRING_CACHE) stringCache.set(trimmed, fixed);
-      return text.replace(trimmed, fixed);
+    if (/^Configure\s+allowed\s+and\s+denied\s+URLs\s+for\s+the\s+browser\s+subagent\s*\(invoked\s+with\s+\/browser\)\.\s*Requires\s+Google\s+Chrome\.?$/i.test(trimmed)) {
+      const fixed = '配置浏览器子智能体（通过 /browser 调用）允许和拒绝访问的 URL。需要 Google Chrome。';
+      cacheSet(trimmed, fixed);
+      return replaceTrimmed(text, trimmed, fixed);
     }
 
     if (/^Choose\s+Antigravity(?:'s)?\s+Voice$/i.test(trimmed)) {
       const fixed = '选择 Antigravity 的声音';
-      if (stringCache.size < MAX_STRING_CACHE) stringCache.set(trimmed, fixed);
-      return text.replace(trimmed, fixed);
+      cacheSet(trimmed, fixed);
+      return replaceTrimmed(text, trimmed, fixed);
     }
 
-    if (/^Use\s+([A-Za-z0-9_-]+)$/i.test(trimmed)) {
-      const fixed = trimmed.replace(/^Use\s+([A-Za-z0-9_-]+)$/i, '使用 $1');
-      if (stringCache.size < MAX_STRING_CACHE) stringCache.set(trimmed, fixed);
-      return text.replace(trimmed, fixed);
-    }
-
-    if (/^(?:Clear|清除)\s+and\s+friendly[.。]?$/i.test(trimmed)) {
+    if (/^(?:Clear|清除)\s+and\s+friendly$/i.test(trimmed)) {
       const fixed = '清晰友好';
-      if (stringCache.size < MAX_STRING_CACHE) stringCache.set(trimmed, fixed);
-      return text.replace(trimmed, fixed);
+      cacheSet(trimmed, fixed);
+      return replaceTrimmed(text, trimmed, fixed);
     }
 
-    // ===== 2.31.2 设置面板与项目管理深度补漏动态保障 =====
-    if (/^Configure built-in browser, link opening, and browser subagent preferences[.。]?$/i.test(trimmed)) {
-      const fixed = '配置内置浏览器、链接打开方式以及浏览器子智能体偏好设置。';
-      if (stringCache.size < MAX_STRING_CACHE) stringCache.set(trimmed, fixed);
-      return text.replace(trimmed, fixed);
-    }
-
-    if (/^Manage project folders and settings[.。]?$/i.test(trimmed)) {
-      const fixed = '管理项目文件夹与设置。';
-      if (stringCache.size < MAX_STRING_CACHE) stringCache.set(trimmed, fixed);
-      return text.replace(trimmed, fixed);
-    }
-
-    if (/\bModified\s+in\s+([a-zA-Z0-9_\-\/\.]+)/i.test(trimmed)) {
-      const fixed = trimmed.replace(/\bModified\s+in\s+([a-zA-Z0-9_\-\/\.]+)/gi, '已在 $1 中修改');
-      if (stringCache.size < MAX_STRING_CACHE) stringCache.set(trimmed, fixed);
-      return text.replace(trimmed, fixed);
+    // ===== 设置面板与删除项目对话统计动态规则 =====
+    if (/\bModified\s+in\s+([a-zA-Z0-9_\-/.]+)/i.test(trimmed)) {
+      const fixed = trimmed.replace(/\bModified\s+in\s+([a-zA-Z0-9_\-/.]+)/gi, '已在 $1 中修改');
+      cacheSet(trimmed, fixed);
+      return replaceTrimmed(text, trimmed, fixed);
     }
 
     if (/^(?:Permanently delete|永久删除)\s+(.+?)\s+(?:including|包括|包含)\s+(\d+)\s+active\s+conversations?\s+and\s+(\d+)\s+archived\s+conversations?([.。]?)$/i.test(trimmed)) {
       const fixed = trimmed.replace(/^(?:Permanently delete|永久删除)\s+(.+?)\s+(?:including|包括|包含)\s+(\d+)\s+active\s+conversations?\s+and\s+(\d+)\s+archived\s+conversations?([.。]?)$/i, '永久删除 $1，包含 $2 个活跃对话与 $3 个已归档对话。');
-      if (stringCache.size < MAX_STRING_CACHE) stringCache.set(trimmed, fixed);
-      return text.replace(trimmed, fixed);
+      cacheSet(trimmed, fixed);
+      return replaceTrimmed(text, trimmed, fixed);
     }
 
     if (/^(?:Permanently delete|永久删除)\s+(.+?)\s+(?:including|包括|包含)\s+(\d+)\s+active\s+conversations?([.。]?)$/i.test(trimmed)) {
       const fixed = trimmed.replace(/^(?:Permanently delete|永久删除)\s+(.+?)\s+(?:including|包括|包含)\s+(\d+)\s+active\s+conversations?([.。]?)$/i, '永久删除 $1，包含 $2 个活跃对话。');
-      if (stringCache.size < MAX_STRING_CACHE) stringCache.set(trimmed, fixed);
-      return text.replace(trimmed, fixed);
+      cacheSet(trimmed, fixed);
+      return replaceTrimmed(text, trimmed, fixed);
     }
 
     if (/^(?:Permanently delete|永久删除)\s+(.+?)\s+(?:including|包括|包含)\s+(\d+)\s+archived\s+conversations?([.。]?)$/i.test(trimmed)) {
       const fixed = trimmed.replace(/^(?:Permanently delete|永久删除)\s+(.+?)\s+(?:including|包括|包含)\s+(\d+)\s+archived\s+conversations?([.。]?)$/i, '永久删除 $1，包含 $2 个已归档对话。');
-      if (stringCache.size < MAX_STRING_CACHE) stringCache.set(trimmed, fixed);
-      return text.replace(trimmed, fixed);
+      cacheSet(trimmed, fixed);
+      return replaceTrimmed(text, trimmed, fixed);
     }
 
     if (/^(?:(?:including|包括|包含)\s+)?(\d+)\s+active\s+conversations?\s+and\s+(\d+)\s+archived\s+conversations?([.。]?)$/i.test(trimmed)) {
       const fixed = trimmed.replace(/^(?:(?:including|包括|包含)\s+)?(\d+)\s+active\s+conversations?\s+and\s+(\d+)\s+archived\s+conversations?([.。]?)$/i, '包含 $1 个活跃对话与 $2 个已归档对话。');
-      if (stringCache.size < MAX_STRING_CACHE) stringCache.set(trimmed, fixed);
-      return text.replace(trimmed, fixed);
+      cacheSet(trimmed, fixed);
+      return replaceTrimmed(text, trimmed, fixed);
     }
 
     if (/^(\d+)\s+active\s+conversations?([.。]?)$/i.test(trimmed)) {
       const fixed = trimmed.replace(/^(\d+)\s+active\s+conversations?([.。]?)$/i, '$1 个活跃对话。');
-      if (stringCache.size < MAX_STRING_CACHE) stringCache.set(trimmed, fixed);
-      return text.replace(trimmed, fixed);
+      cacheSet(trimmed, fixed);
+      return replaceTrimmed(text, trimmed, fixed);
     }
 
     if (/^(\d+)\s+archived\s+conversations?([.。]?)$/i.test(trimmed)) {
       const fixed = trimmed.replace(/^(\d+)\s+archived\s+conversations?([.。]?)$/i, '$1 个已归档对话。');
-      if (stringCache.size < MAX_STRING_CACHE) stringCache.set(trimmed, fixed);
-      return text.replace(trimmed, fixed);
+      cacheSet(trimmed, fixed);
+      return replaceTrimmed(text, trimmed, fixed);
     }
 
-    // ===== 2.32.1 远程 SSH 交互与状态动态保障 =====
+    // ===== 远程 SSH 交互与连接状态动态保障（长句在前，防止被短句遮蔽） =====
     if (/^Reconnecting to (.+?)[.…⋯]?$/i.test(trimmed)) {
       const fixed = trimmed.replace(/^Reconnecting to (.+?)[.…⋯]?$/i, '正在重新连接到 $1…');
-      if (stringCache.size < MAX_STRING_CACHE) stringCache.set(trimmed, fixed);
-      return text.replace(trimmed, fixed);
+      cacheSet(trimmed, fixed);
+      return replaceTrimmed(text, trimmed, fixed);
     }
 
     if (/^Disconnected from (.+?)$/i.test(trimmed)) {
       const fixed = trimmed.replace(/^Disconnected from (.+?)$/i, '已断开与 $1 的连接');
-      if (stringCache.size < MAX_STRING_CACHE) stringCache.set(trimmed, fixed);
-      return text.replace(trimmed, fixed);
+      cacheSet(trimmed, fixed);
+      return replaceTrimmed(text, trimmed, fixed);
     }
 
-    if (/^Agents keep running on (.+?).?$/i.test(trimmed)) {
-      const fixed = trimmed.replace(/^Agents keep running on (.+?).?$/i, '智能体将在 $1 上继续运行。');
-      if (stringCache.size < MAX_STRING_CACHE) stringCache.set(trimmed, fixed);
-      return text.replace(trimmed, fixed);
+    if (/^Agents keep running on (.+?) unless its server stopped\.?$/i.test(trimmed)) {
+      const fixed = trimmed.replace(/^Agents keep running on (.+?) unless its server stopped\.?$/i, '智能体将在 $1 上继续运行（除非其服务端已停止）。');
+      cacheSet(trimmed, fixed);
+      return replaceTrimmed(text, trimmed, fixed);
     }
 
-    if (/^Agents keep running on (.+?) unless its server stopped.?$/i.test(trimmed)) {
-      const fixed = trimmed.replace(/^Agents keep running on (.+?) unless its server stopped.?$/i, '智能体将在 $1 上继续运行（除非其服务端已停止）。');
-      if (stringCache.size < MAX_STRING_CACHE) stringCache.set(trimmed, fixed);
-      return text.replace(trimmed, fixed);
+    if (/^Agents keep running on (.+?)\.?$/i.test(trimmed)) {
+      const fixed = trimmed.replace(/^Agents keep running on (.+?)\.?$/i, '智能体将在 $1 上继续运行。');
+      cacheSet(trimmed, fixed);
+      return replaceTrimmed(text, trimmed, fixed);
     }
 
-    // ===== 2.32.1 Google Workspace 与插件生态动态兼容 =====
     if (/^Connect to Google Workspace, including Docs, Sheets, Slides, Drive, Calendar(?:, and Gmail)?[.…⋯]?$/i.test(trimmed)) {
       const fixed = '连接到 Google Workspace，包括 Google 文档、表格、幻灯片、云端硬盘、日历' + (trimmed.includes('Gmail') ? '和 Gmail。' : '。');
-      if (stringCache.size < MAX_STRING_CACHE) stringCache.set(trimmed, fixed);
-      return text.replace(trimmed, fixed);
+      cacheSet(trimmed, fixed);
+      return replaceTrimmed(text, trimmed, fixed);
     }
 
-    if (/^Stop the Antigravity server on (.+?)?$/i.test(trimmed)) {
-      const fixed = trimmed.replace(/^Stop the Antigravity server on (.+?)?$/i, '停止 $1 上的 Antigravity 服务端？');
-      if (stringCache.size < MAX_STRING_CACHE) stringCache.set(trimmed, fixed);
-      return text.replace(trimmed, fixed);
+    if (/^Stop the Antigravity server on (.+?)\?$/i.test(trimmed)) {
+      const fixed = trimmed.replace(/^Stop the Antigravity server on (.+?)\?$/i, '停止 $1 上的 Antigravity 服务端？');
+      cacheSet(trimmed, fixed);
+      return replaceTrimmed(text, trimmed, fixed);
     }
 
-    // ===== 2.32.2.1 对话页排队发送 (Send all (N))、模型档位及撤销弹窗动态匹配 =====
+    // ===== 对话排队发送、模型档位、侧边提问、Worktree 与工具动态匹配 =====
     if (/^Send\s+all\s*\((\d+)\)$/i.test(trimmed)) {
       const fixed = trimmed.replace(/^Send\s+all\s*\((\d+)\)$/i, '全部发送 ($1)');
-      if (stringCache.size < MAX_STRING_CACHE) stringCache.set(trimmed, fixed);
-      return text.replace(trimmed, fixed);
+      cacheSet(trimmed, fixed);
+      return replaceTrimmed(text, trimmed, fixed);
     }
 
     if (/^Send\s+all$/i.test(trimmed)) {
       const fixed = '全部发送';
-      if (stringCache.size < MAX_STRING_CACHE) stringCache.set(trimmed, fixed);
-      return text.replace(trimmed, fixed);
+      cacheSet(trimmed, fixed);
+      return replaceTrimmed(text, trimmed, fixed);
     }
 
     if (/^(Low|Medium|High|Extra|Max)\s*·\s*(.+)$/i.test(trimmed)) {
@@ -5882,77 +4935,83 @@ electron_1.contextBridge.exposeInMainWorld('wizardAPI', wizardAPI);
         const tierMap = { low: '低', medium: '中', high: '高', xhigh: '极高', extra: '极高', max: '最高' };
         return (tierMap[tier.toLowerCase()] || tier) + ' · ' + ctx;
       });
-      if (stringCache.size < MAX_STRING_CACHE) stringCache.set(trimmed, fixed);
-      return text.replace(trimmed, fixed);
+      cacheSet(trimmed, fixed);
+      return replaceTrimmed(text, trimmed, fixed);
     }
 
     if (/^(\d+)\s+models\s+selected$/i.test(trimmed)) {
       const fixed = trimmed.replace(/^(\d+)\s+models\s+selected$/i, '已选择 $1 个模型');
-      if (stringCache.size < MAX_STRING_CACHE) stringCache.set(trimmed, fixed);
-      return text.replace(trimmed, fixed);
+      cacheSet(trimmed, fixed);
+      return replaceTrimmed(text, trimmed, fixed);
     }
 
     if (/^\+(\d+)\s+attachments?$/i.test(trimmed)) {
       const fixed = trimmed.replace(/^\+(\d+)\s+attachments?$/i, '+$1 个附件');
-      if (stringCache.size < MAX_STRING_CACHE) stringCache.set(trimmed, fixed);
-      return text.replace(trimmed, fixed);
+      cacheSet(trimmed, fixed);
+      return replaceTrimmed(text, trimmed, fixed);
     }
 
     if (/^Send\s+now:\s*(.+)$/i.test(trimmed)) {
       const fixed = trimmed.replace(/^Send\s+now:\s*(.+)$/i, (_m, v) => '立即发送：' + v);
-      if (stringCache.size < MAX_STRING_CACHE) stringCache.set(trimmed, fixed);
-      return text.replace(trimmed, fixed);
+      cacheSet(trimmed, fixed);
+      return replaceTrimmed(text, trimmed, fixed);
     }
 
     if (/^View\s+Diff\s+for\s+(.+)$/i.test(trimmed)) {
       const fixed = trimmed.replace(/^View\s+Diff\s+for\s+(.+)$/i, (_m, v) => '查看 ' + v + ' 的差异');
-      if (stringCache.size < MAX_STRING_CACHE) stringCache.set(trimmed, fixed);
-      return text.replace(trimmed, fixed);
+      cacheSet(trimmed, fixed);
+      return replaceTrimmed(text, trimmed, fixed);
     }
 
     if (/^There was an error determining the code changes that this undo action will make:\s*(.+)$/i.test(trimmed)) {
       const fixed = trimmed.replace(/^There was an error determining the code changes that this undo action will make:\s*(.+)$/i, (_m, v) => '确定此撤销操作将产生的代码更改时出错：' + v);
-      if (stringCache.size < MAX_STRING_CACHE) stringCache.set(trimmed, fixed);
-      return text.replace(trimmed, fixed);
+      cacheSet(trimmed, fixed);
+      return replaceTrimmed(text, trimmed, fixed);
     }
 
-    // ===== 2.32.2 自动化调度、分步向导与侧边提问动态保障 =====
-    if (/^Steps+(d+)s+ofs+(d+)$/i.test(trimmed)) {
-      const fixed = trimmed.replace(/^Steps+(d+)s+ofs+(d+)$/i, '第 $1 步，共 $2 步');
-      if (stringCache.size < MAX_STRING_CACHE) stringCache.set(trimmed, fixed);
-      return text.replace(trimmed, fixed);
+    // ===== 自动化调度、分步向导与侧边提问动态保障（已修复全部单反斜杠漏转义） =====
+    if (/^Step\s+(\d+)\s+of\s+(\d+)$/i.test(trimmed)) {
+      const fixed = trimmed.replace(/^Step\s+(\d+)\s+of\s+(\d+)$/i, '第 $1 步，共 $2 步');
+      cacheSet(trimmed, fixed);
+      return replaceTrimmed(text, trimmed, fixed);
     }
 
-    if (/^Edit side question title:s*(.+)$/i.test(trimmed)) {
-      const fixed = trimmed.replace(/^Edit side question title:s*(.+)$/i, '编辑侧边提问标题：$1');
-      if (stringCache.size < MAX_STRING_CACHE) stringCache.set(trimmed, fixed);
-      return text.replace(trimmed, fixed);
+    if (/^Edit side question title:\s*(.+)$/i.test(trimmed)) {
+      const fixed = trimmed.replace(/^Edit side question title:\s*(.+)$/i, (_m, t) => '编辑侧边提问标题：' + t.trim());
+      cacheSet(trimmed, fixed);
+      return replaceTrimmed(text, trimmed, fixed);
     }
 
-    if (/^(?:New|Create)s+(automation|scheduled task)$/i.test(trimmed)) {
+    if (/^Reply to\s+(.+)$/i.test(trimmed)) {
+      const fixed = trimmed.replace(/^Reply to\s+(.+)$/i, (_m, t) => '回复 ' + t);
+      cacheSet(trimmed, fixed);
+      return replaceTrimmed(text, trimmed, fixed);
+    }
+
+    if (/^(?:New|Create)\s+(automation|scheduled task)$/i.test(trimmed)) {
       const isCreate = /^Create/i.test(trimmed);
       const isAuto = /automation$/i.test(trimmed);
       const fixed = (isCreate ? '创建' : '新建') + (isAuto ? '自动化' : '定时任务');
-      if (stringCache.size < MAX_STRING_CACHE) stringCache.set(trimmed, fixed);
-      return text.replace(trimmed, fixed);
+      cacheSet(trimmed, fixed);
+      return replaceTrimmed(text, trimmed, fixed);
     }
 
     if (/^Next run (today|tomorrow) around (.+)$/i.test(trimmed)) {
       const fixed = trimmed.replace(/^Next run (today|tomorrow) around (.+)$/i, (_m, d, t) => '下次运行：' + (/today/i.test(d) ? '今天 ' : '明天 ') + t + ' 左右');
-      if (stringCache.size < MAX_STRING_CACHE) stringCache.set(trimmed, fixed);
-      return text.replace(trimmed, fixed);
+      cacheSet(trimmed, fixed);
+      return replaceTrimmed(text, trimmed, fixed);
     }
 
     if (/^Next run on (.+?) around (.+)$/i.test(trimmed)) {
       const fixed = trimmed.replace(/^Next run on (.+?) around (.+)$/i, '下次运行：$1 $2 左右');
-      if (stringCache.size < MAX_STRING_CACHE) stringCache.set(trimmed, fixed);
-      return text.replace(trimmed, fixed);
+      cacheSet(trimmed, fixed);
+      return replaceTrimmed(text, trimmed, fixed);
     }
 
-    if (/^Every (d+) (hours?|minutes?)(?: on (.+))?$/i.test(trimmed)) {
-      const fixed = trimmed.replace(/^Every (d+) (hours?|minutes?)(?: on (.+))?$/i, (_m, n, u, d) => '每 ' + n + (/hour/i.test(u) ? ' 小时' : ' 分钟') + (d ? '（' + d + '）' : ''));
-      if (stringCache.size < MAX_STRING_CACHE) stringCache.set(trimmed, fixed);
-      return text.replace(trimmed, fixed);
+    if (/^Every\s+(\d+)\s+(hours?|minutes?)(?:\s+on\s+(.+))?$/i.test(trimmed)) {
+      const fixed = trimmed.replace(/^Every\s+(\d+)\s+(hours?|minutes?)(?:\s+on\s+(.+))?$/i, (_m, n, u, d) => '每 ' + n + (/hour/i.test(u) ? ' 小时' : ' 分钟') + (d ? '（' + d + '）' : ''));
+      cacheSet(trimmed, fixed);
+      return replaceTrimmed(text, trimmed, fixed);
     }
 
     if (/^(Daily|Weekdays|Weekends) at (.+)$/i.test(trimmed)) {
@@ -5960,724 +5019,600 @@ electron_1.contextBridge.exposeInMainWorld('wizardAPI', wizardAPI);
         const map = { daily: '每天 ', weekdays: '每个工作日 ', weekends: '每个周末 ' };
         return (map[p.toLowerCase()] || p + ' ') + t;
       });
-      if (stringCache.size < MAX_STRING_CACHE) stringCache.set(trimmed, fixed);
-      return text.replace(trimmed, fixed);
+      cacheSet(trimmed, fixed);
+      return replaceTrimmed(text, trimmed, fixed);
     }
 
-    if (/^Monthly on the (d+)(?:st|nd|rd|th) at (.+)$/i.test(trimmed)) {
-      const fixed = trimmed.replace(/^Monthly on the (d+)(?:st|nd|rd|th) at (.+)$/i, '每月 $1 日 $2');
-      if (stringCache.size < MAX_STRING_CACHE) stringCache.set(trimmed, fixed);
-      return text.replace(trimmed, fixed);
+    if (/^Monthly on the\s+(\d+)(?:st|nd|rd|th)\s+at\s+(.+)$/i.test(trimmed)) {
+      const fixed = trimmed.replace(/^Monthly on the\s+(\d+)(?:st|nd|rd|th)\s+at\s+(.+)$/i, '每月 $1 日 $2');
+      cacheSet(trimmed, fixed);
+      return replaceTrimmed(text, trimmed, fixed);
     }
 
     if (/^Not connected to (.+?)$/i.test(trimmed)) {
-      const fixed = trimmed.replace(/^Not connected to (.+?)$/i, '未连接到 $1');
-      if (stringCache.size < MAX_STRING_CACHE) stringCache.set(trimmed, fixed);
-      return text.replace(trimmed, fixed);
+      const fixed = trimmed.replace(/^Not connected to (.+?)$/i, (_m, h) => '未连接到 ' + h);
+      cacheSet(trimmed, fixed);
+      return replaceTrimmed(text, trimmed, fixed);
     }
 
-    // ===== 2.29.1 扩展市场通用模式匹配 =====
+    // ===== 侧边栏、分支、浏览器与 Hooks 动态短语 =====
+    if (/^Using browser\s*·\s*(.+)$/i.test(trimmed)) {
+      const fixed = trimmed.replace(/^Using browser\s*·\s*(.+)$/i, (_m, target) => '正在使用浏览器 · ' + target);
+      cacheSet(trimmed, fixed);
+      return replaceTrimmed(text, trimmed, fixed);
+    }
+
+    if (/^Marked\s+(\d+)\s+conversations?\s+as\s+read$/i.test(trimmed)) {
+      const fixed = trimmed.replace(/^Marked\s+(\d+)\s+conversations?\s+as\s+read$/i, '已将 $1 个对话标为已读');
+      cacheSet(trimmed, fixed);
+      return replaceTrimmed(text, trimmed, fixed);
+    }
+
+    if (/^(\d+)\s+pinned\s+conversations?$/i.test(trimmed)) {
+      const fixed = trimmed.replace(/^(\d+)\s+pinned\s+conversations?$/i, '$1 个置顶对话');
+      cacheSet(trimmed, fixed);
+      return replaceTrimmed(text, trimmed, fixed);
+    }
+
+    if (/^Detached at\s+(.+)$/i.test(trimmed)) {
+      const fixed = trimmed.replace(/^Detached at\s+(.+)$/i, (_m, rev) => '游离于 ' + rev);
+      cacheSet(trimmed, fixed);
+      return replaceTrimmed(text, trimmed, fixed);
+    }
+
+    if (/^Branch,\s*current:\s*(.+)$/i.test(trimmed)) {
+      const fixed = trimmed.replace(/^Branch,\s*current:\s*(.+)$/i, (_m, br) => '分支，当前：' + br);
+      cacheSet(trimmed, fixed);
+      return replaceTrimmed(text, trimmed, fixed);
+    }
+
+    if (/^No handlers configured for\s+(.+)$/i.test(trimmed)) {
+      const fixed = trimmed.replace(/^No handlers configured for\s+(.+)$/i, (_m, ev) => '尚未为 ' + ev + ' 配置处理程序');
+      cacheSet(trimmed, fixed);
+      return replaceTrimmed(text, trimmed, fixed);
+    }
+
+    if (/^Add New Handler to\s+(.+)$/i.test(trimmed)) {
+      const fixed = trimmed.replace(/^Add New Handler to\s+(.+)$/i, (_m, ev) => '向 ' + ev + ' 添加新处理程序');
+      cacheSet(trimmed, fixed);
+      return replaceTrimmed(text, trimmed, fixed);
+    }
+
+    if (/^Managed by the\s+(.+?)\s+(automation|plugin)$/i.test(trimmed)) {
+      const fixed = trimmed.replace(/^Managed by the\s+(.+?)\s+(automation|plugin)$/i, (_m, name, kind) => {
+        return /automation/i.test(kind) ? ('由自动化任务 ' + name + ' 托管') : ('由插件 ' + name + ' 托管');
+      });
+      cacheSet(trimmed, fixed);
+      return replaceTrimmed(text, trimmed, fixed);
+    }
+
+    // ===== 扩展市场通用模式匹配 =====
     if (/^(.+)\s+plugin for Antigravity$/i.test(trimmed)) {
       const fixed = trimmed.replace(/^(.+)\s+plugin for Antigravity$/i, 'Antigravity 的 $1 插件');
-      if (stringCache.size < MAX_STRING_CACHE) stringCache.set(trimmed, fixed);
-      return text.replace(trimmed, fixed);
+      cacheSet(trimmed, fixed);
+      return replaceTrimmed(text, trimmed, fixed);
     }
 
     if (/^The first (.+) tool call opens a browser window to authorize your workspace[.。]?$/i.test(trimmed)) {
       const fixed = trimmed.replace(/^The first (.+) tool call opens a browser window to authorize your workspace[.。]?$/i, '首次调用 $1 工具时会打开浏览器窗口以授权你的工作区。');
-      if (stringCache.size < MAX_STRING_CACHE) stringCache.set(trimmed, fixed);
-      return text.replace(trimmed, fixed);
+      cacheSet(trimmed, fixed);
+      return replaceTrimmed(text, trimmed, fixed);
     }
 
     if (trimmed.startsWith("Teamwork Graph CLI is Atlassian's agent-first interface")) {
       const fixed = "Teamwork Graph CLI 是 Atlassian 专为智能体打造的工作上下文接口：汇集 Jira 议题、Confluence 页面、Bitbucket PR 以及连接的第三方数据源。专为 Antigravity 等编码智能体量身定制，由 Atlassian 上下文图谱驱动。试试说：“根据此 PR 起草一个 Jira issue 并关联到史诗”。安装后运行 /twg-setup 将 Atlassian Teamwork Graph CLI 连接到 Antigravity。";
-      if (stringCache.size < MAX_STRING_CACHE) stringCache.set(trimmed, fixed);
-      return text.replace(trimmed, fixed);
+      cacheSet(trimmed, fixed);
+      return replaceTrimmed(text, trimmed, fixed);
     }
 
-    // ===== 2.21.0 专属动态模式匹配与防御 =====
-    // Customizations 扩展市场与已安装动态模式
     if (/^See\s+(\d+)\s+more$/i.test(trimmed)) {
       const fixed = trimmed.replace(/^See\s+(\d+)\s+more$/i, '查看其余 $1 项');
-      if (stringCache.size < MAX_STRING_CACHE) stringCache.set(trimmed, fixed);
-      return text.replace(trimmed, fixed);
+      cacheSet(trimmed, fixed);
+      return replaceTrimmed(text, trimmed, fixed);
     }
 
     if (/^See\s+less$/i.test(trimmed)) {
       const fixed = '收起';
-      if (stringCache.size < MAX_STRING_CACHE) stringCache.set(trimmed, fixed);
-      return text.replace(trimmed, fixed);
+      cacheSet(trimmed, fixed);
+      return replaceTrimmed(text, trimmed, fixed);
     }
 
     if (/^See\s+more\s+in\s+(.+)$/i.test(trimmed)) {
-      const fixed = trimmed.replace(/^See\s+more\s+in\s+(.+)$/i, '在“$1”中查看更多');
-      if (stringCache.size < MAX_STRING_CACHE) stringCache.set(trimmed, fixed);
-      return text.replace(trimmed, fixed);
+      const rawGroup = trimmed.replace(/^See\s+more\s+in\s+/i, '').trim();
+      const groupCn = translateString(rawGroup);
+      const fixed = '在“' + groupCn + '”中查看更多';
+      cacheSet(trimmed, fixed);
+      return replaceTrimmed(text, trimmed, fixed);
     }
 
+    if (/^See\s+less\s+in\s+(.+)$/i.test(trimmed)) {
+      const rawGroup = trimmed.replace(/^See\s+less\s+in\s+/i, '').trim();
+      const groupCn = translateString(rawGroup);
+      const fixed = '在“' + groupCn + '”中收起';
+      cacheSet(trimmed, fixed);
+      return replaceTrimmed(text, trimmed, fixed);
+    }
+
+    // 收紧后的 Install / Uninstall 动态规则：仅允许宾语 <= 3 词且不含连词介词与句末标点
     if (/^Install\s+(.+)$/i.test(trimmed)) {
-      const target = trimmed.replace(/^Install\s+/i, '');
-      const translatedTarget = translateString(target);
-      const fixed = '安装 ' + translatedTarget;
-      if (stringCache.size < MAX_STRING_CACHE) stringCache.set(trimmed, fixed);
-      return text.replace(trimmed, fixed);
+      const target = trimmed.replace(/^Install\s+/i, '').trim();
+      const tWords = target.split(/\s+/);
+      if (tWords.length <= 3 && !/\b(?:or|and|to|in|from|with|for|into|on|by)\b/i.test(target) && !/[.!?]$/.test(target)) {
+        const fixed = '安装 ' + translateString(target);
+        cacheSet(trimmed, fixed);
+        return replaceTrimmed(text, trimmed, fixed);
+      }
     }
 
     if (/^Uninstall\s+(.+)$/i.test(trimmed)) {
-      const target = trimmed.replace(/^Uninstall\s+/i, '');
-      const translatedTarget = translateString(target);
-      const fixed = '卸载 ' + translatedTarget;
-      if (stringCache.size < MAX_STRING_CACHE) stringCache.set(trimmed, fixed);
-      return text.replace(trimmed, fixed);
+      const target = trimmed.replace(/^Uninstall\s+/i, '').trim();
+      const tWords = target.split(/\s+/);
+      if (tWords.length <= 3 && !/\b(?:or|and|to|in|from|with|for|into|on|by)\b/i.test(target) && !/[.!?]$/.test(target)) {
+        const fixed = '卸载 ' + translateString(target);
+        cacheSet(trimmed, fixed);
+        return replaceTrimmed(text, trimmed, fixed);
+      }
     }
 
     if (/^(\d+)\s+(?:tools?|工具)\s+enabled$/i.test(trimmed)) {
       const fixed = trimmed.replace(/^(\d+)\s+(?:tools?|工具)\s+enabled$/i, '已启用 $1 个工具');
-      if (stringCache.size < MAX_STRING_CACHE) stringCache.set(trimmed, fixed);
-      return text.replace(trimmed, fixed);
+      cacheSet(trimmed, fixed);
+      return replaceTrimmed(text, trimmed, fixed);
     }
 
-    if (/^(?:Custom Agents|Custom 智能体|custom agents)$/i.test(trimmed)) {
-      const fixed = '自定义智能体';
-      if (stringCache.size < MAX_STRING_CACHE) stringCache.set(trimmed, fixed);
-      return text.replace(trimmed, fixed);
+    if (/^Loading (?:plugin|skill|bundle)[.…]*$/i.test(trimmed)) {
+      const fixed = /bundle/i.test(trimmed) ? '正在加载插件组合包...' : (/skill/i.test(trimmed) ? '正在加载技能...' : '正在加载插件...');
+      cacheSet(trimmed, fixed);
+      return replaceTrimmed(text, trimmed, fixed);
     }
 
-    if (/^(?:Skills\s*&\s*Rules|skills\s*&\s*rules)$/i.test(trimmed)) {
-      const fixed = '技能与规则';
-      if (stringCache.size < MAX_STRING_CACHE) stringCache.set(trimmed, fixed);
-      return text.replace(trimmed, fixed);
-    }
-
-    if (/^(?:Built In|Built-in|built in)$/i.test(trimmed)) {
-      const fixed = '内置';
-      if (stringCache.size < MAX_STRING_CACHE) stringCache.set(trimmed, fixed);
-      return text.replace(trimmed, fixed);
-    }
-
-    if (/^Loading plugin[.…]*$/i.test(trimmed)) {
-      const fixed = '正在加载插件...';
-      if (stringCache.size < MAX_STRING_CACHE) stringCache.set(trimmed, fixed);
-      return text.replace(trimmed, fixed);
-    }
-
-    // ===== 显示选项与筛选子菜单动态防御 =====
-    if (/^(?:Last 提示词|Last Prompt|Last prompt)$/i.test(trimmed)) {
+    if (/^(?:Last 提示词|Last Prompt)$/i.test(trimmed)) {
       const fixed = '最新提示词';
-      if (stringCache.size < MAX_STRING_CACHE) stringCache.set(trimmed, fixed);
-      return text.replace(trimmed, fixed);
-    }
-
-    if (/^(?:Sort Conversations|Sort conversations|sort conversations)$/i.test(trimmed)) {
-      const fixed = '对话排序';
-      if (stringCache.size < MAX_STRING_CACHE) stringCache.set(trimmed, fixed);
-      return text.replace(trimmed, fixed);
-    }
-
-    if (/^(?:Archived Only|Archived only|archived only)$/i.test(trimmed)) {
-      const fixed = '仅已归档';
-      if (stringCache.size < MAX_STRING_CACHE) stringCache.set(trimmed, fixed);
-      return text.replace(trimmed, fixed);
+      cacheSet(trimmed, fixed);
+      return replaceTrimmed(text, trimmed, fixed);
     }
 
     if (/^Last\s+(\d+)\s+days?$/i.test(trimmed)) {
       const fixed = trimmed.replace(/^Last\s+(\d+)\s+days?$/i, '最近 $1 天');
-      if (stringCache.size < MAX_STRING_CACHE) stringCache.set(trimmed, fixed);
-      return text.replace(trimmed, fixed);
+      cacheSet(trimmed, fixed);
+      return replaceTrimmed(text, trimmed, fixed);
     }
 
     if (/^Last\s+(\d+)\s+hours?$/i.test(trimmed)) {
       const fixed = trimmed.replace(/^Last\s+(\d+)\s+hours?$/i, '最近 $1 小时');
-      if (stringCache.size < MAX_STRING_CACHE) stringCache.set(trimmed, fixed);
-      return text.replace(trimmed, fixed);
+      cacheSet(trimmed, fixed);
+      return replaceTrimmed(text, trimmed, fixed);
     }
 
     if (/^Show\s+(\d+)\s+breakdowns?$/i.test(trimmed)) {
       const fixed = trimmed.replace(/^Show\s+(\d+)\s+breakdowns?$/i, '显示 $1 项明细');
-      if (stringCache.size < MAX_STRING_CACHE) stringCache.set(trimmed, fixed);
-      return text.replace(trimmed, fixed);
+      cacheSet(trimmed, fixed);
+      return replaceTrimmed(text, trimmed, fixed);
     }
 
     if (/^Hide\s+breakdowns?$/i.test(trimmed)) {
       const fixed = '隐藏明细';
-      if (stringCache.size < MAX_STRING_CACHE) stringCache.set(trimmed, fixed);
-      return text.replace(trimmed, fixed);
+      cacheSet(trimmed, fixed);
+      return replaceTrimmed(text, trimmed, fixed);
     }
 
-    // ===== 智能体执行标签、工具组与步骤状态动态正则匹配 =====
-    // 1. 夹生词清理：Ran 命令 -> 已运行命令
-    if (/^Ran\s+命令$/i.test(trimmed)) {
-      const fixed = '已运行命令';
-      if (stringCache.size < MAX_STRING_CACHE) stringCache.set(trimmed, fixed);
-      return text.replace(trimmed, fixed);
-    }
-    if (/^Running\s+命令$/i.test(trimmed)) {
-      const fixed = '正在运行命令';
-      if (stringCache.size < MAX_STRING_CACHE) stringCache.set(trimmed, fixed);
-      return text.replace(trimmed, fixed);
-    }
+    // ===== 智能体执行标签、工具组与步骤状态动态匹配 =====
     if (/^Ran\s+命令:\s*(.+)$/i.test(trimmed)) {
-      const fixed = trimmed.replace(/^Ran\s+命令:\s*(.+)$/i, '已运行命令: $1');
-      if (stringCache.size < MAX_STRING_CACHE) stringCache.set(trimmed, fixed);
-      return text.replace(trimmed, fixed);
+      const fixed = trimmed.replace(/^Ran\s+命令:\s*(.+)$/i, (_m, cmd) => '已运行命令: ' + cmd);
+      cacheSet(trimmed, fixed);
+      return replaceTrimmed(text, trimmed, fixed);
     }
     if (/^Running\s+命令:\s*(.+)$/i.test(trimmed)) {
-      const fixed = trimmed.replace(/^Running\s+命令:\s*(.+)$/i, '正在运行命令: $1');
-      if (stringCache.size < MAX_STRING_CACHE) stringCache.set(trimmed, fixed);
-      return text.replace(trimmed, fixed);
+      const fixed = trimmed.replace(/^Running\s+命令:\s*(.+)$/i, (_m, cmd) => '正在运行命令: ' + cmd);
+      cacheSet(trimmed, fixed);
+      return replaceTrimmed(text, trimmed, fixed);
     }
-    if (/^Ran\s+(\d+)\s+命令$/i.test(trimmed)) {
-      const fixed = trimmed.replace(/^Ran\s+(\d+)\s+命令$/i, '已运行 $1 条命令');
-      if (stringCache.size < MAX_STRING_CACHE) stringCache.set(trimmed, fixed);
-      return text.replace(trimmed, fixed);
+    if (/^Ran\s+(\d+)\s*(?:commands|命令)$/i.test(trimmed)) {
+      const fixed = trimmed.replace(/^Ran\s+(\d+)\s*(?:commands|命令)$/i, '已运行 $1 条命令');
+      cacheSet(trimmed, fixed);
+      return replaceTrimmed(text, trimmed, fixed);
     }
-    if (/^Running\s+(\d+)\s+命令$/i.test(trimmed)) {
-      const fixed = trimmed.replace(/^Running\s+(\d+)\s+命令$/i, '正在运行 $1 条命令');
-      if (stringCache.size < MAX_STRING_CACHE) stringCache.set(trimmed, fixed);
-      return text.replace(trimmed, fixed);
-    }
-
-    // 执行模式副标题动态匹配
-    if (/^Every command requires approval[.。]?$/i.test(trimmed)) {
-      const fixed = /[.。]$/.test(trimmed) ? '每条命令都需要审批。' : '每条命令都需要审批';
-      if (stringCache.size < MAX_STRING_CACHE) stringCache.set(trimmed, fixed);
-      return text.replace(trimmed, fixed);
-    }
-    if (/^Ask before sensitive operations[.。]?$/i.test(trimmed)) {
-      const fixed = /[.。]$/.test(trimmed) ? '在执行敏感操作前询问。' : '在执行敏感操作前询问';
-      if (stringCache.size < MAX_STRING_CACHE) stringCache.set(trimmed, fixed);
-      return text.replace(trimmed, fixed);
-    }
-    if (/^Run all commands without restrictions[.。]?$/i.test(trimmed)) {
-      const fixed = /[.。]$/.test(trimmed) ? '无限制运行所有命令。' : '无限制运行所有命令';
-      if (stringCache.size < MAX_STRING_CACHE) stringCache.set(trimmed, fixed);
-      return text.replace(trimmed, fixed);
-    }
-    if (/^Run all commands in sandbox without restrictions[.。]?$/i.test(trimmed)) {
-      const fixed = /[.。]$/.test(trimmed) ? '在沙盒中无限制运行所有命令。' : '在沙盒中无限制运行所有命令';
-      if (stringCache.size < MAX_STRING_CACHE) stringCache.set(trimmed, fixed);
-      return text.replace(trimmed, fixed);
+    if (/^Running\s+(\d+)\s*(?:commands|命令)$/i.test(trimmed)) {
+      const fixed = trimmed.replace(/^Running\s+(\d+)\s*(?:commands|命令)$/i, '正在运行 $1 条命令');
+      cacheSet(trimmed, fixed);
+      return replaceTrimmed(text, trimmed, fixed);
     }
 
-    // 2. 动词三联/复合短语（已完成与进行中）
     if (/^Explored\s+(\d+)\s+files?,\s*ran\s+(\d+)\s+commands?,\s*edited\s+(\d+)\s+(?:files?|artifacts?)$/i.test(trimmed)) {
       const isArt = /artifacts?$/i.test(trimmed);
-      const fixed = trimmed.replace(/^Explored\s+(\d+)\s+files?,\s*ran\s+(\d+)\s+commands?,\s*edited\s+(\d+)\s+(?:files?|artifacts?)$/i, 
+      const fixed = trimmed.replace(/^Explored\s+(\d+)\s+files?,\s*ran\s+(\d+)\s+commands?,\s*edited\s+(\d+)\s+(?:files?|artifacts?)$/i,
         isArt ? '已探索 $1 个文件，已执行 $2 条命令，已编辑 $3 个工件' : '已探索 $1 个文件，已执行 $2 条命令，已编辑 $3 个文件');
-      if (stringCache.size < MAX_STRING_CACHE) stringCache.set(trimmed, fixed);
-      return text.replace(trimmed, fixed);
+      cacheSet(trimmed, fixed);
+      return replaceTrimmed(text, trimmed, fixed);
     }
 
     if (/^Exploring\s+(\d+)\s+files?,\s*running\s+(\d+)\s+commands?,\s*editing\s+(\d+)\s+(?:files?|artifacts?)$/i.test(trimmed)) {
       const isArt = /artifacts?$/i.test(trimmed);
-      const fixed = trimmed.replace(/^Exploring\s+(\d+)\s+files?,\s*running\s+(\d+)\s+commands?,\s*editing\s+(\d+)\s+(?:files?|artifacts?)$/i, 
+      const fixed = trimmed.replace(/^Exploring\s+(\d+)\s+files?,\s*running\s+(\d+)\s+commands?,\s*editing\s+(\d+)\s+(?:files?|artifacts?)$/i,
         isArt ? '正在探索 $1 个文件，正在运行 $2 条命令，正在编辑 $3 个工件' : '正在探索 $1 个文件，正在运行 $2 条命令，正在编辑 $3 个文件');
-      if (stringCache.size < MAX_STRING_CACHE) stringCache.set(trimmed, fixed);
-      return text.replace(trimmed, fixed);
+      cacheSet(trimmed, fixed);
+      return replaceTrimmed(text, trimmed, fixed);
     }
 
     if (/^Explored\s+files?,\s*ran\s+commands?,\s*edited\s+(?:files?|artifacts?)$/i.test(trimmed)) {
       const fixed = /artifacts?$/i.test(trimmed) ? '已探索文件、已执行命令、已编辑工件' : '已探索文件、已执行命令、已编辑文件';
-      if (stringCache.size < MAX_STRING_CACHE) stringCache.set(trimmed, fixed);
-      return text.replace(trimmed, fixed);
+      cacheSet(trimmed, fixed);
+      return replaceTrimmed(text, trimmed, fixed);
     }
 
     if (/^Exploring\s+files?,\s*running\s+commands?,\s*editing\s+(?:files?|artifacts?)$/i.test(trimmed)) {
       const fixed = /artifacts?$/i.test(trimmed) ? '正在探索文件、运行命令、编辑工件' : '正在探索文件、运行命令、编辑文件';
-      if (stringCache.size < MAX_STRING_CACHE) stringCache.set(trimmed, fixed);
-      return text.replace(trimmed, fixed);
+      cacheSet(trimmed, fixed);
+      return replaceTrimmed(text, trimmed, fixed);
     }
 
     if (/^Explored\s+(\d+)\s+files?,\s*ran\s+(\d+)\s+commands?$/i.test(trimmed)) {
       const fixed = trimmed.replace(/^Explored\s+(\d+)\s+files?,\s*ran\s+(\d+)\s+commands?$/i, '已探索 $1 个文件，已执行 $2 条命令');
-      if (stringCache.size < MAX_STRING_CACHE) stringCache.set(trimmed, fixed);
-      return text.replace(trimmed, fixed);
+      cacheSet(trimmed, fixed);
+      return replaceTrimmed(text, trimmed, fixed);
     }
 
     if (/^Exploring\s+(\d+)\s+files?,\s*running\s+(\d+)\s+commands?$/i.test(trimmed)) {
       const fixed = trimmed.replace(/^Exploring\s+(\d+)\s+files?,\s*running\s+(\d+)\s+commands?$/i, '正在探索 $1 个文件，正在运行 $2 条命令');
-      if (stringCache.size < MAX_STRING_CACHE) stringCache.set(trimmed, fixed);
-      return text.replace(trimmed, fixed);
+      cacheSet(trimmed, fixed);
+      return replaceTrimmed(text, trimmed, fixed);
     }
 
     if (/^Explored\s+files?,\s*ran\s+commands?$/i.test(trimmed)) {
       const fixed = '已探索文件，已执行命令';
-      if (stringCache.size < MAX_STRING_CACHE) stringCache.set(trimmed, fixed);
-      return text.replace(trimmed, fixed);
+      cacheSet(trimmed, fixed);
+      return replaceTrimmed(text, trimmed, fixed);
     }
 
     if (/^Exploring\s+files?,\s*running\s+commands?$/i.test(trimmed)) {
       const fixed = '正在探索文件，正在运行命令';
-      if (stringCache.size < MAX_STRING_CACHE) stringCache.set(trimmed, fixed);
-      return text.replace(trimmed, fixed);
+      cacheSet(trimmed, fixed);
+      return replaceTrimmed(text, trimmed, fixed);
     }
 
     if (/^Running\s+commands?,\s*editing\s+(?:files?|artifacts?)$/i.test(trimmed)) {
       const fixed = /artifacts?$/i.test(trimmed) ? '正在运行命令、编辑工件' : '正在运行命令、编辑文件';
-      if (stringCache.size < MAX_STRING_CACHE) stringCache.set(trimmed, fixed);
-      return text.replace(trimmed, fixed);
+      cacheSet(trimmed, fixed);
+      return replaceTrimmed(text, trimmed, fixed);
     }
 
     if (/^Ran\s+commands?,\s*edited\s+(?:files?|artifacts?)$/i.test(trimmed)) {
       const fixed = /artifacts?$/i.test(trimmed) ? '已执行命令、已编辑工件' : '已执行命令、已编辑文件';
-      if (stringCache.size < MAX_STRING_CACHE) stringCache.set(trimmed, fixed);
-      return text.replace(trimmed, fixed);
+      cacheSet(trimmed, fixed);
+      return replaceTrimmed(text, trimmed, fixed);
     }
 
     if (/^Explored\s+files?,\s*edited\s+(?:files?|artifacts?)$/i.test(trimmed)) {
       const fixed = /artifacts?$/i.test(trimmed) ? '已探索文件、已编辑工件' : '已探索文件、已编辑文件';
-      if (stringCache.size < MAX_STRING_CACHE) stringCache.set(trimmed, fixed);
-      return text.replace(trimmed, fixed);
+      cacheSet(trimmed, fixed);
+      return replaceTrimmed(text, trimmed, fixed);
     }
 
     if (/^Exploring\s+files?,\s*editing\s+(?:files?|artifacts?)$/i.test(trimmed)) {
       const fixed = /artifacts?$/i.test(trimmed) ? '正在探索文件、编辑工件' : '正在探索文件、编辑文件';
-      if (stringCache.size < MAX_STRING_CACHE) stringCache.set(trimmed, fixed);
-      return text.replace(trimmed, fixed);
+      cacheSet(trimmed, fixed);
+      return replaceTrimmed(text, trimmed, fixed);
     }
 
-    // 3. 统计数字类模式
     if (/^Ran\s+(\d+)\s+commands?$/i.test(trimmed)) {
       const fixed = trimmed.replace(/^Ran\s+(\d+)\s+commands?$/i, '已运行 $1 条命令');
-      if (stringCache.size < MAX_STRING_CACHE) stringCache.set(trimmed, fixed);
-      return text.replace(trimmed, fixed);
+      cacheSet(trimmed, fixed);
+      return replaceTrimmed(text, trimmed, fixed);
     }
 
     if (/^Running\s+(\d+)\s+commands?$/i.test(trimmed)) {
       const fixed = trimmed.replace(/^Running\s+(\d+)\s+commands?$/i, '正在运行 $1 条命令');
-      if (stringCache.size < MAX_STRING_CACHE) stringCache.set(trimmed, fixed);
-      return text.replace(trimmed, fixed);
-    }
-
-    if (/^Ran\s+(\d+)\s+command$/i.test(trimmed)) {
-      const fixed = trimmed.replace(/^Ran\s+(\d+)\s+command$/i, '已运行 $1 条命令');
-      if (stringCache.size < MAX_STRING_CACHE) stringCache.set(trimmed, fixed);
-      return text.replace(trimmed, fixed);
-    }
-
-    if (/^Running\s+(\d+)\s+command$/i.test(trimmed)) {
-      const fixed = trimmed.replace(/^Running\s+(\d+)\s+command$/i, '正在运行 $1 条命令');
-      if (stringCache.size < MAX_STRING_CACHE) stringCache.set(trimmed, fixed);
-      return text.replace(trimmed, fixed);
+      cacheSet(trimmed, fixed);
+      return replaceTrimmed(text, trimmed, fixed);
     }
 
     if (/^Explored\s+(\d+)\s+files?$/i.test(trimmed)) {
       const fixed = trimmed.replace(/^Explored\s+(\d+)\s+files?$/i, '已探索 $1 个文件');
-      if (stringCache.size < MAX_STRING_CACHE) stringCache.set(trimmed, fixed);
-      return text.replace(trimmed, fixed);
+      cacheSet(trimmed, fixed);
+      return replaceTrimmed(text, trimmed, fixed);
     }
 
     if (/^Exploring\s+(\d+)\s+files?$/i.test(trimmed)) {
       const fixed = trimmed.replace(/^Exploring\s+(\d+)\s+files?$/i, '正在探索 $1 个文件');
-      if (stringCache.size < MAX_STRING_CACHE) stringCache.set(trimmed, fixed);
-      return text.replace(trimmed, fixed);
+      cacheSet(trimmed, fixed);
+      return replaceTrimmed(text, trimmed, fixed);
     }
 
     if (/^Edited\s+(\d+)\s+files?$/i.test(trimmed)) {
       const fixed = trimmed.replace(/^Edited\s+(\d+)\s+files?$/i, '已编辑 $1 个文件');
-      if (stringCache.size < MAX_STRING_CACHE) stringCache.set(trimmed, fixed);
-      return text.replace(trimmed, fixed);
+      cacheSet(trimmed, fixed);
+      return replaceTrimmed(text, trimmed, fixed);
     }
 
     if (/^Editing\s+(\d+)\s+files?$/i.test(trimmed)) {
       const fixed = trimmed.replace(/^Editing\s+(\d+)\s+files?$/i, '正在编辑 $1 个文件');
-      if (stringCache.size < MAX_STRING_CACHE) stringCache.set(trimmed, fixed);
-      return text.replace(trimmed, fixed);
+      cacheSet(trimmed, fixed);
+      return replaceTrimmed(text, trimmed, fixed);
     }
 
     if (/^Edited\s+(\d+)\s+artifacts?$/i.test(trimmed)) {
       const fixed = trimmed.replace(/^Edited\s+(\d+)\s+artifacts?$/i, '已编辑 $1 个工件');
-      if (stringCache.size < MAX_STRING_CACHE) stringCache.set(trimmed, fixed);
-      return text.replace(trimmed, fixed);
+      cacheSet(trimmed, fixed);
+      return replaceTrimmed(text, trimmed, fixed);
     }
 
     if (/^Editing\s+(\d+)\s+artifacts?$/i.test(trimmed)) {
       const fixed = trimmed.replace(/^Editing\s+(\d+)\s+artifacts?$/i, '正在编辑 $1 个工件');
-      if (stringCache.size < MAX_STRING_CACHE) stringCache.set(trimmed, fixed);
-      return text.replace(trimmed, fixed);
+      cacheSet(trimmed, fixed);
+      return replaceTrimmed(text, trimmed, fixed);
     }
 
-    // 4. 具体工具步骤行模式
+    // ===== 具体工具步骤行模式 =====
     if (/^Ran\s+command:\s*(.+)$/i.test(trimmed)) {
-      const fixed = trimmed.replace(/^Ran\s+command:\s*(.+)$/i, '已运行命令: $1');
-      if (stringCache.size < MAX_STRING_CACHE) stringCache.set(trimmed, fixed);
-      return text.replace(trimmed, fixed);
+      const fixed = trimmed.replace(/^Ran\s+command:\s*(.+)$/i, (_m, cmd) => '已运行命令: ' + cmd);
+      cacheSet(trimmed, fixed);
+      return replaceTrimmed(text, trimmed, fixed);
     }
 
     if (/^Running\s+command:\s*(.+)$/i.test(trimmed)) {
-      const fixed = trimmed.replace(/^Running\s+command:\s*(.+)$/i, '正在运行命令: $1');
-      if (stringCache.size < MAX_STRING_CACHE) stringCache.set(trimmed, fixed);
-      return text.replace(trimmed, fixed);
+      const fixed = trimmed.replace(/^Running\s+command:\s*(.+)$/i, (_m, cmd) => '正在运行命令: ' + cmd);
+      cacheSet(trimmed, fixed);
+      return replaceTrimmed(text, trimmed, fixed);
     }
 
     if (/^Waiting for command completion \(up to (\d+) seconds\)$/i.test(trimmed)) {
       const fixed = trimmed.replace(/^Waiting for command completion \(up to (\d+) seconds\)$/i, '等待命令执行完成（最多 $1 秒）');
-      if (stringCache.size < MAX_STRING_CACHE) stringCache.set(trimmed, fixed);
-      return text.replace(trimmed, fixed);
+      cacheSet(trimmed, fixed);
+      return replaceTrimmed(text, trimmed, fixed);
     }
 
     if (/^Rejected sending (?:termination request|input) to command$/i.test(trimmed)) {
-      const isTerm = /termination/i.test(trimmed);
-      const fixed = isTerm ? '已拒绝向命令发送终止请求' : '已拒绝向命令发送输入';
-      if (stringCache.size < MAX_STRING_CACHE) stringCache.set(trimmed, fixed);
-      return text.replace(trimmed, fixed);
+      const fixed = /termination/i.test(trimmed) ? '已拒绝向命令发送终止请求' : '已拒绝向命令发送输入';
+      cacheSet(trimmed, fixed);
+      return replaceTrimmed(text, trimmed, fixed);
     }
 
     if (/^Sent (?:termination request|input) to command$/i.test(trimmed)) {
-      const isTerm = /termination/i.test(trimmed);
-      const fixed = isTerm ? '已向命令发送终止请求' : '已向命令发送输入';
-      if (stringCache.size < MAX_STRING_CACHE) stringCache.set(trimmed, fixed);
-      return text.replace(trimmed, fixed);
+      const fixed = /termination/i.test(trimmed) ? '已向命令发送终止请求' : '已向命令发送输入';
+      cacheSet(trimmed, fixed);
+      return replaceTrimmed(text, trimmed, fixed);
     }
 
     if (/^Suggested sending (?:termination request|input) to command$/i.test(trimmed)) {
-      const isTerm = /termination/i.test(trimmed);
-      const fixed = isTerm ? '建议向命令发送终止请求' : '建议向命令发送输入';
-      if (stringCache.size < MAX_STRING_CACHE) stringCache.set(trimmed, fixed);
-      return text.replace(trimmed, fixed);
+      const fixed = /termination/i.test(trimmed) ? '建议向命令发送终止请求' : '建议向命令发送输入';
+      cacheSet(trimmed, fixed);
+      return replaceTrimmed(text, trimmed, fixed);
     }
 
     if (/^Sending (?:termination request|input) to command$/i.test(trimmed)) {
-      const isTerm = /termination/i.test(trimmed);
-      const fixed = isTerm ? '正在向命令发送终止请求' : '正在向命令发送输入';
-      if (stringCache.size < MAX_STRING_CACHE) stringCache.set(trimmed, fixed);
-      return text.replace(trimmed, fixed);
+      const fixed = /termination/i.test(trimmed) ? '正在向命令发送终止请求' : '正在向命令发送输入';
+      cacheSet(trimmed, fixed);
+      return replaceTrimmed(text, trimmed, fixed);
     }
 
     if (/^Error sending (?:termination request|input) to command$/i.test(trimmed)) {
-      const isTerm = /termination/i.test(trimmed);
-      const fixed = isTerm ? '向命令发送终止请求时出错' : '向命令发送输入时出错';
-      if (stringCache.size < MAX_STRING_CACHE) stringCache.set(trimmed, fixed);
-      return text.replace(trimmed, fixed);
+      const fixed = /termination/i.test(trimmed) ? '向命令发送终止请求时出错' : '向命令发送输入时出错';
+      cacheSet(trimmed, fixed);
+      return replaceTrimmed(text, trimmed, fixed);
     }
 
     if (/^Canceled edit to (.+)$/i.test(trimmed)) {
-      const fixed = trimmed.replace(/^Canceled edit to (.+)$/i, '已取消对 $1 的编辑');
-      if (stringCache.size < MAX_STRING_CACHE) stringCache.set(trimmed, fixed);
-      return text.replace(trimmed, fixed);
+      const fixed = trimmed.replace(/^Canceled edit to (.+)$/i, (_m, f) => '已取消对 ' + f + ' 的编辑');
+      cacheSet(trimmed, fixed);
+      return replaceTrimmed(text, trimmed, fixed);
     }
 
     if (/^Canceled creation of (.+)$/i.test(trimmed)) {
-      const fixed = trimmed.replace(/^Canceled creation of (.+)$/i, '已取消创建 $1');
-      if (stringCache.size < MAX_STRING_CACHE) stringCache.set(trimmed, fixed);
-      return text.replace(trimmed, fixed);
+      const fixed = trimmed.replace(/^Canceled creation of (.+)$/i, (_m, f) => '已取消创建 ' + f);
+      cacheSet(trimmed, fixed);
+      return replaceTrimmed(text, trimmed, fixed);
     }
 
     if (/^Canceled deletion of (.+)$/i.test(trimmed)) {
-      const fixed = trimmed.replace(/^Canceled deletion of (.+)$/i, '已取消删除 $1');
-      if (stringCache.size < MAX_STRING_CACHE) stringCache.set(trimmed, fixed);
-      return text.replace(trimmed, fixed);
+      const fixed = trimmed.replace(/^Canceled deletion of (.+)$/i, (_m, f) => '已取消删除 ' + f);
+      cacheSet(trimmed, fixed);
+      return replaceTrimmed(text, trimmed, fixed);
+    }
+
+    if (/^Canceled\s+(.+)$/.test(trimmed)) {
+      const fixed = trimmed.replace(/^Canceled\s+(.+)$/, (_m, cmd) => '已取消 ' + cmd);
+      cacheSet(trimmed, fixed);
+      return replaceTrimmed(text, trimmed, fixed);
     }
 
     if (/^Used MCP tool:\s*(.+)$/i.test(trimmed)) {
-      const fixed = trimmed.replace(/^Used MCP tool:\s*(.+)$/i, '调用 MCP 工具: $1');
-      if (stringCache.size < MAX_STRING_CACHE) stringCache.set(trimmed, fixed);
-      return text.replace(trimmed, fixed);
+      const fixed = trimmed.replace(/^Used MCP tool:\s*(.+)$/i, (_m, t) => '调用 MCP 工具: ' + t);
+      cacheSet(trimmed, fixed);
+      return replaceTrimmed(text, trimmed, fixed);
     }
 
     if (/^Used tool:\s*(.+)$/i.test(trimmed)) {
-      const fixed = trimmed.replace(/^Used tool:\s*(.+)$/i, '调用工具: $1');
-      if (stringCache.size < MAX_STRING_CACHE) stringCache.set(trimmed, fixed);
-      return text.replace(trimmed, fixed);
+      const fixed = trimmed.replace(/^Used tool:\s*(.+)$/i, (_m, t) => '调用工具: ' + t);
+      cacheSet(trimmed, fixed);
+      return replaceTrimmed(text, trimmed, fixed);
     }
 
     if (/^Generated image:\s*(.+)$/i.test(trimmed)) {
-      const fixed = trimmed.replace(/^Generated image:\s*(.+)$/i, '生成图像: $1');
-      if (stringCache.size < MAX_STRING_CACHE) stringCache.set(trimmed, fixed);
-      return text.replace(trimmed, fixed);
+      const fixed = trimmed.replace(/^Generated image:\s*(.+)$/i, (_m, t) => '生成图像: ' + t);
+      cacheSet(trimmed, fixed);
+      return replaceTrimmed(text, trimmed, fixed);
     }
 
     if (/^Browser task:\s*(.+)$/i.test(trimmed)) {
-      const fixed = trimmed.replace(/^Browser task:\s*(.+)$/i, '浏览器任务: $1');
-      if (stringCache.size < MAX_STRING_CACHE) stringCache.set(trimmed, fixed);
-      return text.replace(trimmed, fixed);
+      const fixed = trimmed.replace(/^Browser task:\s*(.+)$/i, (_m, t) => '浏览器任务: ' + t);
+      cacheSet(trimmed, fixed);
+      return replaceTrimmed(text, trimmed, fixed);
     }
 
     if (/^Opened browser:\s*(.+)$/i.test(trimmed)) {
-      const fixed = trimmed.replace(/^Opened browser:\s*(.+)$/i, '已打开浏览器: $1');
-      if (stringCache.size < MAX_STRING_CACHE) stringCache.set(trimmed, fixed);
-      return text.replace(trimmed, fixed);
+      const fixed = trimmed.replace(/^Opened browser:\s*(.+)$/i, (_m, t) => '已打开浏览器: ' + t);
+      cacheSet(trimmed, fixed);
+      return replaceTrimmed(text, trimmed, fixed);
     }
 
     if (/^Read URL:\s*(.+)$/i.test(trimmed)) {
-      const fixed = trimmed.replace(/^Read URL:\s*(.+)$/i, '读取 URL: $1');
-      if (stringCache.size < MAX_STRING_CACHE) stringCache.set(trimmed, fixed);
-      return text.replace(trimmed, fixed);
+      const fixed = trimmed.replace(/^Read URL:\s*(.+)$/i, (_m, t) => '读取 URL: ' + t);
+      cacheSet(trimmed, fixed);
+      return replaceTrimmed(text, trimmed, fixed);
     }
 
     if (/^Searched web:\s*(.+)$/i.test(trimmed)) {
-      const fixed = trimmed.replace(/^Searched web:\s*(.+)$/i, '网页搜索: $1');
-      if (stringCache.size < MAX_STRING_CACHE) stringCache.set(trimmed, fixed);
-      return text.replace(trimmed, fixed);
+      const fixed = trimmed.replace(/^Searched web:\s*(.+)$/i, (_m, t) => '网页搜索: ' + t);
+      cacheSet(trimmed, fixed);
+      return replaceTrimmed(text, trimmed, fixed);
     }
 
     if (/^Invoked subagent:\s*(.+)$/i.test(trimmed)) {
-      const fixed = trimmed.replace(/^Invoked subagent:\s*(.+)$/i, '调用子智能体: $1');
-      if (stringCache.size < MAX_STRING_CACHE) stringCache.set(trimmed, fixed);
-      return text.replace(trimmed, fixed);
+      const fixed = trimmed.replace(/^Invoked subagent:\s*(.+)$/i, (_m, t) => '调用子智能体: ' + t);
+      cacheSet(trimmed, fixed);
+      return replaceTrimmed(text, trimmed, fixed);
     }
 
     if (/^Searched for files:\s*(.+)$/i.test(trimmed)) {
-      const fixed = trimmed.replace(/^Searched for files:\s*(.+)$/i, '搜索文件: $1');
-      if (stringCache.size < MAX_STRING_CACHE) stringCache.set(trimmed, fixed);
-      return text.replace(trimmed, fixed);
+      const fixed = trimmed.replace(/^Searched for files:\s*(.+)$/i, (_m, t) => '搜索文件: ' + t);
+      cacheSet(trimmed, fixed);
+      return replaceTrimmed(text, trimmed, fixed);
     }
 
     if (/^Searched for\s+"([^"]+)"$/i.test(trimmed)) {
-      const fixed = trimmed.replace(/^Searched for\s+"([^"]+)"$/i, '搜索: "$1"');
-      if (stringCache.size < MAX_STRING_CACHE) stringCache.set(trimmed, fixed);
-      return text.replace(trimmed, fixed);
+      const fixed = trimmed.replace(/^Searched for\s+"([^"]+)"$/i, (_m, q) => '搜索: "' + q + '"');
+      cacheSet(trimmed, fixed);
+      return replaceTrimmed(text, trimmed, fixed);
     }
 
     if (/^Code search:\s*(.+)$/i.test(trimmed)) {
-      const fixed = trimmed.replace(/^Code search:\s*(.+)$/i, '代码搜索: $1');
-      if (stringCache.size < MAX_STRING_CACHE) stringCache.set(trimmed, fixed);
-      return text.replace(trimmed, fixed);
+      const fixed = trimmed.replace(/^Code search:\s*(.+)$/i, (_m, q) => '代码搜索: ' + q);
+      cacheSet(trimmed, fixed);
+      return replaceTrimmed(text, trimmed, fixed);
     }
 
     if (/^Internal search:\s*(.+)$/i.test(trimmed)) {
-      const fixed = trimmed.replace(/^Internal search:\s*(.+)$/i, '内部搜索: $1');
-      if (stringCache.size < MAX_STRING_CACHE) stringCache.set(trimmed, fixed);
-      return text.replace(trimmed, fixed);
+      const fixed = trimmed.replace(/^Internal search:\s*(.+)$/i, (_m, q) => '内部搜索: ' + q);
+      cacheSet(trimmed, fixed);
+      return replaceTrimmed(text, trimmed, fixed);
     }
 
     if (/^Listed directory\s+(.+)$/i.test(trimmed)) {
-      const fixed = trimmed.replace(/^Listed directory\s+(.+)$/i, '列出目录: $1');
-      if (stringCache.size < MAX_STRING_CACHE) stringCache.set(trimmed, fixed);
-      return text.replace(trimmed, fixed);
+      const fixed = trimmed.replace(/^Listed directory\s+(.+)$/i, (_m, d) => '列出目录: ' + d);
+      cacheSet(trimmed, fixed);
+      return replaceTrimmed(text, trimmed, fixed);
     }
 
     if (/^No more older messages(?:,\s*showing\s+(\d+)\s+of\s+(\d+))?$/i.test(trimmed)) {
-      const fixed = trimmed.replace(/^No more older messages(?:,\s*showing\s+(\d+)\s+of\s+(\d+))?$/i, (m, a, b) => {
+      const fixed = trimmed.replace(/^No more older messages(?:,\s*showing\s+(\d+)\s+of\s+(\d+))?$/i, (_m, a, b) => {
         return a && b ? ('已无更早的历史消息（共显示 ' + a + ' / ' + b + ' 条）') : '已无更早的历史消息';
       });
-      if (stringCache.size < MAX_STRING_CACHE) stringCache.set(trimmed, fixed);
-      return text.replace(trimmed, fixed);
+      cacheSet(trimmed, fixed);
+      return replaceTrimmed(text, trimmed, fixed);
     }
 
     if (/^Select model,\s*current:\s*(.+)$/i.test(trimmed)) {
-      const fixed = trimmed.replace(/^Select model,\s*current:\s*(.+)$/i, '选择模型，当前为: $1');
-      if (stringCache.size < MAX_STRING_CACHE) stringCache.set(trimmed, fixed);
-      return text.replace(trimmed, fixed);
+      const fixed = trimmed.replace(/^Select model,\s*current:\s*(.+)$/i, (_m, m) => '选择模型，当前为: ' + m);
+      cacheSet(trimmed, fixed);
+      return replaceTrimmed(text, trimmed, fixed);
     }
 
     if (/^Opens external link:\s*(.+)$/i.test(trimmed)) {
-      const fixed = trimmed.replace(/^Opens external link:\s*(.+)$/i, '打开外部链接: $1');
-      if (stringCache.size < MAX_STRING_CACHE) stringCache.set(trimmed, fixed);
-      return text.replace(trimmed, fixed);
+      const fixed = trimmed.replace(/^Opens external link:\s*(.+)$/i, (_m, u) => '打开外部链接: ' + u);
+      cacheSet(trimmed, fixed);
+      return replaceTrimmed(text, trimmed, fixed);
     }
 
     if (/^Send feedback as\s+(.+)$/i.test(trimmed)) {
-      const fixed = trimmed.replace(/^Send feedback as\s+(.+)$/i, '以 $1 身份发送反馈');
-      if (stringCache.size < MAX_STRING_CACHE) stringCache.set(trimmed, fixed);
-      return text.replace(trimmed, fixed);
-    }
-
-    if (/^(?:Show All|Show all|show all|显示 All)$/i.test(trimmed)) {
-      const fixed = '显示全部';
-      if (stringCache.size < MAX_STRING_CACHE) stringCache.set(trimmed, fixed);
-      return text.replace(trimmed, fixed);
-    }
-
-    if (/^(?:File Reads|文件 Reads|file reads)$/i.test(trimmed)) {
-      const fixed = '文件读取';
-      if (stringCache.size < MAX_STRING_CACHE) stringCache.set(trimmed, fixed);
-      return text.replace(trimmed, fixed);
-    }
-
-    if (/^(?:File Writes|文件 Writes|file writes)$/i.test(trimmed)) {
-      const fixed = '文件写入';
-      if (stringCache.size < MAX_STRING_CACHE) stringCache.set(trimmed, fixed);
-      return text.replace(trimmed, fixed);
-    }
-
-    if (/^(?:Project options|项目 options)$/i.test(trimmed)) {
-      const fixed = '项目选项';
-      if (stringCache.size < MAX_STRING_CACHE) stringCache.set(trimmed, fixed);
-      return text.replace(trimmed, fixed);
-    }
-
-    if (/^(?:Agent response|智能体 response)$/i.test(trimmed)) {
-      const fixed = '智能体回复';
-      if (stringCache.size < MAX_STRING_CACHE) stringCache.set(trimmed, fixed);
-      return text.replace(trimmed, fixed);
-    }
-
-    if (/^(?:View Usage|View usage|view usage|查看 Usage)$/i.test(trimmed)) {
-      const fixed = '查看使用额度';
-      if (stringCache.size < MAX_STRING_CACHE) stringCache.set(trimmed, fixed);
-      return text.replace(trimmed, fixed);
-    }
-
-    if (/^(?:Permanently delete|Permanently 删除)$/i.test(trimmed)) {
-      const fixed = '永久删除';
-      if (stringCache.size < MAX_STRING_CACHE) stringCache.set(trimmed, fixed);
-      return text.replace(trimmed, fixed);
-    }
-
-    if (trimmed.includes('could not be opened')) {
-      const replacedCouldNot = trimmed.replace(/could not be opened/gi, '无法打开');
-      if (stringCache.size < MAX_STRING_CACHE) stringCache.set(trimmed, replacedCouldNot);
-      return text.replace(trimmed, replacedCouldNot);
-    }
-
-    if (/Scan the code to/i.test(trimmed)) {
-      if (/Scan the code to.*,\s*or\s*$/i.test(trimmed)) {
-        const fixed = '扫描二维码以在远程控制中打开此设备，或';
-        if (stringCache.size < MAX_STRING_CACHE) stringCache.set(trimmed, fixed);
-        return text.replace(trimmed, fixed);
-      }
-      if (/Scan the code to.*(?:copy link|复制链接)/i.test(trimmed)) {
-        const fixed = '扫描二维码以在远程控制中打开此设备，或复制链接。';
-        if (stringCache.size < MAX_STRING_CACHE) stringCache.set(trimmed, fixed);
-        return text.replace(trimmed, fixed);
-      }
-      if (/Scan the code to.*(?:Remote Control|远程\s*控制)/i.test(trimmed)) {
-        const fixed = '扫描二维码以在远程控制中打开此设备';
-        if (stringCache.size < MAX_STRING_CACHE) stringCache.set(trimmed, fixed);
-        return text.replace(trimmed, fixed);
-      }
-    }
-
-    if (/Continue your work from another device/i.test(trimmed)) {
-      let fixed = '借助远程控制从另一台设备继续工作。请扫描下方二维码或打开下方链接。';
-      if (!/Scan the QR code/i.test(trimmed)) {
-        fixed = '借助远程控制从另一台设备继续工作。';
-      }
-      if (stringCache.size < MAX_STRING_CACHE) stringCache.set(trimmed, fixed);
-      return text.replace(trimmed, fixed);
-    }
-
-    if (/Scan the QR code or open the link below/i.test(trimmed)) {
-      const fixed = '扫描下方二维码或打开下方链接。';
-      if (stringCache.size < MAX_STRING_CACHE) stringCache.set(trimmed, fixed);
-      return text.replace(trimmed, fixed);
-    }
-
-    if (/^Invalid tool call$/i.test(trimmed)) {
-      const fixed = '无效的工具调用';
-      if (stringCache.size < MAX_STRING_CACHE) stringCache.set(trimmed, fixed);
-      return text.replace(trimmed, fixed);
-    }
-
-    if (/^No Project$/i.test(trimmed)) {
-      const fixed = '无项目';
-      if (stringCache.size < MAX_STRING_CACHE) stringCache.set(trimmed, fixed);
-      return text.replace(trimmed, fixed);
+      const fixed = trimmed.replace(/^Send feedback as\s+(.+)$/i, (_m, u) => '以 ' + u + ' 身份发送反馈');
+      cacheSet(trimmed, fixed);
+      return replaceTrimmed(text, trimmed, fixed);
     }
 
     if (/^See all\s*\(([^)]+)\)$/i.test(trimmed)) {
-      const fixed = trimmed.replace(/^See all\s*\(([^)]+)\)$/i, '查看全部 ($1)');
-      if (stringCache.size < MAX_STRING_CACHE) stringCache.set(trimmed, fixed);
-      return text.replace(trimmed, fixed);
+      const fixed = trimmed.replace(/^See all\s*\(([^)]+)\)$/i, (_m, n) => '查看全部 (' + n + ')');
+      cacheSet(trimmed, fixed);
+      return replaceTrimmed(text, trimmed, fixed);
     }
 
-    if (/^Ran\s+(\d+)\s*(?:commands|命令)$/i.test(trimmed)) {
-      const fixed = trimmed.replace(/^Ran\s+(\d+)\s*(?:commands|命令)$/i, '已运行 $1 条命令');
-      if (stringCache.size < MAX_STRING_CACHE) stringCache.set(trimmed, fixed);
-      return text.replace(trimmed, fixed);
+    if (/^(See all|Generation Steps|Show submitted|Show more|Send all|Show all)\s*\($/i.test(trimmed)) {
+      const prefixMap = {
+        'see all': '查看全部 (',
+        'generation steps': '生成步骤 (',
+        'show submitted': '显示已提交 (',
+        'show more': '显示更多 (',
+        'send all': '全部发送 (',
+        'show all': '显示全部 ('
+      };
+      const keyLower = trimmed.replace(/\s*\($/, '').toLowerCase();
+      if (prefixMap[keyLower]) {
+        const fixed = prefixMap[keyLower];
+        cacheSet(trimmed, fixed);
+        return replaceTrimmed(text, trimmed, fixed);
+      }
     }
 
     if (/^Load older messages,\s*showing\s+(\d+)\s+of\s+(\d+)$/i.test(trimmed)) {
       const fixed = trimmed.replace(/^Load older messages,\s*showing\s+(\d+)\s+of\s+(\d+)$/i, '加载历史消息，正在显示 $1 / $2 条');
-      if (stringCache.size < MAX_STRING_CACHE) stringCache.set(trimmed, fixed);
-      return text.replace(trimmed, fixed);
+      cacheSet(trimmed, fixed);
+      return replaceTrimmed(text, trimmed, fixed);
     }
 
     if (/^Fold lines\s+([0-9-]+)$/i.test(trimmed)) {
       const fixed = trimmed.replace(/^Fold lines\s+([0-9-]+)$/i, '折叠第 $1 行');
-      if (stringCache.size < MAX_STRING_CACHE) stringCache.set(trimmed, fixed);
-      return text.replace(trimmed, fixed);
+      cacheSet(trimmed, fixed);
+      return replaceTrimmed(text, trimmed, fixed);
     }
 
-    if (/^(?:Advanced\s*Settings|Advanced\s*设置|advanced\s*settings)$/i.test(trimmed)) {
-      const fixed = '高级设置';
-      if (stringCache.size < MAX_STRING_CACHE) stringCache.set(trimmed, fixed);
-      return text.replace(trimmed, fixed);
+    // ===== 远程控制二维码与 WSL 动态提示（严格首尾锚定） =====
+    if (/^Continue your work from another device with Remote Control\.\s*Scan the QR code or open the link below\.?$/i.test(trimmed)) {
+      const fixed = '借助远程控制从另一台设备继续工作。请扫描下方二维码或打开下方链接。';
+      cacheSet(trimmed, fixed);
+      return replaceTrimmed(text, trimmed, fixed);
     }
 
-    if (/^(?:Collapse\s*All|Collapse\s*all|collapse\s*all)$/i.test(trimmed)) {
-      const fixed = '全部折叠';
-      if (stringCache.size < MAX_STRING_CACHE) stringCache.set(trimmed, fixed);
-      return text.replace(trimmed, fixed);
+    if (/^Scan the QR code or open the link below\.?$/i.test(trimmed)) {
+      const fixed = '扫描下方二维码或打开下方链接。';
+      cacheSet(trimmed, fixed);
+      return replaceTrimmed(text, trimmed, fixed);
     }
 
-    if (/^(?:Expand\s*All|Expand\s*all|expand\s*all)$/i.test(trimmed)) {
-      const fixed = '全部展开';
-      if (stringCache.size < MAX_STRING_CACHE) stringCache.set(trimmed, fixed);
-      return text.replace(trimmed, fixed);
-    }
-
-    if (/^(?:Inherit\s*Global|Inherits\s*Global|继承\s*Global)$/i.test(trimmed)) {
-      const fixed = '继承全局';
-      if (stringCache.size < MAX_STRING_CACHE) stringCache.set(trimmed, fixed);
-      return text.replace(trimmed, fixed);
-    }
-
-    if (/^Inherits\s+your\s+Global\s+Permissions\s+when\s+working\s+in\s+this\s+project\.?$/i.test(trimmed)) {
-      const fixed = '在此项目中工作时继承您的全局权限。';
-      if (stringCache.size < MAX_STRING_CACHE) stringCache.set(trimmed, fixed);
-      return text.replace(trimmed, fixed);
-    }
-
-    if (/^Also\s+includes.*(?:Global\s+Permissions|全局权限).*when\s+working\s+in\s+this\s+project/i.test(trimmed)) {
+    if (/^Also\s+includes\s+(?:Global\s+Permissions|全局权限)\s+when\s+working\s+in\s+this\s+project\.?$/i.test(trimmed)) {
       const fixed = '在当前项目中工作时，亦继承全局权限配置。';
-      if (stringCache.size < MAX_STRING_CACHE) stringCache.set(trimmed, fixed);
-      return text.replace(trimmed, fixed);
-    }
-
-    if (/^Modify permissions for/i.test(trimmed)) {
-      const fixed = '修改针对文件系统、终端命令以及 MCP 工具的安全权限。';
-      if (stringCache.size < MAX_STRING_CACHE) stringCache.set(trimmed, fixed);
-      return text.replace(trimmed, fixed);
-    }
-
-    if (/^(?:Tool[\s ]+Permissions|工具[\s ]*Permissions)$/i.test(trimmed)) {
-      const fixed = '工具权限';
-      if (stringCache.size < MAX_STRING_CACHE) stringCache.set(trimmed, fixed);
-      return text.replace(trimmed, fixed);
+      cacheSet(trimmed, fixed);
+      return replaceTrimmed(text, trimmed, fixed);
     }
 
     if (/^Setting up WSL:\s*(.+)$/i.test(trimmed)) {
-      const fixed = trimmed.replace(/^Setting up WSL:\s*(.+)$/i, '正在配置 WSL: $1');
-      if (stringCache.size < MAX_STRING_CACHE) stringCache.set(trimmed, fixed);
-      return text.replace(trimmed, fixed);
+      const fixed = trimmed.replace(/^Setting up WSL:\s*(.+)$/i, (_m, d) => '正在配置 WSL: ' + d);
+      cacheSet(trimmed, fixed);
+      return replaceTrimmed(text, trimmed, fixed);
     }
 
-    if (/^Installing into\s*(.+?)[…\.]*$/i.test(trimmed)) {
-      const fixed = trimmed.replace(/^Installing into\s*(.+?)[…\.]*$/i, '正在安装到 $1…');
-      if (stringCache.size < MAX_STRING_CACHE) stringCache.set(trimmed, fixed);
-      return text.replace(trimmed, fixed);
+    if (/^Installing into\s*(.+?)[….]*$/i.test(trimmed)) {
+      const fixed = trimmed.replace(/^Installing into\s*(.+?)[….]*$/i, (_m, d) => '正在安装到 ' + d + '…');
+      cacheSet(trimmed, fixed);
+      return replaceTrimmed(text, trimmed, fixed);
     }
 
     if (/^This folder belongs to the WSL distro "([^"]+)", but this window is connected to "([^"]+)"\.?$/i.test(trimmed)) {
       const fixed = trimmed.replace(/^This folder belongs to the WSL distro "([^"]+)", but this window is connected to "([^"]+)"\.?$/i, '此文件夹属于 WSL 发行版“$1”，但当前窗口连接到“$2”。');
-      if (stringCache.size < MAX_STRING_CACHE) stringCache.set(trimmed, fixed);
-      return text.replace(trimmed, fixed);
+      cacheSet(trimmed, fixed);
+      return replaceTrimmed(text, trimmed, fixed);
     }
 
     if (/^This location cannot be opened in WSL:\s*(.+)$/i.test(trimmed)) {
-      const fixed = trimmed.replace(/^This location cannot be opened in WSL:\s*(.+)$/i, '无法在 WSL 中打开此位置: $1');
-      if (stringCache.size < MAX_STRING_CACHE) stringCache.set(trimmed, fixed);
-      return text.replace(trimmed, fixed);
+      const fixed = trimmed.replace(/^This location cannot be opened in WSL:\s*(.+)$/i, (_m, loc) => '无法在 WSL 中打开此位置: ' + loc);
+      cacheSet(trimmed, fixed);
+      return replaceTrimmed(text, trimmed, fixed);
     }
 
     if (/^The WSL distro "([^"]+)" is no longer installed\.?$/i.test(trimmed)) {
       const fixed = trimmed.replace(/^The WSL distro "([^"]+)" is no longer installed\.?$/i, 'WSL 发行版“$1”已不再安装。');
-      if (stringCache.size < MAX_STRING_CACHE) stringCache.set(trimmed, fixed);
-      return text.replace(trimmed, fixed);
+      cacheSet(trimmed, fixed);
+      return replaceTrimmed(text, trimmed, fixed);
     }
 
     if (/^Antigravity opened on Windows instead\.?$/i.test(trimmed)) {
       const fixed = 'Antigravity 已改为在 Windows 本地打开。';
-      if (stringCache.size < MAX_STRING_CACHE) stringCache.set(trimmed, fixed);
-      return text.replace(trimmed, fixed);
+      cacheSet(trimmed, fixed);
+      return replaceTrimmed(text, trimmed, fixed);
     }
 
     if (/^Connected to WSL:\s*(.+)$/i.test(trimmed)) {
-      const fixed = trimmed.replace(/^Connected to WSL:\s*(.+)$/i, '已连接到 WSL: $1');
-      if (stringCache.size < MAX_STRING_CACHE) stringCache.set(trimmed, fixed);
-      return text.replace(trimmed, fixed);
+      const fixed = trimmed.replace(/^Connected to WSL:\s*(.+)$/i, (_m, d) => '已连接到 WSL: ' + d);
+      cacheSet(trimmed, fixed);
+      return replaceTrimmed(text, trimmed, fixed);
     }
 
     if (/% of the (?:customization )?budget is (?:available|used)/i.test(trimmed)) {
@@ -6691,98 +5626,67 @@ electron_1.contextBridge.exposeInMainWorld('wizardAPI', wizardAPI);
       } else if (/used/i.test(trimmed)) {
         fixed = trimmed.replace(/(\d+(?:\.\d+)?)% of the (?:customization )?budget is used[.。]?/i, '已使用 $1% 的自定义额度。');
       }
-      if (stringCache.size < MAX_STRING_CACHE) stringCache.set(trimmed, fixed);
-      return text.replace(trimmed, fixed);
+      cacheSet(trimmed, fixed);
+      return replaceTrimmed(text, trimmed, fixed);
     }
 
-    if (/^Plugins are packaged collections of/i.test(trimmed)) {
-      let fixed = '';
-      if (/Google developer products/i.test(trimmed)) {
-        if (/change your choices in Settings/i.test(trimmed)) {
-          fixed = '插件是技能和 MCP 的打包集合，用于协助 Antigravity 中的智能体使用 Google 开发者产品。你可以随时在设置中更改你的选择。';
-        } else {
-          fixed = '插件是技能和 MCP 的打包集合，用于协助 Antigravity 中的智能体使用 Google 开发者产品。';
-        }
-      } else {
-        fixed = '插件是技能和 MCP 的打包集合，用于协助智能体在';
-      }
-      if (stringCache.size < MAX_STRING_CACHE) stringCache.set(trimmed, fixed);
-      return text.replace(trimmed, fixed);
-    }
-
-    if (/^You can always change your choices in Settings[.。]?$/i.test(trimmed)) {
-      const fixed = '你可以随时在设置中更改你的选择。';
-      if (stringCache.size < MAX_STRING_CACHE) stringCache.set(trimmed, fixed);
-      return text.replace(trimmed, fixed);
-    }
-
-    if (/^Antigravity work with Google developer products/i.test(trimmed)) {
-      let fixed = 'Antigravity 中协同 Google 开发者产品工作。';
-      if (/change your choices in Settings/i.test(trimmed)) {
-        fixed = 'Antigravity 中协同 Google 开发者产品工作。你可以随时在设置中更改你的选择。';
-      }
-      if (stringCache.size < MAX_STRING_CACHE) stringCache.set(trimmed, fixed);
-      return text.replace(trimmed, fixed);
-    }
-
-    if (/^work with Google developer products/i.test(trimmed)) {
-      let fixed = '协同 Google 开发者产品工作。';
-      if (/change your choices in Settings/i.test(trimmed)) {
-        fixed = '协同 Google 开发者产品工作。你可以随时在设置中更改你的选择。';
-      }
-      if (stringCache.size < MAX_STRING_CACHE) stringCache.set(trimmed, fixed);
-      return text.replace(trimmed, fixed);
-    }
-
-    // --- Dynamic Agent Logs Regex Rules (Fixed Escaping) ---
-    let dynamicMatch = trimmed;
-    let isDynamic = false;
-    
-    // 用户定制方案 3：思考了 (时间) 与 总耗时 (时间) 动态正则
+    // ===== 思考耗时、文件统计与限额动态匹配 =====
     if (/^Thought (?:for|持续) (.+)$/i.test(trimmed)) {
-      dynamicMatch = dynamicMatch.replace(/^Thought (?:for|持续) (.+)$/i, '思考了 $1');
-      isDynamic = true;
+      const fixed = trimmed.replace(/^Thought (?:for|持续) (.+)$/i, (_m, t) => '思考了 ' + t);
+      cacheSet(trimmed, fixed);
+      return replaceTrimmed(text, trimmed, fixed);
     }
+
+    if (/^Thinking (?:for|持续) (.+)$/i.test(trimmed)) {
+      const fixed = trimmed.replace(/^Thinking (?:for|持续) (.+)$/i, (_m, t) => '思考了 ' + t);
+      cacheSet(trimmed, fixed);
+      return replaceTrimmed(text, trimmed, fixed);
+    }
+
+    if (/^Thinking \((.+)\)$/i.test(trimmed)) {
+      const fixed = trimmed.replace(/^Thinking \((.+)\)$/i, (_m, t) => '正在思考 (' + t + ')');
+      cacheSet(trimmed, fixed);
+      return replaceTrimmed(text, trimmed, fixed);
+    }
+
     if (/^Worked (?:for|持续) (.+)$/i.test(trimmed)) {
-      dynamicMatch = dynamicMatch.replace(/^Worked (?:for|持续) (.+)$/i, '总耗时 $1');
-      isDynamic = true;
+      const fixed = trimmed.replace(/^Worked (?:for|持续) (.+)$/i, (_m, t) => '总耗时 ' + t);
+      cacheSet(trimmed, fixed);
+      return replaceTrimmed(text, trimmed, fixed);
     }
+
     if (/^\d+ files? changed(.*)$/i.test(trimmed)) {
-      dynamicMatch = dynamicMatch.replace(/^(\d+) files? changed(.*)/i, '$1 个文件已更改$2');
-      isDynamic = true;
+      const fixed = trimmed.replace(/^(\d+) files? changed(.*)$/i, (_m, n, rest) => n + ' 个文件已更改' + rest);
+      cacheSet(trimmed, fixed);
+      return replaceTrimmed(text, trimmed, fixed);
     }
+
     if (/^(\d+)\s+searches?$/i.test(trimmed)) {
-      dynamicMatch = dynamicMatch.replace(/^(\d+)\s+searches?/i, '$1 次搜索');
-      isDynamic = true;
+      const fixed = trimmed.replace(/^(\d+)\s+searches?$/i, '$1 次搜索');
+      cacheSet(trimmed, fixed);
+      return replaceTrimmed(text, trimmed, fixed);
     }
+
     if (/^Edited (.*) \+(\d+) -(\d+)$/i.test(trimmed)) {
-      dynamicMatch = dynamicMatch.replace(/^Edited (.*) \+(\d+) -(\d+)/i, '编辑 $1 (+$2 -$3)');
-      isDynamic = true;
-    }
-    if (/^Canceled taskkill/.test(trimmed)) {
-      dynamicMatch = dynamicMatch.replace(/^Canceled (.*)/, '已取消 $1');
-      isDynamic = true;
-    }
-    if (/^\d+(?:\.\d+)?% of the (?:customization )?budget is (?:available|used)[.。]?$/i.test(trimmed)) {
-      dynamicMatch = dynamicMatch
-        .replace(/(\d+(?:\.\d+)?)% of the (?:customization )?budget is available[.。]?/i, '自定义额度尚有 $1% 可用。')
-        .replace(/(\d+(?:\.\d+)?)% of the (?:customization )?budget is used[.。]?/i, '已使用 $1% 的自定义额度。');
-      isDynamic = true;
+      const fixed = trimmed.replace(/^Edited (.*) \+(\d+) -(\d+)$/i, (_m, f, a, d) => '编辑 ' + f + ' (+' + a + ' -' + d + ')');
+      cacheSet(trimmed, fixed);
+      return replaceTrimmed(text, trimmed, fixed);
     }
 
-    // 限额剩余标题动态匹配 (例如 "Five Hour Limit Remaining", "Weekly Limit Remaining", "5-hour limit remaining")
-    if (/^(Weekly|Five[- ]Hour|5[- ]Hour|Hourly|Daily)\s+Limit\s+Remaining$/i.test(trimmed)) {
+    // 限额剩余标题动态匹配（补齐 Monthly Limit Remaining）
+    if (/^(Weekly|Monthly|Five[- ]Hour|5[- ]Hour|Hourly|Daily)\s+Limit\s+Remaining$/i.test(trimmed)) {
       const lower = trimmed.toLowerCase();
-      if (lower.includes('weekly')) dynamicMatch = '每周限额剩余';
-      else if (lower.includes('five') || lower.includes('5')) dynamicMatch = '5 小时限额剩余';
-      else if (lower.includes('hourly')) dynamicMatch = '每小时限额剩余';
-      else if (lower.includes('daily')) dynamicMatch = '每日限额剩余';
-      isDynamic = true;
+      let fixed = '每周限额剩余';
+      if (lower.includes('monthly')) fixed = '每月限额剩余';
+      else if (lower.includes('five') || lower.includes('5')) fixed = '5 小时限额剩余';
+      else if (lower.includes('hourly')) fixed = '每小时限额剩余';
+      else if (lower.includes('daily')) fixed = '每日限额剩余';
+      cacheSet(trimmed, fixed);
+      return replaceTrimmed(text, trimmed, fixed);
     }
 
-    // 模型/分组专属限额标题动态匹配 (例如 "Gemini 4 Argon Weekly Limit", "Gemini 4 Hydrogen 5-Hour Limit", "Claude Opus 5.5 Weekly Limit Remaining")
     if (/^(.+?)\s+(Weekly|Five[- ]Hour|5[- ]Hour|\d+[- ]?Hour|\d+h|Hourly|Daily|Monthly)\s+Limit(\s+Remaining)?$/i.test(trimmed)) {
-      dynamicMatch = trimmed.replace(/^(.+?)\s+(Weekly|Five[- ]Hour|5[- ]Hour|(\d+)[- ]?Hour|(\d+)h|Hourly|Daily|Monthly)\s+Limit(\s+Remaining)?$/i, (_m, prefix, period, h1, h2, rem) => {
+      const fixed = trimmed.replace(/^(.+?)\s+(Weekly|Five[- ]Hour|5[- ]Hour|(\d+)[- ]?Hour|(\d+)h|Hourly|Daily|Monthly)\s+Limit(\s+Remaining)?$/i, (_m, prefix, period, h1, h2, rem) => {
         const pLower = period.toLowerCase();
         let periodCn = '每周限额';
         if (pLower.includes('five') || pLower === '5-hour' || pLower === '5 hour' || pLower === '5h') periodCn = '5 小时限额';
@@ -6794,444 +5698,764 @@ electron_1.contextBridge.exposeInMainWorld('wizardAPI', wizardAPI);
         const prefixCn = dictionary[prefixTrim] || lowerDictionary.get(prefixTrim.toLowerCase()) || prefixTrim;
         return prefixCn + ' ' + periodCn + (rem ? '剩余' : '');
       });
-      isDynamic = true;
+      cacheSet(trimmed, fixed);
+      return replaceTrimmed(text, trimmed, fixed);
     }
 
-    // 侧边栏子智能体折叠按钮动态匹配 ("Show N more subagent(s)" / "Show less")
     if (/^Show\s+(\d+)\s+more\s+subagents?$/i.test(trimmed)) {
-      dynamicMatch = trimmed.replace(/^Show\s+(\d+)\s+more\s+subagents?$/i, '显示其余 $1 个子智能体');
-      isDynamic = true;
+      const fixed = trimmed.replace(/^Show\s+(\d+)\s+more\s+subagents?$/i, '显示其余 $1 个子智能体');
+      cacheSet(trimmed, fixed);
+      return replaceTrimmed(text, trimmed, fixed);
     }
+
     if (/^Show\s+less$/i.test(trimmed)) {
-      dynamicMatch = '收起';
-      isDynamic = true;
+      const fixed = '收起';
+      cacheSet(trimmed, fixed);
+      return replaceTrimmed(text, trimmed, fixed);
     }
 
-    // 配额提示句 (含动态天数/小时/分钟，支持全英或半中文状态下自愈清洗)
-    if (/(?:You have used some of your|您已使用了部分).*(?:limit|限额)/i.test(trimmed)) {
-      dynamicMatch = dynamicMatch
-        .replace(/^(?:You have used some of your|您已使用了部分)\s*(?:weekly|每周)\s*(?:limit|限额)?/i, '您已使用了部分每周限额')
-        .replace(/^(?:You have used some of your|您已使用了部分)\s*(?:5[- ]hour|five[- ]hour|5 小时|五小时)\s*(?:limit|限额)?/i, '您已使用了部分 5 小时限额')
-        .replace(/^(?:You have used some of your|您已使用了部分)\s*(?:hourly|每小时)\s*(?:limit|限额)?/i, '您已使用了部分每小时限额')
-        .replace(/^(?:You have used some of your|您已使用了部分)\s*(?:daily|每日)\s*(?:limit|限额)?/i, '您已使用了部分每日限额')
-        .replace(/(?:it will fully refresh in|它将在以下时间后完全刷新[：:]?)\s*/i, ' 它将在以下时间后完全刷新：')
-        .replace(/(\d+)\s*days?/gi, ' $1 天')
-        .replace(/(\d+)\s*hours?/gi, ' $1 小时')
-        .replace(/(\d+)\s*minutes?\.?$/gi, ' $1 分钟')
-        .replace(/\s+/g, ' ')
-        .trim();
-      isDynamic = true;
+    // 配额用量与完全刷新提示（支持 weekly/monthly/daily/hourly/5-hour，严格一次幂等，无双冒号与残留句点）
+    if (/^(?:You have used some of your|您已使用了部分)\s*(?:weekly|monthly|5[- ]hour|five[- ]hour|hourly|daily|每周|每月|5\s*小时|五小时|每小时|每日)\s*(?:limit|限额)/i.test(trimmed)) {
+      let fixed = trimmed
+        .replace(/^(?:You have used some of your|您已使用了部分)\s*(?:weekly|每周)\s*(?:limit|限额)[.。]?/i, '您已使用了部分每周限额。')
+        .replace(/^(?:You have used some of your|您已使用了部分)\s*(?:monthly|每月)\s*(?:limit|限额)[.。]?/i, '您已使用了部分每月限额。')
+        .replace(/^(?:You have used some of your|您已使用了部分)\s*(?:5[- ]hour|five[- ]hour|5\s*小时|五小时)\s*(?:limit|限额)[.。]?/i, '您已使用了部分 5 小时限额。')
+        .replace(/^(?:You have used some of your|您已使用了部分)\s*(?:hourly|每小时)\s*(?:limit|限额)[.。]?/i, '您已使用了部分每小时限额。')
+        .replace(/^(?:You have used some of your|您已使用了部分)\s*(?:daily|每日)\s*(?:limit|限额)[.。]?/i, '您已使用了部分每日限额。');
+      fixed = fixed.replace(/\s*(?:It will fully refresh in|它将在以下时间后完全刷新)[：:\s]*(.+?)[.。]?$/i, (_m, rest) => {
+        return '它将在以下时间后完全刷新：' + formatDurationCn(rest);
+      });
+      cacheSet(trimmed, fixed);
+      return replaceTrimmed(text, trimmed, fixed);
     }
-    // 模型分组配额说明长句
+
     if (/^Within each group, models share/.test(trimmed)) {
-      dynamicMatch = '在每个分组中，模型共享每周限额和 5 小时限额。配额按 token 成本比例消耗。因此，较短的任务或使用更具性价比的模型时，限额可持续更长时间。5 小时限额用于平滑总需求，以便在所有用户间公平分配全球容量，而每周限额则与您的个人等级直接挂钩。';
-      isDynamic = true;
+      const fixed = '在每个分组中，模型共享每周限额和 5 小时限额。配额按 token 成本比例消耗。因此，较短的任务或使用更具性价比的模型时，限额可持续更长时间。5 小时限额用于平滑总需求，以便在所有用户间公平分配全球容量，而每周限额则与您的个人等级直接挂钩。';
+      cacheSet(trimmed, fixed);
+      return replaceTrimmed(text, trimmed, fixed);
     }
 
-    // 模型配额剩余动态匹配 (例如 "70% left", "100% Remaining", "85.4% remaining")
-    if (/^(\d+(?:\.\d+)?%?)\s+(?:remaining|left)$/i.test(trimmed)) {
-      dynamicMatch = dynamicMatch.replace(/^(\d+(?:\.\d+)?%?)\s+(?:remaining|left)$/i, '$1 剩余');
-      isDynamic = true;
-    }
-    // 限额周期动态匹配 (例如 "5h limit", "5h Limit", "24h limit", "1h limit")
     if (/^(\d+)h\s+limit$/i.test(trimmed)) {
-      dynamicMatch = dynamicMatch.replace(/^(\d+)h\s+limit$/i, '$1 小时限额');
-      isDynamic = true;
+      const fixed = trimmed.replace(/^(\d+)h\s+limit$/i, '$1 小时限额');
+      cacheSet(trimmed, fixed);
+      return replaceTrimmed(text, trimmed, fixed);
     }
-    // 配额重置时间动态匹配 (例如 "Resets in 15h 14m", "Resets in 4h 50m", "Resets in 4d 15h", "Resets in 28m")
-    if (/^Resets?\s+in\s+(.+)$/i.test(trimmed)) {
-      const timePart = trimmed.replace(/^Resets?\s+in\s+/i, '');
-      const formattedTime = timePart
-        .replace(/(\d+)\s*d(?:ays?)?/gi, '$1 天 ')
-        .replace(/(\d+)\s*h(?:(?:ou)?rs?)?/gi, '$1 小时 ')
-        .replace(/(\d+)\s*m(?:in(?:ute)?s?)?/gi, '$1 分钟 ')
-        .replace(/(\d+)\s*s(?:ec(?:ond)?s?)?/gi, '$1 秒 ')
-        .replace(/\s+/g, ' ')
-        .trim();
-      dynamicMatch = formattedTime + '后重置';
-      isDynamic = true;
-    }
-    // 剩余时间刷新动态匹配 (例如 "15 minutes", "1 hour 26 minutes", "2 hours", "1 day")
+
     if (/^(\d+)\s+hours?\s+(\d+)\s+minutes?$/i.test(trimmed)) {
-      dynamicMatch = dynamicMatch.replace(/^(\d+)\s+hours?\s+(\d+)\s+minutes?$/i, '$1 小时 $2 分钟');
-      isDynamic = true;
+      const fixed = trimmed.replace(/^(\d+)\s+hours?\s+(\d+)\s+minutes?$/i, '$1 小时 $2 分钟');
+      cacheSet(trimmed, fixed);
+      return replaceTrimmed(text, trimmed, fixed);
     }
     if (/^(\d+)\s+minutes?$/i.test(trimmed)) {
-      dynamicMatch = dynamicMatch.replace(/^(\d+)\s+minutes?$/i, '$1 分钟');
-      isDynamic = true;
+      const fixed = trimmed.replace(/^(\d+)\s+minutes?$/i, '$1 分钟');
+      cacheSet(trimmed, fixed);
+      return replaceTrimmed(text, trimmed, fixed);
     }
     if (/^(\d+)\s+hours?$/i.test(trimmed)) {
-      dynamicMatch = dynamicMatch.replace(/^(\d+)\s+hours?$/i, '$1 小时');
-      isDynamic = true;
+      const fixed = trimmed.replace(/^(\d+)\s+hours?$/i, '$1 小时');
+      cacheSet(trimmed, fixed);
+      return replaceTrimmed(text, trimmed, fixed);
     }
     if (/^(\d+)\s+days?$/i.test(trimmed)) {
-      dynamicMatch = dynamicMatch.replace(/^(\d+)\s+days?$/i, '$1 天');
-      isDynamic = true;
+      const fixed = trimmed.replace(/^(\d+)\s+days?$/i, '$1 天');
+      cacheSet(trimmed, fixed);
+      return replaceTrimmed(text, trimmed, fixed);
     }
 
-    // 项目/路径不存在的动态提示 (项目名 + " does not exist"，超3词无法走分词)
-    if (/^.+ does not exist\.?$/i.test(trimmed)) {
-      dynamicMatch = dynamicMatch.replace(/^(.+) does not exist\.?$/i, '$1 不存在');
-      isDynamic = true;
-    }
-    // "xxx was not found" 动态提示
-    if (/^.+ was not found\.?$/i.test(trimmed)) {
-      dynamicMatch = dynamicMatch.replace(/^(.+) was not found\.?$/i, '$1 未找到');
-      isDynamic = true;
+    // 收紧主语词数上限（<= 4 词且不含从句连词），避免误伤英文长提示句
+    if (/^(.+)\s+does not exist\.?$/i.test(trimmed)) {
+      const subj = trimmed.replace(/\s+does not exist\.?$/i, '').trim();
+      if (subj.split(/\s+/).length <= 4 && !/\b(?:because|that|which|when|while)\b/i.test(subj)) {
+        const fixed = subj + ' 不存在';
+        cacheSet(trimmed, fixed);
+        return replaceTrimmed(text, trimmed, fixed);
+      }
     }
 
-    // 步骤与回合动态提示
-    if (/^Step \d+ \([^\)]+\):?$/i.test(trimmed)) {
-      dynamicMatch = dynamicMatch.replace(/^Step (\d+) \(([^\)]+)\):?/i, '步骤 $1 ($2)：');
-      isDynamic = true;
+    if (/^(.+)\s+was not found\.?$/i.test(trimmed)) {
+      const subj = trimmed.replace(/\s+was not found\.?$/i, '').trim();
+      if (subj.split(/\s+/).length <= 4 && !/\b(?:because|that|which|when|while)\b/i.test(subj)) {
+        const fixed = subj + ' 未找到';
+        cacheSet(trimmed, fixed);
+        return replaceTrimmed(text, trimmed, fixed);
+      }
     }
+
+    if (/^([A-Za-z]+)\s+not\s+found\.?$/i.test(trimmed)) {
+      const noun = trimmed.replace(/\s+not\s+found\.?$/i, '');
+      const nounLower = noun.toLowerCase();
+      const nounCn = Object.prototype.hasOwnProperty.call(coreWords, nounLower)
+        ? coreWords[nounLower]
+        : (Object.prototype.hasOwnProperty.call(dictionary, noun) ? dictionary[noun] : lowerDictionary.get(nounLower));
+      if (nounCn && /[\u4e00-\u9fa5]/.test(nounCn)) {
+        const fixed = nounCn + '未找到' + (/\.$/.test(trimmed) ? '。' : '');
+        cacheSet(trimmed, fixed);
+        return replaceTrimmed(text, trimmed, fixed);
+      }
+    }
+
+    if (/^Step \d+ \([^)]+\):?$/i.test(trimmed)) {
+      const fixed = trimmed.replace(/^Step (\d+) \(([^)]+)\):?$/i, '步骤 $1 ($2)：');
+      cacheSet(trimmed, fixed);
+      return replaceTrimmed(text, trimmed, fixed);
+    }
+
     if (/^\d+ turns?$/i.test(trimmed)) {
-      dynamicMatch = dynamicMatch.replace(/^(\d+) turns?$/i, '$1 回合');
-      isDynamic = true;
+      const fixed = trimmed.replace(/^(\d+) turns?$/i, '$1 回合');
+      cacheSet(trimmed, fixed);
+      return replaceTrimmed(text, trimmed, fixed);
     }
+
     if (/^Turn \d+$/i.test(trimmed)) {
-      dynamicMatch = dynamicMatch.replace(/^Turn (\d+)$/i, '第 $1 回合');
-      isDynamic = true;
+      const fixed = trimmed.replace(/^Turn (\d+)$/i, '第 $1 回合');
+      cacheSet(trimmed, fixed);
+      return replaceTrimmed(text, trimmed, fixed);
     }
+
     if (/^Task id "[^"]+" finished with result:$/i.test(trimmed)) {
-      dynamicMatch = dynamicMatch.replace(/^Task id "([^"]+)" finished with result:$/i, '任务 "$1" 执行完成：');
-      isDynamic = true;
+      const fixed = trimmed.replace(/^Task id "([^"]+)" finished with result:$/i, (_m, id) => '任务 "' + id + '" 执行完成：');
+      cacheSet(trimmed, fixed);
+      return replaceTrimmed(text, trimmed, fixed);
     }
+
     if (/^Tool is running as a background task with task id: (.+)$/i.test(trimmed)) {
-      dynamicMatch = dynamicMatch.replace(/^Tool is running as a background task with task id: (.+)$/i, '工具正在后台运行 (任务ID: $1)');
-      isDynamic = true;
+      const fixed = trimmed.replace(/^Tool is running as a background task with task id: (.+)$/i, (_m, id) => '工具正在后台运行 (任务ID: ' + id + ')');
+      cacheSet(trimmed, fixed);
+      return replaceTrimmed(text, trimmed, fixed);
     }
-    if (/^Thought (?:for|持续) (.+)$/i.test(trimmed)) {
-      dynamicMatch = dynamicMatch.replace(/^Thought (?:for|持续) (.+)$/i, '思考了 $1');
-      isDynamic = true;
-    }
-    if (/^Thinking (?:for|持续) (.+)$/i.test(trimmed)) {
-      dynamicMatch = dynamicMatch.replace(/^Thinking (?:for|持续) (.+)$/i, '思考了 $1');
-      isDynamic = true;
-    }
-    if (/^Thinking \((.+)\)$/i.test(trimmed)) {
-      dynamicMatch = dynamicMatch.replace(/^Thinking \((.+)\)$/i, '正在思考 ($1)');
-      isDynamic = true;
-    }
+
     if (/^Version\s+(\d+.*)$/i.test(trimmed)) {
-      dynamicMatch = dynamicMatch.replace(/^Version\s+(\d+.*)$/i, '版本 $1');
-      isDynamic = true;
+      const fixed = trimmed.replace(/^Version\s+(\d+.*)$/i, (_m, v) => '版本 ' + v);
+      cacheSet(trimmed, fixed);
+      return replaceTrimmed(text, trimmed, fixed);
     }
-    if (/^Updated\s+(.+)$/i.test(trimmed)) {
-      dynamicMatch = dynamicMatch.replace(/^Updated\s+(.+)$/i, '更新于 $1')
-        .replace(/\b(Jan|Feb|Mar|Apr|May|Jun|Jul|Aug|Sep|Oct|Nov|Dec)\s+(\d{1,2})\b/gi, (m, mon, day) => {
+
+    // 收紧 Updated 时间戳正则：仅后接明确时间词或月份数字才译为 "更新于"
+    if (/^Updated\s+(?:just now|today|yesterday|\d|a\s+(?:moment|few|minute|hour|day|week|month|year)|an\s+hour|last\s+|Jan|Feb|Mar|Apr|May|Jun|Jul|Aug|Sep|Oct|Nov|Dec)/i.test(trimmed)) {
+      const fixed = trimmed.replace(/^Updated\s+(.+)$/i, (_m, rest) => '更新于 ' + rest)
+        .replace(/\b(Jan|Feb|Mar|Apr|May|Jun|Jul|Aug|Sep|Oct|Nov|Dec)\s+(\d{1,2})\b/gi, (_m, mon, day) => {
           const monMap = { jan: 1, feb: 2, mar: 3, apr: 4, may: 5, jun: 6, jul: 7, aug: 8, sep: 9, oct: 10, nov: 11, dec: 12 };
           return monMap[mon.toLowerCase()] + '月' + day + '日';
         });
-      isDynamic = true;
+      cacheSet(trimmed, fixed);
+      return replaceTrimmed(text, trimmed, fixed);
     }
 
-    // 智能体设置：计划审核策略提示 (包含纯英文、部分翻译、夹生等各种形态)
-    if (/(?:Type|输入)\s*\/\s*(?:and|并|和)?\s*(?:select|选择)?\s*['"]?plan['"]?\s*to\s+have\s+the\s+agent\s+generate\s+a\s+plan[。.]?/i.test(trimmed)) {
-      dynamicMatch = /[。.]\s*$/.test(trimmed) ? '输入 / 并选择 plan 来让智能体生成计划。' : '输入 / 并选择 plan 来让智能体生成计划';
-      isDynamic = true;
+    // 计划审核策略提示兼容形态
+    if (/^(?:Type|输入)\s*\/\s*(?:and|并|和)?\s*(?:select|选择)?\s*['"]?plan['"]?\s*to\s+have\s+the\s+agent\s+generate\s+a\s+plan[。.]?$/i.test(trimmed)) {
+      const fixed = /[。.]\s*$/.test(trimmed) ? '输入 / 并选择 plan 来让智能体生成计划。' : '输入 / 并选择 plan 来让智能体生成计划';
+      cacheSet(trimmed, fixed);
+      return replaceTrimmed(text, trimmed, fixed);
     }
     if (/^(?:to\s+)?have\s+the\s+agent\s+generate\s+a\s+plan[。.]?$/i.test(trimmed)) {
-      dynamicMatch = /[。.]\s*$/.test(trimmed) ? '来让智能体生成计划。' : '来让智能体生成计划';
-      isDynamic = true;
+      const fixed = /[。.]\s*$/.test(trimmed) ? '来让智能体生成计划。' : '来让智能体生成计划';
+      cacheSet(trimmed, fixed);
+      return replaceTrimmed(text, trimmed, fixed);
     }
     if (/^plan\s+to\s+have\s+the\s+agent\s+generate\s+a\s+plan[。.]?$/i.test(trimmed)) {
-      dynamicMatch = /[。.]\s*$/.test(trimmed) ? 'plan 来让智能体生成计划。' : 'plan 来让智能体生成计划';
-      isDynamic = true;
+      const fixed = /[。.]\s*$/.test(trimmed) ? 'plan 来让智能体生成计划。' : 'plan 来让智能体生成计划';
+      cacheSet(trimmed, fixed);
+      return replaceTrimmed(text, trimmed, fixed);
     }
-    if (/^(?:Type|输入)\s*\/\s*(?:and|并|和)\s*$/i.test(trimmed)) {
-      dynamicMatch = '输入 / 并';
-      isDynamic = true;
+    if (/^(?:Type|输入)\s*\/\s*(?:and|并|和)(?:\s*(?:select|选择))?\s*$/i.test(trimmed)) {
+      const fixed = /(?:select|选择)\s*$/i.test(trimmed) ? '输入 / 并选择' : '输入 / 并';
+      cacheSet(trimmed, fixed);
+      return replaceTrimmed(text, trimmed, fixed);
     }
 
-    // 服务端下发的模型分组标签：文本节点包含动态模型列表（如
-    // "Models within this group: Claude Opus, Claude Sonnet, GPT-OS"），
-    // 精确词典条目无法命中，必须用前缀动态匹配；模型名列表保持英文原样。
     if (/^Models within this group:\s*(.*)$/i.test(trimmed)) {
-      dynamicMatch = trimmed.replace(/^Models within this group:\s*(.*)$/i,
-        (_m, list) => '本组内的模型：' + list.trim());
-      isDynamic = true;
+      const fixed = trimmed.replace(/^Models within this group:\s*(.*)$/i, (_m, list) => '本组内的模型：' + list.trim());
+      cacheSet(trimmed, fixed);
+      return replaceTrimmed(text, trimmed, fixed);
     }
 
-    // 2.26.0 带「当前值」后缀的动态选择器 aria-label
-    // 注意：必须用函数式 replace，避免捕获到的路径/名称里含 $ 时被误当作替换模板
     if (/^Select project, current: (.+)$/i.test(trimmed)) {
-      dynamicMatch = trimmed.replace(/^Select project, current: (.+)$/i, (_m, v) => '选择项目，当前：' + v);
-      isDynamic = true;
+      const fixed = trimmed.replace(/^Select project, current: (.+)$/i, (_m, v) => '选择项目，当前：' + v);
+      cacheSet(trimmed, fixed);
+      return replaceTrimmed(text, trimmed, fixed);
     }
+
     if (/^Agent permissions preset selector, current: (.+)$/i.test(trimmed)) {
-      dynamicMatch = trimmed.replace(/^Agent permissions preset selector, current: (.+)$/i,
+      const fixed = trimmed.replace(/^Agent permissions preset selector, current: (.+)$/i,
         (_m, v) => '智能体权限预设选择器，当前：' + v.replace(/Turbo/gi, '极速模式'));
-      isDynamic = true;
-    }
-    if (isDynamic) {
-      return text.replace(trimmed, dynamicMatch);
-    }
-    // --- End Dynamic Regex ---
-
-    // 1. Direct Literal Match (Exact match including punctuation)
-    if (dictionary[trimmed]) {
-      return text.replace(trimmed, dictionary[trimmed]);
+      cacheSet(trimmed, fixed);
+      return replaceTrimmed(text, trimmed, fixed);
     }
 
-    // Normalizing internal multiple whitespace/newlines for multi-sentence cards
-    const normalizedSpace = trimmed.replace(/\s+/g, ' ');
-    if (dictionary[normalizedSpace]) {
-      return text.replace(trimmed, dictionary[normalizedSpace]);
+    // ===== v2.33.0 新增动态规则：Voices / Dictation / Computer Use / Browser Data / Shortcuts / Bundles / Step Plan / SSH =====
+    if (/^([^,]+),\s*voice\s+(\d+)\s+of\s+(\d+)$/i.test(trimmed)) {
+      const fixed = trimmed.replace(/^([^,]+),\s*voice\s+(\d+)\s+of\s+(\d+)$/i, '$1，第 $2 / $3 个音色');
+      cacheSet(trimmed, fixed);
+      return replaceTrimmed(text, trimmed, fixed);
     }
+
+    if (/^Retrying transcription \(attempt (\d+)\)[.…]*$/i.test(trimmed)) {
+      const fixed = trimmed.replace(/^Retrying transcription \(attempt (\d+)\)[.…]*$/i, '正在重试转写（第 $1 次尝试）…');
+      cacheSet(trimmed, fixed);
+      return replaceTrimmed(text, trimmed, fixed);
+    }
+
+    // Computer Use / Agents Live 暂停接管横幅、窗口标题提示、游标胶囊与智能体状态芯片（长句在前，防 ^Agent: 短前缀截胡）
+    if (/^(.+?)\s+is paused in\s+(.+?);\s*its view keeps playing here\.\s*Resume to let it continue\.?$/i.test(trimmed)) {
+      const fixed = trimmed.replace(/^(.+?)\s+is paused in\s+(.+?);\s*its view keeps playing here\.\s*Resume to let it continue\.?$/i, (_m, who, app) => {
+        const isGeneric = /^the agent$/i.test(who.trim());
+        const whoCn = isGeneric ? '智能体' : translateString(who.trim());
+        return whoCn + (isGeneric ? '已在 ' : ' 已在 ') + app + ' 中暂停；其画面仍在此处实时播放。点击“恢复”即可让其继续操作。';
+      });
+      cacheSet(trimmed, fixed);
+      return replaceTrimmed(text, trimmed, fixed);
+    }
+
+    if (/^(.+?)\s*·\s*(Agent:\s*.+?)\s*\((Focus this tile|Back to all agents)\)$/i.test(trimmed)) {
+      const fixed = trimmed.replace(/^(.+?)\s*·\s*(Agent:\s*.+?)\s*\((Focus this tile|Back to all agents)\)$/i, (_m, title, ag, act) => {
+        const actCn = /focus/i.test(act) ? '聚焦此视图' : '返回全部智能体';
+        return title + ' · ' + translateString(ag) + '（' + actCn + '）';
+      });
+      cacheSet(trimmed, fixed);
+      return replaceTrimmed(text, trimmed, fixed);
+    }
+
+    if (/^Agent:\s*([^;\n]{1,60})$/i.test(trimmed)) {
+      const rest = trimmed.replace(/^Agent:\s*/i, '');
+      const parts = rest.split(/\s*·\s*/);
+      const nameCn = parts[0].toLowerCase() === 'unnamed' ? '未命名' : parts[0];
+      const intentMap = {
+        'press': '点击',
+        'select': '选择',
+        'typing': '正在输入',
+        'scroll ↕': '滚动 ↕',
+        'scroll': '滚动',
+        'pointer': '移动指针',
+        'looking': '正在查看',
+        'waiting for the pointer': '等待指针控制权'
+      };
+      const mapped = [
+        '智能体：' + nameCn,
+        ...parts.slice(1).map(p => intentMap[p.toLowerCase()] || p)
+      ];
+      const fixed = mapped.join(' · ');
+      cacheSet(trimmed, fixed);
+      return replaceTrimmed(text, trimmed, fixed);
+    }
+
+    if (/^·\s*(?:(.+?)\s*·\s*)?(foreground|background|paused|stopped)$/i.test(trimmed)) {
+      const stateMap = { foreground: '前台', background: '后台', paused: '已暂停', stopped: '已停止' };
+      const fixed = trimmed.replace(/^·\s*(?:(.+?)\s*·\s*)?(foreground|background|paused|stopped)$/i, (_m, app, st) => {
+        const stCn = stateMap[st.toLowerCase()] || st;
+        return app ? ('· ' + app + ' · ' + stCn) : ('· ' + stCn);
+      });
+      cacheSet(trimmed, fixed);
+      return replaceTrimmed(text, trimmed, fixed);
+    }
+
+    if (/^Hidden by policy \((.+)\)\.?$/i.test(trimmed)) {
+      const fixed = trimmed.replace(/^Hidden by policy \((.+)\)\.?$/i, '已按策略隐藏（$1）。');
+      cacheSet(trimmed, fixed);
+      return replaceTrimmed(text, trimmed, fixed);
+    }
+
+    // 内置浏览器按站点 Cookie 管理、预览端口与文件体积限制
+    if (/^(\d+)\s+cookies?$/i.test(trimmed)) {
+      const fixed = trimmed.replace(/^(\d+)\s+cookies?$/i, '$1 个 Cookie');
+      cacheSet(trimmed, fixed);
+      return replaceTrimmed(text, trimmed, fixed);
+    }
+
+    if (/^Delete cookies for\s+(.+)$/i.test(trimmed)) {
+      const fixed = trimmed.replace(/^Delete cookies for\s+(.+)$/i, '删除 $1 的 Cookie');
+      cacheSet(trimmed, fixed);
+      return replaceTrimmed(text, trimmed, fixed);
+    }
+
+    if (/^Deleted cookies for\s+(.+)$/i.test(trimmed)) {
+      const fixed = trimmed.replace(/^Deleted cookies for\s+(.+)$/i, '已删除 $1 的 Cookie');
+      cacheSet(trimmed, fixed);
+      return replaceTrimmed(text, trimmed, fixed);
+    }
+
+    if (/^Showing latest\s+(\d+)\s+browser steps$/i.test(trimmed)) {
+      const fixed = trimmed.replace(/^Showing latest\s+(\d+)\s+browser steps$/i, '正在显示最近 $1 个浏览器步骤');
+      cacheSet(trimmed, fixed);
+      return replaceTrimmed(text, trimmed, fixed);
+    }
+
+    if (/^The preview did not respond on port\s+(\d+)\.?$/i.test(trimmed)) {
+      const fixed = trimmed.replace(/^The preview did not respond on port\s+(\d+)\.?$/i, '端口 $1 上的预览未响应。');
+      cacheSet(trimmed, fixed);
+      return replaceTrimmed(text, trimmed, fixed);
+    }
+
+    if (/^Nothing is running on port\s+(\d+)\.?$/i.test(trimmed)) {
+      const fixed = trimmed.replace(/^Nothing is running on port\s+(\d+)\.?$/i, '端口 $1 上没有正在运行的服务');
+      cacheSet(trimmed, fixed);
+      return replaceTrimmed(text, trimmed, fixed);
+    }
+
+    if (/^File exceeds the\s+(\d+(?:\.\d+)?)MB display limit(?:\s*\((\d+(?:\.\d+)?)MB\))?,\s*so it can't be opened or downloaded here\.?$/i.test(trimmed)) {
+      const fixed = trimmed.replace(/^File exceeds the\s+(\d+(?:\.\d+)?)MB display limit(?:\s*\((\d+(?:\.\d+)?)MB\))?,\s*so it can't be opened or downloaded here\.?$/i, (_m, lim, sz) => {
+        return sz ? ('文件（' + sz + 'MB）超出 ' + lim + 'MB 显示上限，无法在此处打开或下载。') : ('文件超出 ' + lim + 'MB 显示上限，无法在此处打开或下载。');
+      });
+      cacheSet(trimmed, fixed);
+      return replaceTrimmed(text, trimmed, fixed);
+    }
+
+    // 快捷键录制冲突提示（支持多条冲突通过 "; " 连接）
+    if (/^Conflicts with "/i.test(trimmed)) {
+      const parts = trimmed.split(/;\s*/);
+      const translatedParts = parts.map(part => {
+        if (/^Conflicts with "(.+)" \(press Enter to replace\)$/i.test(part)) {
+          return part.replace(/^Conflicts with "(.+)" \(press Enter to replace\)$/i, '与“$1”冲突（按 Enter 替换）');
+        }
+        if (/^Conflicts with "(.+)" \(managed by application menu\)$/i.test(part)) {
+          return part.replace(/^Conflicts with "(.+)" \(managed by application menu\)$/i, '与“$1”冲突（由应用程序菜单管理）');
+        }
+        if (/^Conflicts with "(.+)"$/i.test(part)) {
+          return part.replace(/^Conflicts with "(.+)"$/i, '与“$1”冲突');
+        }
+        return part;
+      });
+      const fixed = translatedParts.join('；');
+      cacheSet(trimmed, fixed);
+      return replaceTrimmed(text, trimmed, fixed);
+    }
+
+    // Marketplace Bundles 与插件/技能源码安全审查提示
     
-    // 性能：大小写不敏感匹配改用预先构建的 O(1) 索引 lowerDictionary，
-    // 语义与原先遍历整本词典完全一致（取首个 toLowerCase 相同的键），
-    // 但避免了每次未命中都要线性扫描两千余条词典。
+
+    if (/^No (plugin|skill|bundle) found for$/i.test(trimmed)) {
+      const fixed = /bundle/i.test(trimmed) ? '未找到对应的插件组合包：' : (/skill/i.test(trimmed) ? '未找到对应的技能：' : '未找到对应的插件：');
+      cacheSet(trimmed, fixed);
+      return replaceTrimmed(text, trimmed, fixed);
+    }
+
+    if (/^Add bundle\s+(.+)$/i.test(trimmed)) {
+      const fixed = trimmed.replace(/^Add bundle\s+(.+)$/i, '添加组合包 $1');
+      cacheSet(trimmed, fixed);
+      return replaceTrimmed(text, trimmed, fixed);
+    }
+
+    if (/^Adding plugins from\s+(.+)$/i.test(trimmed)) {
+      const fixed = trimmed.replace(/^Adding plugins from\s+(.+)$/i, '正在从 $1 添加插件');
+      cacheSet(trimmed, fixed);
+      return replaceTrimmed(text, trimmed, fixed);
+    }
+
+    if (/^Added\s+(.+?)\s+and installed\s+(\d+)\s+plugins?\.?$/i.test(trimmed)) {
+      const fixed = trimmed.replace(/^Added\s+(.+?)\s+and installed\s+(\d+)\s+plugins?\.?$/i, '已添加 $1 并安装 $2 个插件。');
+      cacheSet(trimmed, fixed);
+      return replaceTrimmed(text, trimmed, fixed);
+    }
+
+    if (/^(\d+)\s+plugins?,\s*all already installed\.\s*Adding the bundle installs plugins it gains later\.?$/i.test(trimmed)) {
+      const fixed = trimmed.replace(/^(\d+)\s+plugins?,\s*all already installed\.\s*Adding the bundle installs plugins it gains later\.?$/i, '共 $1 个插件，均已安装。添加此组合包后，未来新增的插件将自动安装。');
+      cacheSet(trimmed, fixed);
+      return replaceTrimmed(text, trimmed, fixed);
+    }
+
+    if (/^(\d+)\s+plugins?\.\s*Adding the bundle installs plugins it gains later\.?$/i.test(trimmed)) {
+      const fixed = trimmed.replace(/^(\d+)\s+plugins?\.\s*Adding the bundle installs plugins it gains later\.?$/i, '共 $1 个插件。添加此组合包后，未来新增的插件将自动安装。');
+      cacheSet(trimmed, fixed);
+      return replaceTrimmed(text, trimmed, fixed);
+    }
+
+    if (/^(\d+)\s+plugins?\.\s*Add bundle installs (?:it|all of them)\.?$/i.test(trimmed)) {
+      const fixed = trimmed.replace(/^(\d+)\s+plugins?\.\s*Add bundle installs (?:it|all of them)\.?$/i, (_m, n) => {
+        return Number(n) === 1 ? '共 1 个插件。点击“添加组合包”即可安装。' : ('共 ' + n + ' 个插件。点击“添加组合包”将全部安装。');
+      });
+      cacheSet(trimmed, fixed);
+      return replaceTrimmed(text, trimmed, fixed);
+    }
+
+    if (/^(\d+)\s+plugins?\.\s*Add bundle installs\s+(\d+);\s*the ones you already have stay as they are\.?$/i.test(trimmed)) {
+      const fixed = trimmed.replace(/^(\d+)\s+plugins?\.\s*Add bundle installs\s+(\d+);\s*the ones you already have stay as they are\.?$/i, '共 $1 个插件。点击“添加组合包”将安装其余 $2 个；已安装的插件保持不变。');
+      cacheSet(trimmed, fixed);
+      return replaceTrimmed(text, trimmed, fixed);
+    }
+
+    if (/^(\d+)\s+plugins?\.\s*Disabling or removing the bundle applies only to the ones it installed\.?$/i.test(trimmed)) {
+      const fixed = trimmed.replace(/^(\d+)\s+plugins?\.\s*Disabling or removing the bundle applies only to the ones it installed\.?$/i, '共 $1 个插件。禁用或移除组合包仅影响由该组合包安装的插件。');
+      cacheSet(trimmed, fixed);
+      return replaceTrimmed(text, trimmed, fixed);
+    }
+
+    if (/^Review\s+(plugin|skill|bundle)\s+before\s+(?:installing|adding)$/i.test(trimmed)) {
+      const fixed = /bundle/i.test(trimmed) ? '添加前审查组合包' : (/skill/i.test(trimmed) ? '安装前审查技能' : '安装前审查插件');
+      cacheSet(trimmed, fixed);
+      return replaceTrimmed(text, trimmed, fixed);
+    }
+
+    if (/^This\s+(plugin|skill)'s source is in\s+(.+?),\s*which can have looser review standards than standard Google code\.\s*Review its contents before installing\.?$/i.test(trimmed)) {
+      const fixed = trimmed.replace(/^This\s+(plugin|skill)'s source is in\s+(.+?),\s*which can have looser review standards than standard Google code\.\s*Review its contents before installing\.?$/i, (_m, kind, src) => {
+        const kindCn = /skill/i.test(kind) ? '技能' : '插件';
+        return '此' + kindCn + '的源码位于 ' + src + '，其代码审查标准可能比标准 Google 代码更宽松。请在安装前审查其内容。';
+      });
+      cacheSet(trimmed, fixed);
+      return replaceTrimmed(text, trimmed, fixed);
+    }
+
+    if (/^(?:This plugin|These plugins) in\s+(.+?)\s+may have looser code review\.\s*Review (?:its|their) contents before adding the bundle\.?$/i.test(trimmed)) {
+      const isPlural = /^These/i.test(trimmed);
+      const fixed = trimmed.replace(/^(?:This plugin|These plugins) in\s+(.+?)\s+may have looser code review\.\s*Review (?:its|their) contents before adding the bundle\.?$/i,
+        isPlural ? '$1 中的以下插件代码审查可能较宽松，请在添加组合包前审查其内容。' : '$1 中的此插件代码审查可能较宽松，请在添加组合包前审查其内容。');
+      cacheSet(trimmed, fixed);
+      return replaceTrimmed(text, trimmed, fixed);
+    }
+
+    if (/^(.+?)\s+may have looser code review\.\s*Review (?:its|their) contents before adding the bundle\.?$/i.test(trimmed)) {
+      const fixed = trimmed.replace(/^(.+?)\s+may have looser code review\.\s*Review (?:its|their) contents before adding the bundle\.?$/i, (_m, items) => {
+        const itemsCn = items
+          .replace(/\bPrototype\b/g, '原型')
+          .replace(/\bExperimental\b/g, '实验性')
+          .replace(/\bThird-party\b/g, '第三方');
+        return itemsCn + ' 的代码审查可能较宽松，请在添加组合包前审查其内容。';
+      });
+      cacheSet(trimmed, fixed);
+      return replaceTrimmed(text, trimmed, fixed);
+    }
+
+    // Step Plan 步骤计划进度条与折叠胶囊
+    if (/^Plan,\s*(\d+)\s+of\s+(\d+)\s+steps done$/i.test(trimmed)) {
+      const fixed = trimmed.replace(/^Plan,\s*(\d+)\s+of\s+(\d+)\s+steps done$/i, '计划：已完成 $1 / $2 步');
+      cacheSet(trimmed, fixed);
+      return replaceTrimmed(text, trimmed, fixed);
+    }
+
+    if (/^(\d+)\/(\d+)\s+steps(?:\s*·\s*(\d+)\s+failed)?(?:\s*·\s*(\d+)\s+skipped)?(?:\.\s*(Show|Hide)\s+plan)?$/i.test(trimmed)) {
+      const fixed = trimmed.replace(/^(\d+)\/(\d+)\s+steps(?:\s*·\s*(\d+)\s+failed)?(?:\s*·\s*(\d+)\s+skipped)?(?:\.\s*(Show|Hide)\s+plan)?$/i, (_m, d, t, fail, skip, toggle) => {
+        let res = d + '/' + t + ' 步';
+        if (fail) res += ' · ' + fail + ' 失败';
+        if (skip) res += ' · ' + skip + ' 已跳过';
+        if (toggle) res += '。' + (/hide/i.test(toggle) ? '隐藏计划' : '显示计划');
+        return res;
+      });
+      cacheSet(trimmed, fixed);
+      return replaceTrimmed(text, trimmed, fixed);
+    }
+
+    if (/^Side question \(conversation ([^)]+)\):\s*(.+)$/i.test(trimmed)) {
+      const fixed = trimmed.replace(/^Side question \(conversation ([^)]+)\):\s*(.+)$/i, '侧边提问（对话 $1）：$2');
+      cacheSet(trimmed, fixed);
+      return replaceTrimmed(text, trimmed, fixed);
+    }
+
+    // Remote SSH 新增登录归属、连接通知与远程 Chrome 调试引导
+    if (/^You're signing in on\s+(.+?)\.\s*Your sign-in stays on that machine\.?$/i.test(trimmed)) {
+      const fixed = trimmed.replace(/^You're signing in on\s+(.+?)\.\s*Your sign-in stays on that machine\.?$/i, '你正在 $1 上登录。登录状态将保存在该机器上。');
+      cacheSet(trimmed, fixed);
+      return replaceTrimmed(text, trimmed, fixed);
+    }
+
+    if (/^Connected to\s+(?!WSL:)(.+)$/i.test(trimmed)) {
+      const fixed = trimmed.replace(/^Connected to\s+(.+)$/i, '已连接到 $1');
+      cacheSet(trimmed, fixed);
+      return replaceTrimmed(text, trimmed, fixed);
+    }
+
+    if (/^Connecting to\s+(.+?)[.…]*$/i.test(trimmed)) {
+      const fixed = trimmed.replace(/^Connecting to\s+(.+?)[.…]*$/i, '正在连接到 $1…');
+      cacheSet(trimmed, fixed);
+      return replaceTrimmed(text, trimmed, fixed);
+    }
+
+    if (/^This window's agents, files, and terminals are on\s+(.+?)\.?$/i.test(trimmed)) {
+      const fixed = trimmed.replace(/^This window's agents, files, and terminals are on\s+(.+?)\.?$/i, '此窗口的智能体、文件与终端均运行在 $1 上。');
+      cacheSet(trimmed, fixed);
+      return replaceTrimmed(text, trimmed, fixed);
+    }
+
+    if (/^(\d+)\s+hidden\s+hosts?$/i.test(trimmed)) {
+      const fixed = trimmed.replace(/^(\d+)\s+hidden\s+hosts?$/i, '$1 个已隐藏的主机');
+      cacheSet(trimmed, fixed);
+      return replaceTrimmed(text, trimmed, fixed);
+    }
+
+    if (/^SSH Config \((.+)\)$/i.test(trimmed)) {
+      const fixed = trimmed.replace(/^SSH Config \((.+)\)$/i, 'SSH 配置 ($1)');
+      cacheSet(trimmed, fixed);
+      return replaceTrimmed(text, trimmed, fixed);
+    }
+
+    if (/^Browser tools run on\s+(.+?),\s*the SSH host this window is connected to,\s*and Chrome there isn't accepting remote debugging\.\s*Complete these steps on\s+(.+?),\s*not on this computer:$/i.test(trimmed)) {
+      const fixed = trimmed.replace(/^Browser tools run on\s+(.+?),\s*the SSH host this window is connected to,\s*and Chrome there isn't accepting remote debugging\.\s*Complete these steps on\s+(.+?),\s*not on this computer:$/i,
+        '浏览器工具运行在当前窗口连接的 SSH 主机 $1 上，而该主机上的 Chrome 尚未开启远程调试。请在 $2（而非本机）上完成以下步骤：');
+      cacheSet(trimmed, fixed);
+      return replaceTrimmed(text, trimmed, fixed);
+    }
+
+    if (/^Open Google Chrome on\s+(.+?)\.$/i.test(trimmed)) {
+      const fixed = trimmed.replace(/^Open Google Chrome on\s+(.+?)\.$/i, (_m, h) => {
+        const isGeneric = /^the ssh host$/i.test(h.trim());
+        return isGeneric ? '在该 SSH 主机上打开 Google Chrome。' : ('在 ' + h + ' 上打开 Google Chrome。');
+      });
+      cacheSet(trimmed, fixed);
+      return replaceTrimmed(text, trimmed, fixed);
+    }
+
+    if (/^If\s+(.+?)\s+is a Cloudtop,\s*open it in$/i.test(trimmed)) {
+      const fixed = trimmed.replace(/^If\s+(.+?)\s+is a Cloudtop,\s*open it in$/i, (_m, h) => {
+        const isGeneric = /^the ssh host$/i.test(h.trim());
+        return isGeneric ? '如果该 SSH 主机是 Cloudtop，请通过以下入口打开：' : ('如果 ' + h + ' 是 Cloudtop，请通过以下入口打开：');
+      });
+      cacheSet(trimmed, fixed);
+      return replaceTrimmed(text, trimmed, fixed);
+    }
+
+    if (/^Your Plan:\s*(.+)$/i.test(trimmed)) {
+      const fixed = trimmed.replace(/^Your Plan:\s*(.+)$/i, '您的计划：$1');
+      cacheSet(trimmed, fixed);
+      return replaceTrimmed(text, trimmed, fixed);
+    }
+
+    if (/^You(?:'re|\s+are)\s+subscribed\s+to\s+the\s+(?:best|highest|top(?:-tier)?)\s+(.+?)\s+plan([.!]?)$/i.test(trimmed)) {
+      const fixed = trimmed.replace(
+        /^You(?:'re|\s+are)\s+subscribed\s+to\s+the\s+(?:best|highest|top(?:-tier)?)\s+(.+?)\s+plan([.!]?)$/i,
+        (_m, tier, punct) => '您已订阅最高等级的 ' + tier + ' 计划' + (punct ? '。' : '')
+      );
+      cacheSet(trimmed, fixed);
+      return replaceTrimmed(text, trimmed, fixed);
+    }
+
+    // 5. 大小写不敏感词典查找与末尾标点剥离重拼（O(1)，命中写入 stringCache）
     const caseInsensitiveHit = lowerDictionary.get(trimmed.toLowerCase());
     if (caseInsensitiveHit !== undefined) {
-      return text.replace(trimmed, caseInsensitiveHit);
+      cacheSet(trimmed, caseInsensitiveHit);
+      return replaceTrimmed(text, trimmed, caseInsensitiveHit);
     }
 
-    // 2. Intelligent Punctuation Stripping & Reconstruction
     let core = trimmed;
     let trailPunc = '';
     let matchPunc = '';
 
-    // Strip trailing common punctuation
     const puncRegex = /(\.\.\.|…|\.|\?|!|:|：|？|！|。)$/;
     const match = core.match(puncRegex);
     if (match) {
       matchPunc = match[0];
       core = core.slice(0, -matchPunc.length).trim();
-      
-      // Determine the correct Chinese counterpart punctuation
       if (matchPunc === '.') trailPunc = '。';
       else if (matchPunc === '?') trailPunc = '？';
       else if (matchPunc === '!') trailPunc = '！';
       else if (matchPunc === ':') trailPunc = '：';
-      else if (matchPunc === '：') trailPunc = '：';
-      else if (matchPunc === '？') trailPunc = '？';
-      else if (matchPunc === '！') trailPunc = '！';
-      else if (matchPunc === '。') trailPunc = '。';
-      else trailPunc = matchPunc; // keep ..., …
+      else trailPunc = matchPunc;
     }
 
-    // Check stripped core in dictionary (O(1) exact or O(1) case-insensitive)
-    const coreTranslated = dictionary[core] || lowerDictionary.get(core.toLowerCase()) || '';
-
-    if (coreTranslated) {
-      return text.replace(trimmed, coreTranslated + trailPunc);
-    }
-
-    // 3. Fallback to word-by-word ONLY for short strings (<= 3 words)
-    // 如果短语中已经包含了中文字符（即原本就是汉化内容或中英混排），则严禁进入英文分词翻译
-    // 这可以完美阻止像中英文混排短语被分词规则执行二次翻译导致重叠和污染
-    if (/[\u4e00-\u9fa5]/.test(core)) {
-      return text;
-    }
-    // 防御：若短语包含连字符、下划线、斜杠、反斜杠、点号等，属于代码标识符、文件名、路径或扩展名，绝对跳过分词！
-    if (/[-_\\/.]/.test(core)) {
-      return text;
-    }
-    // This prevents long unmatched sentences from getting mangled into Chinglish.
-    const wordsCount = core.split(/\s+/).filter(Boolean).length;
-    if (wordsCount > 3) {
-      return text; // Do not translate, keep original English sentence clean
-    }
-
-    let replaced = false;
-    let temp = core.replace(CORE_WORDS_UNION_REGEX, (matched) => {
-      const lower = matched.toLowerCase();
-      if (coreWords[lower]) {
-        replaced = true;
-        return coreWords[lower];
+    if (core) {
+      const coreTranslated = Object.prototype.hasOwnProperty.call(dictionary, core)
+        ? dictionary[core]
+        : lowerDictionary.get(core.toLowerCase());
+      if (coreTranslated !== undefined && coreTranslated !== '') {
+        const fixed = coreTranslated + trailPunc;
+        cacheSet(trimmed, fixed);
+        return replaceTrimmed(text, trimmed, fixed);
       }
-      return matched;
-    });
+    }
 
-    let finalTranslated = replaced ? temp : core;
-    // 消除中文字符之间可能由分词替换残留的英文空格，提升翻译句子的连贯精致度
-    finalTranslated = finalTranslated.replace(/([\u4e00-\u9fa5])\s+([\u4e00-\u9fa5])/g, '$1$2');
-    // 特殊去重清洗：防止前置分词造成的“使用使用”与半中半英长句残留
-    finalTranslated = finalTranslated.replace(/使用使用 Google 插件构建/g, '使用 Google 插件构建');
-    finalTranslated = finalTranslated.replace(/Advanced\s*设置/gi, '高级设置');
-    finalTranslated = finalTranslated.replace(/Collapse\s*All/gi, '全部折叠');
-    finalTranslated = finalTranslated.replace(/Expand\s*All/gi, '全部展开');
-    finalTranslated = finalTranslated.replace(/了解更多关于\s*继承\s*Global/gi, '了解更多关于 继承全局');
-    finalTranslated = finalTranslated.replace(/继承\s*Global/gi, '继承全局');
-    finalTranslated = finalTranslated.replace(/Also\s+includes\s*(?:Global\s*Permissions|全局权限)\s*when\s+working\s+in\s+this\s+project\.?[。.]?/gi, '在当前项目中工作时，亦继承全局权限配置。');
-    finalTranslated = finalTranslated.replace(/Configure 智能体 执行[,\s]+queued 消息 delivery[,\s]+and 权限[。.]?/g, '配置智能体执行策略、消息队列发送机制以及安全权限。');
-    finalTranslated = finalTranslated.replace(/Automatic 检查更新/g, '自动检查更新');
-    finalTranslated = finalTranslated.replace(/每周限额\s*Remaining/gi, '每周限额剩余');
-    finalTranslated = finalTranslated.replace(/五小时限额\s*Remaining/gi, '5 小时限额剩余');
-    finalTranslated = finalTranslated.replace(/Claude and GPT 模型/g, 'Claude 与 GPT 模型');
-    finalTranslated = finalTranslated.replace(/命令\s*palette/gi, '命令面板');
-    finalTranslated = finalTranslated.replace(/Scan the code to .*(?:copy link|复制链接)[。.]?/gi, '扫描二维码以在远程控制中打开此设备，或复制链接。');
-    finalTranslated = finalTranslated.replace(/Scan the code to (?:打开|open) this (?:设备|device) in 远程\s*(?:Control|控制)[,\s]+or (?:复制链接|copy link)[。.]?/gi, '扫描二维码以在远程控制中打开此设备，或复制链接。');
-    finalTranslated = finalTranslated.replace(/(?:工作了\s*持续|总耗时\s*持续|Worked for)\s*(.+)/gi, '总耗时 $1');
-    finalTranslated = finalTranslated.replace(/(?:Thought\s*持续|思考了\s*持续)\s*(.+)/gi, '思考了 $1');
-    finalTranslated = finalTranslated.replace(/查看\s*could not be opened/gi, '查看文件无法打开');
-    finalTranslated = finalTranslated.replace(/could not be opened/gi, '无法打开');
-    finalTranslated = finalTranslated.replace(/([\u4e00-\u9fa5]+)\s+not\s+found$/i, '$1未找到');
-    finalTranslated = finalTranslated.replace(/(\d+)\s+searches?/gi, '$1 次搜索');
-    finalTranslated = finalTranslated.replace(/(?:Type|输入)\s*\/\s*(?:and|并|和)?\s*(?:select|选择)?\s*['"]?plan['"]?\s*to\s+have\s+the\s+agent\s+generate\s+a\s+plan[。.]?/gi, '输入 / 并选择 plan 来让智能体生成计划。');
-    finalTranslated = finalTranslated.replace(/输入\s*\/\s*并\s*选择\s*plan\s*来让智能体生成计划[。.]?/g, '输入 / 并选择 plan 来让智能体生成计划。');
-    finalTranslated = finalTranslated.replace(/^Ran\s*命令$/i, '已运行命令');
-    finalTranslated = finalTranslated.replace(/^Running\s*命令$/i, '正在运行命令');
-    finalTranslated = finalTranslated.replace(/^Run\s*命令$/i, '运行命令');
-    finalTranslated = finalTranslated.replace(/^Ran\s*命令:\s*(.+)$/i, '已运行命令: $1');
-    finalTranslated = finalTranslated.replace(/^Running\s*命令:\s*(.+)$/i, '正在运行命令: $1');
-    finalTranslated = finalTranslated.replace(/^Run\s*命令:\s*(.+)$/i, '运行命令: $1');
+    // 6. coreWords 短词组合回退（严格 <= 3 词且 100% 英文单词命中守卫，彻底消灭半中半英夹生词）
+    if (!core || /[\u4e00-\u9fa5]/.test(core) || /[-_\\/.]/.test(core)) {
+      if (trimmed.length <= 200) cacheSet(trimmed, trimmed);
+      return text;
+    }
+
+    const words = core.split(/\s+/).filter(Boolean);
+    if (words.length === 0 || words.length > 3) {
+      if (trimmed.length <= 200) cacheSet(trimmed, trimmed);
+      return text;
+    }
+
+    let replacedAny = false;
+    const translatedTokens = [];
+    for (let i = 0; i < words.length; i++) {
+      const tok = words[i];
+      if (!/[a-zA-Z]/.test(tok)) {
+        translatedTokens.push(tok);
+        continue;
+      }
+      if (!/^[a-zA-Z]+$/.test(tok)) {
+        // 含数字或特殊符号的混合词（如 24m, 11h, 1mo）若未精确收录，立即放弃拼凑保持英文原样
+        const exactTok = Object.prototype.hasOwnProperty.call(dictionary, tok)
+          ? dictionary[tok]
+          : lowerDictionary.get(tok.toLowerCase());
+        if (exactTok === undefined) {
+          cacheSet(trimmed, trimmed);
+          return text;
+        }
+        if (exactTok !== tok) replacedAny = true;
+        translatedTokens.push(exactTok);
+        continue;
+      }
+      const lw = tok.toLowerCase();
+      let wordCn;
+      if (Object.prototype.hasOwnProperty.call(coreWords, lw)) {
+        wordCn = coreWords[lw];
+      } else if (Object.prototype.hasOwnProperty.call(dictionary, tok)) {
+        wordCn = dictionary[tok];
+      } else {
+        wordCn = lowerDictionary.get(lw);
+      }
+      if (wordCn === undefined) {
+        // 存在任何一个未知英文单词，立即放弃分词拼凑并返回干净原文
+        cacheSet(trimmed, trimmed);
+        return text;
+      }
+      if (wordCn !== tok) replacedAny = true;
+      translatedTokens.push(wordCn);
+    }
+
+    if (!replacedAny) {
+      cacheSet(trimmed, trimmed);
+      return text;
+    }
+
+    let finalTranslated = translatedTokens.join(' ')
+      .replace(/([\u4e00-\u9fa5])\s+([\u4e00-\u9fa5])/g, '$1$2')
+      .replace(/^Ran\s*命令$/i, '已运行命令')
+      .replace(/^Running\s*命令$/i, '正在运行命令')
+      .replace(/^Run\s*命令$/i, '运行命令')
+      .replace(/Advanced\s*设置/gi, '高级设置')
+      .replace(/继承\s*Global/gi, '继承全局');
+
     if (matchPunc) {
       finalTranslated += trailPunc;
     }
-    if (stringCache.size < MAX_STRING_CACHE) {
-      stringCache.set(trimmed, finalTranslated);
-    }
-    return text.replace(trimmed, finalTranslated);
+    cacheSet(trimmed, finalTranslated);
+    return replaceTrimmed(text, trimmed, finalTranslated);
   }
 
-  // 用于精确匹配代码编辑器、语法高亮等容器类名（收敛范围，防止误杀带 font-mono 或 viewer 的正常 UI）
-  const codeClassPattern = /(?:^|[\s_-])(monaco-editor|editor-instance|hljs|shiki|prism|codemirror|line-content|gutter|codeblock|code-block|code-line|view-line)(?:$|[\s_-])/i;
+  // 精确匹配代码编辑器、语法高亮及内置终端（xterm）容器类名
+  const codeClassPattern = /(?:^|[\s_-])(monaco-editor|editor-instance|hljs|shiki|prism|codemirror|line-content|gutter|codeblock|code-block|code-line|view-line|xterm|xterm-rows|xterm-screen|xterm-accessibility)(?:$|[\s_-])/i;
 
   // 提及菜单 (@ Mentions) 分类白名单：放行汉化，同时保持斜杠命令 (/boost 等) 与代码文件名严格跳过
   const MENTION_CATEGORIES = new Set([
-    'Rules',
-    '规则',
-    'Conversation',
-    '对话',
-    'PDF Document',
-    'PDF 文档',
-    'MCP Resource',
-    'MCP 资源',
-    'Browser Page',
-    '浏览器页面',
-    'Browser Text',
-    '浏览器文本',
-    'Directory',
-    '目录',
-    'Git Commit',
-    'Git 提交',
-    'Git Diff',
-    'Git 差异'
+    'Rules', '规则',
+    'Conversation', '对话',
+    'PDF Document', 'PDF 文档',
+    'MCP Resource', 'MCP 资源',
+    'Browser Page', '浏览器页面',
+    'Browser Text', '浏览器文本',
+    'Directory', '目录',
+    'Git Commit', 'Git 提交',
+    'Git Diff', 'Git 差异'
   ]);
 
   const skipCache = new WeakMap();
 
   function shouldSkipNode(node) {
     if (!node) return true;
-    
-    // 如果是文本节点，我们检查其父元素；如果是属性/元素节点，检查自身
+
     const element = node.nodeType === Node.TEXT_NODE ? node.parentElement : node;
     if (!element) return false;
 
-    // 1. 记忆化缓存查询：O(1) 瞬间返回，消除折叠栏展开时的万次重复检查
-    if (skipCache.has(element)) {
-      return skipCache.get(element);
+    // 动态编辑态瞬时拦截（防止动态挂载 contenteditable 后命中旧缓存）
+    if (element.isContentEditable || (element.getAttribute && (
+      element.getAttribute('contenteditable') === 'true' ||
+      element.getAttribute('role') === 'textbox' ||
+      element.getAttribute('data-lexical-editor') === 'true'
+    ))) {
+      return true;
     }
 
-    // 2. 绝对不能翻译的脚本/样式/按键标签
-    const skipTags = ['SCRIPT', 'STYLE', 'NOSCRIPT', 'KBD', 'SAMP', 'VAR'];
-    if (skipTags.includes(element.tagName)) {
+    const upperTag = (element.tagName || '').toUpperCase();
+
+    // 绝对禁止翻译的脚本/样式/矢量图/公式/行内代码/预格式化代码块标签
+    const skipTags = ['SCRIPT', 'STYLE', 'NOSCRIPT', 'KBD', 'SAMP', 'VAR', 'SVG', 'MATH', 'CODE', 'PRE', 'INPUT', 'TEXTAREA'];
+    if (skipTags.includes(upperTag)) {
       skipCache.set(element, true);
       return true;
     }
 
-    // 核心保护：斜杠命令与提及建议菜单的触发词标签（保持 /boost, /schedule, /browser 等原生命令标识不变）
-    // 但针对提及菜单（@）中的分类标签（如 Rules -> 规则, Conversation -> 对话 等）放行汉化
+    // 斜杠命令与提及建议菜单触发词标签（动态复用节点，绝不写入 skipCache 防止缓存毒化）
     const isMenuOptionLabel = element.closest && element.closest('[data-testid="menu-option-label"]');
     if (isMenuOptionLabel) {
       const labelText = (isMenuOptionLabel.innerText || isMenuOptionLabel.textContent || '').trim();
-      if (MENTION_CATEGORIES.has(labelText)) {
-        skipCache.set(element, false);
-        return false;
-      }
-      skipCache.set(element, true);
-      return true;
+      return !MENTION_CATEGORIES.has(labelText);
     }
 
-    // 思考过程触发药丸按钮（如“Thought for 4s”折叠栏标题）：必须放行汉化为“思考了 4s”
+    // 思考过程触发药丸按钮（如 "Thought for 4s"）：放行汉化
     const isThinkingTrigger = element.closest && element.closest('button[data-testid="thinking-collapsible-trigger"]');
     if (isThinkingTrigger) {
       skipCache.set(element, false);
       return false;
     }
 
-    // 排队发送控制栏与用户消息操作栏（不含用户正文 user-message-content）放行汉化
+    // 排队发送控制栏与用户消息操作栏（且不在用户正文 user-message-content 内）：放行汉化
     const isUserActionDecorator = element.closest && element.closest('[data-testid="queued-decorators"], [data-testid="user-message-actions"]');
     if (isUserActionDecorator && !(element.closest && element.closest('[data-testid="user-message-content"]'))) {
       skipCache.set(element, false);
       return false;
     }
-    // 3. 特殊特权放行：针对执行步骤的药丸标签（如 Ran, Explored, Edited, Viewed, Thought, Thinking, Working 等）
-    // 无论其父级为 SPAN、CODE 还是 BUTTON，只要是系统执行药丸且不在用户提问气泡内，一律无条件放行汉化
+
+    // 选中文本快捷引用气泡（Quote）及 /btw 提问气泡（Ask /btw）特权放行（依赖动态文本，不写 skipCache）
     const textContent = (element.innerText || element.textContent || '').trim();
-        // 选中文本快捷引用气泡（Quote / Quote Ctrl+L / Quote Cmd+L）及 /btw 提问气泡特权放行
-    if (/^(?:Quote|Ask(?:\s+|\s*\/\s*)btw)(?:\s+(?:Ctrl|Cmd)\+[a-zA-Z0-9]+)?$/i.test(textContent)) {
-      skipCache.set(element, false);
+    if (/^(?:Quote|Ask(?:\s+|\s*\/\s*)btw)(?:\s+(?:Ctrl|Cmd)(?:\+[a-zA-Z0-9]+)+)?$/i.test(textContent)) {
       return false;
     }
 
+    // 执行步骤状态药丸（已在上方拦截 CODE/PRE，绝不误伤 Markdown 行内代码；依赖动态文本不写 skipCache）
     const isActionPill = textContent.length <= 40 && /^(Explored|Exploring|Ran|Run|Running|Viewed|Viewing|Edited|Editing|Thought|Thinking|Working|Done|Analyzed|Analyzing|Created|Creating|Deleted|Deleting|Waiting|Rejected|Errored|Completed|Used)(\s+(command|commands|files?|tools?|artifacts?))?$/i.test(textContent);
     if (isActionPill) {
-      let inUserInput = false;
-      let inThinkingContent = false;
+      let inProtectedAncestor = false;
       let checkCur = element;
       while (checkCur && checkCur !== document.body) {
-        if (checkCur.classList) {
-          if (checkCur.classList.contains('group/user-input-step') || checkCur.classList.contains('cursor-edit')) {
-            inUserInput = true;
-            break;
-          }
+        const curTag = (checkCur.tagName || '').toUpperCase();
+        if (curTag === 'CODE' || curTag === 'PRE' || curTag === 'SVG' || curTag === 'MATH') {
+          inProtectedAncestor = true;
+          break;
+        }
+        if (checkCur.getAttribute && (
+          checkCur.getAttribute('data-testid') === 'user-message-content' ||
+          checkCur.getAttribute('contenteditable') === 'true' ||
+          checkCur.getAttribute('role') === 'textbox' ||
+          checkCur.getAttribute('data-lexical-editor') === 'true'
+        )) {
+          inProtectedAncestor = true;
+          break;
+        }
+        if (checkCur.classList && (
+          checkCur.classList.contains('group/user-input-step') ||
+          checkCur.classList.contains('user-message') ||
+          checkCur.classList.contains('thought-content') ||
+          checkCur.classList.contains('thinking-content') ||
+          checkCur.classList.contains('thought-box') ||
+          checkCur.classList.contains('cursor-edit') ||
+          checkCur.classList.contains('katex') ||
+          checkCur.classList.contains('mjx-container')
+        )) {
+          inProtectedAncestor = true;
+          break;
+        }
+        if (checkCur.className && typeof checkCur.className === 'string' && codeClassPattern.test(checkCur.className)) {
+          inProtectedAncestor = true;
+          break;
         }
         if (checkCur.parentElement && checkCur.parentElement.querySelector) {
           const trigger = checkCur.parentElement.querySelector(':scope > button[data-testid="thinking-collapsible-trigger"]');
           if (trigger && checkCur !== trigger && !trigger.contains(checkCur)) {
-            inThinkingContent = true;
+            inProtectedAncestor = true;
             break;
           }
         }
         checkCur = checkCur.parentElement;
       }
-      if (!inUserInput && !inThinkingContent) {
-        skipCache.set(element, false);
+      if (!inProtectedAncestor) {
         return false;
       }
     }
 
-    if (element.tagName === 'CODE') {
-      if (!isActionPill) {
-        skipCache.set(element, true);
-        return true;
-      }
-    }
-    if (element.tagName === 'PRE') {
-      skipCache.set(element, true);
-      return true;
+    // 静态结构缓存查询
+    if (skipCache.has(element)) {
+      return skipCache.get(element);
     }
 
-    // 4. 输入框/文本域/富文本编辑器/用户提问气泡绝对跳过（输入前、输入中、发送后 100% 原样保留）
-    if (element.tagName === 'INPUT' || element.tagName === 'TEXTAREA') {
-      skipCache.set(element, true);
-      return true;
-    }
     if (element.getAttribute && (
-        element.getAttribute('contenteditable') === 'true' ||
-        element.getAttribute('role') === 'textbox' ||
-        element.getAttribute('data-lexical-editor') === 'true'
+      element.getAttribute('data-language') ||
+      element.getAttribute('data-code') ||
+      element.getAttribute('data-line') ||
+      element.getAttribute('data-line-number')
     )) {
       skipCache.set(element, true);
       return true;
     }
 
-    // 5. 检查元素自身是否带有代码语言标记属性
-    if (element.getAttribute) {
-      if (element.getAttribute('data-language') || 
-          element.getAttribute('data-code') ||
-          element.getAttribute('data-line') ||
-          element.getAttribute('data-line-number')) {
-        skipCache.set(element, true);
-        return true;
-      }
-    }
-
-    // 6. 向上递归检查祖先节点（带路径记忆化剪枝）
+    // 向上递归检查祖先容器（用户消息正文、思考链、代码区、终端 xterm、公式 katex/mjx）
     let cur = element;
     let shouldSkip = false;
     while (cur && cur !== document.body) {
@@ -7240,19 +6464,26 @@ electron_1.contextBridge.exposeInMainWorld('wizardAPI', wizardAPI);
         break;
       }
 
-      // 核心防御：模型思考链正文容器绝对跳过
-      // 思考链为 AI 运行时生成的自由英文/动态推理流，切勿进行逐词或断句翻译，否则会导致中英夹杂混乱
+      const curTag = (cur.tagName || '').toUpperCase();
+      if (curTag === 'PRE' || curTag === 'CODE' || curTag === 'SVG' || curTag === 'MATH' || curTag === 'MJX-CONTAINER') {
+        shouldSkip = true;
+        break;
+      }
+
       if (cur.classList && (
         cur.classList.contains('cursor-edit') ||
         cur.classList.contains('thought-content') ||
         cur.classList.contains('thinking-content') ||
-        cur.classList.contains('thought-box')
+        cur.classList.contains('thought-box') ||
+        cur.classList.contains('katex') ||
+        cur.classList.contains('katex-display') ||
+        cur.classList.contains('katex-html') ||
+        cur.classList.contains('mjx-container')
       )) {
         shouldSkip = true;
         break;
       }
 
-      // 思考折叠栏内容区域：位于 thinking-collapsible-trigger 旁的展开正文容器
       if (cur.parentElement && cur.parentElement.querySelector) {
         const trigger = cur.parentElement.querySelector(':scope > button[data-testid="thinking-collapsible-trigger"]');
         if (trigger && cur !== trigger && !trigger.contains(cur)) {
@@ -7261,22 +6492,16 @@ electron_1.contextBridge.exposeInMainWorld('wizardAPI', wizardAPI);
         }
       }
 
-      // 用户输入框与富文本编辑器（输入前/输入中绝对不翻译）
       if (cur.getAttribute && (
-          cur.getAttribute('contenteditable') === 'true' ||
-          cur.getAttribute('role') === 'textbox' ||
-          cur.getAttribute('data-lexical-editor') === 'true'
-      )) {
-        shouldSkip = true;
-        break;
-      }
-
-      if (cur.getAttribute && (
-          cur.getAttribute('data-language') || 
-          cur.getAttribute('data-code') ||
-          cur.getAttribute('data-line') ||
-          cur.getAttribute('data-line-number') ||
-          cur.getAttribute('role') === 'code'
+        cur.getAttribute('data-testid') === 'user-message-content' ||
+        cur.getAttribute('contenteditable') === 'true' ||
+        cur.getAttribute('role') === 'textbox' ||
+        cur.getAttribute('data-lexical-editor') === 'true' ||
+        cur.getAttribute('data-language') ||
+        cur.getAttribute('data-code') ||
+        cur.getAttribute('data-line') ||
+        cur.getAttribute('data-line-number') ||
+        cur.getAttribute('role') === 'code'
       )) {
         shouldSkip = true;
         break;
@@ -7286,7 +6511,7 @@ electron_1.contextBridge.exposeInMainWorld('wizardAPI', wizardAPI);
         cur.classList.contains('group/user-input-step') ||
         cur.classList.contains('user-message') ||
         cur.classList.contains('cursor-text') ||
-        cur.classList.contains('monaco-editor') || 
+        cur.classList.contains('monaco-editor') ||
         cur.classList.contains('editor-instance') ||
         cur.classList.contains('input-area') ||
         cur.classList.contains('chat-input')
@@ -7307,11 +6532,6 @@ electron_1.contextBridge.exposeInMainWorld('wizardAPI', wizardAPI);
         }
       }
 
-      if (cur.tagName === 'PRE') {
-        shouldSkip = true;
-        break;
-      }
-
       cur = cur.parentElement;
     }
 
@@ -7319,13 +6539,10 @@ electron_1.contextBridge.exposeInMainWorld('wizardAPI', wizardAPI);
     return shouldSkip;
   }
 
-  // ---- 组合句翻译兜底（React Fragment 片段化）----
-  // React 常把一句话拆成「多个文本节点 + 内联元素」，例如：
-  //   "Configure the browser subagent. It requires", " ",
-  //   <a>Google Chrome</a>, " ", "to be installed."
-  // 这种结构下整句词典条目永远无法命中，只会由碎片条目各自命中后拼接，
-  // 导致中文语序错乱（例："这需要 Google Chrome 需要安装。"）。
-  // 此处改为：用元素整体文本命中整句词典，再用内联元素的锚点文本把译文切回各节点。
+  // 已处理文本节点记忆化 WeakMap（记录 node -> 上次处理后的 nodeValue，消除窗口 focus 时未变化英文段落重复扫描）
+  const translatedNodes = new WeakMap();
+
+  // 组合句翻译兜底（支持原英文锚点与已翻译内联锚点双向定位，不增删任何 Element 节点）
   function tryCombinedSentenceTranslation(element) {
     if (!element || element.nodeType !== Node.ELEMENT_NODE) return false;
     const children = Array.prototype.slice.call(element.childNodes);
@@ -7334,76 +6551,163 @@ electron_1.contextBridge.exposeInMainWorld('wizardAPI', wizardAPI);
     const slots = [];
     for (const child of children) {
       if (child.nodeType === Node.TEXT_NODE) {
-        if (!child.nodeValue.trim()) { slots.push({ type: 'space', node: child }); continue; }
+        if (!child.nodeValue.trim()) {
+          slots.push({ type: 'space', node: child });
+          continue;
+        }
         slots.push({ type: 'text', node: child });
       } else if (child.nodeType === Node.ELEMENT_NODE) {
-        if (child.childNodes.length !== 1 || child.firstChild.nodeType !== Node.TEXT_NODE) return false;
+        if (!child.childNodes || child.childNodes.length !== 1 || child.firstChild.nodeType !== Node.TEXT_NODE) {
+          return false;
+        }
         slots.push({ type: 'anchor', node: child, anchorText: child.firstChild.nodeValue.trim() });
       } else {
         return false;
       }
     }
 
-    const anchors = slots.filter(function (s) { return s.type === 'anchor'; });
+    const anchors = slots.filter(s => s.type === 'anchor');
     if (!anchors.length) return false;
 
     let fullText = '';
     for (const child of children) {
-      fullText += child.nodeType === Node.TEXT_NODE ? child.nodeValue : child.textContent;
+      fullText += child.nodeType === Node.TEXT_NODE ? child.nodeValue : (child.textContent || '');
     }
     const key = fullText.trim();
     if (!key || !/[A-Za-z]/.test(key)) return false;
 
-    // 快速路径：整句已在词典中时直接取译文，避免为一个已收录的整句
-    // 跑完整的动态正则链 + 大小写索引查找。
-    let translated = dictionary[key];
-    if (!translated) translated = lowerDictionary.get(key.toLowerCase());
+    let translated = Object.prototype.hasOwnProperty.call(dictionary, key) ? dictionary[key] : lowerDictionary.get(key.toLowerCase());
     if (!translated) translated = translateString(key);
     if (!translated || translated === key) return false;
 
-    // 所有锚点必须原样出现在译文中，否则无法安全切分
     let probe = 0;
     for (const a of anchors) {
-      if (!a.anchorText) return false;
-      const idx = translated.indexOf(a.anchorText, probe);
+      if (!a.anchorText || a.anchorText.length < 2) return false;
+      let idx = translated.indexOf(a.anchorText, probe);
+      let matchedText = a.anchorText;
+      let shouldTranslateAnchor = false;
+      if (idx < 0) {
+        const anchorCn = translateString(a.anchorText);
+        if (anchorCn && anchorCn !== a.anchorText && anchorCn.length >= 2) {
+          idx = translated.indexOf(anchorCn, probe);
+          if (idx >= 0) {
+            matchedText = anchorCn;
+            shouldTranslateAnchor = true;
+          }
+        }
+      }
       if (idx < 0) return false;
       a.start = idx;
-      a.end = idx + a.anchorText.length;
+      a.end = idx + matchedText.length;
+      a.newAnchorText = shouldTranslateAnchor ? matchedText : null;
       probe = a.end;
     }
 
-    // 按 DOM 顺序把译文回填到各文本节点；锚点元素文本保持原样
     let anchorIdx = 0;
     let consumed = 0;
     for (const s of slots) {
       if (s.type === 'anchor') {
-        consumed = anchors[anchorIdx].end;
+        const anc = anchors[anchorIdx];
+        if (anc.newAnchorText) {
+          s.node.firstChild.nodeValue = anc.newAnchorText;
+          translatedNodes.set(s.node.firstChild, anc.newAnchorText);
+        }
+        consumed = anc.end;
         anchorIdx++;
         continue;
       }
       if (s.type === 'space') {
         s.node.nodeValue = '';
-        translatedNodes.add(s.node);
+        translatedNodes.set(s.node, '');
         continue;
       }
       const segEnd = anchorIdx < anchors.length ? anchors[anchorIdx].start : translated.length;
-      s.node.nodeValue = translated.slice(consumed, segEnd);
-      translatedNodes.add(s.node);
+      const segVal = translated.slice(consumed, segEnd);
+      s.node.nodeValue = segVal;
+      translatedNodes.set(s.node, segVal);
       consumed = segEnd;
     }
     return true;
   }
 
-  // 性能优化 3：已处理文本节点记忆化 WeakSet，消除父容器重绘时的重复遍历
-  const translatedNodes = new WeakSet();
+  // 收集元素下安全的叶子文本节点（排除 SVG / STYLE / SCRIPT / MATH，绝不触碰 Element 结构）
+  function collectSafeLeafTextNodes(rootEl, out) {
+    if (!rootEl || !rootEl.childNodes) return;
+    for (let i = 0; i < rootEl.childNodes.length; i++) {
+      const ch = rootEl.childNodes[i];
+      if (ch.nodeType === Node.TEXT_NODE) {
+        if (ch.nodeValue && ch.nodeValue.trim()) {
+          out.push(ch);
+        }
+      } else if (ch.nodeType === Node.ELEMENT_NODE) {
+        const tag = (ch.tagName || '').toUpperCase();
+        if (tag === 'SVG' || tag === 'SCRIPT' || tag === 'STYLE' || tag === 'NOSCRIPT' || tag === 'MATH' || tag === 'CODE' || tag === 'PRE') {
+          continue;
+        }
+        collectSafeLeafTextNodes(ch, out);
+      }
+    }
+  }
+
+  // 判定文本节点是否位于非按钮类角标胶囊内（如模型选择器 tagTitle 或步骤前缀 "New"）
+  function isNewBadgeTextNode(node) {
+    const parent = node && node.parentElement;
+    if (!parent || typeof parent.closest !== 'function') return false;
+    if (parent.closest('[data-testid="sidecar-new-button"]')) return false;
+    const badgeEl = parent.closest('.rounded-full, .bg-secondary.rounded');
+    if (!badgeEl) return false;
+    const role = badgeEl.getAttribute ? badgeEl.getAttribute('role') : null;
+    if ((badgeEl.tagName || '').toUpperCase() === 'BUTTON' || role === 'button') return false;
+    return true;
+  }
+
+  function translateTextNode(node) {
+    const original = node.nodeValue;
+    if (!original || !original.trim()) return;
+    if (translatedNodes.get(node) === original) return;
+    const trimmed = original.trim();
+    const translated = (trimmed === 'New' && isNewBadgeTextNode(node))
+      ? replaceTrimmed(original, trimmed, '新')
+      : translateString(original);
+    if (original !== translated) {
+      node.nodeValue = translated;
+      translatedNodes.set(node, translated);
+    } else {
+      translatedNodes.set(node, original);
+    }
+  }
 
   function translateNode(node) {
     if (!node) return;
 
-    // 优先翻译元素自身的静态 UI 属性（如 input 的 placeholder、按钮的 title 与 aria-label）
-    // 必须在 shouldSkipNode 之前处理，因为 shouldSkipNode 会跳过 INPUT/TEXTAREA 的文本子节点与 value
+    // 针对 INPUT / TEXTAREA：在确认其父容器不处于受保护代码区/用户消息区后，仅翻译其静态提示属性并立即返回
     if (node.nodeType === Node.ELEMENT_NODE) {
-      ['placeholder', 'title', 'aria-label'].forEach(attr => {
+      const upperTag = (node.tagName || '').toUpperCase();
+      if (upperTag === 'INPUT' || upperTag === 'TEXTAREA') {
+        if (!node.parentElement || !shouldSkipNode(node.parentElement)) {
+          ['placeholder', 'title', 'aria-label'].forEach(attr => {
+            if (node.hasAttribute && node.hasAttribute(attr)) {
+              const original = node.getAttribute(attr);
+              if (original) {
+                const translated = translateString(original);
+                if (original !== translated) {
+                  node.setAttribute(attr, translated);
+                }
+              }
+            }
+          });
+        }
+        return;
+      }
+    }
+
+    if (shouldSkipNode(node)) return;
+
+    if (node.nodeType === Node.TEXT_NODE) {
+      translateTextNode(node);
+    } else if (node.nodeType === Node.ELEMENT_NODE) {
+      // 普通元素通过 shouldSkipNode 后仅执行一次属性汉化（彻底消除原先重复两遍的属性扫描）
+      ['placeholder', 'title', 'aria-label', 'value'].forEach(attr => {
         if (node.hasAttribute && node.hasAttribute(attr)) {
           const original = node.getAttribute(attr);
           if (original) {
@@ -7414,90 +6718,53 @@ electron_1.contextBridge.exposeInMainWorld('wizardAPI', wizardAPI);
           }
         }
       });
-    }
 
-    if (shouldSkipNode(node)) return;
-
-    if (node.nodeType === Node.TEXT_NODE) {
-      if (translatedNodes.has(node)) return;
-      const original = node.nodeValue;
-      if (!original || !original.trim()) return;
-      const translated = translateString(original);
-      if (original !== translated) {
-        node.nodeValue = translated;
-        translatedNodes.add(node);
-      } else if (!/[a-zA-Z]/.test(original)) {
-        translatedNodes.add(node);
-      }
-    } else if (node.nodeType === Node.ELEMENT_NODE) {
-      ['placeholder', 'title', 'aria-label', 'value'].forEach(attr => {
-        if (node.hasAttribute && node.hasAttribute(attr)) {
-          // 双重锁死：绝对不翻译任何输入框或编辑区的用户 value 属性
-          if (attr === 'value' && (node.tagName === 'INPUT' || node.tagName === 'TEXTAREA')) {
-            return;
+      // 空状态提示收敛（纯叶子 TEXT_NODE 改写，严禁赋值 ELEMENT_NODE.textContent，保留 <svg> 与全部 React Fiber 子元素引用）
+      const leafTexts = [];
+      collectSafeLeafTextNodes(node, leafTexts);
+      if (leafTexts.length >= 1 && leafTexts.length <= 8) {
+        const joinedLeafText = leafTexts.map(t => t.nodeValue).join('').trim();
+        const emptyStateMatch = joinedLeafText.match(/^No\s+(automations?|automation|自动化|conversations?|conversation|对话|groups?|group|分组)\s+yet[.。]?$/i);
+        if (emptyStateMatch) {
+          const emptyStateMap = {
+            automations: '暂无自动化',
+            automation: '暂无自动化',
+            '自动化': '暂无自动化',
+            conversations: '暂无对话',
+            conversation: '暂无对话',
+            '对话': '暂无对话',
+            groups: '暂无分组',
+            group: '暂无分组',
+            '分组': '暂无分组'
+          };
+          const targetText = emptyStateMap[emptyStateMatch[1].toLowerCase()] || '暂无自动化';
+          leafTexts[0].nodeValue = targetText;
+          translatedNodes.set(leafTexts[0], targetText);
+          for (let i = 1; i < leafTexts.length; i++) {
+            leafTexts[i].nodeValue = '';
+            translatedNodes.set(leafTexts[i], '');
           }
-          const original = node.getAttribute(attr);
-          if (original && (node.tagName !== 'INPUT' || node.type === 'button' || node.type === 'submit' || attr !== 'value')) {
-            const translated = translateString(original);
-            if (original !== translated) {
-              node.setAttribute(attr, translated);
-            }
-          }
+          return;
         }
-      });
-      // 2.32.1 针对 React 片段化导致的「No 自动化 yet」等空状态提示进行容器级收敛
-      const containerText = (node.textContent || '').trim();
-      const emptyStateMatch = containerText.match(/^No\s+(automations?|automation|自动化|conversations?|conversation|对话|groups?|group|分组)\s+yet[.。]?$/i);
-      if (emptyStateMatch) {
-        const emptyStateMap = {
-          automations: '暂无自动化',
-          automation: '暂无自动化',
-          '自动化': '暂无自动化',
-          conversations: '暂无对话',
-          conversation: '暂无对话',
-          '对话': '暂无对话',
-          groups: '暂无分组',
-          group: '暂无分组',
-          '分组': '暂无分组'
-        };
-        const targetText = emptyStateMap[emptyStateMatch[1].toLowerCase()] || '暂无自动化';
-        let setDone = false;
-        for (let i = 0; i < node.childNodes.length; i++) {
-          const child = node.childNodes[i];
-          if (child.nodeType === Node.TEXT_NODE) {
-            if (!setDone) {
-              child.nodeValue = targetText;
-              translatedNodes.add(child);
-              setDone = true;
-            } else {
-              child.nodeValue = '';
-              translatedNodes.add(child);
-            }
-          } else if (child.nodeType === Node.ELEMENT_NODE) {
-            if (!setDone) {
-              child.textContent = targetText;
-              setDone = true;
-            } else {
-              child.textContent = '';
-            }
-          }
-        }
-        return;
       }
 
-      // 组合句翻译兜底：React 片段化导致整句词典条目无法命中时启用
+      // 组合句翻译兜底：React 片段化导致整句词典条目被内联标签切碎时启用
       tryCombinedSentenceTranslation(node);
 
       if (node.shadowRoot) {
         observeRoot(node.shadowRoot);
         translateNode(node.shadowRoot);
       }
-      for (let i = 0; i < node.childNodes.length; i++) {
-        translateNode(node.childNodes[i]);
+      if (node.childNodes) {
+        for (let i = 0; i < node.childNodes.length; i++) {
+          translateNode(node.childNodes[i]);
+        }
       }
     } else if (node.nodeType === Node.DOCUMENT_FRAGMENT_NODE) {
-      for (let i = 0; i < node.childNodes.length; i++) {
-        translateNode(node.childNodes[i]);
+      if (node.childNodes) {
+        for (let i = 0; i < node.childNodes.length; i++) {
+          translateNode(node.childNodes[i]);
+        }
       }
     }
   }
@@ -7539,20 +6806,23 @@ electron_1.contextBridge.exposeInMainWorld('wizardAPI', wizardAPI);
     isTranslating = true;
 
     try {
-      // 1. 批量处理属性变更
+      // 1. 批量处理属性变更（严格遵守 shouldSkipNode 保护边界）
       if (pendingAttrNodes.size > 0) {
         for (const [target, attrs] of pendingAttrNodes) {
+          const upperTag = (target.tagName || '').toUpperCase();
+          const isInputLike = upperTag === 'INPUT' || upperTag === 'TEXTAREA';
+          const canTranslateAttrs = isInputLike
+            ? (!target.parentElement || !shouldSkipNode(target.parentElement))
+            : !shouldSkipNode(target);
+          if (!canTranslateAttrs) continue;
+
           for (const attrName of attrs) {
-            if (attrName === 'value' && (target.tagName === 'INPUT' || target.tagName === 'TEXTAREA')) {
-              continue;
-            }
-            if (attrName === 'placeholder' || attrName === 'title' || attrName === 'aria-label' || !shouldSkipNode(target)) {
-              const original = target.getAttribute(attrName);
-              if (original) {
-                const translated = translateString(original);
-                if (original !== translated) {
-                  target.setAttribute(attrName, translated);
-                }
+            if (attrName === 'value' && isInputLike) continue;
+            const original = target.getAttribute ? target.getAttribute(attrName) : null;
+            if (original) {
+              const translated = translateString(original);
+              if (original !== translated) {
+                target.setAttribute(attrName, translated);
               }
             }
           }
@@ -7564,22 +6834,13 @@ electron_1.contextBridge.exposeInMainWorld('wizardAPI', wizardAPI);
       if (pendingTextNodes.size > 0) {
         for (const node of pendingTextNodes) {
           if (!shouldSkipNode(node)) {
-            const original = node.nodeValue;
-            if (original && original.trim()) {
-              const translated = translateString(original);
-              if (original !== translated) {
-                node.nodeValue = translated;
-                translatedNodes.add(node);
-              } else if (!/[a-zA-Z]/.test(original)) {
-                translatedNodes.add(node);
-              }
-            }
+            translateTextNode(node);
           }
         }
         pendingTextNodes.clear();
       }
 
-      // 3. 批量处理新增节点（性能优化 6：祖先包含剪枝，彻底消灭 O(N^2) 嵌套递归）
+      // 3. 批量处理新增节点（祖先包含剪枝，消除嵌套重复递归）
       if (pendingAddedNodes.size > 0) {
         const rootNodes = [];
         for (const node of pendingAddedNodes) {
@@ -7603,9 +6864,7 @@ electron_1.contextBridge.exposeInMainWorld('wizardAPI', wizardAPI);
           if (node.shadowRoot) {
             observeRoot(node.shadowRoot);
           }
-          if (!shouldSkipNode(node)) {
-            translateNode(node);
-          }
+          translateNode(node);
         }
       }
     } catch (e) {
@@ -7657,13 +6916,14 @@ electron_1.contextBridge.exposeInMainWorld('wizardAPI', wizardAPI);
     observer.observe(root, observerConfig);
   }
 
-  // Hook attachShadow
-  const originalAttachShadow = Element.prototype.attachShadow;
-  Element.prototype.attachShadow = function() {
-    const shadowRoot = originalAttachShadow.apply(this, arguments);
-    observeRoot(shadowRoot);
-    return shadowRoot;
-  };
+  if (typeof Element !== 'undefined' && Element.prototype && Element.prototype.attachShadow) {
+    const originalAttachShadow = Element.prototype.attachShadow;
+    Element.prototype.attachShadow = function() {
+      const shadowRoot = originalAttachShadow.apply(this, arguments);
+      observeRoot(shadowRoot);
+      return shadowRoot;
+    };
+  }
 
   function safeScan() {
     if (document.body) {
@@ -7679,14 +6939,10 @@ electron_1.contextBridge.exposeInMainWorld('wizardAPI', wizardAPI);
   function startObserver() {
     safeScan();
 
-    // 1. 渐进式多阶挂载兜底 (Progressive Mounting Backstop)
-    // 应对托盘重开、温热加载下 React 异步挂载延迟与路由初次渲染
     [50, 150, 400, 1000, 2500].forEach(delay => {
       setTimeout(safeScan, delay);
     });
 
-    // 2. 窗口激活 (Focus) 与可见性恢复 (VisibilityChange) 兜底
-    // 无论是窗口从最小化还原、托盘重新唤醒，还是失焦后重新聚焦，自动触发增量补丁
     window.addEventListener('focus', safeScan);
     document.addEventListener('visibilitychange', () => {
       if (document.visibilityState === 'visible') {
@@ -7694,8 +6950,6 @@ electron_1.contextBridge.exposeInMainWorld('wizardAPI', wizardAPI);
       }
     });
 
-    // 3. 单页应用 (SPA) 路由切换监听 (History API Hook)
-    // 保证在不同会话、项目切换、从欢迎根路径跳转至具体任务视图时即时汉化
     try {
       const origPushState = history.pushState;
       history.pushState = function() {
@@ -7712,7 +6966,6 @@ electron_1.contextBridge.exposeInMainWorld('wizardAPI', wizardAPI);
       window.addEventListener('popstate', () => setTimeout(safeScan, 50));
     } catch (_) {}
 
-    // 4. 修复官方 v2.32.1 左侧边栏项目拖拽排序错位 Bug (u2c 展开态测量竞态与首项 topBound 锁死)
     setupSidebarProjectDragFix();
   }
 
@@ -7735,10 +6988,11 @@ electron_1.contextBridge.exposeInMainWorld('wizardAPI', wizardAPI);
     return true;
   }
 
+  // 仅当虚拟滚动器基础定位 translateY(...) 后紧跟拖拽附加变换时才提取额外偏移，防止误减独立单变换布局坐标
   function getExtraDragTranslateY(transformStr) {
     if (!transformStr) return 0;
-    const m3d = transformStr.match(/translate3d\([^,]+,\s*([-+\d.]+)px/i);
-    if (m3d) return parseFloat(m3d[1]) || 0;
+    const m3dAfterY = transformStr.match(/translateY\([^)]+\)\s+translate3d\([^,]+,\s*([-+\d.]+)px/i);
+    if (m3dAfterY) return parseFloat(m3dAfterY[1]) || 0;
     const allY = [];
     const reY = /translateY\(\s*([-+\d.]+)px\s*\)/gi;
     let m;
@@ -7748,12 +7002,22 @@ electron_1.contextBridge.exposeInMainWorld('wizardAPI', wizardAPI);
     return allY.length >= 2 ? allY[allY.length - 1] : 0;
   }
 
+  // 修复官方左侧边栏项目拖拽排序错位（u2c/t2c 展开态测量竞态与首项 topBound 偏移）：
+  // 1) 全程返回合法有限数值 DOMRect（firstTop + rank * slotHeight），绝不返回 top: undefined 引发虚拟列表 NaN；
+  // 2) pointerup / pointercancel / dragend / blur 统一使用捕获阶段 true + >= 4px 阈值 + buttons === 0 兜底，根除拖拽态锁死。
   function setupSidebarProjectDragFix() {
     if (typeof window === 'undefined' || typeof Element === 'undefined' || window.__agySidebarDragFixInstalled) return;
     window.__agySidebarDragFixInstalled = true;
 
     let isProjectPointerDown = false;
     let hasProjectPointerMoved = false;
+    let downX = 0;
+    let downY = 0;
+
+    const clearDragState = () => {
+      isProjectPointerDown = false;
+      hasProjectPointerMoved = false;
+    };
 
     window.addEventListener('pointerdown', (e) => {
       if (e && e.button === 0 && e.target && typeof e.target.closest === 'function') {
@@ -7761,23 +7025,29 @@ electron_1.contextBridge.exposeInMainWorld('wizardAPI', wizardAPI);
         if (projectBtn && projectBtn.closest('[data-sidebar-scroll-container="true"]')) {
           isProjectPointerDown = true;
           hasProjectPointerMoved = false;
+          downX = typeof e.clientX === 'number' ? e.clientX : 0;
+          downY = typeof e.clientY === 'number' ? e.clientY : 0;
         }
       }
     }, true);
 
-    window.addEventListener('pointermove', () => {
-      if (isProjectPointerDown) {
-        hasProjectPointerMoved = true;
+    window.addEventListener('pointermove', (e) => {
+      if (!isProjectPointerDown) return;
+      if (e && typeof e.buttons === 'number' && e.buttons === 0) {
+        clearDragState();
+        return;
+      }
+      if (!hasProjectPointerMoved && e && typeof e.clientX === 'number' && typeof e.clientY === 'number') {
+        if (Math.hypot(e.clientX - downX, e.clientY - downY) >= 4) {
+          hasProjectPointerMoved = true;
+        }
       }
     }, true);
 
-    const clearDragState = () => {
-      isProjectPointerDown = false;
-      hasProjectPointerMoved = false;
-    };
-    window.addEventListener('pointerup', clearDragState, false);
-    window.addEventListener('pointercancel', clearDragState, false);
-    window.addEventListener('blur', clearDragState, false);
+    window.addEventListener('pointerup', clearDragState, true);
+    window.addEventListener('pointercancel', clearDragState, true);
+    window.addEventListener('dragend', clearDragState, true);
+    window.addEventListener('blur', clearDragState, true);
 
     const origGetBCR = Element.prototype.getBoundingClientRect;
     if (typeof origGetBCR !== 'function') return;
@@ -7793,29 +7063,37 @@ electron_1.contextBridge.exposeInMainWorld('wizardAPI', wizardAPI);
       const myIdx = parseInt(this.getAttribute('data-index') || '', 10);
       if (Number.isNaN(myIdx)) return rect;
 
-      let minProjectIdx = myIdx;
+      const projectWrappers = [];
       const children = parent.children;
       for (let i = 0; i < children.length; i++) {
         const child = children[i];
         if (isProjectSectionWrapper(child)) {
           const idx = parseInt(child.getAttribute('data-index') || '', 10);
-          if (!Number.isNaN(idx) && idx < minProjectIdx) {
-            minProjectIdx = idx;
+          if (!Number.isNaN(idx)) {
+            projectWrappers.push({ el: child, idx });
           }
         }
       }
+      if (projectWrappers.length === 0) return rect;
+      projectWrappers.sort((a, b) => a.idx - b.idx);
 
-      if (myIdx === minProjectIdx) {
-        const extraY = getExtraDragTranslateY(this.style && this.style.transform);
-        if (extraY !== 0) {
+      const firstEntry = projectWrappers[0];
+      const firstRawRect = firstEntry.el === this ? rect : origGetBCR.call(firstEntry.el);
+      const firstExtraY = getExtraDragTranslateY(firstEntry.el.style && firstEntry.el.style.transform);
+      const baseFirstTop = firstRawRect.top - firstExtraY;
+      const slotHeight = firstRawRect.height > 0 ? firstRawRect.height : (rect.height > 0 ? rect.height : 37);
+
+      const rank = projectWrappers.findIndex(w => w.idx === myIdx);
+      if (rank <= 0) {
+        if (firstExtraY !== 0) {
           return {
             x: rect.x,
-            y: rect.y - extraY,
+            y: baseFirstTop,
             width: rect.width,
             height: rect.height,
-            top: rect.top - extraY,
+            top: baseFirstTop,
             right: rect.right,
-            bottom: rect.bottom - extraY,
+            bottom: baseFirstTop + rect.height,
             left: rect.left,
             toJSON: () => (typeof rect.toJSON === 'function' ? rect.toJSON() : rect)
           };
@@ -7823,14 +7101,15 @@ electron_1.contextBridge.exposeInMainWorld('wizardAPI', wizardAPI);
         return rect;
       }
 
+      const syntheticTop = baseFirstTop + rank * slotHeight;
       return {
         x: rect.x,
-        y: rect.y,
+        y: syntheticTop,
         width: rect.width,
-        height: rect.height,
-        top: undefined,
+        height: slotHeight,
+        top: syntheticTop,
         right: rect.right,
-        bottom: rect.bottom,
+        bottom: syntheticTop + slotHeight,
         left: rect.left,
         toJSON: () => (typeof rect.toJSON === 'function' ? rect.toJSON() : rect)
       };
@@ -7842,6 +7121,4 @@ electron_1.contextBridge.exposeInMainWorld('wizardAPI', wizardAPI);
   } else {
     startObserver();
   }
-
-
 })();

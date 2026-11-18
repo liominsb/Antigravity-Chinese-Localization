@@ -6,6 +6,7 @@ exports.extractFrameOrigin = extractFrameOrigin;
 exports.isProtectedIdpFrameUrl = isProtectedIdpFrameUrl;
 exports.redactFrameUrl = redactFrameUrl;
 exports.normalizeExpectedOrigin = normalizeExpectedOrigin;
+exports.parseFrameBridgeOptions = parseFrameBridgeOptions;
 exports.buildFrameGuardPrelude = buildFrameGuardPrelude;
 exports.isValidDomPath = isValidDomPath;
 exports.composeFrameViewportRect = composeFrameViewportRect;
@@ -210,6 +211,17 @@ function normalizeExpectedOrigin(raw) {
     }
     const s = raw.trim().toLowerCase().replace(/\/+$/, '');
     return s || undefined;
+}
+/**
+ * Reports whether caller-supplied frame-bridge options opt into PDF-viewer
+ * unmasking: only an own data property `pdfViewerUnmask` that is exactly
+ * `true` does. Never throws, so malformed options fall back to the default.
+ */
+function parseFrameBridgeOptions(raw) {
+    if (typeof raw !== 'object' || raw === null || Array.isArray(raw)) {
+        return false;
+    }
+    return (Object.getOwnPropertyDescriptor(raw, 'pdfViewerUnmask')?.value === true);
 }
 /**
  * Builds a statement block that runs first inside the target frame's isolated

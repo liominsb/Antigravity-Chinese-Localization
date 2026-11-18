@@ -14,8 +14,11 @@ exports.hardenRemoteWindow = hardenRemoteWindow;
  * the remote: the page must not reach the laptop's loopback or private network
  * (notably the local language server, whose CORS policy trusts any loopback
  * origin), hand other schemes or local addresses to the OS, leave its origin,
- * attach <webview> guests, get device, media or clipboard-read permissions or
- * a client certificate, run session-wide preloads, or veto unloading.
+ * attach <webview> guests, get device, camera, screen or clipboard-read
+ * permissions or a client certificate, run session-wide preloads, or veto
+ * unloading. The microphone is the one device: for voice, the window's own
+ * page may use it once the user allows its host (RemoteSessionPolicy's
+ * askMicrophone, which RemoteManager answers).
  * Sidecar UIs (`plugin:`) are the one other origin: their handler fetches the
  * remote's loopback through the same SOCKS proxy (remoteSidecars.ts).
  *
@@ -83,6 +86,51 @@ const ALWAYS_ALLOWED_PERMISSIONS = new Set([
     'clipboard-sanitized-write',
     'fullscreen',
 ]);
+function isOwnOrigin(url, allowedOrigin) {
+    return typeof url === 'string' && (0, externalUrl_1.isSameOrigin)(url, allowedOrigin);
+}
+/**
+ * Whether a permission request is getUserMedia for the microphone alone, from
+ * the window's own page: its main frame, on `allowedOrigin` (undefined while
+ * disconnected). Not the camera, the screen or system audio (other or more
+ * `mediaTypes`), subframes such as sidecar UIs, nor other origins.
+ */
+function isOwnMicrophoneRequest(permission, details, allowedOrigin) {
+    const types = details?.mediaTypes;
+    return (permission === 'media' &&
+        !!allowedOrigin &&
+        Array.isArray(types) &&
+        types.length === 1 &&
+        types[0] === 'audio' &&
+        details?.isMainFrame === true &&
+        isOwnOrigin(details.requestingUrl, allowedOrigin) &&
+        (details.securityOrigin === undefined ||
+            isOwnOrigin(details.securityOrigin, allowedOrigin)));
+}
+/**
+ * The same for a permission check: navigator.permissions, and the device
+ * names enumerateDevices() shows (microphones and speakers). Checks with no
+ * media type (Chromium re-reads a granted permission without one) or another
+ * one are refused.
+ */
+function isOwnMicrophoneCheck(permission, requestingOrigin, details, allowedOrigin) {
+    return (permission === 'media' &&
+        !!allowedOrigin &&
+        details?.mediaType === 'audio' &&
+        details.isMainFrame === true &&
+        isOwnOrigin(requestingOrigin, allowedOrigin) &&
+        [
+            details.requestingUrl,
+            details.securityOrigin,
+            details.embeddingOrigin,
+        ].every((url) => url === undefined || isOwnOrigin(url, allowedOrigin)));
+}
+/** The SSH window `contents` shows, unless it is gone or not one. */
+function liveRemoteBackend(contents) {
+    return contents && !contents.isDestroyed?.()
+        ? (0, windowBackends_1.remoteBackendOf)(contents)
+        : undefined;
+}
 const hardenedSessions = new WeakMap();
 /** Whether `ses` belongs to an SSH window (see hardenRemoteSession). */
 function isRemoteSession(ses) {
@@ -149,10 +197,50 @@ function hardenRemoteSession(ses, policy) {
         callback({ cancel });
     });
     (0, transport_1.trustLoopbackCertificate)(ses);
-    ses.setPermissionRequestHandler((_contents, permission, callback) => {
-        callback(ALWAYS_ALLOWED_PERMISSIONS.has(permission));
+    ses.setPermissionRequestHandler((contents, permission, callback, details) => {
+        if (ALWAYS_ALLOWED_PERMISSIONS.has(permission)) {
+            callback(true);
+            return;
+        }
+        const ownMicrophone = () => {
+            try {
+                return isOwnMicrophoneRequest(permission, details, current().allowedOrigin());
+            }
+            catch {
+                return false; // Fail closed.
+            }
+        };
+        const ask = current().askMicrophone;
+        if (!ask || !ownMicrophone() || !liveRemoteBackend(contents)) {
+            callback(false);
+            return;
+        }
+        // Re-checked once answered: the window may have closed or moved on.
+        void ask(contents)
+            .then((allowed) => allowed && !!liveRemoteBackend(contents) && ownMicrophone())
+            .catch(() => false) // Fail closed.
+            .then(callback);
     });
-    ses.setPermissionCheckHandler((_contents, permission) => ALWAYS_ALLOWED_PERMISSIONS.has(permission));
+    ses.setPermissionCheckHandler((contents, permission, requestingOrigin, details) => {
+        if (ALWAYS_ALLOWED_PERMISSIONS.has(permission)) {
+            return true;
+        }
+        try {
+            const policy = current();
+            // Granted until the user says no: the toolkit reads this before it
+            // calls getUserMedia, whose request asks the user. Until then the
+            // page sees microphone and speaker names, and WebRTC could list
+            // this computer's addresses but for hardenRemoteWindow's policy.
+            return (!!policy.askMicrophone &&
+                isOwnMicrophoneCheck(permission, requestingOrigin, details, policy.allowedOrigin()) &&
+                !!contents &&
+                !!liveRemoteBackend(contents) &&
+                !policy.microphoneRefused?.(contents));
+        }
+        catch {
+            return false; // Fail closed.
+        }
+    });
     // No USB/HID/serial devices (Electron would otherwise ask the app).
     ses.setDevicePermissionHandler(() => false);
     ses.on('select-hid-device', (event, _details, callback) => {
@@ -188,19 +276,27 @@ function refuseRemoteClientCertificates() {
 /**
  * Opens a URL from an SSH window in the OS browser if it is a web URL off the
  * local network: the browser would send the user's cookies to local services.
+ * `open`, if given, opens it instead (the window's connection, which relays
+ * sign-in callbacks to the host).
  */
-function openRemoteUrl(url) {
+function openRemoteUrl(url, open) {
     if (typeof url !== 'string' || !(0, localNetwork_1.isRemoteOpenableUrl)(url)) {
         return 'blocked';
     }
-    void (0, externalUrl_1.openExternalSafely)(url, 'unconfirmed');
+    if (open) {
+        open(url);
+    }
+    else {
+        void (0, externalUrl_1.openExternalSafely)(url, 'unconfirmed');
+    }
     return 'opened';
 }
 /**
- * An SSH window stays on its origin; other URLs go to openRemoteUrl, except
- * the Disconnected page's buttons (`onPageAction`, while it shows that page).
+ * An SSH window stays on its origin; other URLs go to openRemoteUrl (with
+ * `open`), except the Disconnected page's buttons (`onPageAction`, while it
+ * shows that page).
  */
-function remoteNavigationPolicy(allowedOrigin, onPageAction) {
+function remoteNavigationPolicy(allowedOrigin, onPageAction, open) {
     return {
         allowsNavigation: (url) => {
             const origin = allowedOrigin();
@@ -214,7 +310,7 @@ function remoteNavigationPolicy(allowedOrigin, onPageAction) {
                 }
                 return;
             }
-            openRemoteUrl(url);
+            openRemoteUrl(url, open);
         },
     };
 }

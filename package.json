@@ -1,0 +1,19 @@
+{
+  "name": "antigravity-chinese-localization",
+  "version": "2.33.0",
+  "private": true,
+  "description": "High-performance, non-destructive Chinese localization patch and control center for Google Antigravity",
+  "main": "localize.js",
+  "license": "MIT",
+  "engines": {
+    "node": ">=18.18.0"
+  },
+  "scripts": {
+    "start": "node localize.js",
+    "apply": "node localize.js --apply-only",
+    "now": "node localize.js --now",
+    "restore": "node localize.js --auto-restore",
+    "status": "node localize.js --check-status",
+    "test": "node tests/run-all-tests.js"
+  }
+}

@@ -8,14 +8,7 @@ const localizeSource = fs.readFileSync(path.join(__dirname, '..', 'localize.js')
 
 // 2. 提取 DOM_TRANSLATOR_INJECTION 中的 translateString
 function extractTranslator() {
-  const match = localizeSource.match(/(const DOM_TRANSLATOR_INJECTION = `[\s\S]*?`;)/);
-  if (!match) {
-    throw new Error('未能在 localize.js 中找到 DOM_TRANSLATOR_INJECTION 定义');
-  }
-  const hostSandbox = { globalThis: {} };
-  vm.createContext(hostSandbox);
-  vm.runInContext(match[1].replace('const DOM_TRANSLATOR_INJECTION', 'globalThis.DOM_TRANSLATOR_INJECTION'), hostSandbox);
-  let injectionCode = hostSandbox.globalThis.DOM_TRANSLATOR_INJECTION;
+  let injectionCode = require('./helpers/translator-loader').getInjectionCode();
 
   injectionCode = injectionCode.replace(
     'if (document.readyState === \'loading\')',
@@ -62,7 +55,7 @@ console.log('=== 开始 Ticket-07 Antigravity 2.13.0 核心特性汉化测试 ==
 console.log('--- 版本元数据校验 ---');
 const versionMatch = localizeSource.match(/const CURRENT_VERSION = ['"]([^'"]+)['"];/);
 const currentVer = versionMatch ? versionMatch[1] : null;
-const isVerValid = currentVer && (currentVer >= '2.13.0');
+const isVerValid = Boolean(currentVer && require('./helpers/translator-loader').compareSemver(currentVer, '2.13.0') >= 0);
 check('CURRENT_VERSION 版本号应 >= 2.13.0', isVerValid ? currentVer : null, currentVer);
 
 // 2. 侧边问答与表单交互 (Side Question & Questionnaire)

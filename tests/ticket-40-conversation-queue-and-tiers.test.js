@@ -10,14 +10,7 @@ const localizeSource = fs.readFileSync(path.join(root, 'localize.js'), 'utf-8');
 const readyAsarPath = path.join(root, 'app.asar.ready');
 
 function extractTranslatorAndSkip() {
-  const match = localizeSource.match(/(const DOM_TRANSLATOR_INJECTION = `[\s\S]*?`;)/);
-  if (!match) {
-    throw new Error('未能在 localize.js 中找到 DOM_TRANSLATOR_INJECTION 定义');
-  }
-  const hostSandbox = { globalThis: {} };
-  vm.createContext(hostSandbox);
-  vm.runInContext(match[1].replace('const DOM_TRANSLATOR_INJECTION', 'globalThis.DOM_TRANSLATOR_INJECTION'), hostSandbox);
-  let injectionCode = hostSandbox.globalThis.DOM_TRANSLATOR_INJECTION;
+  let injectionCode = require('./helpers/translator-loader').getInjectionCode();
 
   injectionCode = injectionCode.replace(
     "if (document.readyState === 'loading')",
@@ -140,7 +133,8 @@ check('user-message-content 内的用户文本严格跳过保护', shouldSkipNod
 
 console.log('\n--- 6. RELEASE_VERSION 与 app.asar.ready 二进制产物验证 ---');
 const releaseVerMatch = localizeSource.match(/const RELEASE_VERSION = ['"]([^'"]+)['"];/);
-check('localize.js RELEASE_VERSION 为 2.32.2.1', releaseVerMatch ? releaseVerMatch[1] : '', '2.32.2.1');
+const releaseVer = releaseVerMatch ? releaseVerMatch[1] : '';
+check('localize.js RELEASE_VERSION >= 2.32.2.1', require('./helpers/translator-loader').compareSemver(releaseVer, '2.32.2.1') >= 0, true);
 
 const asarBuf = fs.readFileSync(readyAsarPath);
 const asarSource = asarBuf.toString('utf-8', 0, Math.min(asarBuf.length, 30000000));

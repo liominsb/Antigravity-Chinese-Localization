@@ -36,10 +36,12 @@ var __importDefault = (this && this.__importDefault) || function (mod) {
     return (mod && mod.__esModule) ? mod : { "default": mod };
 };
 Object.defineProperty(exports, "__esModule", { value: true });
-exports.SleepBlocker = exports.showOrCreateWindow = exports.CATCHER_STABLE_LOAD_RESET_MS = exports.CATCHER_CRASH_BACKOFF_MS = exports.CATCHER_DATA_URL = exports.WCV_THREE_LAYER_STACK_FLAG = exports.HUB_SURFACE_COLOR_STORAGE_KEY = exports.showQuitConfirmation = void 0;
+exports.SleepBlocker = exports.showOrCreateWindow = exports.CATCHER_STABLE_LOAD_RESET_MS = exports.CATCHER_CRASH_BACKOFF_MS = exports.CATCHER_DATA_URL = exports.WCV_THREE_LAYER_STACK_ARG = exports.WCV_THREE_LAYER_STACK_FLAG = exports.HUB_SURFACE_COLOR_STORAGE_KEY = exports.showQuitConfirmation = void 0;
 exports.setShowQuitConfirmation = setShowQuitConfirmation;
 exports.isMacOS = isMacOS;
 exports.isLightTheme = isLightTheme;
+exports.startInactive = startInactive;
+exports.onHubWindowFocusChange = onHubWindowFocusChange;
 exports.isWcvThreeLayerStackEnabled = isWcvThreeLayerStackEnabled;
 exports.normalizeHexSurfaceColor = normalizeHexSurfaceColor;
 exports.buildHubCurtainDataUrl = buildHubCurtainDataUrl;
@@ -66,6 +68,7 @@ exports.getNodeWrapperPaths = getNodeWrapperPaths;
 exports.setupNodeWrapper = setupNodeWrapper;
 const electron_1 = require("electron");
 const constants_1 = require("./constants");
+Object.defineProperty(exports, "WCV_THREE_LAYER_STACK_FLAG", { enumerable: true, get: function () { return constants_1.WCV_THREE_LAYER_STACK_FLAG; } });
 const externalUrl_1 = require("./externalUrl");
 const keybindings_1 = require("./keybindings");
 const path_1 = __importDefault(require("path"));
@@ -74,6 +77,8 @@ const paths_1 = require("./paths");
 const loadingOverlay_1 = require("./loadingOverlay");
 const wsl_1 = require("./wsl");
 const debugConsole_1 = require("./debugConsole");
+const previewViewers_1 = require("./computer/previewViewers");
+const hubWindows_1 = require("./hubWindows");
 const windowState_1 = require("./windowState");
 const windowBackends_1 = require("./remote/windowBackends");
 const nodeWrapper_1 = require("./nodeWrapper");
@@ -125,8 +130,61 @@ function ensureAppIsInDock() {
         electron_1.app.dock.setIcon(electron_1.nativeImage.createFromPath(iconPath));
     }
 }
+/**
+ * The inactive start's Dock entry: the regular activation policy gives the
+ * Hub its Dock icon and Cmd-Tab entry without activating it (dock.show()
+ * also activates the app), so a window shown inactive on another Space can
+ * still be reached.
+ */
+function ensureAppIsInDockInactive() {
+    if (!isMacOS()) {
+        return;
+    }
+    electron_1.app.setActivationPolicy('regular');
+    if (electron_1.app.dock) {
+        const iconPath = path_1.default.join(__dirname, '..', 'icon.png');
+        electron_1.app.dock.setIcon(electron_1.nativeImage.createFromPath(iconPath));
+    }
+}
+// ---------------------------------------------------------------------------
+// Window Management
+// ---------------------------------------------------------------------------
+/**
+ * Dev / E2E harness only (never in a packaged app): with
+ * AGY_HUB_START_INACTIVE=1, windows open without activating the Hub (created
+ * hidden, then shown with showInactive(); no dock.show(), which activates the
+ * app on macOS), so relaunching the Dev Hub during a background-mode run
+ * doesn't take focus from the user's app.
+ */
+function startInactive(env = process.env, packaged = electron_1.app.isPackaged) {
+    return !packaged && env.AGY_HUB_START_INACTIVE === '1';
+}
+/** Longest wait for the first paint before an inactive window is shown. */
+const INACTIVE_SHOW_FALLBACK_MS = 5000;
+const hubFocusListeners = new Set();
+/**
+ * Calls `cb` whenever a Hub window gains or loses focus, or closes (Hub
+ * windows are BaseWindows, which `app`'s browser-window-focus/-blur events
+ * don't cover). Returns an unsubscribe function.
+ */
+function onHubWindowFocusChange(cb) {
+    hubFocusListeners.add(cb);
+    return () => {
+        hubFocusListeners.delete(cb);
+    };
+}
+function notifyHubFocusChange() {
+    for (const cb of [...hubFocusListeners]) {
+        try {
+            cb();
+        }
+        catch (err) {
+            console.error('Hub focus listener failed:', err);
+        }
+    }
+}
 exports.HUB_SURFACE_COLOR_STORAGE_KEY = 'hubSurfaceBackgroundColor';
-exports.WCV_THREE_LAYER_STACK_FLAG = 'enable-wcv-three-layer-stack';
+exports.WCV_THREE_LAYER_STACK_ARG = '--agy-wcv-three-layer-stack=1';
 /** Minimal transparent full-viewport HTML document loaded into `catcherWcv`. */
 exports.CATCHER_DATA_URL = 'data:text/html,<!doctype html><html style="margin:0;width:100%;height:100%;overflow:hidden;background:transparent;user-select:none"><body style="margin:0;width:100%;height:100%;overflow:hidden;background:transparent;user-select:none"></body></html>';
 exports.CATCHER_CRASH_BACKOFF_MS = [100, 500, 2000];
@@ -187,7 +245,7 @@ function isWcvThreeLayerStackEnabled(storageManager) {
     const rawOverrides = items[CUSTOM_FLAG_OVERRIDES_STORAGE_KEY];
     if (typeof rawOverrides === 'string') {
         try {
-            const val = asRecord(JSON.parse(rawOverrides))?.[exports.WCV_THREE_LAYER_STACK_FLAG];
+            const val = asRecord(JSON.parse(rawOverrides))?.[constants_1.WCV_THREE_LAYER_STACK_FLAG];
             if (typeof val === 'boolean') {
                 return val;
             }
@@ -196,7 +254,7 @@ function isWcvThreeLayerStackEnabled(storageManager) {
             // Ignore malformed customFlagOverrides JSON and fall through.
         }
     }
-    const saved = items[exports.WCV_THREE_LAYER_STACK_FLAG];
+    const saved = items[constants_1.WCV_THREE_LAYER_STACK_FLAG];
     return saved === true || saved === 'true';
 }
 /** Validates a 6-digit `#RRGGBB` hex color string and returns it normalized to uppercase. */
@@ -452,6 +510,10 @@ function getHubWindows() {
             continue;
         }
         seen.add(win);
+        // Aux windows (the desktop HUD) are never Hub windows.
+        if ((0, hubWindows_1.isAuxWindow)(win)) {
+            continue;
+        }
         if (hubWindows.has(win) || !isPopupWindow(win)) {
             candidates.push(win);
         }
@@ -494,6 +556,7 @@ function getFocusedHubWindow() {
             : null);
     return focused &&
         !focused.isDestroyed?.() &&
+        !(0, hubWindows_1.isAuxWindow)(focused) &&
         (hubWindows.has(focused) || !isPopupWindow(focused))
         ? focused
         : undefined;
@@ -514,9 +577,16 @@ const defaultNavigationPolicy = {
  * With `builtInBrowser: false`, a plain `BrowserWindow` instead.
  */
 function createWindow(url, storageManager, options) {
-    ensureAppIsInDock();
-    const existingWindows = options?.cascade ? getHubWindows() : [];
+    const inactive = startInactive();
+    if (inactive) {
+        ensureAppIsInDockInactive();
+    }
+    else {
+        ensureAppIsInDock();
+    }
+    const existingWindows = options?.cascade && !options.initialState ? getHubWindows() : [];
     const initialWindowState = (0, windowState_1.resolveInitialWindowState)({
+        state: options?.initialState,
         cascadeFromWindow: existingWindows.length > 0
             ? (getFocusedHubWindow() ?? existingWindows[existingWindows.length - 1])
             : undefined,
@@ -538,6 +608,7 @@ function createWindow(url, storageManager, options) {
         width: initialWindowState.width,
         height: initialWindowState.height,
         ...(initialWindowState.isFullScreen ? { fullscreen: true } : {}),
+        ...(options?.inactive ? { show: false } : {}),
         minWidth: windowState_1.MIN_WINDOW_WIDTH,
         minHeight: windowState_1.MIN_WINDOW_HEIGHT,
         title: electron_1.app.getName() + badge,
@@ -551,6 +622,7 @@ function createWindow(url, storageManager, options) {
                 height: 30,
             },
         backgroundColor,
+        ...(inactive ? { show: false } : {}),
         trafficLightPosition: { x: 12, y: 12 },
         webPreferences: {
             nodeIntegration: false,
@@ -592,8 +664,15 @@ function createWindow(url, storageManager, options) {
             : undefined;
         curtainView?.setBackgroundColor?.(curtainColor);
         const initialCurtainLoad = Promise.resolve(curtainView?.webContents?.loadURL?.(buildHubCurtainDataUrl(curtainColor))).catch(() => undefined);
+        const hubArgs = [
+            ...(webPreferences?.additionalArguments ?? []),
+            exports.WCV_THREE_LAYER_STACK_ARG,
+        ];
+        const extraHubPrefs = threeLayer
+            ? { additionalArguments: hubArgs }
+            : undefined;
         const hubWcv = new electron_1.WebContentsView({
-            webPreferences: { ...webPreferences, transparent: true },
+            webPreferences: { ...webPreferences, ...extraHubPrefs, transparent: true },
         });
         // Opaque until a native browser tab must show through. Don't change this
         // back to '#00000000': a see-through full-window hubWcv slows every Hub
@@ -688,6 +767,7 @@ function createWindow(url, storageManager, options) {
             event?.preventDefault?.();
             lockCatcherZoom();
         };
+        const suppressCatcherContextMenu = (e) => e?.preventDefault?.();
         const onCatcherProcessGone = (_event, details) => {
             if (!catcherView ||
                 !catcherContents ||
@@ -800,6 +880,7 @@ function createWindow(url, storageManager, options) {
             catcherContents.on?.('dom-ready', lockCatcherZoom);
             catcherContents.on?.('did-finish-load', lockCatcherZoom);
             catcherContents.on?.('zoom-changed', onCatcherZoomChanged);
+            catcherContents.on?.('context-menu', suppressCatcherContextMenu);
             catcherContents.on?.('render-process-gone', onCatcherProcessGone);
             lockCatcherZoom();
             void Promise.resolve(catcherContents.loadURL(exports.CATCHER_DATA_URL)).catch(() => undefined);
@@ -820,6 +901,7 @@ function createWindow(url, storageManager, options) {
                 catcherContents?.off?.('dom-ready', lockCatcherZoom);
                 catcherContents?.off?.('did-finish-load', lockCatcherZoom);
                 catcherContents?.off?.('zoom-changed', onCatcherZoomChanged);
+                catcherContents?.off?.('context-menu', suppressCatcherContextMenu);
                 catcherContents?.off?.('render-process-gone', onCatcherProcessGone);
                 if (!baseWin.isDestroyed?.()) {
                     baseWin.contentView?.removeChildView?.(catcherView);
@@ -861,7 +943,12 @@ function createWindow(url, storageManager, options) {
         win.maximize?.();
         syncHubViewBounds?.();
     }
-    (0, windowState_1.trackWindowState)(win, initialWindowState);
+    if (options?.inactive) {
+        win.showInactive?.();
+    }
+    if (options?.persistBounds !== false) {
+        (0, windowState_1.trackWindowState)(win, initialWindowState);
+    }
     const hubContents = getHubWebContents(win);
     if (!hubContents) {
         throw new Error('Failed to initialize Hub WebContents');
@@ -869,6 +956,8 @@ function createWindow(url, storageManager, options) {
     hubWindows.add(win);
     win.on('focus', () => lastFocusOf.set(win, ++focusCount));
     registerWindowWebContents(win, hubContents);
+    win.on('focus', notifyHubFocusChange);
+    win.on('blur', notifyHubFocusChange);
     // `BaseWindow` does not mirror the Hub page title, so set it explicitly.
     // Truncation keeps the menu dropdown from being very wide.
     const handleTitleUpdate = (_event, title) => {
@@ -913,6 +1002,7 @@ function createWindow(url, storageManager, options) {
         openOutside(event.url);
     };
     win.on('closed', () => {
+        notifyHubFocusChange();
         for (const [id, mappedWin] of windowByWebContentsId.entries()) {
             if (mappedWin === win) {
                 windowByWebContentsId.delete(id);
@@ -1010,6 +1100,25 @@ function createWindow(url, storageManager, options) {
             hubContents.off?.('zoom-changed', handleZoomChanged);
         });
     }
+    if (inactive) {
+        // Once: whichever comes first, the first paint or the fallback (a window
+        // the user hid after its load must not come back on the timer).
+        let fallback;
+        const showInactive = () => {
+            if (fallback === undefined) {
+                return;
+            }
+            clearTimeout(fallback);
+            fallback = undefined;
+            if (!win.isDestroyed() && !win.isVisible()) {
+                win.showInactive();
+            }
+        };
+        hubContents.once?.('did-finish-load', showInactive);
+        fallback = setTimeout(showInactive, INACTIVE_SHOW_FALLBACK_MS);
+    }
+    // The computer pane's loopback preview: this window's Hub UI only.
+    (0, previewViewers_1.registerPreviewViewer)(hubContents);
     void win.loadURL(url);
     return win;
 }

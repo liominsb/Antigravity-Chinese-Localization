@@ -195,7 +195,7 @@ check('列出目录', translate('Listed directory src/'), '列出目录: src/');
 console.log('\n--- 7. isActionPill 药丸白名单校验 ---');
 const isActionPillRegexMatch = engineCode.match(/const isActionPill\s*=\s*textContent\.length\s*<=\s*\d+\s*&&\s*(\/[^/]+\/i)\.test/);
 assert.ok(isActionPillRegexMatch, 'isActionPill regex must exist in engine code');
-const actionPillRegex = eval(isActionPillRegexMatch[1]);
+const actionPillRegex = vm.runInNewContext(isActionPillRegexMatch[1]);
 
 const testPills = ['Run', 'Running', 'Ran', 'Explored', 'Exploring', 'Edited', 'Editing', 'Thought', 'Thinking', 'Working', 'Done', 'Analyzed', 'Analyzing', 'Waiting', 'Rejected', 'Errored', 'Ran command', 'Running commands'];
 for (const pill of testPills) {

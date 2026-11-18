@@ -25,7 +25,7 @@ function serverArtifactsWithoutLookup(opts) {
     // '||': an empty value means unset.
     const version = env[exports.SSH_LS_VERSION_ENV] || opts.appVersion;
     if (!VERSION_RE.test(version) || /^\.+$/.test(version)) {
-        throw new types_1.RemoteError('INSTALL_FAILED', `Invalid server version: ${JSON.stringify(version)}`);
+        throw new types_1.RemoteError('INSTALL_FAILED', `无效的服务端版本：${JSON.stringify(version)}`);
     }
     const remotePath = env[exports.SSH_LS_REMOTE_PATH_ENV];
     if (!remotePath) {
@@ -33,7 +33,7 @@ function serverArtifactsWithoutLookup(opts) {
     }
     // eslint-disable-next-line no-control-regex
     if (!/^\/[^\u0000-\u001f\u007f]{0,4095}$/.test(remotePath)) {
-        throw new types_1.RemoteError('INSTALL_FAILED', `${exports.SSH_LS_REMOTE_PATH_ENV} must be an absolute path on the SSH host: ${JSON.stringify(remotePath)}`);
+        throw new types_1.RemoteError('INSTALL_FAILED', `${exports.SSH_LS_REMOTE_PATH_ENV} 必须是 SSH 主机上的绝对路径：${JSON.stringify(remotePath)}`);
     }
     return { version, x64: {}, arm64: {}, remotePath };
 }
@@ -56,9 +56,9 @@ async function resolveRemoteServerArtifacts(opts) {
     catch (err) {
         return {
             artifacts,
-            resolutionError: `Could not find the Antigravity server build ${version}: ` +
-                `${err instanceof Error ? err.message : String(err)}. Development builds must set ` +
-                `${exports.SSH_LS_VERSION_ENV} to a released version.`,
+            resolutionError: `找不到 Antigravity 服务端构建版本 ${version}：` +
+                `${err instanceof Error ? err.message : String(err)}。开发版构建必须将环境变量 ` +
+                `${exports.SSH_LS_VERSION_ENV} 设置为已发布的版本号。`,
         };
     }
     return {

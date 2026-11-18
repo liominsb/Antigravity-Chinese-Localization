@@ -10,10 +10,10 @@ Antigravity 深度汉化与高性能本地化补丁程序
 [![GitHub Discussions](https://img.shields.io/github/discussions/antigravity-cn-community/Antigravity-Chinese-Localization?style=flat&color=purple)](https://github.com/antigravity-cn-community/Antigravity-Chinese-Localization/discussions)
 [![Platform](https://img.shields.io/badge/Platform-Windows%20%7C%20macOS%20%7C%20Linux-blue)](https://github.com/antigravity-cn-community/Antigravity-Chinese-Localization)
 [![Package Size](https://img.shields.io/badge/ASAR%20Size-~6.3%20MB%20(Official%20Slim)-success)](https://github.com/antigravity-cn-community/Antigravity-Chinese-Localization)
-[![Node Runtime](https://img.shields.io/badge/Node.js-%3E%3D%2014.0.0-informational)](https://nodejs.org/)
+[![Node Runtime](https://img.shields.io/badge/Node.js-%3E%3D%2018.18.0-informational)](https://nodejs.org/)
 [![license](https://img.shields.io/github/license/antigravity-cn-community/Antigravity-Chinese-Localization)](LICENSE)
 
-专为 Google Antigravity 打造的高性能、非破坏性深度汉化补丁，现由开源社区组织 **[`antigravity-cn-community`](https://github.com/antigravity-cn-community/Antigravity-Chinese-Localization)** 联合维护。全面适配 **Antigravity v2.32.2+** 最新架构，深度重构基础算力层与 DOM 调度层，带来百万级吞吐量的极致流畅体验。全量汉化规划模式、系统设置、安全沙盒、Remote SSH 子系统与官方插件生态等数千条核心界面文案，严格对齐官方原生轻量级打包规格（v2.32.2 约 6.3 MB），并对用户打字与代码编辑区实施绝对物理免疫。
+专为 Google Antigravity 打造的高性能、非破坏性深度汉化补丁，现由开源社区组织 **[`antigravity-cn-community`](https://github.com/antigravity-cn-community/Antigravity-Chinese-Localization)** 联合维护。全面适配 **Antigravity v2.33.0+** 最新架构，深度重构基础算力层与 DOM 调度层，带来百万级吞吐量的极致流畅体验。全量汉化规划模式、系统设置、安全沙盒、Remote SSH 子系统与官方插件生态等数千条核心界面文案，严格对齐官方原生轻量级打包规格（v2.33.0 约 6.2 MB），并对用户打字与代码编辑区实施绝对物理免疫。
 
 > [最新 Release 下载](https://github.com/antigravity-cn-community/Antigravity-Chinese-Localization/releases/latest) · [社区讨论与千星里程碑 (Discussions)](https://github.com/antigravity-cn-community/Antigravity-Chinese-Localization/discussions) · [问题反馈与建议](https://github.com/antigravity-cn-community/Antigravity-Chinese-Localization/issues)
 
@@ -47,7 +47,7 @@ Antigravity 深度汉化与高性能本地化补丁程序
 | **极致吞吐与高帧率调度** | 吞吐量突破 168 万次/秒 | 采用预编译 $O(1)$ 哈希索引、纯中文 ASCII 极速短路、联合流式正则、DOM 树祖先剪枝与微任务帧聚合调度，全面保障 60fps/120fps 满帧无感运行。 |
 | **轻量打包与标准规格** | 严格对齐官方原生规格（约 6.3 MB） | 使用 `--unpack-dir` 排除外部冗余依赖，彻底消除历史版本 14MB~21MB 的体积膨胀问题，与官方原生分发包规格保持一致。 |
 | **生命周期自愈与热升级** | `injectOrUpdate` 截断更新 | 解决旧版因检测到历史标记而跳过更新的缺陷，无论是全新安装、日常热覆盖还是跨版本升级，均支持热注入与 `Ctrl + R` 瞬时重载自愈。 |
-| **全套 TDD 自动化测试门禁** | 42 组测试套件 ALL GREEN | 覆盖词典去重基线、首页动态文案、原生菜单、AST 语法门禁、文件与进程安全校验以及流式发布下载防护，杜绝回归与启动崩溃。 |
+| **全套 TDD 自动化测试门禁** | 51 组测试套件 ALL GREEN | 覆盖模块化翻译引擎、词典去重基线、原生菜单、AST 语法门禁、回环安全鉴权、文件与进程安全校验及流式发布下载防护，杜绝回归与启动崩溃。 |
 
 ---
 
@@ -89,7 +89,7 @@ Antigravity 深度汉化与高性能本地化补丁程序
 
 控制中心首页显示实际已安装的 `app.asar` 版本，可以直接读取 GitHub Releases，选择最新正式版或历史版本。“仅下载”将文件缓存到本项目的 `downloads/` 目录；“下载并安装”在下载和 SHA-256 校验后，确认安装到配置的目标路径。更新说明和已下载版本默认折叠；路径配置、本地脚本汉化、还原及日志可在“设置与维护”中展开。
 
-各版本缓存会一直保留。用户可以在“已下载版本”列表中安装或单独删除某个缓存包；删除缓存不会修改 Antigravity 的安装文件。安装确认会提醒先保存编辑；用户确认后，如程序仍在运行，控制中心会结束所有 Antigravity 实例及后台语言服务，并严格确认进程退出后才备份和安装。强制退出可能丢失未保存的编辑；停止失败时不替换安装文件。替换失败会尝试恢复本次备份。备份按文件内容（SHA-256）去重，相同内容直接复用已有备份；当前安装文件已经与所选包一致时，跳过结束进程、安装和备份。不同内容的备份及历史备份会保留，不自动删除。原有“一键汉化”按钮继续使用本地脚本注入流程。
+各版本缓存会一直保留。用户可以在“已下载版本”列表中安装或单独删除某个缓存包；删除缓存不会修改 Antigravity 的安装文件。安装确认会提醒先保存编辑；用户确认后，如程序仍在运行，控制中心会结束所有 Antigravity 实例及后台语言服务，并严格确认进程退出后才备份和安装。强制退出可能丢失未保存的编辑；停止失败时不替换安装文件。替换失败会尝试恢复本次备份。备份按文件内容（SHA-256）去重，相同内容直接复用已有备份；当前安装文件已经与所选包一致时，跳过结束进程、安装和备份。不同内容的备份及历史备份会保留，不自动删除。“设置与维护”中的“使用本地脚本汉化”按钮继续提供本地解包注入流程。
 
 #### 2. 一键快速更新与官方更新恢复（双击即用）
 官方客户端自动更新后会还原为英文原版，此时双击运行 **`一键更新汉化.bat`**：
@@ -119,7 +119,7 @@ node localize.js --now
    ```bash
    ./运行汉化.sh
    ```
-2. 浏览器自动打开可视化控制面板，点击“一键汉化”。  
+2. 浏览器自动打开可视化控制面板，点击“下载并安装”（或在“设置与维护”中点击“使用本地脚本汉化”）。  
    或者直接通过无头命令行部署：
    ```bash
    node localize.js --now
@@ -134,16 +134,16 @@ node localize.js --now
    chmod +x 运行汉化.sh
    ./运行汉化.sh
    ```
-2. 浏览器自动打开控制中心，点击“一键汉化”。默认定位路径为 `/Applications/Antigravity.app`。
+2. 浏览器自动打开控制中心，点击“下载并安装”（或在“设置与维护”中点击“使用本地脚本汉化”）。默认定位路径为 `/Applications/Antigravity.app`。
 
-官方升级后需要重新应用汉化时，可在源码目录或包含 `localize.js` 的完整分发包中双击 **`一键更新汉化.command`**（首次使用可运行 `chmod +x 一键更新汉化.command`）。需要 Node.js 14 或更新版本；执行前会提示保存工作并确认，随后调用现有 `--auto-restore` 流程关闭客户端、备份并恢复汉化，成功后打开应用。此入口不依赖 `extracted/`，不联网下载或重新打包；仅支持实际归档版本相同的本地预制包，版本不匹配或无法读取时停止。尚未发布对应版本汉化包时，请等待适配，不要用旧包覆盖新客户端。这里的“恢复”指恢复汉化，不是还原英文版。
+官方升级后需要重新应用汉化时，可在源码目录或包含 `localize.js` 的完整分发包中双击 **`一键更新汉化.command`**（首次使用可运行 `chmod +x 一键更新汉化.command`）。需要 Node.js 18.18.0 或更新版本；执行前会提示保存工作并确认，随后调用现有 `--auto-restore` 流程关闭客户端、备份并恢复汉化，成功后打开应用。此入口不依赖 `extracted/`，不联网下载或重新打包；仅支持实际归档版本相同的本地预制包，版本不匹配或无法读取时停止。尚未发布对应版本汉化包时，请等待适配，不要用旧包覆盖新客户端。这里的“恢复”指恢复汉化，不是还原英文版。
 
 启动器优先使用当前 PATH 中可用的 Node，并补充常见 Homebrew 路径；必要时通过用户的登录交互 shell 加载 nvm、fnm、asdf 等初始化配置，再尝试 NVM 默认版本。请确保这些工具已在自己的 shell 中正确配置。自动打开应用失败只显示提示，不会改变汉化成功的退出码。
 
 > **macOS 代码签名提示**：  
-> 在 macOS 下修改应用内部 asar 包会破坏原有的签名信息，Gatekeeper 可能会拦截并提示“应用已损坏，无法打开”。若遇到该情况，在终端中执行以下命令清除隔离属性即可恢复正常：  
+> 在 macOS（尤其是 Apple Silicon `arm64`）下修改应用内部 `app.asar` 会破坏原有的代码签名密封哈希，Gatekeeper 或 `amfid` 可能提示“应用已损坏，无法打开”。若遇到该情况，请在终端执行以下命令清除隔离属性并进行本地 Ad-hoc 重签（注：重签可能会重置 macOS 本地 TCC 权限授权）：  
 > ```bash
-> xattr -cr /Applications/Antigravity.app
+> xattr -cr "/Applications/Antigravity.app" && codesign --force --deep --sign - "/Applications/Antigravity.app"
 > ```
 
 ---
@@ -177,8 +177,8 @@ node localize.js --apply-only
 ```text
 [ Antigravity 启动 ]
         │
-        ├─► [ 原生层: dist/loadingOverlay.js ] ──► 本地化启动遮罩动画
-        ├─► [ 原生层: dist/menu.js & tray.js ] ──► 本地化原生菜单栏与系统托盘
+        ├─► [ 原生层: dist/menu.js & updater.js ] ──► 本地化原生菜单栏与更新状态机
+        ├─► [ 原生层: dist/tray.js & ipcHandlers.js ] ──► 本地化系统托盘与全量右键菜单
         │
         └─► [ Web 容器: dist/preload.js ]
                     │
@@ -215,6 +215,7 @@ node localize.js --apply-only
 
 各版本的详细更新记录、新特性适配细节与底层技术架构演进，请参阅独立的 [CHANGELOG.md](CHANGELOG.md)（英文版请参阅 [CHANGELOG.en.md](CHANGELOG.en.md)）：
 
+- **[v2.33.0](CHANGELOG.md#v2330-2026-11-18)** (2026-11-18)：全面同步适配官方 `v2.33.0` 大版本架构更新！重磅覆盖 `Computer Use` 桌面操控 HUD 悬浮条与 `Agents Live` 实时桌面预览窗格、Remote SSH 服务端重启/共享目录接管/远程麦克风授权与配置诊断、新版 9 款 Gemini Live 音色与实时语音听写、内置浏览器按站点 Cookie 管理、VS Code / AGY 双模快捷键方案以及扩展市场 `Bundles` 插件组合包与安装前源码审查；同步完成 `src/` 模块化引擎解耦、回环安全鉴权与词库去重瘦身（共 `4,250+` 条零重复词条、51 组自动化测试门禁 100% ALL GREEN）。
 - **[v2.32.2.1](CHANGELOG.md#v23221-2026-11-17)** (2026-11-17)：深度补齐对话页排队发送按钮（`Send all (N)` ➔ `全部发送 (N)`）及排队消息卡片（`Sends after agent finishes working`、`Empty message`）、补全模型思考档位 `Extra` / `Max`（`极高` / `最高` 及 `· 上下文窗口` 组合标签）、撤销确认弹窗、过长对话历史提示与 Best of N 回复偏好问卷（共 +44 条词典与 +8 组动态正则），并在放行排队/操作装饰栏的同时保持用户正文与时间标签（如 `2m ago`）原样不变。
 - **[v2.32.2](CHANGELOG.md#v2322-2026-11-17)** (2026-11-17)：全面同步官方 `v2.32.2` 更新，新增官方插件市场 `Robotics` 机器人开发插件（描述及 9 条示例提示词）、GitHub 细粒度权限策略 (`GitHub Policies & Permissions`)、协调器 (`Coordinator`)、跨设备接力、侧边提问 (`Side Question`) 与自动化分步创建向导及定时计划编辑器（共 +140 条词典、+9 组动态正则与 +13 项原生菜单映射），并修复 `replaceInFile` 同义目标幂等逻辑。
 - **[v2.32.1.2](CHANGELOG.md#v23212-2026-11-16)** (2026-11-16)：补全标签页与侧边栏原生右键菜单 40 项（含 `(Default)` 动态后缀）、117 条设置与右侧栏界面文案、`File not found` 兜底、首页问候语与第三方模型公告（PR #57）、模型专属限额动态正则及全套双语外观主题预设；植入 `setupSidebarProjectDragFix` 热修复官方左侧栏项目拖拽偏移 Bug；同步千星纪念组织化治理与共同 MIT 版权声明（PR #58）。

@@ -3,7 +3,9 @@ const path = require('path');
 const assert = require('assert');
 
 // 1. 读取当前 localize.js 源码与 extracted/package.json
-const localizeSource = fs.readFileSync(path.join(__dirname, '..', 'localize.js'), 'utf-8');
+const { getCombinedSource, loadTranslatorSandbox } = require('./helpers/translator-loader');
+const localizeSource = getCombinedSource();
+const { translateString } = loadTranslatorSandbox();
 const packageJson = JSON.parse(fs.readFileSync(path.join(__dirname, '..', 'extracted', 'package.json'), 'utf-8'));
 
 let passed = 0;
@@ -76,7 +78,7 @@ check('preload.js 包含 Pin conversation 映射', preloadSource.includes('"Pin 
 check('preload.js 包含 Pinned Conversations 映射', preloadSource.includes('"Pinned Conversations": "置顶对话"'), true);
 check('preload.js 包含 pinned conversations 映射', preloadSource.includes('"pinned conversations": "置顶对话"'), true);
 check('preload.js 包含 Recent Conversations 映射', preloadSource.includes('"Recent Conversations": "最近对话"'), true);
-check('preload.js 包含 Undo to this point 映射', preloadSource.includes('"Undo to this point": "撤销到此处"'), true);
+check('preload.js 包含 Undo to this point 映射', preloadSource.includes('"Undo to this point": "撤销至此处"'), true);
 check('preload.js 包含 Copy code 映射', preloadSource.includes('"Copy code": "复制代码"'), true);
 check('preload.js 包含 At mention code block 映射', preloadSource.includes('"At mention code block": "提及代码块"'), true);
 check('preload.js 包含 Add inline comment 映射', preloadSource.includes('"Add inline comment": "添加行内注释"'), true);
@@ -97,6 +99,10 @@ check('localize.js 包含 Bad response 映射', localizeSource.includes('"Bad re
 check('localize.js 包含 More actions 映射', localizeSource.includes('"More actions": "更多操作"'), true);
 check('localize.js 包含 Pinned Conversations 映射', localizeSource.includes('"Pinned Conversations": "置顶对话"'), true);
 check('localize.js 包含 See all (N) 动态正则', localizeSource.includes('/^See all\\\\s*\\\\(([^)]+)\\\\)$/i') || localizeSource.includes('/^See all\\s*\\(([^)]+)\\)$/i'), true);
+
+
+check('行为级验证: See all (12) 动态翻译', translateString('See all (12)'), '查看全部 (12)');
+check('行为级验证: Fold lines 10-25 动态翻译', translateString('Fold lines 10-25'), '折叠第 10-25 行');
 
 console.log('\n========================================');
 console.log(`测试完成: ${passed}/${total} 通过 (${passed === total ? 'ALL PASS' : 'FAILED'})`);

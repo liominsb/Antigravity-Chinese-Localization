@@ -42,9 +42,21 @@ case "$RESTORE_CODE" in
     echo '汉化包已就绪，正在打开 Antigravity…'
     open -a '/Applications/Antigravity.app' 2>/dev/null || open -a Antigravity 2>/dev/null ||
       echo '提示：未能自动启动应用，请手动打开 Antigravity。'
+    echo ''
+    echo '排障提示（macOS Apple Silicon arm64）：'
+    echo '如遇到系统提示“已损坏 / 无法打开”，请在终端执行去隔离命令：'
+    echo '  xattr -cr "/Applications/Antigravity.app"'
+    echo '必要时补充执行本地重签名（如遇权限不足请在命令前加 sudo）：'
+    echo '  codesign --force --deep --sign - "/Applications/Antigravity.app"'
     ;;
   2) echo '版本不匹配，未覆盖客户端。请获取对应客户端版本的汉化包后重试。' ;;
-  *) echo '恢复失败。请检查上方错误、客户端路径和本地预制包是否完整。' ;;
+  *)
+    echo '恢复失败。请检查上方错误、客户端路径和本地预制包是否完整。'
+    echo '如在 Apple Silicon (arm64) 遇到“已损坏 / 无法打开”提示，可在终端执行：'
+    echo '  xattr -cr "/Applications/Antigravity.app"'
+    echo '必要时执行重签名：'
+    echo '  codesign --force --deep --sign - "/Applications/Antigravity.app"'
+    ;;
 esac
 read -r -p '按回车关闭…' _
 exit "$RESTORE_CODE"

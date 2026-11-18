@@ -346,8 +346,27 @@ function registerIpcHandlers(storageManager, deps = {}) {
             return 'unknown';
         }
     };
-    localOnly('mic:get-access-status', (event) => {
-        if (!(0, wcvIpcHandlers_1.isAuthorizedHubMainFrameEvent)(event)) {
+    /**
+     * Whether `event` may use a mic channel SSH windows share: a local Hub
+     * window's main frame, or an SSH window's own top frame. Anything else on
+     * an SSH window's session is refused, as by localOnly().
+     */
+    const isMicCaller = (channel, event) => {
+        const sender = event?.sender;
+        if (!(0, remoteWindowSecurity_1.isRemoteContents)(sender)) {
+            return (0, wcvIpcHandlers_1.isAuthorizedHubMainFrameEvent)(event);
+        }
+        if (!(0, windowBackends_1.remoteBackendOf)(sender)) {
+            throw new Error(`${channel} is not available in SSH windows`);
+        }
+        // Its top frame (null once it navigated), while it lives.
+        return !sender.isDestroyed() && event.senderFrame === sender.mainFrame;
+    };
+    // SSH windows too, so a mic blocked in the OS settings says so there. They
+    // only read it: no OS prompt (mic:request-access), which getUserMedia shows
+    // anyway once the user allows their host the mic (remoteWindowSecurity.ts).
+    electron_1.ipcMain.handle('mic:get-access-status', (event) => {
+        if (!isMicCaller('mic:get-access-status', event)) {
             return 'unknown';
         }
         if (process.platform === 'darwin' || process.platform === 'win32') {
@@ -391,9 +410,15 @@ function registerIpcHandlers(storageManager, deps = {}) {
         }
         return 'unknown';
     });
-    localOnly('mic:open-system-preferences', async (event) => {
-        if (!(0, wcvIpcHandlers_1.isAuthorizedHubMainFrameEvent)(event)) {
+    // A fixed settings page, for SSH windows too.
+    electron_1.ipcMain.handle('mic:open-system-preferences', async (event) => {
+        if (!isMicCaller('mic:open-system-preferences', event)) {
             return;
+        }
+        // Remote content mustn't open System Settings while you're elsewhere.
+        if ((0, remoteWindowSecurity_1.isRemoteContents)(event.sender) &&
+            !windowForSender(event.sender)?.isFocused()) {
+            throw new Error('mic:open-system-preferences is only available while the window is focused');
         }
         if (process.platform === 'darwin') {
             await (0, externalUrl_1.openExternalSafely)('x-apple.systempreferences:com.apple.preference.security?Privacy_Microphone', 'confirmed');
@@ -501,9 +526,13 @@ function registerIpcHandlers(storageManager, deps = {}) {
         if (!(0, debugConsole_1.isDebugConsoleEnabled)() || !allowed) {
             return;
         }
-        const win = getTargetHubWindow(event?.sender);
-        if (win) {
-            win.webContents.toggleDevTools();
+        const win = windowForSender(event?.sender);
+        if (!win) {
+            return;
+        }
+        const targetContents = (0, utils_1.getHubWebContents)(win) ?? win.webContents;
+        if (targetContents && !targetContents.isDestroyed?.()) {
+            targetContents.toggleDevTools();
         }
     });
     electron_1.ipcMain.removeListener?.(deviceChooser_1.WEBVIEW_DEVICE_CHOOSER_SUBSCRIBER_STATE_CHANNEL, onDeviceChooserSubscriberState);
@@ -540,6 +569,10 @@ function registerIpcHandlers(storageManager, deps = {}) {
     electron_1.ipcMain.handle('window:show-context-menu', async (event, items) => {
         const win = getTargetHubWindow(event?.sender);
         if (!win || !Array.isArray(items) || items.length === 0) {
+            return null;
+        }
+        // An SSH window's page, while one of the Hub's questions is up there.
+        if ((0, remoteWindowSecurity_1.isRemoteContents)(event?.sender) && deps.hostQuestionBusy?.(win)) {
             return null;
         }
         activeContextMenu?.closePopup?.(win);
@@ -602,7 +635,10 @@ function registerIpcHandlers(storageManager, deps = {}) {
     // Safe external shell launch
     electron_1.ipcMain.handle('shell:open-external', async (event, url) => {
         if ((0, remoteWindowSecurity_1.isRemoteContents)(event?.sender)) {
-            if ((0, remoteWindowSecurity_1.openRemoteUrl)(url) !== 'opened') {
+            const sender = event.sender;
+            const open = deps.openFromRemote &&
+                ((checked) => deps.openFromRemote?.(sender, checked));
+            if ((0, remoteWindowSecurity_1.openRemoteUrl)(url, open) !== 'opened') {
                 const label = (0, windowBackends_1.remoteBackendOf)(event?.sender)?.label ?? 'an SSH window';
                 main_1.default.warn(`[SSH] Not opening a link from ${label}: blocked.`);
             }
@@ -730,7 +766,7 @@ function registerIpcHandlers(storageManager, deps = {}) {
         }
         const options = {
             properties: ['openDirectory', 'createDirectory'],
-            title: 'Select Download Folder',
+            title: '选择下载文件夹',
             defaultPath: resolvedDefaultPath,
         };
         const owner = electron_1.BrowserWindow.fromWebContents(event.sender);
@@ -1054,11 +1090,11 @@ function registerIpcHandlers(storageManager, deps = {}) {
         });
     });
     const assertMainFrameGuestCaller = (event, webContentsId, channel) => resolveMainFrameOwnedGuest(event, webContentsId, channel).wc;
-    localOnly('webview:list-frames', async (event, wcId) => guestFrameBridge_1.guestFrameBridge.listFrames(assertMainFrameGuestCaller(event, wcId, 'webview:list-frames')));
-    localOnly('webview:execute-js-frame-isolated-world', async (event, wcId, frameId, code, expectedOrigin) => {
+    localOnly('webview:list-frames', async (event, wcId, options) => guestFrameBridge_1.guestFrameBridge.listFrames(assertMainFrameGuestCaller(event, wcId, 'webview:list-frames'), options));
+    localOnly('webview:execute-js-frame-isolated-world', async (event, wcId, frameId, code, expectedOrigin, options) => {
         const channel = 'webview:execute-js-frame-isolated-world';
         const wc = assertMainFrameGuestCaller(event, wcId, channel);
-        return guestFrameBridge_1.guestFrameBridge.executeInFrameIsolatedWorld(wc, frameId, code, expectedOrigin);
+        return guestFrameBridge_1.guestFrameBridge.executeInFrameIsolatedWorld(wc, frameId, code, expectedOrigin, options);
     });
     // Execute an untrusted agent script inside a single-use, zero-egress
     // Electron script jail and transfer the paired MessagePort to the caller.
@@ -1072,6 +1108,15 @@ function registerIpcHandlers(storageManager, deps = {}) {
         return (0, scriptJail_1.warmScriptJail)(event?.sender, event?.senderFrame);
     });
     (0, wcvIpcHandlers_1.registerWcvIpcHandlers)(undefined, undefined, storageManager);
+    return {
+        closeContextMenu: (win) => {
+            if (activeContextMenuOwner === win) {
+                activeContextMenu?.closePopup?.(win);
+                activeContextMenu = null;
+                activeContextMenuOwner = undefined;
+            }
+        },
+    };
 }
 
 
@@ -1084,6 +1129,19 @@ const contextMenuTranslationMap = {
   'Undo': '撤销',
   'Redo': '重做',
   'Delete': '删除',
+
+  // 内置浏览器 Webview 与窗格导航菜单
+  'Comment': '评论',
+  'Back': '后退',
+  'Forward': '前进',
+  'Reload': '重新加载',
+  'Go Back': '后退',
+  'Go Forward': '前进',
+  'Add to Chat': '添加到对话',
+  'Find in Pane': '在窗格中查找',
+  'Split Terminal': '拆分终端',
+  'Kill Terminal': '终止终端',
+  'Settings': '设置',
 
   // 项目与工作区右键菜单（项目文件夹）
   'Copy Project Name': '复制项目名称',
@@ -1098,10 +1156,18 @@ const contextMenuTranslationMap = {
   'Remove from List': '从列表中移除',
   'Project options': '项目选项',
 
-  // 对话列表右键菜单（对话条目）
+  // 对话列表与分组右键菜单
   'New Conversation': '新建对话',
+  'Fork': '派生',
   'Fork Conversation': '派生对话',
   'Rename': '重命名',
+  'Rename Group': '重命名分组',
+  'Move Up': '上移',
+  'Move Down': '下移',
+  'Delete Group': '删除分组',
+  'Restore': '恢复',
+  'View Debug': '查看调试信息',
+  'Telemetry': '遥测',
   'Pin': '置顶',
   'Unpin': '取消置顶',
   'Auto Pin': '自动置顶',
@@ -1156,6 +1222,7 @@ const contextMenuTranslationMap = {
   'Project Path': '项目路径',
   'Workspace Name': '工作区名称',
   'Workspace Path': '工作区路径',
+  'Worktree Name': '工作树名称',
   'Conversation Path': '对话路径',
   'Split Right': '向右分屏',
   'Split Down': '向下分屏',
@@ -1178,6 +1245,7 @@ const contextMenuTranslationMap = {
   'Reopen Closed Tab': '重新打开已关闭的标签页',
   'Open in Tab': '在标签页中打开',
   'Open in New Tab': '在新标签页中打开',
+  'Open in New Window': '在新窗口中打开',
   'Open in Side Panel': '在侧边栏中打开',
   'Open in Built-in Browser': '在内置浏览器中打开',
   'Open in External Browser': '在外部浏览器中打开',
@@ -1220,6 +1288,34 @@ const contextMenuTranslationMap = {
   'Open on phone': '在手机上打开',
   'Open on another device': '在其他设备上打开',
   'Coordinator settings': '协调器设置',
+  // 2.33.0 新增菜单、Computer Use 虚拟机控制、SSH 远程操作与组合包
+  'Interrupt Agent': '中断智能体',
+  'Disconnect': '断开连接',
+  'Stop Server': '停止服务端',
+  'Stop SSH Server': '停止 SSH 服务端',
+  'Stop SSH Server…': '停止 SSH 服务端…',
+  'Restart SSH Server': '重启 SSH 服务端',
+  'SSH Host…': 'SSH 主机…',
+  'SSH Host...': 'SSH 主机...',
+  'Connect to SSH Host': '连接到 SSH 主机',
+  'Connect to SSH Host…': '连接到 SSH 主机…',
+  'Side Question Selection': '针对所选内容发起侧边提问',
+  'Quote Selection': '引用所选内容',
+  'Open in Code Search': '在代码搜索中打开',
+  'Comment on Selection': '针对所选内容添加评论',
+  'Switch to This Computer': '切换到本机',
+  'This Computer': '本机',
+  'Toggle Virtual Machine': '切换虚拟机面板',
+  'Agents': '智能体',
+  'Screen Recording': '屏幕录制',
+  'Add bundle': '添加组合包',
+  'Remove bundle': '移除组合包',
+  'Terminal: Select All': '终端：全选',
+  'Terminal: Add to Chat': '终端：添加到对话',
+  'Maximize': '最大化',
+  'Delete Hook': '删除钩子',
+  'Add Hook Card': '添加钩子卡片',
+  'Delete Handler': '删除处理程序',
 };
 function translateContextLabel(lbl) {
   if (!lbl) return '';
@@ -1229,6 +1325,18 @@ function translateContextLabel(lbl) {
   if (/\s+\(Default\)$/i.test(trimmed)) {
     const base = trimmed.replace(/\s+\(Default\)$/i, '').trim();
     if (contextMenuTranslationMap[base]) return contextMenuTranslationMap[base] + '（默认）';
+    const openMatch = base.match(/^Open in\s+(.+)$/i);
+    if (openMatch) return '在 ' + openMatch[1] + ' 中打开（默认）';
   }
+  let m = trimmed.match(/^Move to Group:\s*(.+)$/i);
+  if (m) return '移动到分组：' + m[1];
+  m = trimmed.match(/^Remove\s+(.+)\s+from Recent$/i);
+  if (m) return '从最近记录中移除 ' + m[1];
+  m = trimmed.match(/^Hide\s+(.+)\s+from this list$/i);
+  if (m) return '从此列表中隐藏 ' + m[1];
+  m = trimmed.match(/^Show\s+(.+)\s+in the list again$/i);
+  if (m) return '在列表中重新显示 ' + m[1];
+  m = trimmed.match(/^Open in\s+(.+)$/i);
+  if (m) return '在 ' + m[1] + ' 中打开';
   return lbl;
 }

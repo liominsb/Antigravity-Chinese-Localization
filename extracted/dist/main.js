@@ -48,6 +48,7 @@ const utils_1 = require("./utils");
 const languageServer_1 = require("./languageServer");
 const updater_1 = require("./updater");
 const hostBridgeServer_1 = require("./hostBridgeServer");
+const mendelFlagSync_1 = require("./mendelFlagSync");
 const constants_1 = require("./constants");
 const tray_1 = require("./tray");
 const storage_1 = require("./storage");
@@ -71,6 +72,11 @@ const remoteWindowSecurity_1 = require("./remote/remoteWindowSecurity");
 const hostStores_1 = require("./remote/hostStores");
 const remoteManager_1 = require("./remote/remoteManager");
 const sshBridge_1 = require("./remote/sshBridge");
+const signInReturn_1 = require("./remote/signInReturn");
+const sshWindowRestore_1 = require("./remote/sshWindowRestore");
+const mainClient_1 = require("./actuator/mainClient");
+const computer_1 = require("./computer");
+const previewIpc_1 = require("./computer/previewIpc");
 const gotTheLock = electron_1.app.requestSingleInstanceLock();
 if (!gotTheLock) {
     electron_1.app.quit();
@@ -86,7 +92,10 @@ let isQuitting = false;
 // Loopback HTTP server the language server uses to read update status and
 // request an update. Kept at module scope so it is not garbage collected.
 let hostBridgeServer;
+let mendelFlagSync;
 let remoteManager;
+/** The SSH windows to reopen at the next start; unset when headless. */
+let sshWindows;
 // ---------------------------------------------------------------------------
 // Config
 // ---------------------------------------------------------------------------
@@ -130,9 +139,6 @@ if (HEADLESS) {
     electron_1.app.commandLine.appendSwitch('disable-gpu');
     electron_1.app.commandLine.appendSwitch('no-sandbox');
 }
-if (!electron_1.app.commandLine.hasSwitch('remote-debugging-port')) {
-    electron_1.app.commandLine.appendSwitch('remote-debugging-port', '0');
-}
 electron_1.app.commandLine.appendSwitch('disable-blink-features', 'AutomationControlled');
 electron_1.app.commandLine.appendSwitch('disable-features', 'FedCm');
 // Hidden built-in browser tabs stay attached under an opaque curtain view
@@ -144,11 +150,50 @@ electron_1.app.commandLine.appendSwitch('disable-features', 'FedCm');
 const disabledFeatures = electron_1.app.commandLine.getSwitchValue('disable-features');
 electron_1.app.commandLine.appendSwitch('disable-features', [disabledFeatures, 'CalculateNativeWinOcclusion'].filter(Boolean).join(','));
 electron_1.app.commandLine.appendSwitch('disable-backgrounding-occluded-windows');
+// Computer use (macOS): only with the `enable-agy-hub-cua-macos` override, or
+// AGY_ENABLE_CUA=1 in an unpackaged build (src/computer/gate.ts). Off, the Hub
+// sets no loopback WebRTC switch, registers no actuator and starts no helper.
+const computerUseOn = (0, computer_1.computerUseEnabledAtStartup)();
+if (computerUseOn) {
+    // The computer pane's loopback-only WebRTC preview (P3-1); before ready.
+    (0, computer_1.configurePreviewWebRtc)(languageServer_1.getLsPort);
+}
 // ---------------------------------------------------------------------------
 // Application Lifecycle
 // ---------------------------------------------------------------------------
 let pendingDeepLink = null;
+/**
+ * Gives `url` to the first local window as handleDeepLink does, but without
+ * bringing it up or opening one. For a link that carries nothing (an SSH
+ * window's sign-in success link back) but that a local window may be waiting
+ * for too: its plugin list refetches on it.
+ */
+function sendDeepLinkQuietly(url) {
+    const [win] = (0, utils_1.getLocalHubWindows)();
+    if (!win) {
+        return; // A window opened later loads its plugin list anyway.
+    }
+    const hubContents = (0, utils_1.getHubWebContents)(win);
+    if (!hubContents ||
+        hubContents.isDestroyed?.() ||
+        hubContents.isLoadingMainFrame?.()) {
+        // As in handleDeepLink, but never in place of an unread local link.
+        pendingDeepLink ?? (pendingDeepLink = url);
+    }
+    else {
+        hubContents.send('deep-link', url);
+    }
+}
 function handleDeepLink(url) {
+    // The sign-in success page's link back after an SSH window's sign-in:
+    // that window comes up, not a local one.
+    if (remoteManager?.takeSignInReturn(url)) {
+        sendDeepLinkQuietly(url);
+        return;
+    }
+    if ((0, signInReturn_1.isOAuthSuccessLink)(url, PROTOCOL)) {
+        void mendelFlagSync?.refresh();
+    }
     // Deep links can carry auth codes: never to an SSH window.
     const wins = (0, utils_1.getLocalHubWindows)();
     // This block handles deep links when windows are already open.
@@ -182,11 +227,7 @@ function handleDeepLink(url) {
         }
     }
 }
-const PROTOCOL = electron_1.app
-    .getName()
-    .toLowerCase()
-    .replace(/[^a-z0-9]+/g, '-')
-    .replace(/^-|-$/g, '');
+const PROTOCOL = (0, signInReturn_1.protocolSchemeFor)(electron_1.app.getName());
 // When running unpackaged (`npm start` / `electron .`), process.execPath is
 // the stock Electron binary, so the app path must be registered too or the OS
 // would launch bare Electron for deep links. Only Windows uses these args.
@@ -197,11 +238,16 @@ if (!electron_1.app.isDefaultProtocolClient(PROTOCOL, ...protocolClientArgs)) {
     electron_1.app.setAsDefaultProtocolClient(PROTOCOL, ...protocolClientArgs);
 }
 electron_1.app.on('second-instance', (_event, commandLine) => {
+    const url = commandLine.find((arg) => arg.startsWith(`${PROTOCOL}://`));
+    // Before any local window comes up: see handleDeepLink.
+    if (url && remoteManager?.takeSignInReturn(url)) {
+        sendDeepLinkQuietly(url);
+        return;
+    }
     if (!HEADLESS && hasStartedMainApplication) {
         (0, utils_1.showOrCreateWindow)((0, languageServer_1.getLsPort)());
         electron_1.app.focus({ steal: true });
     }
-    const url = commandLine.find((arg) => arg.startsWith(`${PROTOCOL}://`));
     if (url) {
         handleDeepLink(url);
     }
@@ -215,6 +261,25 @@ function sshHostFromArgs(argv) {
     const arg = argv.find((a) => a.startsWith(SSH_HOST_SWITCH));
     // '||': an empty value means unset.
     return arg?.slice(SSH_HOST_SWITCH.length).trim() || undefined;
+}
+/** At startup: reopens the last session's SSH windows, then --ssh-host's. */
+function openStartupSshWindows() {
+    const manager = remoteManager;
+    if (sshWindows && manager && !isQuitting) {
+        // A deep link's local window keeps the front. Pending until that window
+        // reads it: from argv, or on macOS from open-url.
+        const focus = pendingDeepLink === null;
+        void sshWindows
+            .restore((saved) => manager.restoreWindow(saved.host, { ...saved, inactive: !focus }), { focus })
+            .then(() => {
+            // Inactive, they still stack above it (as created): raise it again.
+            if (!focus) {
+                (0, utils_1.getLocalHubWindows)()[0]?.show();
+            }
+        });
+    }
+    // For a host just reopened, this joins its window's connect.
+    openSshHostFromArgs(process.argv);
 }
 /** Opens `--ssh-host`'s window; a failure shows on the local window. */
 function openSshHostFromArgs(argv) {
@@ -281,7 +346,11 @@ electron_1.app
         includeFutureSessions: false,
     });
     Object.assign(console, main_1.default.functions);
-    (0, paths_1.tightenActivePortPermissions)(electron_1.app.getPath('userData'), (0, paths_1.getActivePortFilePath)());
+    const activePortFile = (0, paths_1.getActivePortFilePath)();
+    if (!electron_1.app.commandLine.hasSwitch('remote-debugging-port')) {
+        (0, paths_1.removeStaleActivePortFile)(activePortFile);
+    }
+    (0, paths_1.tightenActivePortPermissions)(electron_1.app.getPath('userData'), activePortFile);
     const storagePath = (0, paths_1.getAppStoragePath)();
     // SSH windows hear only this store's app settings (hosts have their own).
     storageManager = new storage_1.StorageManager(storagePath, settingsService_1.DEFAULTS, hostStores_1.mainStoreScope);
@@ -292,6 +361,11 @@ electron_1.app
         console.log('Launched with deep link:', deepLinkFromArg);
         pendingDeepLink = deepLinkFromArg;
     }
+    if (!HEADLESS) {
+        sshWindows = new sshWindowRestore_1.SshWindowRestore(path.join(electron_1.app.getPath('userData'), sshWindowRestore_1.SSH_WINDOWS_FILE));
+        // On macOS an update closes every window before 'before-quit'.
+        electron_1.autoUpdater.on('before-quit-for-update', () => sshWindows?.freezeForUpdate());
+    }
     remoteManager = new remoteManager_1.RemoteManager({
         mainStorage: storageManager,
         appVersion: electron_1.app.getVersion(),
@@ -299,14 +373,23 @@ electron_1.app
         openLocalWindow: () => {
             (0, utils_1.createWindow)(DEV_URL ?? `${constants_1.WINDOW_ORIGIN}:${(0, languageServer_1.getLsPort)()}/`, storageManager, { cascade: true });
         },
+        onWindowOpened: (win, host) => sshWindows?.track(win, host),
     });
     (0, sshBridge_1.registerSshBridgeIpc)(remoteManager);
     // Register IPC handlers. SSH windows get their host's store.
     const hostStores = new hostStores_1.HostStores(electron_1.app.getPath('userData'), storageManager);
-    (0, ipcHandlers_1.registerIpcHandlers)(storageManager, {
+    const ipc = (0, ipcHandlers_1.registerIpcHandlers)(storageManager, {
+        hostQuestionBusy: (win) => remoteManager?.hostQuestions.isBusy(win) ?? false,
         resolveStorage: (sender) => hostStores.forSender(sender),
         sidecarRoutesFor: (sender) => remoteManager?.sidecarRoutesFor(sender),
+        openFromRemote: (sender, url) => remoteManager?.openUrlFrom(sender, url),
     });
+    // No menu the page popped up stays over a host question as it shows.
+    remoteManager.hostQuestions.onBeforeAsk((win) => ipc.closeContextMenu(win));
+    if (computerUseOn) {
+        // The Agents pane's live preview signaling (P3-1), local Hub UI only.
+        (0, previewIpc_1.registerComputerPreviewIpc)();
+    }
     electron_1.ipcMain.handle('deep-link:get-stored', (event) => {
         if ((0, remoteWindowSecurity_1.isRemoteContents)(event?.sender)) {
             return null; // Deep links are for local windows only.
@@ -350,7 +433,7 @@ electron_1.app
         console.log('Starting in dev mode with URL:', DEV_URL);
         (0, utils_1.createWindow)(DEV_URL, storageManager);
         hasStartedMainApplication = true;
-        openSshHostFromArgs(process.argv);
+        openStartupSshWindows();
         return;
     }
     if (!WSL_DISTRO && !fs.existsSync(languageServer_1.LS_BINARY)) {
@@ -430,6 +513,7 @@ electron_1.app
         console.error('Failed to start host bridge server:', err.message);
     }
     let handle;
+    let lsExited = false;
     const targetPort = Number(process.env.JETSKI_LS_PORT) || constants_1.DYNAMIC_PORT;
     try {
         handle = await (0, languageServer_1.startAndMonitorLanguageServer)(targetPort, csrf, {
@@ -437,12 +521,21 @@ electron_1.app
             wsl: wslOptions,
             hostBridgeUrl: hostBridgeServer?.url,
             hostBridgeToken: hostBridgeServer?.token,
+            onExited: () => {
+                lsExited = true;
+                mendelFlagSync?.onPortChanged(0);
+            },
             onPortChanged: (newPort) => {
+                lsExited = false;
+                mendelFlagSync?.onPortChanged(newPort);
                 const newUrl = `${constants_1.WINDOW_ORIGIN}:${newPort}/`;
                 console.log(`[Auto-Restart] Port changed! Reloading all windows with URL: ${newUrl}`);
                 // Apply cert trust
                 (0, languageServer_1.setupLocalCertTrust)();
+                // Main-process ActuatorService streams follow the LS to its new port.
+                (0, mainClient_1.mainActuatorClientPortChanged)(newPort);
                 if (!HEADLESS) {
+                    // Hub windows only: the desktop HUD keeps its own page.
                     const windows = (0, utils_1.getLocalHubWindows)();
                     for (const win of windows) {
                         void win.loadURL(newUrl);
@@ -462,7 +555,18 @@ electron_1.app
         electron_1.app.quit();
         return;
     }
+    mendelFlagSync = (0, mendelFlagSync_1.startMendelFlagSync)({
+        port: lsExited ? 0 : handle.port,
+        csrfToken: csrf,
+        storageManager,
+    });
     const url = `${constants_1.WINDOW_ORIGIN}:${handle.port}/`;
+    // Main-process ActuatorClient (actuator types hosted by the main process
+    // register on it); it dials the LS's ActuatorService from here on.
+    if (computerUseOn) {
+        (0, computer_1.registerComputerUse)({ headless: HEADLESS }); // `computer` actuator
+    }
+    (0, mainClient_1.startMainActuatorClient)(handle.port, csrf);
     console.log('\n' + '='.repeat(60));
     console.log(`  Local:       ${url}`);
     console.log(`  LS Logs:     ${(0, paths_1.getLsLogPath)()}`);
@@ -532,7 +636,7 @@ electron_1.app
             }
         });
     }
-    openSshHostFromArgs(process.argv);
+    openStartupSshWindows();
     // Start checking for app updates.
     (0, updater_1.initAutoUpdater)(HEADLESS, settingsService);
     hasStartedMainApplication = true;
@@ -583,9 +687,12 @@ electron_1.app.on('before-quit', async (event) => {
     if (!utils_1.showQuitConfirmation) {
         event.preventDefault();
         isQuitting = true;
+        mendelFlagSync?.dispose();
         // Persist the focused/open Hub window bounds and full-screen/maximized state
         // before `win.destroy()`, which bypasses the normal `'close'` event.
         (0, windowState_1.flushTrackedWindowState)((0, utils_1.getFocusedHubWindow)());
+        // Before the windows close: the SSH windows open now reopen next time.
+        sshWindows?.freeze();
         // Before destroying the windows (see disposeAll).
         const sshClosed = remoteManager?.disposeAll().catch((err) => {
             console.error('Failed to close SSH connections:', err);
@@ -597,6 +704,19 @@ electron_1.app.on('before-quit', async (event) => {
         for (const win of windows) {
             win.destroy();
         }
+        // Tell the LS this process's actuators are going away (GOING_AWAY per
+        // actuator type) while it is still up; bounded so quitting never hangs.
+        // Computer use first aborts any batch in flight and stops its helper
+        // (rt P3-21); only on a confirmed quit, never before the Cmd+Q dialog.
+        await Promise.race([
+            Promise.all([
+                (0, computer_1.unregisterComputerUse)().catch((err) => {
+                    console.error('[ComputerUse] failed to unregister:', err);
+                }),
+                (0, mainClient_1.stopMainActuatorClient)(),
+            ]),
+            new Promise((resolve) => setTimeout(resolve, 2000)),
+        ]);
         // Close all active connections and kill the language server in parallel
         await Promise.all([
             electron_1.session.defaultSession.closeAllConnections().catch((err) => {
@@ -640,6 +760,9 @@ electron_1.app.on('before-quit', async (event) => {
             }
         });
     }
+});
+electron_1.app.on('will-quit', () => {
+    mendelFlagSync?.dispose();
 });
 /**
  * Fired when the app is re-activated (e.g. clicking the dock icon on macOS).

@@ -4,6 +4,13 @@ const fs = require('fs');
 const fsp = fs.promises;
 const path = require('path');
 const crypto = require('crypto');
+const { readAsarPackageVersion } = require('./asar-version');
+const { normalizeVersion } = require('./src/backup-utils');
+const {
+  verifySameOriginAndToken,
+  readJsonBody,
+  sanitizeSingleSegmentUsername
+} = require('./src/http-security');
 
 function failure(message, statusCode = 500) {
   const error = new Error(message);
@@ -21,27 +28,24 @@ function within(parent, child) {
   return relative === '' || (!relative.startsWith(`..${path.sep}`) && relative !== '..' && !path.isAbsolute(relative));
 }
 
-async function hasSymlinkOrJunction(targetPath) {
-  let curr = path.resolve(targetPath);
-  while (true) {
-    try {
-      const stat = await fsp.lstat(curr);
-      if (stat.isSymbolicLink()) return true;
-    } catch (err) {
-      if (err.code === 'ENOENT') return false;
-      throw err;
+// Check only the target directory and intermediate subdirectories up to rootBoundary
+// (never walking up to '/' where macOS /var -> private/var or symlinked /home would false-positive) [H-02].
+async function directoryWithoutLinks(directory, rootBoundary = directory) {
+  const boundary = path.resolve(rootBoundary);
+  let curr = path.resolve(directory);
+  const initialStat = await fsp.lstat(curr);
+  if (!initialStat.isDirectory() || initialStat.isSymbolicLink()) {
+    throw failure('目标安装目录不允许使用符号链接或目录联接', 400);
+  }
+  while (within(boundary, curr)) {
+    const stat = await fsp.lstat(curr);
+    if (!stat.isDirectory() || stat.isSymbolicLink()) {
+      throw failure('目标安装目录不允许使用符号链接或目录联接', 400);
     }
+    if (comparable(curr) === comparable(boundary)) break;
     const parent = path.dirname(curr);
     if (parent === curr) break;
     curr = parent;
-  }
-  return false;
-}
-
-async function directoryWithoutLinks(directory) {
-  const stat = await fsp.lstat(directory);
-  if (!stat.isDirectory() || await hasSymlinkOrJunction(directory)) {
-    throw failure('目标安装目录不允许使用符号链接或目录联接', 400);
   }
 }
 
@@ -57,9 +61,17 @@ async function hashFile(filePath) {
   return hash.digest('hex');
 }
 
+function assertCompatiblePackageVersion(targetAsarPath, candidatePath) {
+  const v1 = readAsarPackageVersion(targetAsarPath);
+  const v2 = readAsarPackageVersion(candidatePath);
+  if (v1 !== null && v2 !== null && normalizeVersion(v1) !== normalizeVersion(v2)) {
+    throw failure(`汉化包版本 (v${v2}) 与当前客户端版本 (v${v1}) 不一致，已阻止跨版本覆盖`, 409);
+  }
+}
+
 async function findMatchingBackup(resourcesDir, size, sha256) {
   const names = (await fsp.readdir(resourcesDir))
-    .filter(name => name === 'app.asar.bak' || name.startsWith('app.asar.backup-')).sort();
+    .filter(name => name === 'app.asar.bak' || name.startsWith('app.asar.backup-') || name.startsWith('app.asar.bak.')).sort();
   for (const name of names) {
     const filePath = path.join(resourcesDir, name);
     // Older timestamped backups are eligible too. Never trust the filename
@@ -75,8 +87,17 @@ async function findMatchingBackup(resourcesDir, size, sha256) {
   return null;
 }
 
-function createPackageInstaller({ workspaceDir, releaseManager, getAppDir, getResourcesDir, isAppRunning,
-  stopProcesses, stopTimeoutMs = 3000 } = {}) {
+function createPackageInstaller({
+  workspaceDir,
+  releaseManager,
+  getAppDir,
+  getResourcesDir,
+  isAppRunning,
+  stopProcesses,
+  stopTimeoutMs = 3000,
+  securityToken,
+  writeLock
+} = {}) {
   if (!workspaceDir || !releaseManager || typeof releaseManager.withCachedFile !== 'function' ||
       typeof getAppDir !== 'function' || typeof getResourcesDir !== 'function' || typeof isAppRunning !== 'function') {
     throw new Error('Package installer dependencies are required');
@@ -108,28 +129,32 @@ function createPackageInstaller({ workspaceDir, releaseManager, getAppDir, getRe
   }
 
   async function install(cache, params) {
-    const appDir = path.resolve(getAppDir(params.username || '', params.useDefault !== false, params.customPath || ''));
+    const cleanUsername = params.username !== undefined ? sanitizeSingleSegmentUsername(params.username) : '';
+    const appDir = path.resolve(getAppDir(cleanUsername, params.useDefault !== false, params.customPath || ''));
     const resourcesDir = path.resolve(getResourcesDir(appDir));
     if (!within(appDir, resourcesDir) || resourcesDir === appDir ||
         within(downloadsDir, resourcesDir) || within(resourcesDir, downloadsDir) || within(resourcesDir, cache.path)) {
       throw failure('安装目标与下载缓存重叠或不属于目标程序目录', 400);
     }
     await directoryWithoutLinks(appDir);
-    await directoryWithoutLinks(resourcesDir);
+    await directoryWithoutLinks(resourcesDir, appDir);
     const asarPath = path.join(resourcesDir, 'app.asar');
     await regularFile(asarPath);
     const skippedResult = { tag: cache.tag, asarPath, backupPath: null, sha256: cache.sha256,
       skipped: true, backupReused: false };
     // An identical package needs no writes and should not close a running app.
     if (await hashFile(asarPath) === cache.sha256) return skippedResult;
+    // Block cross-version archive overwrites before stopping any active client [H-01].
+    assertCompatiblePackageVersion(asarPath, cache.path);
     await stopBeforeInstall(params.forceStop === true);
     await directoryWithoutLinks(appDir);
-    await directoryWithoutLinks(resourcesDir);
+    await directoryWithoutLinks(resourcesDir, appDir);
     const originalStat = await regularFile(asarPath);
     const originalHash = await hashFile(asarPath);
     if (originalHash === cache.sha256) {
       return skippedResult;
     }
+    assertCompatiblePackageVersion(asarPath, cache.path);
     const token = `${Date.now()}-${crypto.randomBytes(8).toString('hex')}`;
     const stagePath = path.join(resourcesDir, `.app.asar.install-${token}.stage`);
     const rollbackPath = path.join(resourcesDir, `.app.asar.rollback-${token}.stage`);
@@ -156,12 +181,13 @@ function createPackageInstaller({ workspaceDir, releaseManager, getAppDir, getRe
       // Recheck immediately before commit: preparation may take time, during
       // which the user or the official updater can start another operation.
       await directoryWithoutLinks(appDir);
-      await directoryWithoutLinks(resourcesDir);
+      await directoryWithoutLinks(resourcesDir, appDir);
       await regularFile(asarPath);
       await regularFile(backupPath);
       if (await hashFile(backupPath) !== originalHash) throw failure('安装前备份校验失败，已暂停安装', 409);
       await requireStopped();
       if (await hashFile(asarPath) !== originalHash) throw failure('官方 app.asar 在准备期间发生变化，已暂停安装', 409);
+      assertCompatiblePackageVersion(asarPath, stagePath);
       commitAttempted = true;
       await fsp.rename(stagePath, asarPath);
       stageCreated = false;
@@ -188,7 +214,7 @@ function createPackageInstaller({ workspaceDir, releaseManager, getAppDir, getRe
           // writing it again when it already has the pre-install fingerprint.
           if (currentHash !== originalHash) {
             await directoryWithoutLinks(appDir);
-            await directoryWithoutLinks(resourcesDir);
+            await directoryWithoutLinks(resourcesDir, appDir);
             await regularFile(backupPath);
             if (await hashFile(backupPath) !== originalHash) throw failure('本次备份校验失败');
             await fsp.copyFile(backupPath, rollbackPath, fs.constants.COPYFILE_EXCL);
@@ -221,34 +247,24 @@ function createPackageInstaller({ workspaceDir, releaseManager, getAppDir, getRe
   }
 
   function checkOrigin(req) {
-    if (!req.headers.origin) return;
-    try {
-      const own = new URL(`${req.socket.encrypted ? 'https' : 'http'}://${req.headers.host}`);
-      if (['localhost', '127.0.0.1', '[::1]'].includes(own.hostname) && new URL(req.headers.origin).origin === own.origin) return;
-    } catch (_) {}
-    throw failure('安装操作只允许来自本机同源控制中心', 403);
+    verifySameOriginAndToken(req, {
+      securityToken,
+      requireToken: Boolean(securityToken)
+    });
   }
 
   async function readBody(req) {
-    if (!/^application\/json(?:\s*;|$)/i.test(req.headers['content-type'] || '')) throw failure('请求必须使用 application/json', 415);
-    if (Number(req.headers['content-length']) > 16384) throw failure('请求正文过大', 413);
-    const chunks = [];
-    let size = 0;
-    for await (const chunk of req) {
-      size += chunk.length;
-      if (size > 16384) throw failure('请求正文过大', 413);
-      chunks.push(chunk);
-    }
-    let body;
-    try { body = JSON.parse(Buffer.concat(chunks).toString('utf8')); }
-    catch (_) { throw failure('请求正文必须是有效 JSON 对象', 400); }
-    if (!body || typeof body !== 'object' || Array.isArray(body) || typeof body.cacheId !== 'string' ||
+    const body = await readJsonBody(req, { maxBytes: 16384, allowEmpty: false });
+    if (typeof body.cacheId !== 'string' ||
         (body.username !== undefined && typeof body.username !== 'string') ||
         (body.useDefault !== undefined && typeof body.useDefault !== 'boolean') ||
         (body.forceStop !== undefined && typeof body.forceStop !== 'boolean') ||
         (body.customPath !== undefined && typeof body.customPath !== 'string') ||
         (body.useDefault === false && !String(body.customPath || '').trim())) {
       throw failure('请选择有效缓存版本和目标安装目录', 400);
+    }
+    if (body.username !== undefined) {
+      sanitizeSingleSegmentUsername(body.username);
     }
     return body;
   }
@@ -261,7 +277,14 @@ function createPackageInstaller({ workspaceDir, releaseManager, getAppDir, getRe
       if (req.method !== 'POST') throw failure('此接口仅支持 POST', 405);
       checkOrigin(req);
       const params = await readBody(req);
-      return releaseManager.withCachedFile(params.cacheId, cache => install(cache, params));
+      const runInstall = () => releaseManager.withCachedFile(params.cacheId, cache => install(cache, params));
+      if (writeLock && typeof writeLock.tryRun === 'function') {
+        return writeLock.tryRun(runInstall, {
+          owner: 'release-install',
+          conflictMessage: '已有汉化、恢复或安装操作正在进行，请等待完成后重试'
+        });
+      }
+      return runInstall();
     })().then(installed => {
       if (res.destroyed || res.writableEnded) return;
       res.writeHead(200, { 'Content-Type': 'application/json; charset=utf-8', 'Cache-Control': 'no-store' });

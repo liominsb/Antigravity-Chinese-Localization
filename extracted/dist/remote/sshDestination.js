@@ -62,30 +62,30 @@ function describeChar(ch) {
 }
 function checkUser(user, shown = user) {
     if (user === '') {
-        invalid('The user name before "@" is missing.');
+        invalid('缺少 "@" 之前的用户名。');
     }
     if (user.startsWith('-')) {
-        invalid('The user name must not start with "-".');
+        invalid('用户名不能以 "-" 开头。');
     }
     if (!USER_RE.test(user)) {
-        invalid(`"${shown}" isn't a valid user name.`);
+        invalid(`"${shown}" 不是有效的用户名。`);
     }
 }
 function checkHost(host) {
     if (host === '') {
-        invalid('The host name is missing.');
+        invalid('缺少主机名。');
     }
     if (host.startsWith('-')) {
-        invalid('The host name must not start with "-".');
+        invalid('主机名不能以 "-" 开头。');
     }
     if (!HOST_RE.test(host) || host.includes('..')) {
-        invalid(`"${host}" isn't a valid host name.`);
+        invalid(`"${host}" 不是有效的主机名。`);
     }
 }
 function checkPort(port) {
     const n = Number(port);
     if (!PORT_RE.test(port) || n > 65535) {
-        invalid(`Invalid port "${port}": use a number from 1 to 65535.`);
+        invalid(`端口 "${port}" 无效：请使用 1 到 65535 之间的数字。`);
     }
     return n;
 }
@@ -95,7 +95,7 @@ function checkIPv6(addr) {
     const ip = pct === -1 ? addr : addr.slice(0, pct);
     const zone = pct === -1 ? undefined : addr.slice(pct + 1);
     if (!net.isIPv6(ip) || (zone !== undefined && !ZONE_RE.test(zone))) {
-        invalid(`"${addr}" isn't a valid IPv6 address. Write an IPv6 address with a port in brackets, for example [::1]:2222.`);
+        invalid(`"${addr}" 不是有效的 IPv6 地址。带端口的 IPv6 地址请用方括号括起，例如 [::1]:2222。`);
     }
 }
 /** Parses `host`, `host:port`, `[v6]`, `[v6]:port` or a bare IPv6 address. */
@@ -103,7 +103,7 @@ function parseHostPort(hostPort) {
     if (hostPort.startsWith('[')) {
         const close = hostPort.indexOf(']');
         if (close === -1) {
-            invalid(`Missing "]" after the IPv6 address in "${hostPort}".`);
+            invalid(`"${hostPort}" 中的 IPv6 地址后缺少 "]"。`);
         }
         const host = hostPort.slice(1, close);
         checkIPv6(host);
@@ -112,7 +112,7 @@ function parseHostPort(hostPort) {
             return { host, ipv6: true };
         }
         if (!rest.startsWith(':')) {
-            invalid(`Unexpected "${rest}" after "]".`);
+            invalid(`"]" 后存在意外字符 "${rest}"。`);
         }
         return { host, port: checkPort(rest.slice(1)), ipv6: true };
     }
@@ -134,7 +134,7 @@ function parseHostPort(hostPort) {
 /** Strict %XX decoding of a URI user name (bytes, like OpenSSH's urldecode). */
 function percentDecode(s) {
     if (/%(?![0-9A-Fa-f]{2})/.test(s)) {
-        invalid(`Invalid percent-encoding in the user name "${s}".`);
+        invalid(`用户名 "${s}" 中的百分号编码无效。`);
     }
     return s.replace(/%([0-9A-Fa-f]{2})/g, (_m, hex) => String.fromCharCode(parseInt(hex, 16)));
 }
@@ -165,12 +165,12 @@ function parseUri(body) {
     // Like OpenSSH: the user ends at the first '@' and is percent-decoded.
     const parts = body.split('@');
     if (parts.length > 2) {
-        invalid('Write "@" inside the user name of an ssh:// URI as %40.');
+        invalid('请在 ssh:// URI 的用户名中将 "@" 写作 %40。');
     }
     let user;
     if (parts.length === 2) {
         if (parts[0] === '') {
-            invalid('The user name before "@" is missing.');
+            invalid('缺少 "@" 之前的用户名。');
         }
         // Check the decoded name: that's what %r expansions and the remote see.
         user = percentDecode(parts[0]);
@@ -178,7 +178,7 @@ function parseUri(body) {
     }
     const hostPort = parts[parts.length - 1];
     if (!hostPort.startsWith('[') && hostPort.split(':').length > 2) {
-        invalid('Write an IPv6 address in an ssh:// URI in brackets, for example ssh://[::1]:2222.');
+        invalid('请在 ssh:// URI 中用方括号括起 IPv6 地址，例如 ssh://[::1]:2222。');
     }
     const { host, port, ipv6 } = parseHostPort(hostPort);
     return canonical(user, host, port, ipv6);
@@ -196,23 +196,23 @@ function parsePlain(input) {
 function parseDestination(input) {
     const s = input.trim();
     if (s === '') {
-        invalid('Enter an SSH host, for example "devbox" or "user@host:2222".');
+        invalid('请输入 SSH 主机，例如 "devbox" 或 "user@host:2222"。');
     }
     if (s.length > MAX_DESTINATION_LENGTH) {
-        invalid(`The SSH host is too long (at most ${MAX_DESTINATION_LENGTH} characters).`);
+        invalid(`SSH 主机地址过长（最多 ${MAX_DESTINATION_LENGTH} 个字符）。`);
     }
     if (s.startsWith('-')) {
-        invalid('The SSH host must not start with "-".');
+        invalid('SSH 主机地址不能以 "-" 开头。');
     }
     if (/[\s\p{Cc}]/u.test(s)) {
-        invalid('The SSH host must not contain spaces or control characters.');
+        invalid('SSH 主机地址不能包含空格或控制字符。');
     }
     // The scheme is case-sensitive for ssh too: "SSH://h" is not a URI to it.
     const isUri = s.startsWith(SSH_URI_PREFIX);
     const body = isUri ? s.slice(SSH_URI_PREFIX.length) : s;
     const bad = DISALLOWED_CHAR.exec(body);
     if (bad) {
-        invalid(`The SSH host must not contain ${describeChar(bad[0])}.`);
+        invalid(`SSH 主机地址不能包含 ${describeChar(bad[0])}。`);
     }
     return isUri ? parseUri(body) : parsePlain(s);
 }

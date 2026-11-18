@@ -288,7 +288,7 @@ function getConnectedDisplays() {
  * Resolves the initial bounds and state to apply to a newly created Hub window.
  */
 function resolveInitialWindowState(options) {
-    const persisted = readPersistedWindowState(options?.stateFilePath);
+    const persisted = options?.state ?? readPersistedWindowState(options?.stateFilePath);
     const { displays, primaryDisplay } = getConnectedDisplays();
     const resolved = resolveWindowStateForDisplays(persisted, displays, primaryDisplay);
     const refWin = options?.cascadeFromWindow;

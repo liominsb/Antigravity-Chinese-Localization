@@ -1,33 +1,46 @@
 #!/bin/bash
 # Antigravity 2.0 Chinese Localizer Service Startup Script for Linux/macOS
 
+cd "$(dirname -- "$0")" || exit 1
+
 echo "======================================================="
 echo "  Antigravity 2.0 Chinese Localizer Service"
 echo "======================================================="
 echo ""
+
+if ! command -v node >/dev/null 2>&1; then
+  echo "[ERROR] Node.js was not found in your PATH."
+  echo "Please install Node.js (>= 18.18.0 recommended) before starting the localization service:"
+  echo "  https://nodejs.org"
+  echo ""
+  if [ -t 0 ]; then
+    read -r -p "Press Enter to exit..." _
+  fi
+  exit 1
+fi
+
+if [ ! -f "localize.js" ]; then
+  echo "[ERROR] localize.js was not found in $(pwd)."
+  echo "Please make sure you extracted the complete localization package."
+  exit 1
+fi
+
 echo "Starting localization backend service..."
-echo "Opening dashboard in your default browser..."
+echo "Opening dashboard in your default browser: http://127.0.0.1:3388"
 echo ""
 
-# Open dashboard in browser
-if [ "$(uname)" = "Darwin" ]; then
-  open "http://localhost:3388" &
-elif which xdg-open > /dev/null 2>&1; then
-  xdg-open "http://localhost:3388" &
-elif which gnome-open > /dev/null 2>&1; then
-  gnome-open "http://localhost:3388" &
-elif which x-www-browser > /dev/null 2>&1; then
-  x-www-browser "http://localhost:3388" &
-fi
+# Delay browser launch by 1 second in the background so the HTTP server is listening first
+(
+  sleep 1
+  if [ "$(uname)" = "Darwin" ] && command -v open >/dev/null 2>&1; then
+    open "http://127.0.0.1:3388" >/dev/null 2>&1 || true
+  elif command -v xdg-open >/dev/null 2>&1; then
+    xdg-open "http://127.0.0.1:3388" >/dev/null 2>&1 || true
+  elif command -v gnome-open >/dev/null 2>&1; then
+    gnome-open "http://127.0.0.1:3388" >/dev/null 2>&1 || true
+  elif command -v x-www-browser >/dev/null 2>&1; then
+    x-www-browser "http://127.0.0.1:3388" >/dev/null 2>&1 || true
+  fi
+) &
 
-# Start the node service
-node localize.js
-
-if [ $? -ne 0 ]; then
-  echo ""
-  echo "[ERROR] Failed to start the localization service."
-  echo "Please make sure Node.js is installed on your system."
-  echo "You can download it from https://nodejs.org"
-  echo ""
-  read -p "Press Enter to exit..."
-fi
+exec node localize.js "$@"

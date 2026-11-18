@@ -10,10 +10,10 @@ Deep Localization & High-Performance Chinese Patch for Google Antigravity
 [![GitHub Discussions](https://img.shields.io/github/discussions/antigravity-cn-community/Antigravity-Chinese-Localization?style=flat&color=purple)](https://github.com/antigravity-cn-community/Antigravity-Chinese-Localization/discussions)
 [![Platform](https://img.shields.io/badge/Platform-Windows%20%7C%20macOS%20%7C%20Linux-blue)](https://github.com/antigravity-cn-community/Antigravity-Chinese-Localization)
 [![Package Size](https://img.shields.io/badge/ASAR%20Size-~6.3%20MB%20(Official%20Slim)-success)](https://github.com/antigravity-cn-community/Antigravity-Chinese-Localization)
-[![Node Runtime](https://img.shields.io/badge/Node.js-%3E%3D%2014.0.0-informational)](https://nodejs.org/)
+[![Node Runtime](https://img.shields.io/badge/Node.js-%3E%3D%2018.18.0-informational)](https://nodejs.org/)
 [![license](https://img.shields.io/github/license/antigravity-cn-community/Antigravity-Chinese-Localization)](LICENSE)
 
-A high-performance, non-destructive deep Chinese localization patch designed for Google Antigravity, now co-maintained under the open-source organization **[`antigravity-cn-community`](https://github.com/antigravity-cn-community/Antigravity-Chinese-Localization)**. Fully adapted to the latest architecture of **Antigravity v2.32.2+**, featuring fundamental computational refactoring and DOM micro-batch scheduling that delivers 1.68 million queries/sec throughput. It provides comprehensive localization for Planning Mode, System Settings, Security Sandbox, Remote SSH subsystem, and the Google Plugin Ecosystem, strictly aligns with the official slim packaging spec (~6.3 MB for v2.32.2), and guarantees absolute physical immunity for code editors and user input fields.
+A high-performance, non-destructive deep Chinese localization patch designed for Google Antigravity, now co-maintained under the open-source organization **[`antigravity-cn-community`](https://github.com/antigravity-cn-community/Antigravity-Chinese-Localization)**. Fully adapted to the latest architecture of **Antigravity v2.33.0+**, featuring fundamental computational refactoring and DOM micro-batch scheduling that delivers 1.68 million queries/sec throughput. It provides comprehensive localization for Planning Mode, System Settings, Security Sandbox, Remote SSH subsystem, and the Google Plugin Ecosystem, strictly aligns with the official slim packaging spec (~6.2 MB for v2.33.0), and guarantees absolute physical immunity for code editors and user input fields.
 
 > [Download Latest Release](https://github.com/antigravity-cn-community/Antigravity-Chinese-Localization/releases/latest) · [Discussions & 1K Stars Milestone](https://github.com/antigravity-cn-community/Antigravity-Chinese-Localization/discussions) · [Issues & Feedback](https://github.com/antigravity-cn-community/Antigravity-Chinese-Localization/issues)
 
@@ -47,7 +47,7 @@ A high-performance, non-destructive deep Chinese localization patch designed for
 | **High Throughput & Frame Rate** | Over 1.68 Million QPS | Leverages precompiled $O(1)$ Hash Map, ASCII short-circuit, unified regex stream scanning, DOM ancestor pruning, and microtask frame aggregation to ensure buttery-smooth 60fps/120fps operation. |
 | **Slim Packaging Standards** | Aligned with Official Spec (~6.3 MB) | Uses `--unpack-dir` to exclude redundant external Node modules, completely eliminating legacy 14MB–21MB package bloat and matching official distribution size. |
 | **Lifecycle Self-Healing & Hot Updates** | `injectOrUpdate` Truncation Logic | Overcomes legacy limitations where existing markers prevented updates; supports hot file replacement and instantaneous `Ctrl + R` reload across versions. |
-| **TDD Automated Test Gate** | 42 Test Suites ALL GREEN | Comprehensive regression matrix (`Ticket-01` through `Ticket-38`) covering dictionary deduplication, native menus, AST syntax checks, file/process safety, and streaming release installer guards. |
+| **TDD Automated Test Gate** | 51 Test Suites ALL GREEN | Comprehensive regression matrix (`Ticket-01` through `Ticket-44` plus security/AST/archive gates) covering modular translation engine, dictionary deduplication, native menus, loopback CSRF/Host guards, and streaming release installer safety. |
 
 ---
 
@@ -117,7 +117,7 @@ node localize.js --now
    ```bash
    ./运行汉化.sh
    ```
-2. Open dashboard in browser and click "一键汉化", or deploy directly via headless CLI:
+2. Open dashboard in browser and click "下载并安装" (or "使用本地脚本汉化" under Settings & Maintenance), or deploy directly via headless CLI:
    ```bash
    node localize.js --now
    ```
@@ -131,16 +131,16 @@ node localize.js --now
    chmod +x 运行汉化.sh
    ./运行汉化.sh
    ```
-2. Click "一键汉化" in the dashboard. The default path is `/Applications/Antigravity.app`.
+2. Click "下载并安装" (or "使用本地脚本汉化" under Settings & Maintenance) in the dashboard. The default path is `/Applications/Antigravity.app`.
 
-After an official update, double-click **`一键更新汉化.command`** from the source checkout or a complete distribution containing `localize.js` (run `chmod +x 一键更新汉化.command` first if needed). This requires Node.js 14 or newer. It asks you to save your work and confirm before invoking the existing `--auto-restore` flow to close the client, back it up, and reapply localization; the app opens only after success. It does not require `extracted/`, download files, or rebuild archives. Only local prebuilt packages whose actual archive version matches the client are accepted; mismatched or unreadable versions stop the operation. Wait for a matching localization release rather than replacing a newer client with an older package. “Restore” here means restoring localization, not switching back to English.
+After an official update, double-click **`一键更新汉化.command`** from the source checkout or a complete distribution containing `localize.js` (run `chmod +x 一键更新汉化.command` first if needed). This requires Node.js 18.18.0 or newer. It asks you to save your work and confirm before invoking the existing `--auto-restore` flow to close the client, back it up, and reapply localization; the app opens only after success. It does not require `extracted/`, download files, or rebuild archives. Only local prebuilt packages whose actual archive version matches the client are accepted; mismatched or unreadable versions stop the operation. Wait for a matching localization release rather than replacing a newer client with an older package. “Restore” here means restoring localization, not switching back to English.
 
 The launcher prefers a usable Node from the current PATH and adds common Homebrew locations. If needed, it loads the user’s login/interactive shell configuration for tools such as nvm, fnm, and asdf, then tries NVM’s default version. These tools must be configured in the user’s shell. Failure to open the app only displays a notice and does not change a successful localization exit code.
 
 > **macOS Code Signing Notice**:  
-> Modifying the internal asar bundle breaks the original signature, and Gatekeeper may report "App is damaged". Run the following command in terminal to clear the quarantine flag:  
+> Modifying the internal `app.asar` bundle on macOS (especially Apple Silicon `arm64`) invalidates the original code-signature seal, and Gatekeeper / `amfid` may report "App is damaged". Run the following command in terminal to clear quarantine attributes and apply a local ad-hoc signature (note: ad-hoc re-signing may reset macOS TCC permission prompts):  
 > ```bash
-> xattr -cr /Applications/Antigravity.app
+> xattr -cr "/Applications/Antigravity.app" && codesign --force --deep --sign - "/Applications/Antigravity.app"
 > ```
 
 ---
@@ -174,8 +174,8 @@ This project is not a simple string replacement script, but an industrial-grade 
 ```text
 [ Antigravity Launches ]
         │
-        ├─► [ Native: dist/loadingOverlay.js ] ──► Localized loading splash screen
-        ├─► [ Native: dist/menu.js & tray.js ] ──► Localized menus & system tray
+        ├─► [ Native: dist/menu.js & updater.js ] ──► Localized menus & auto-updater state
+        ├─► [ Native: dist/tray.js & ipcHandlers.js ] ──► Localized system tray & context menus
         │
         └─► [ Web Container: dist/preload.js ]
                     │
@@ -212,6 +212,7 @@ Detailed architectural designs, benchmarks (1.68M qps), and engineering practice
 
 For detailed release notes, new feature adaptations, and architectural evolution history across all versions, please refer to the dedicated [CHANGELOG.en.md](CHANGELOG.en.md) (or [Chinese CHANGELOG.md](CHANGELOG.md)):
 
+- **[v2.33.0](CHANGELOG.en.md#v2330-2026-11-18)** (2026-11-18): Full zero-day adaptation to official Antigravity `v2.33.0`! Covers the new `Computer Use` desktop HUD & `Agents Live` preview pane, expanded Remote SSH lifecycle (server restart, shared-home takeover, remote microphone access, SSH config diagnostics), all 9 Gemini Live voices & voice dictation, built-in browser Browsing Data & per-site Cookie manager, `Keybinding Scheme` (`VS Code Default` vs `Antigravity (AGY) Style`), and Marketplace `Bundles` & source-review modals, alongside modular `src/` architecture, loopback CSRF/Host hardening, and dictionary deduplication (`4,250+` zero-duplicate entries, 51/51 test suites ALL GREEN).
 - **[v2.32.2.1](CHANGELOG.en.md#v23221-2026-11-17)** (2026-11-17): Localized conversation-page queued message controls (`Send all (N)` ➔ `全部发送 (N)`, `Sends after agent finishes working`, `Empty message`), completed model effort tier labels (`Extra` / `Max` ➔ `极高` / `最高` plus `· context` variants), Confirm Undo modal, cleared-step notice, and Best of N survey (+44 dictionary keys, +8 dynamic regex rules), while exempting queued/action decorator controls and leaving timestamps (`2m ago`) untouched.
 - **[v2.32.2](CHANGELOG.en.md#v2322-2026-11-17)** (2026-11-17): Full adaptation to official Antigravity `v2.32.2`, adding localization for the official `Robotics` marketplace plugin (description & 9 prompts), `GitHub Policies & Permissions`, `Coordinator`, cross-device handoff (`Open on phone`), `Side Question`, and the Automation schedule & wizard UI (+140 dictionary keys, +9 dynamic regex rules, +13 native menu entries), plus `replaceInFile` idempotency fix.
 - **[v2.32.1.2](CHANGELOG.en.md#v23212-2026-11-16)** (2026-11-16): Completed 40 native tab/sidebar context menu items (with dynamic `(Default)` suffix), 117 UI & Settings entries, `File not found` guard, home greetings & model notices (PR #57), model-prefixed quota regex, and bilingual theme presets; injected `setupSidebarProjectDragFix` hot-fix for the upstream sidebar project drag offset bug; incorporated 1k-Star community governance & cumulative MIT copyright notice (PR #58).

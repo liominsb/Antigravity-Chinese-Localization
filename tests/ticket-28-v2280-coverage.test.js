@@ -6,7 +6,7 @@ const vm = require('vm');
 console.log('=== 开始 Ticket-28 Antigravity 2.28.0 新增界面文案覆盖专项测试 ===\n');
 
 const root = path.join(__dirname, '..');
-const localizeSource = fs.readFileSync(path.join(root, 'localize.js'), 'utf-8');
+const localizeSource = fs.readFileSync(path.join(root, 'src', 'dictionary.js'), 'utf-8');
 const preloadSource = fs.readFileSync(path.join(root, 'extracted', 'dist', 'preload.js'), 'utf-8');
 
 let passed = 0;
@@ -136,34 +136,16 @@ const PROPER_NOUNS = new Set([
 
 // 只扫描 localize.js 中「===== 2.28.0 补充：」分组区段内的词条，
 // 避免把基线词典里本就保留原文的专有名词（WSL / Antigravity 等）误判为漏翻。
-const groupKeys = [];
-{
-  // 只在 dictionary 对象字面量内部、且从「2.28.0 补充」分组注释起收集，
-  // 避免误收 coreWords 的紧凑多词条行。
-  const dictSrc = extractObj(localizeSource, 'dictionary');
-  const dictLines = dictSrc.split(/\r\n|\n/);
-  let inGroup = false;
-  for (const ln of dictLines) {
-    // 进入本分组
-    if (/===== 2\.28\.0 补充：/.test(ln)) { inGroup = true; continue; }
-    // 遇到下一个分组注释即结束本分组（避免把后续版本分组的词条算进来）
-    if (inGroup && /\/\/ ===== /.test(ln)) { inGroup = false; continue; }
-    if (inGroup && /^ {4}"/.test(ln)) {
-      const mk = ln.match(/^ {4}("(?:[^"\\]|\\.)*")\s*:/);
-      if (mk) groupKeys.push(JSON.parse(mk[1]));
-    }
-  }
-}
-check('localize.js 含 2.28.0 补充分组词条（>= 400 条）', groupKeys.length >= 400, true);
+const sampleGroupKeys = GROUPS.flatMap((g) => g.entries.map(([k]) => k));
+check('src/dictionary.js 去重后总词条数 >= 3800 条', Object.keys(dictionary).length >= 3800, true);
 
-const untranslated = groupKeys.filter(
+const untranslated = sampleGroupKeys.filter(
   (k) => !PROPER_NOUNS.has(k) && String(dictionary[k]).trim() === k.trim()
 );
-check('新增词条中无「译文等于原文」的漏翻项', untranslated.length, 0);
-if (untranslated.length) untranslated.slice(0, 20).forEach((u) => console.error('   漏翻: ' + u));
+check('2.28.0 核心词条中无「译文等于原文」的漏翻项', untranslated.length, 0);
 
-const emptyVal = groupKeys.filter((k) => !String(dictionary[k] || '').trim());
-check('新增词条中无空译文', emptyVal.length, 0);
+const emptyVal = Object.keys(dictionary).filter((k) => !String(dictionary[k] || '').trim());
+check('全量词典中无空译文', emptyVal.length, 0);
 
 // ---------------------------------------------------------------------------
 // 4. 词典规模与重复键健康度
@@ -181,14 +163,13 @@ while ((m = re.exec(dictBlock))) {
 }
 let dupKeys = 0;
 for (const c of counts.values()) if (c > 1) dupKeys++;
-check('dictionary 源码级重复 key 数不超过上游基线 619', dupKeys <= 619, true);
+check('dictionary 源码级重复 key 数严格归零 (0)', dupKeys, 0);
 
 // ---------------------------------------------------------------------------
 // 5. 注入产物必须真实包含 2.28.0 补充分组与新增词条
 // ---------------------------------------------------------------------------
 console.log('\n--- 注入产物 (extracted/dist/preload.js) ---');
-const groups = (preloadSource.match(/===== 2\.28\.0 补充：/g) || []).length;
-check('preload.js 含 2.28.0 补充分组注释', groups >= 4, true);
+check('preload.js 包含引擎标识与 JSON 序列化词库', preloadSource.includes('// Antigravity 2.0 Chinese Localization Engine'), true);
 
 const injected = [
   'Chief of Staff Dashboard', 'Browser CDP Port', 'Autonomous Mode', 'ABFS Workspace (Alpha)',

@@ -249,9 +249,14 @@ async function startLanguageServer(port, csrf, options = {}) {
         // Electron apps don't inherit shell environment variables when they are not launched through the terminal.
         // We need to load the shell env explicitly so the language server can discover tools in the user's environment.
         const env = { ...process.env, ...loginShellEnv };
-        // We don't read the file to avoid adding start up latency.
-        // LS will read when browser recording encoder is invoked.
-        env['AGY_BROWSER_ACTIVE_PORT_FILE'] = (0, paths_1.getActivePortFilePath)();
+        if (electron_1.app.commandLine?.hasSwitch?.('remote-debugging-port')) {
+            // Pass the path without reading it so LS discovers the opt-in debug port lazily.
+            env['AGY_BROWSER_ACTIVE_PORT_FILE'] = (0, paths_1.getActivePortFilePath)();
+        }
+        else {
+            delete env['AGY_BROWSER_ACTIVE_PORT_FILE'];
+            delete env['AGY_BROWSER_WS_URL'];
+        }
         (0, utils_1.setupNodeWrapper)(env);
         setupNodeModules(env, [
             {
@@ -260,6 +265,11 @@ async function startLanguageServer(port, csrf, options = {}) {
                 relativePath: ['build', 'src', 'bin', 'chrome-devtools-mcp.js'],
             },
         ]);
+        // Disable implicit cd4a.config.json discovery/watch, usage telemetry, and
+        // detached npm update checks in Hub-spawned chrome-devtools-mcp processes.
+        env['CHROME_DEVTOOLS_MCP_NO_CONFIG_DISCOVERY'] = '1';
+        env['CHROME_DEVTOOLS_MCP_NO_USAGE_STATISTICS'] = '1';
+        env['CHROME_DEVTOOLS_MCP_NO_UPDATE_CHECKS'] = '1';
         _lsProcess = (0, child_process_1.spawn)(spawnCmd, spawnArgs, {
             stdio: ['pipe', 'pipe', 'pipe'],
             env,
@@ -373,6 +383,7 @@ async function startAndMonitorLanguageServer(port, csrf, options = {}) {
 function monitorLsCrashInternal(handle, port, csrf, options) {
     void handle.exitPromise.then(async (exitInfo) => {
         clearLsProcess();
+        options.onExited?.();
         if (_intentionalTermination) {
             return;
         }

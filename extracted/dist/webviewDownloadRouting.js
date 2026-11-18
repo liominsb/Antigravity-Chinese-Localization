@@ -534,6 +534,7 @@ function setGuestDownloadDirectoryForWc(wc, downloadDir) {
     const validated = validateBrainDownloadsDir(downloadDir);
     const wcId = wc.id;
     guestDownloadDirByWcId.set(wcId, validated);
+    (0, guestAgentControl_1.notifyGuestAgentControlArmed)(wcId);
     if (typeof wc.once === 'function' && !trackedDestroyListeners.has(wc)) {
         trackedDestroyListeners.add(wc);
         wc.once('destroyed', () => {
@@ -606,6 +607,7 @@ function setGuestAgentControlledForWc(wc, active) {
         return true;
     }
     agentControlledGuestIds.add(wcId);
+    (0, guestAgentControl_1.notifyGuestAgentControlArmed)(wcId);
     if (typeof wc.once === 'function' &&
         !trackedAgentControlDestroyListeners.has(wc)) {
         trackedAgentControlDestroyListeners.add(wc);

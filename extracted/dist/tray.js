@@ -79,6 +79,10 @@ function insertTrayMenuItem(position, options) {
     if (!tray || !contextMenu) {
         return;
     }
+    if (options && typeof options === 'object') {
+        if (options.label === 'Connect to WSL') options = { ...options, label: '连接到 WSL' };
+        else if (options.label === 'Reopen Locally') options = { ...options, label: '在本地重新打开' };
+    }
     contextMenu.insert(Math.min(position, contextMenu.items.length), new electron_1.MenuItem(options));
     // Re-set the menu so the tray picks up the change.
     tray.setContextMenu(contextMenu);

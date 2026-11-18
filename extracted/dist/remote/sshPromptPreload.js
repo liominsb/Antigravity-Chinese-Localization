@@ -9,9 +9,10 @@ const electron_1 = require("electron");
 const MAX_ANSWER_BYTES = 1023;
 /** Until then, keys and clicks meant for the window underneath go nowhere. */
 const ARMING_MS = 500;
-electron_1.ipcRenderer.once('ssh-prompt:show', (_event, { label, message, retry }) => {
-    const [asks, text, note, long, input, ok, cancel] = [
-        'asks',
+electron_1.ipcRenderer.once('ssh-prompt:show', (_event, { label, title, message, retry }) => {
+    const [host, heading, text, note, long, input, ok, cancel] = [
+        'label',
+        'title',
         'message',
         'retry',
         'long',
@@ -19,11 +20,21 @@ electron_1.ipcRenderer.once('ssh-prompt:show', (_event, { label, message, retry 
         'continue',
         'cancel',
     ].map((id) => document.getElementById(id));
-    if (!asks || !text || !note || !long || !input || !ok || !cancel) {
+    if (!host ||
+        !heading ||
+        !text ||
+        !note ||
+        !long ||
+        !input ||
+        !ok ||
+        !cancel) {
         return;
     }
-    asks.textContent = `${label} 询问：`;
+    // As text: a host words the message, and in part the title.
+    host.textContent = label;
+    heading.textContent = title;
     text.textContent = message;
+    text.hidden = !message;
     note.hidden = !retry;
     // Armed once writable: nothing typed or pressed before then counts.
     input.readOnly = true;

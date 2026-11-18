@@ -9,14 +9,7 @@ const localizeSource = fs.readFileSync(path.join(__dirname, '..', 'localize.js')
 
 // 从 localize.js 中抽出注入引擎，取到 translateString 用于纯函数级验证
 function extractTranslator() {
-  const match = localizeSource.match(/(const DOM_TRANSLATOR_INJECTION = `[\s\S]*?`;)/);
-  if (!match) {
-    throw new Error('未能在 localize.js 中找到 DOM_TRANSLATOR_INJECTION 定义');
-  }
-  const hostSandbox = { globalThis: {} };
-  vm.createContext(hostSandbox);
-  vm.runInContext(match[1].replace('const DOM_TRANSLATOR_INJECTION', 'globalThis.DOM_TRANSLATOR_INJECTION'), hostSandbox);
-  let injectionCode = hostSandbox.globalThis.DOM_TRANSLATOR_INJECTION;
+  let injectionCode = require('./helpers/translator-loader').getInjectionCode();
 
   injectionCode = injectionCode.replace(
     'if (document.readyState === \'loading\')',

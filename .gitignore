@@ -4,10 +4,16 @@ app.asar*
 # 上面排除的是构建中间产物；就绪包要入库，否则 git clone / Download ZIP
 # 拿到的源码里没有它，一键更新汉化.bat 会提示缺少补丁。
 !app.asar.ready
+app.asar.temp*
+*.unpacked/
 .DS_Store
 Thumbs.db
 *.log
-release-assets/
+release-assets/*
+!release-assets/*.js
+
+# IDE configurations
+.idea/
 
 # Local downloads and generated working files
 /downloads/

@@ -52,6 +52,8 @@ const BOOTSTRAP_ERROR_CODES = [
     'LS_START_FAILED',
     'LS_STOPPED',
 ];
+/** The features the script reports (FEATURES); it drops others. */
+const SERVER_FEATURES = ['ui-bootstrap'];
 /** Markers accepted by buildBootstrapScript(); newMarker() produces them. */
 exports.MARKER_PATTERN = /^[a-f0-9]{16,128}$/;
 function newMarker() {
@@ -64,8 +66,9 @@ function discoveryFileNameFor(workspaceId) {
 }
 /**
  * Null for non-protocol lines, unknown events, OPEN_URL payloads that aren't
- * one token and NEED_UPLOAD without `<x64|arm64> <reason>`. A bad READY's
- * error never echoes it: it has the token.
+ * one token and NEED_UPLOAD without `<x64|arm64> <reason>`; FEATURES keeps
+ * the features it knows. A bad READY's error never echoes it: it has the
+ * token.
  */
 function parseBootstrapLine(line, marker) {
     const prefix = `${marker} `;
@@ -90,6 +93,28 @@ function parseBootstrapLine(line, marker) {
             return parseReady(payload);
         case 'OPEN_URL':
             return /^\S+$/.test(payload) ? { type: 'openUrl', url: payload } : null;
+        case 'FEATURES':
+            return {
+                type: 'features',
+                features: SERVER_FEATURES.filter((f) => payload.split(' ').includes(f)),
+            };
+        case 'SERVER_GONE':
+            return { type: 'serverGone' };
+        case 'OTHER_HOST': {
+            const m = /^(live|unknown) ([1-9]\d{0,9}) ([A-Za-z0-9._/@+:,~-]{1,255}) ([A-Za-z0-9._/@+:,~-]{1,255})$/.exec(payload);
+            const pid = m ? Number(m[2]) : 0;
+            return m && pid <= 0x7fffffff
+                ? {
+                    type: 'otherHost',
+                    otherHost: {
+                        state: m[1] === 'live' ? 'live' : 'unknown',
+                        pid,
+                        host: m[3],
+                        here: m[4],
+                    },
+                }
+                : null;
+        }
         case 'ERROR':
             return parseError(payload);
         default:
@@ -107,6 +132,11 @@ function intInRange(v, min, max) {
 function nonEmptyString(v) {
     return typeof v === 'string' && v !== '' ? v : undefined;
 }
+/**
+ * A credential import token as the LS writes it. Shorter or odder values are
+ * dropped: every log line of the connection redacts the token's text.
+ */
+const IMPORT_TOKEN = /^[A-Za-z0-9_-]{16,512}$/;
 function parseReady(payload) {
     let parsed;
     try {
@@ -128,6 +158,8 @@ function parseReady(payload) {
         csrfToken: nonEmptyString(d.csrfToken),
     };
     const { pid, httpsPort, httpPort, lspPort, lsVersion, csrfToken } = fields;
+    // Optional: only servers that allow credential import write it.
+    const importToken = nonEmptyString(d.credentialImportToken);
     if (pid !== undefined &&
         httpsPort !== undefined &&
         httpPort !== undefined &&
@@ -136,7 +168,17 @@ function parseReady(payload) {
         csrfToken !== undefined) {
         return {
             type: 'ready',
-            discovery: { pid, httpsPort, httpPort, lspPort, lsVersion, csrfToken },
+            discovery: {
+                pid,
+                httpsPort,
+                httpPort,
+                lspPort,
+                lsVersion,
+                csrfToken,
+                ...(importToken !== undefined && IMPORT_TOKEN.test(importToken)
+                    ? { credentialImportToken: importToken }
+                    : {}),
+            },
         };
     }
     const invalid = Object.entries(fields)

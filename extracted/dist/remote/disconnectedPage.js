@@ -41,13 +41,25 @@ exports.disconnectedPageAction = disconnectedPageAction;
  * The local page an SSH window shows while disconnected (so it makes no
  * requests without a tunnel). A script-less data: URL whose buttons link to
  * `https://agy-ssh.invalid/<action>?page=<token>`: the navigation policy
- * catches them in will-navigate and honors only the shown page's token, so a
- * remote page can't press them. (Chromium blocks a data: page's #fragment
- * links.)
+ * catches them in will-navigate and honors only the shown page's token and
+ * buttons, so a remote page can't press them. (Chromium blocks a data: page's
+ * #fragment links.)
  */
 const crypto = __importStar(require("crypto"));
 /** Origin of the buttons' links; `.invalid` names never resolve. */
 const ACTION_ORIGIN = 'https://agy-ssh.invalid';
+const BUTTON_LABELS = {
+    reconnect: '重新连接',
+    stop: '停止服务端',
+    close: '关闭',
+};
+/** The page's buttons, in order; only these can be pressed on it. */
+function actionsOf(page) {
+    if (page.state !== 'disconnected') {
+        return ['close'];
+    }
+    return page.canStop ? ['reconnect', 'stop', 'close'] : ['reconnect', 'close'];
+}
 const HTML_ESCAPES = {
     '&': '&amp;',
     '<': '&lt;',
@@ -65,22 +77,35 @@ function disconnectedPageUrl(page, token) {
     const sub = page.dark ? '#A0A0A0' : '#5F6368';
     const line = page.dark ? '#3C4043' : '#DADCE0';
     const host = escapeHtml(page.label);
-    const connecting = page.state === 'connecting';
-    const title = connecting ? '正在重新连接…' : '已断开连接';
-    const heading = connecting
-        ? `正在重新连接到 ${host}…`
-        : `已断开与 ${host} 的连接`;
+    const connecting = page.state !== 'disconnected';
+    const restarting = page.state === 'restarting';
+    const title = restarting
+        ? '正在重启…'
+        : connecting
+            ? '正在重新连接…'
+            : '已断开连接';
+    const heading = restarting
+        ? `正在重启 ${host} 上的 Antigravity 服务端…`
+        : connecting
+            ? `正在重新连接到 ${host}…`
+            : `已断开与 ${host} 的连接`;
     const details = connecting
         ? []
         : (page.detail ?? '').split('\n').filter((l) => l.trim());
-    const body = connecting
-        ? `智能体将在 ${host} 上继续运行。`
-        : `智能体将在 ${host} 上继续运行（除非其服务端已停止）。`;
+    const body = restarting
+        ? '服务端启动完成后，此窗口将自动重新打开。'
+        : connecting
+            ? page.serverStopped
+                ? `${host} 上的服务端已停止，其智能体也已随之停止。`
+                : `智能体将在 ${host} 上继续运行。`
+            : page.serverStopped
+                ? `${host} 上的智能体已随服务端一同停止。`
+                : `智能体将在 ${host} 上继续运行（除非其服务端已停止）。`;
     const action = (name) => `${ACTION_ORIGIN}/${name}?page=${encodeURIComponent(token)}`;
     const spinner = connecting ? '<div class="spinner"></div>' : '';
-    const reconnect = connecting
-        ? ''
-        : `<a class="button primary" href="${action('reconnect')}">重新连接</a>`;
+    const buttons = actionsOf(page)
+        .map((name) => `<a class="button${name === 'reconnect' ? ' primary' : ''}" href="${action(name)}">${BUTTON_LABELS[name]}</a>`)
+        .join('');
     const html = `<!DOCTYPE html>
 <html lang="en">
 <head>
@@ -115,20 +140,20 @@ function disconnectedPageUrl(page, token) {
   <h1>${heading}</h1>
   ${details.map((d) => `<p>${escapeHtml(d)}</p>`).join('\n  ')}
   <p>${body}</p>
-  <div class="buttons">${reconnect}<a class="button" href="${action('close')}">关闭</a></div>
+  <div class="buttons">${buttons}</div>
 </body>
 </html>`;
     return `data:text/html;charset=utf-8,${encodeURIComponent(html)}`;
 }
-/** The token of the page last loaded into each window's contents. */
-const pageTokens = new WeakMap();
+/** The page last loaded into each window's contents: its token and buttons. */
+const shownPages = new WeakMap();
 /** Loads the page with a fresh token, unless the window is gone. */
 function showDisconnectedPage(win, page) {
     if (win.isDestroyed?.() || win.webContents?.isDestroyed?.()) {
         return;
     }
     const token = crypto.randomBytes(16).toString('hex');
-    pageTokens.set(win.webContents, token);
+    shownPages.set(win.webContents, { token, actions: actionsOf(page) });
     // ERR_ABORTED when the window closes or navigates during the load.
     win.loadURL(disconnectedPageUrl(page, token)).catch(() => { });
 }
@@ -143,7 +168,7 @@ function isDisconnectedPageLink(url) {
 }
 /**
  * The button `url` presses, if its token is that of the page `contents` shows
- * (on a data: URL, which only the Hub's page can be).
+ * (on a data: URL, which only the Hub's page can be) and that page has it.
  */
 function disconnectedPageAction(contents, url) {
     let parsed;
@@ -153,20 +178,13 @@ function disconnectedPageAction(contents, url) {
     catch {
         return undefined;
     }
-    const token = pageTokens.get(contents);
+    const shown = shownPages.get(contents);
     if (parsed.origin !== ACTION_ORIGIN ||
-        !token ||
-        parsed.searchParams.get('page') !== token ||
+        !shown ||
+        parsed.searchParams.get('page') !== shown.token ||
         contents.isDestroyed?.() ||
         !contents.getURL().startsWith('data:')) {
         return undefined;
     }
-    switch (parsed.pathname) {
-        case '/reconnect':
-            return 'reconnect';
-        case '/close':
-            return 'close';
-        default:
-            return undefined;
-    }
+    return shown.actions.find((name) => parsed.pathname === `/${name}`);
 }

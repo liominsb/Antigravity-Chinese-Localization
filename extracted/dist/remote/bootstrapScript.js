@@ -1,26 +1,32 @@
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
-exports.LOG_ROTATE_BYTES = void 0;
+exports.LOG_ROTATE_BYTES = exports.KEEPER = void 0;
 exports.shQuote = shQuote;
 exports.buildBootstrapScript = buildBootstrapScript;
 /**
  * Builds the POSIX sh script the Hub writes to `ssh -T ... -- <host> sh -s`.
- * It attaches to the user's running language server (LS) whatever its
- * version (replacing it would kill its agents); only when none runs does it
- * install the Hub's version and start it detached in --persistent_mode, with
- * what the user's login shell adds to the environment (as in a terminal).
- * Then it relays the sign-in URLs the LS logs (see parseBootstrapLine).
+ * It attaches to the user's running language server (LS), whatever its
+ * version, unless the Hub asks it to replace exactly that server
+ * (BootstrapParams.displace: an older one the Hub decided to restart). When
+ * none runs, or once that one is stopped, it installs the Hub's version and
+ * starts it detached in --persistent_mode, with what the user's login shell
+ * adds to the environment (as in a terminal). Then it relays the sign-in URLs
+ * the LS logs (see parseBootstrapLine).
  *
  * Caller contract:
  * - After the script, keep stdin open and write nothing; after NEED_UPLOAD,
  *   write the binary gzipped and end stdin (EOF alone declines).
  * - STATUS `checking`, then `attached`, or `waiting`, `invalid binary
- *   removed`, `downloading`, `installed` and `starting` as they apply; then
- *   READY and OPEN_URL lines, or ERROR.
+ *   removed`, `downloading`, `installed`, `replacing` and `starting` as they
+ *   apply, and `checking other host` and `taking over` (a home shared with
+ *   another host); then
+ *   FEATURES, READY and OPEN_URL lines, or OTHER_HOST and ERROR.
  * - An empty line every heartbeatSec during long waits and while streaming:
  *   once the Hub is gone, the next write fails and ends ssh and the script.
- * - No exit event: the script exits once the LS, its log's tail or the
- *   connection is gone (0 only if the LS is gone). The LS keeps running.
+ * - SERVER_GONE once the LS it serves is gone, then it exits 0: ssh itself
+ *   may stay up, waiting for forwarded channels to close (e.g. a browser's
+ *   idle pooled socket). It also exits once its log's tail or the connection
+ *   is gone (not 0, no event). The LS keeps running.
  */
 const loginShellPolicy_1 = require("../loginShellPolicy");
 const bootstrapProtocol_1 = require("./bootstrapProtocol");
@@ -50,6 +56,178 @@ const MAX_LOCK_TIMEOUT_SEC = 24 * 60 * 60;
 const MAX_START_TIMEOUT_SEC = 60 * 60;
 const MAX_HEARTBEAT_SEC = 60 * 60;
 const MAX_TICK_SEC = 60;
+/**
+ * A home directory shared by hosts: the keeper of the server that one of
+ * them runs renews its lease this often, ...
+ */
+const SHARED_HOME_LEASE_SEC = 30;
+/** ... others take a lease this old over (after watching it not change), ... */
+const SHARED_HOME_STALE_SEC = 180;
+/** ... and wait this long for its keeper to stop the server they take over. */
+const SHARED_HOME_TAKE_OVER_SEC = 90;
+/**
+ * How often a keeper looks: a stop waits up to this long for it, against
+ * forks and NFS round trips at each look.
+ */
+const KEEPER_TICK_SEC = 10;
+/** A server asked to stop (SIGTERM) gets this long before SIGKILL. */
+const SERVER_STOP_GRACE_SEC = 12;
+/**
+ * The shared-home protocol, between hosts that share one home directory and
+ * may run different Hub versions (a keeper outlives Hub updates). Next to
+ * the discovery file DISC:
+ * - DISC.host `HOST PID`: the host and pid of the server DISC names, written
+ *   by the bootstrap that starts it or attaches to it (older Hubs too).
+ * - DISC.lease `HOST PID N v1`: renewed every SHARED_HOME_LEASE_SEC by that
+ *   server's keeper, N counting up. Readers match the `HOST PID ` prefix,
+ *   compare whole lines, and ignore later fields.
+ * - DISC.stop `HOST PID`: another host asks that server's keeper to stop it.
+ * - DISC.keeper `HOST KPID KSTART PID`: that keeper itself (its pid and the
+ *   start time in /proc/KPID/stat), so that no second one runs.
+ * Writers write a temp file and rename it. A keeper removes the notes that
+ * name its server once the server is gone.
+ *
+ * The keeper: `AGY_KEEPER=KEEPER sh -c 'eval "$AGY_KEEPER"' agy-keeper DISC
+ * HOST PID LEASE_SEC TICK_SEC START_SEC DISC_RE`. Its script is in the
+ * environment, so that its arguments lead its command line: ps shows them,
+ * and pgrep finds them (busybox reads only the first 1 KB). DISC_RE is DISC
+ * as an ERE. It's started (in a session of its own) with each server, and
+ * for a server of this host that we attach to, and runs for as long as that
+ * process (its pid and start time, not a reused pid) does. Once DISC names
+ * that server, it records itself and renews the lease, and it exits at once
+ * if another live keeper of it is recorded (or, while it can't record
+ * itself, if pgrep finds an older one). A failed write, and that pgrep, wait
+ * a lease period before the next try, so a home that takes no writes (full,
+ * read-only, AFS tokens gone) costs no more. If DISC doesn't name it within
+ * START_SEC (the bootstrap's start timeout and a quarter, so that a
+ * bootstrap still waiting acts first), its start failed and the Hub that
+ * waited for it is gone: the keeper stops it. It stops the server
+ * (SIGTERM, which the LS takes as its Exit RPC; SIGKILL after
+ * SERVER_STOP_GRACE_SEC, to its group too if it leads one) when another host
+ * asks (DISC.stop) or, once DISC has named it, another server takes DISC
+ * over (which it then puts back: the LS removes it as it exits).
+ */
+exports.KEEPER = `set +aCefmvx
+unset AGY_KEEPER
+d=$1 h=$2 pid=$3 lease=$4 tick=$5 start=$6 re=$7 me="$2 $3" n=0 t=$4 w=0 r=$4
+kf=$1.keeper armed=
+ident() {
+  id= pg= st=
+  { IFS= read -r st <"/proc/$1/stat"; } 2>/dev/null || return 1
+  st=\${st##*') '}
+  set -- "$1" $st
+  id="$1 \${21:-}" pg=\${4:-}
+}
+alive() {
+  ident "$pid" && [ "$id" = "$sid" ]
+}
+other() {
+  case $1 in "$h "*" $pid") ;; *) return 1 ;; esac
+  [ "$1" != "$kid" ] || return 1
+  set -- $1
+  ident "$2" && [ "$id" = "$2 $3" ]
+}
+record() {
+  { printf '%s\\n' "$kid" >"$kf.$$" && mv -f "$kf.$$" "$kf"; } 2>/dev/null ||
+    rm -f "$kf.$$" 2>/dev/null
+}
+# Whether pgrep finds an older keeper of this server. Not pid order: our own
+# command substitution's subshell has our command line, and may get a lower pid.
+older() {
+  for p in $(pgrep -f "[a]gy-keeper $re $h $pid " 2>/dev/null); do
+    [ "$p" != "$$" ] && ident "$p" || continue
+    set -- $id
+    case $2 in ''|*[!0-9]*) continue ;; esac
+    if [ "$2" -lt "$kst" ] || { [ "$2" = "$kst" ] && [ "$p" -lt "$$" ]; }; then
+      return 0
+    fi
+  done
+  return 1
+}
+stop() {
+  kill -TERM "$pid" 2>/dev/null
+  i=0
+  while alive && [ "$i" -lt ${SERVER_STOP_GRACE_SEC} ]; do
+    sleep 1
+    i=$((i + 1))
+  done
+  if alive; then
+    [ "$pg" != "$pid" ] || kill -KILL "-$pid" 2>/dev/null
+    kill -KILL "$pid" 2>/dev/null
+  fi
+}
+ident "$pid" || exit 0
+sid=$id
+ident $$ || exit 0
+kid="$h $id $pid" kst=\${id#* }
+while alive; do
+  s=
+  { IFS= read -r s <"$d.stop"; } 2>/dev/null
+  if [ "$s" = "$me" ]; then
+    stop
+    break
+  fi
+  j= l=
+  { while IFS= read -r l; do j=$j$l; done <"$d"; } 2>/dev/null
+  j=$j$l
+  case $j in
+    *'"pid"'*)
+      p=\${j#*'"pid"'}
+      p=\${p#"\${p%%[!: ]*}"}
+      p=\${p%%[!0-9]*}
+      if [ "$p" = "$pid" ]; then
+        armed=1
+      elif [ -n "$p" ] && [ -n "$armed" ]; then
+        stop
+        # On its way out, the server removed the discovery file: another's.
+        [ -e "$d" ] ||
+          { printf '%s' "$j" >"$d.$$" && mv -f "$d.$$" "$d"; } 2>/dev/null
+        break
+      fi
+      ;;
+  esac
+  if [ -z "$armed" ]; then
+    # Not up after the start timeout: the Hub that waited for it is gone.
+    if [ "$w" -gt "$start" ]; then
+      stop
+      break
+    fi
+  else
+    k=
+    { IFS= read -r k <"$kf"; } 2>/dev/null
+    if [ "$k" != "$kid" ]; then
+      other "$k" && exit 0
+      if [ "$r" -ge "$lease" ]; then
+        r=0
+        record
+        # Still unrecorded (e.g. a full home): the oldest keeper stays.
+        k=
+        { IFS= read -r k <"$kf"; } 2>/dev/null
+        if [ "$k" != "$kid" ] && older; then
+          exit 0
+        fi
+      fi
+    fi
+    if [ "$t" -ge "$lease" ]; then
+      n=$((n + 1))
+      t=0
+      { printf '%s %s v1\\n' "$me" "$n" >"$d.lease.$$" && mv -f "$d.lease.$$" "$d.lease"; } 2>/dev/null ||
+        rm -f "$d.lease.$$" 2>/dev/null
+    fi
+  fi
+  sleep "$tick" 2>/dev/null
+  t=$((t + tick)) w=$((w + tick)) r=$((r + tick))
+done
+for f in "$d.lease" "$d.host" "$d.stop"; do
+  s=
+  { IFS= read -r s <"$f"; } 2>/dev/null
+  case $s in "$me"|"$me "*) rm -f "$f" 2>/dev/null ;; esac
+done
+k=
+{ IFS= read -r k <"$kf"; } 2>/dev/null
+[ "$k" != "$kid" ] || rm -f "$kf" 2>/dev/null
+rm -f "$d.lease.$$" "$kf.$$" "$d.$$" 2>/dev/null
+`;
 /** An LS log bigger than this moves to `<log>.1` before a start. */
 exports.LOG_ROTATE_BYTES = 50 * 1024 * 1024;
 /** Quotes `s` as one POSIX shell word; throws on NUL, which none can hold. */
@@ -110,6 +288,30 @@ function checkServerPath(serverPath) {
     }
     return serverPath;
 }
+/** What agy_safe leaves of a host name, as OTHER_HOST reports it. */
+const HOST_PATTERN = /^[A-Za-z0-9._/@+:,~-]{1,255}$/;
+/** p.displace, checked: only on a full connect, with valid values. */
+function checkDisplace(p) {
+    const d = p.displace;
+    if (d === undefined) {
+        return undefined;
+    }
+    if (p.attachOnly === true) {
+        throw new Error(`buildBootstrapScript: ${d.kind} needs a full connect`);
+    }
+    if (d.kind === 'replace') {
+        checkName('replace version', d.server.version);
+    }
+    else if (typeof d.server.host !== 'string' ||
+        !HOST_PATTERN.test(d.server.host)) {
+        throw new Error('buildBootstrapScript: invalid takeOver host');
+    }
+    const { pid } = d.server;
+    if (!Number.isInteger(pid) || pid < 1 || pid > 0x7fffffff) {
+        throw new Error(`buildBootstrapScript: invalid ${d.kind} pid: ${String(pid)}`);
+    }
+    return d;
+}
 /** A Go flag's value (`--n v`, `-n=v`, ...; the last one wins, as in Go). */
 function flagValue(args, name) {
     let value;
@@ -124,6 +326,20 @@ function flagValue(args, name) {
         }
     }
     return value;
+}
+/** `args` without any of a Go flag's occurrences (as flagValue reads them). */
+function withoutFlag(args, name) {
+    const out = [];
+    for (let i = 0; i < args.length; i++) {
+        const arg = args[i];
+        if (arg === `--${name}` || arg === `-${name}`) {
+            i++; // Its value.
+        }
+        else if (!arg.startsWith(`--${name}=`) && !arg.startsWith(`-${name}=`)) {
+            out.push(arg);
+        }
+    }
+    return out;
 }
 function checkLsArgs(p) {
     if (!Array.isArray(p.lsArgs)) {
@@ -183,6 +399,11 @@ function buildBootstrapScript(p) {
     const urlArm64 = checkArtifactUrl('arm64', p.artifacts?.arm64?.url, allowInsecure);
     checkLsArgs(p);
     const serverPath = checkServerPath(p.serverPath);
+    const displace = checkDisplace(p);
+    const replace = displace?.kind === 'replace' ? displace.server : undefined;
+    const takeOver = displace?.kind === 'takeOver' ? displace.server : undefined;
+    const leaseSec = checkSeconds('leaseSec', overrides.leaseSec, SHARED_HOME_LEASE_SEC, SHARED_HOME_LEASE_SEC);
+    const takeOverSec = checkSeconds('takeOverSec', overrides.takeOverSec, SHARED_HOME_TAKE_OVER_SEC, SHARED_HOME_TAKE_OVER_SEC);
     const lockTimeout = checkSeconds('lockTimeoutSec', p.lockTimeoutSec, DEFAULT_LOCK_TIMEOUT_SEC, MAX_LOCK_TIMEOUT_SEC);
     const startTimeout = checkSeconds('startTimeoutSec', p.startTimeoutSec, DEFAULT_START_TIMEOUT_SEC, MAX_START_TIMEOUT_SEC);
     const heartbeat = checkSeconds('heartbeatSec', p.heartbeatSec, DEFAULT_HEARTBEAT_SEC, MAX_HEARTBEAT_SEC);
@@ -190,7 +411,10 @@ function buildBootstrapScript(p) {
     const envTimeout = checkSeconds('loginEnvTimeoutSec', overrides.loginEnvTimeoutSec, loginShellPolicy_1.LOGIN_SHELL_ENV_WAIT_SEC, loginShellPolicy_1.LOGIN_SHELL_ENV_WAIT_SEC);
     const token = flagValue(p.lsArgs, 'csrf_token') ?? '';
     const workspaceId = flagValue(p.lsArgs, 'workspace_id') ?? '';
-    const lsArgs = p.lsArgs.map((a) => `    ${shQuote(a)} \\\n`).join('');
+    // The token goes in separately (agy_exec_ls).
+    const lsArgs = withoutFlag(p.lsArgs, 'csrf_token')
+        .map((a) => ` \\\n    ${shQuote(a)}`)
+        .join('');
     const header = sh `#!/bin/sh
 set +aCefmvx
 # Undoes a login environment's options (bash as sh imports SHELLOPTS; xtrace
@@ -207,6 +431,15 @@ agy_main() {
   agy_url_arm64=${shQuote(urlArm64)}
   agy_serverpath=${shQuote(serverPath)}
   agy_attach_only=${p.attachOnly === true ? '1' : '0'}
+  agy_rep_ver=${shQuote(replace?.version ?? '')}
+  agy_rep_pid=${replace ? String(replace.pid) : "''"}
+  agy_to_host=${shQuote(takeOver?.host ?? '')}
+  agy_to_pid=${takeOver ? String(takeOver.pid) : "''"}
+  agy_lease_sec=${String(leaseSec)}
+  agy_stale=${String(SHARED_HOME_STALE_SEC)}
+  agy_to_wait=${String(takeOverSec)}
+  agy_ktick=${String(Math.min(KEEPER_TICK_SEC, leaseSec))}
+  agy_keeper_sh=${shQuote(exports.KEEPER)}
   agy_tok=${shQuote(token)}
   agy_lock_timeout=${String(lockTimeout)}
   agy_upload_timeout=${String(types_1.REMOTE_UPLOAD_TIMEOUT_SEC)}
@@ -219,11 +452,29 @@ agy_main() {
   agy_run
 }
 
-# Its stdio must not hold the SSH channel open. The LS takes its token only
-# as --csrf_token, so ps shows it to other users of the host (README).
+# Its stdio must not hold the SSH channel open. Its argv, which ps shows to
+# every user of the host, has no token: an LS that reads
+# ANTIGRAVITY_SERVER_CSRF_TOKEN gets it in its environment, which only the user
+# and root can read; an older one as --csrf_token (agy_token_via, README).
+# The former also keeps it out of its start page (GET /), which anyone on the
+# host can load: the Hub opens the page with a one-time token instead (#t=).
 agy_exec_ls() {
-  exec \${agy_ss:+"$agy_ss"} \${agy_nh:+"$agy_nh"} "$agy_bin" \
-${lsArgs}    </dev/null >>"$agy_log" 2>&1
+  set --${lsArgs}
+  unset ANTIGRAVITY_SERVER_CSRF_TOKEN AGY_REQUIRE_AUTHENTICATED_UI_BOOTSTRAP \
+    ANTIGRAVITY_ENABLE_CREDENTIAL_IMPORT
+  case $agy_tokvia in
+    env)
+      # Credential import works only on such a server (the LS checks).
+      ANTIGRAVITY_SERVER_CSRF_TOKEN=$agy_tok
+      AGY_REQUIRE_AUTHENTICATED_UI_BOOTSTRAP=1
+      ANTIGRAVITY_ENABLE_CREDENTIAL_IMPORT=1
+      export ANTIGRAVITY_SERVER_CSRF_TOKEN AGY_REQUIRE_AUTHENTICATED_UI_BOOTSTRAP \
+        ANTIGRAVITY_ENABLE_CREDENTIAL_IMPORT
+      ;;
+    argv) set -- "$@" --csrf_token "$agy_tok" ;;
+  esac
+  exec \${agy_ss:+"$agy_ss"} \${agy_nh:+"$agy_nh"} "$agy_bin" "$@" \
+    </dev/null >>"$agy_log" 2>&1
 }
 `;
     return header + SCRIPT_BODY;
@@ -241,12 +492,15 @@ agy_run() {
   agy_envpg=
   agy_lockdir=
   agy_brk=
+  agy_stopnote=
   agy_json=
   agy_dpid=
   agy_dver=
   agy_dtok=
   agy_ss=
   agy_nh=
+  agy_tokvia=none
+  agy_uiboot=
   agy_tailfrom='-n 0'
   agy_host=$(uname -n 2>/dev/null) || agy_host=
   trap agy_cleanup EXIT
@@ -268,12 +522,23 @@ agy_run() {
   agy_probe
   agy_paths
   agy_check_paths
-  if agy_read_disc && agy_is_ls_pid "$agy_dpid"; then
+  # A replace decides under the lock (agy_attach_or_start).
+  if [ -z "$agy_rep_pid" ] && agy_read_disc && agy_is_ls_pid "$agy_dpid"; then
     # Installs nothing, so no lock.
     agy_attached
+  elif [ "$agy_attach_only" = 1 ]; then
+    # A connect from elsewhere may be starting one, e.g. replacing the server
+    # this session served: wait while it holds the install lock.
+    agy_await_unlocked
+    if ! { agy_read_disc_settled && agy_is_ls_pid "$agy_dpid"; }; then
+      # Another pool machine sharing this home may run it (its lease is
+      # live, or an older Hub left no lease): say where, not that it stopped.
+      agy_check_other_host unlocked
+      agy_fail LS_STOPPED 'no server is running'
+    fi
+    agy_attached
   else
-    [ "$agy_attach_only" = 0 ] || agy_fail LS_STOPPED 'no server is running'
-    agy_check_other_host
+    agy_check_other_host unlocked
     mkdir -p "$agy_root/bin" "$agy_datadir" 2>/dev/null ||
       agy_fail INSTALL_FAILED "cannot create $agy_root"
     chmod 700 "$agy_root" 2>/dev/null
@@ -282,8 +547,9 @@ agy_run() {
     agy_attach_or_start
     agy_unlock
   fi
+  agy_emit FEATURES "\${agy_uiboot:+ui-bootstrap}"
   agy_emit READY "$agy_json"
-  agy_stream
+  agy_stream && agy_emit SERVER_GONE ''
 }
 
 agy_emit() {
@@ -314,6 +580,7 @@ agy_cleanup() {
   if [ -n "$agy_brk" ]; then
     rmdir "$agy_brk" 2>/dev/null
   fi
+  agy_withdraw_stop
   agy_unlock
 }
 
@@ -440,6 +707,7 @@ agy_paths() {
   agy_log=$agy_datadir/ls-$agy_version.log
   agy_daemon=$HOME/.gemini/$agy_appdir/daemon
   agy_disc=$agy_daemon/$agy_discname
+  agy_disc_re=
   if [ "$agy_arch" = arm64 ]; then
     agy_url=$agy_url_arm64
   else
@@ -474,26 +742,20 @@ agy_lock() {
     fi
     agy_o=
     { IFS= read -r agy_o <"$agy_ld/pid"; } 2>/dev/null
-    case $agy_o in
-      "$agy_host "[0-9]*)
-        agy_opid=\${agy_o#"$agy_host "}
-        agy_holder "\${agy_opid%% *}"
-        # Holder gone: one waiter at a time (break) removes the lock, only if it
-        # still names that holder; a killed breaker leaves it to the timeout.
-        if [ "$agy_h" != "$agy_o" ] && mkdir "$agy_ld/break" 2>/dev/null; then
-          agy_brk=$agy_ld/break
-          agy_o2=
-          { IFS= read -r agy_o2 <"$agy_ld/pid"; } 2>/dev/null
-          if [ "$agy_o2" = "$agy_o" ]; then
-            rm -rf "$agy_ld" 2>/dev/null
-          else
-            rmdir "$agy_brk" 2>/dev/null
-          fi
-          agy_brk=
-          continue
-        fi
-        ;;
-    esac
+    # Holder gone: one waiter at a time (break) removes the lock, only if it
+    # still names that holder; a killed breaker leaves it to the timeout.
+    if agy_holder_gone "$agy_o" && mkdir "$agy_ld/break" 2>/dev/null; then
+      agy_brk=$agy_ld/break
+      agy_o2=
+      { IFS= read -r agy_o2 <"$agy_ld/pid"; } 2>/dev/null
+      if [ "$agy_o2" = "$agy_o" ]; then
+        rm -rf "$agy_ld" 2>/dev/null
+      else
+        rmdir "$agy_brk" 2>/dev/null
+      fi
+      agy_brk=
+      continue
+    fi
     [ "$agy_waited" -gt 0 ] || agy_emit STATUS waiting
     [ "$agy_waited" -lt "$agy_lock_timeout" ] || agy_lock_timed_out
     sleep 1
@@ -524,13 +786,23 @@ agy_lock_timed_out() {
 
 # Sets agy_h to "<host> <PID> <start time>": the start time (empty once PID
 # is gone) tells PID from a later process with that pid, e.g. after a reboot.
+# Sets agy_pg to PID's process group.
 agy_holder() {
   agy_h=
   { IFS= read -r agy_h <"/proc/$1/stat"; } 2>/dev/null
   # Strip "pid (comm) " (comm may have spaces), then split the rest unquoted.
   agy_h=\${agy_h##*') '}
   set -- "$1" $agy_h
+  agy_pg=\${4:-}
   agy_h="$agy_host $1 \${21:-}"
+}
+
+# Whether lock holder $1 (as agy_holder names it) is gone from this host.
+agy_holder_gone() {
+  case $1 in "$agy_host "[0-9]*) ;; *) return 1 ;; esac
+  agy_lp=\${1#"$agy_host "}
+  agy_holder "\${agy_lp%% *}"
+  [ "$agy_h" != "$1" ]
 }
 
 agy_unlock() {
@@ -773,30 +1045,35 @@ agy_read_disc() {
   return 0
 }
 
-# PID runs our installed binary, or any with our --workspace_id and
-# --app_data_dir (a server path), so it isn't a reused pid. 2: alive, but
-# its command line can't be read (e.g. tr can't fork).
+# PID runs a server with our --workspace_id and --app_data_dir, whatever its
+# binary, so it isn't a reused pid, nor another app's server (insiders and
+# stable share the install root, not the app data dir). 2: alive, but its
+# command line can't be read (e.g. tr can't fork).
 agy_is_ls_pid() {
   case $1 in ''|*[!0-9]*) return 1 ;; esac
   kill -0 "$1" 2>/dev/null || return 1
   agy_c=$({ tr '\000' ' ' <"/proc/$1/cmdline"; } 2>/dev/null) ||
     { kill -0 "$1" 2>/dev/null && return 2; return 1; }
-  case $agy_c in "$agy_root/bin/"*"/language_server "*) return 0 ;; esac
   case $agy_c in *" --workspace_id $agy_wsid "*) ;; *) return 1 ;; esac
   case $agy_c in *" --app_data_dir $agy_appdir "*) return 0 ;; esac
   return 1
 }
 
-# SIGTERM (to its group under setsid), up to 12 s to exit, then SIGKILL.
+# SIGTERM (to its group under setsid), up to SERVER_STOP_GRACE_SEC to exit,
+# then SIGKILL, to its process group too if it leads one. With "alone" (a
+# server being replaced), SIGTERM goes to PID alone, as its Exit RPC would:
+# the LS shuts down gracefully and stops its agents.
 agy_stop() {
   agy_sp=$1
-  [ -z "$agy_ss" ] || agy_sp=-$1
+  [ "\${2:-}" = alone ] || [ -z "$agy_ss" ] || agy_sp=-$1
   kill -TERM "$agy_sp" 2>/dev/null || kill -TERM "$1" 2>/dev/null || return 0
   agy_i=0
   while kill -0 "$1" 2>/dev/null; do
     agy_i=$((agy_i + 1))
-    if [ "$agy_i" -gt $((12 * agy_naps)) ]; then
-      kill -KILL "$agy_sp" 2>/dev/null || kill -KILL "$1" 2>/dev/null
+    if [ "$agy_i" -gt $((${String(SERVER_STOP_GRACE_SEC)} * agy_naps)) ]; then
+      agy_holder "$1"
+      [ "$agy_pg" != "$1" ] || kill -KILL "-$1" 2>/dev/null
+      kill -KILL "$1" 2>/dev/null
       break
     fi
     agy_nap
@@ -832,45 +1109,190 @@ agy_foreign() {
 # dir) for hosts sharing this home (NFS), which can't see our processes.
 agy_record_host() {
   [ -n "$agy_host" ] || return 0
-  { printf '%s %s\n' "$agy_host" "$1" >"$agy_disc.host"; } 2>/dev/null
+  agy_nn=
+  { IFS= read -r agy_nn <"$agy_disc.host"; } 2>/dev/null
+  [ "$agy_nn" != "$agy_host $1" ] || return 0
+  { printf '%s %s\n' "$agy_host" "$1" >"$agy_disc.host.$$" &&
+    mv -f "$agy_disc.host.$$" "$agy_disc.host"; } 2>/dev/null
   return 0
 }
 
-# Another host's server is invisible here; a second one would take over its
-# discovery file. The note can outlive that host, so say what to delete.
+# Another host's server is invisible here, and a second one would take over
+# its discovery file. Its keeper's lease (agy_lease_state) says whether it
+# still runs. $1: unlocked (look only), locked (take over a server whose
+# lease is stale, or the one the Hub asked for), or strict (refuse any).
 agy_check_other_host() {
   agy_foreign "$agy_disc" || return 0
+  agy_lease_state
+  if [ "$1" != strict ] && { [ "$agy_lstate" = stale ] || agy_take_over_asked; }; then
+    [ "$1" = locked ] || return 0
+    agy_take_over
+    return 0
+  fi
+  agy_other_host_fail
+}
+
+agy_take_over_asked() {
+  [ -n "$agy_to_pid" ] && [ "$agy_ohost" = "$agy_to_host" ] &&
+    [ "$agy_opid" = "$agy_to_pid" ]
+}
+
+# Sets agy_lstate for the server agy_foreign found: live while its keeper
+# renews DISC.lease, stale once that's agy_stale s old by this host's
+# clock, unknown without one for that server (an older Hub started it).
+agy_lease_state() {
+  agy_lstate=unknown
+  agy_lease=
+  { IFS= read -r agy_lease <"$agy_disc.lease"; } 2>/dev/null
+  case $agy_lease in "$agy_ohost $agy_opid "*) ;; *) return 0 ;; esac
+  agy_lstate=live
+  agy_age "$agy_disc.lease" || return 0
+  [ "$agy_a" -lt "$agy_stale" ] || agy_lstate=stale
+}
+
+# Under the lock, takes the server's notes over from the other host, so
+# ours starts: once its lease didn't change for agy_lease_sec + 5 s (clocks
+# can differ between hosts), or, if the Hub asked, once its keeper stopped
+# it (DISC.stop) or, with no keeper (unknown), at once: the user confirmed.
+agy_take_over() {
+  if [ "$agy_lstate" = stale ]; then
+    agy_emit STATUS 'checking other host'
+    agy_wait_lease_gone
+  fi
+  agy_emit STATUS 'taking over'
+  if [ "$agy_lstate" = live ]; then
+    # Noted first: a signal right after the write still withdraws it.
+    agy_stopnote="$agy_ohost $agy_opid"
+    { printf '%s %s\n' "$agy_ohost" "$agy_opid" >"$agy_disc.stop.$$" &&
+      mv -f "$agy_disc.stop.$$" "$agy_disc.stop"; } 2>/dev/null ||
+      agy_fail INSTALL_FAILED "cannot write $agy_disc.stop"
+    agy_wait_lease_gone
+    agy_stopnote=
+  fi
+  rm -f "$agy_disc.host" "$agy_disc.lease" "$agy_disc.stop" \
+    "$agy_disc.keeper" 2>/dev/null
+}
+
+# Waits until no note names that server: its keeper removes them once the
+# server's pid is gone, which can be well after the server deleted its
+# discovery file (as it starts shutting down). Or until its lease doesn't
+# change for agy_lease_sec + 5 s: no keeper renews it. A stale lease that is
+# renewed makes it live: only the Hub's request (the user's) goes on then,
+# to ask its keeper.
+agy_wait_lease_gone() {
+  agy_l0=$agy_lease
+  agy_same=0
+  agy_w=0
+  while agy_notes_name_other; do
+    agy_l=
+    { IFS= read -r agy_l <"$agy_disc.lease"; } 2>/dev/null
+    # A lease that vanished (its keeper cleaning up) isn't a renewal.
+    if [ -z "$agy_l" ] || [ "$agy_l" = "$agy_l0" ]; then
+      agy_same=$((agy_same + 1))
+      [ "$agy_same" -le $((agy_lease_sec + 5)) ] || return 0
+    elif [ "$agy_lstate" = stale ]; then
+      agy_lstate=live
+      agy_take_over_asked || agy_other_host_fail
+      return 0
+    else
+      agy_same=0
+      agy_l0=$agy_l
+    fi
+    if [ "$agy_w" -ge "$agy_to_wait" ]; then
+      # Told it didn't stop, the user expects it to keep running.
+      agy_withdraw_stop
+      agy_safe "$agy_ohost"
+      agy_fail SHARED_HOME_UNSUPPORTED "the Antigravity server on host $agy_s (pid $agy_opid) did not stop within $agy_to_wait s"
+    fi
+    sleep 1
+    agy_w=$((agy_w + 1))
+    [ $((agy_w % agy_hb)) -ne 0 ] || agy_beat
+  done
+}
+
+# Whether .host or .lease still names the server agy_foreign found.
+agy_notes_name_other() {
+  agy_nn=
+  { IFS= read -r agy_nn <"$agy_disc.host"; } 2>/dev/null
+  [ "$agy_nn" != "$agy_ohost $agy_opid" ] || return 0
+  agy_nn=
+  { IFS= read -r agy_nn <"$agy_disc.lease"; } 2>/dev/null
+  case $agy_nn in "$agy_ohost $agy_opid "*) return 0 ;; esac
+  return 1
+}
+
+# Withdraws agy_take_over's request that the other host's keeper stop its
+# server, if no one is waiting for it any more (a timeout, or the Hub left).
+agy_withdraw_stop() {
+  [ -n "$agy_stopnote" ] || return 0
+  rm -f "$agy_disc.stop.$$" 2>/dev/null
+  agy_nn=
+  { IFS= read -r agy_nn <"$agy_disc.stop"; } 2>/dev/null
+  [ "$agy_nn" != "$agy_stopnote" ] || rm -f "$agy_disc.stop" 2>/dev/null
+  agy_stopnote=
+}
+
+# OTHER_HOST <live|unknown> <pid> <its host> <this host>, then the error.
+agy_other_host_fail() {
+  agy_safe "\${agy_host:--}"
+  agy_me=$agy_s
   agy_safe "$agy_ohost"
   agy_record_age "$agy_disc.host"
-  agy_fail SHARED_HOME_UNSUPPORTED "the Antigravity server for this home directory runs on host $agy_s (pid $agy_opid$agy_hage); shared home directories are not supported. If that host no longer exists (e.g. a recreated container or a renamed host) or no longer runs the server, delete $agy_disc.host and connect again"
+  agy_emit OTHER_HOST "$agy_lstate $agy_opid $agy_s $agy_me"
+  agy_fail SHARED_HOME_UNSUPPORTED "the Antigravity server for this home directory runs on host $agy_s (pid $agy_opid$agy_hage)"
+}
+
+# Sets agy_a to $1's age in seconds by this host's clock, if it can tell.
+agy_age() {
+  agy_hmt=$(stat -c %Y "$1" 2>/dev/null </dev/null) || return 1
+  agy_hnow=$(date +%s 2>/dev/null </dev/null) || return 1
+  case $agy_hmt in ''|*[!0-9]*) return 1 ;; esac
+  case $agy_hnow in ''|*[!0-9]*) return 1 ;; esac
+  agy_a=$((agy_hnow - agy_hmt))
 }
 
 # Sets agy_hage to ", recorded <age> ago" from $1's mtime, or to nothing.
 agy_record_age() {
   agy_hage=
-  agy_hmt=$(stat -c %Y "$1" 2>/dev/null </dev/null) || return 0
-  agy_hnow=$(date +%s 2>/dev/null </dev/null) || return 0
-  case $agy_hmt in ''|*[!0-9]*) return 0 ;; esac
-  case $agy_hnow in ''|*[!0-9]*) return 0 ;; esac
-  agy_hd=$((agy_hnow - agy_hmt))
-  if [ "$agy_hd" -ge 172800 ]; then
-    agy_hage=", recorded $((agy_hd / 86400)) days ago"
-  elif [ "$agy_hd" -ge 7200 ]; then
-    agy_hage=", recorded $((agy_hd / 3600)) hours ago"
-  elif [ "$agy_hd" -ge 0 ]; then
-    agy_hage=", recorded $((agy_hd / 60)) minutes ago"
+  agy_age "$1" || return 0
+  if [ "$agy_a" -ge 172800 ]; then
+    agy_hage=", recorded $((agy_a / 86400)) days ago"
+  elif [ "$agy_a" -ge 7200 ]; then
+    agy_hage=", recorded $((agy_a / 3600)) hours ago"
+  elif [ "$agy_a" -ge 0 ]; then
+    agy_hage=", recorded $((agy_a / 60)) minutes ago"
   fi
 }
 
 # Under the lock: attaches to a server that started meanwhile, or starts one.
+# The server the Hub asked to replace is stopped once ours is installed, so a
+# failed download leaves it running.
 agy_attach_or_start() {
   agy_read_disc_settled
   if agy_is_ls_pid "$agy_dpid"; then
-    agy_attached
-    return 0
+    if [ -z "$agy_rep_pid" ] || [ "$agy_dpid" != "$agy_rep_pid" ] ||
+      [ "$agy_dver" != "$agy_rep_ver" ]; then
+      agy_attached
+      return 0
+    fi
+    # Never one that another host's note claims (its pid may be reused here).
+    agy_check_other_host strict
+    agy_prepare
+    agy_emit STATUS replacing
+    agy_stop "$agy_dpid" alone
+  else
+    # Again: another host may have started one while we waited for the lock.
+    # Refuse now, but take nothing over before ours is installed: a failed
+    # or slow install must leave the other host's server running.
+    agy_check_other_host unlocked
+    agy_prepare
+    agy_check_other_host locked
   fi
-  # Again: another host may have started one while we waited for the lock.
-  agy_check_other_host
+  agy_start
+}
+
+# The binary to start: the server path, or ours, installed if needed.
+agy_prepare() {
   if [ -n "$agy_serverpath" ]; then
     agy_check_server_path
   else
@@ -878,7 +1300,6 @@ agy_attach_or_start() {
       agy_fail INSTALL_FAILED "cannot create $agy_bindir"
     agy_install
   fi
-  agy_start
 }
 
 agy_check_server_path() {
@@ -894,6 +1315,11 @@ agy_check_server_path() {
 agy_attached() {
   agy_emit STATUS attached
   agy_record_host "$agy_dpid"
+  agy_keep_attached
+  # Its page takes one-time UI tokens if its binary reads the token from the
+  # environment (agy_token_via); older ones may mint tokens their page can't use.
+  ! grep -q -F ANTIGRAVITY_SERVER_CSRF_TOKEN "/proc/$agy_dpid/exe" </dev/null >/dev/null 2>&1 ||
+    agy_uiboot=1
   agy_l=$(readlink "/proc/$agy_dpid/fd/1" 2>/dev/null </dev/null) || agy_l=
   case $agy_l in
     "$agy_datadir/ls-"*.log)
@@ -1084,21 +1510,15 @@ agy_start() {
   # Created under umask 077 before the LS appends to it.
   true 2>/dev/null >>"$agy_log" ||
     agy_fail LS_START_FAILED "cannot write $agy_log"
-  # By path: the LS's PATH may be the login shell's.
-  agy_ss=$(command -v setsid 2>/dev/null) || agy_ss=
-  agy_nh=
-  if [ -z "$agy_ss" ]; then
-    # Fallback only: everything the LS starts inherits the ignored SIGHUP.
-    agy_nh=$(command -v nohup 2>/dev/null) || agy_nh=
-  fi
+  agy_detacher
   agy_emit STATUS starting
   agy_login_env
+  agy_token_via
   agy_spawn_ls
   agy_i=0
   agy_max=$((agy_start_timeout * agy_naps))
-  # Only accept the server started here.
-  until agy_read_disc && [ "$agy_dpid" = "$agy_lspid" ] &&
-    agy_is_ls_pid "$agy_dpid"; do
+  # Only accept the server started here, with our token.
+  until agy_started; do
     if ! kill -0 "$agy_lspid" 2>/dev/null; then
       wait "$agy_lspid"
       agy_rc=$?
@@ -1131,8 +1551,99 @@ agy_start() {
     agy_nap
   done
   agy_record_host "$agy_lspid"
+  [ "$agy_tokvia" != env ] || agy_uiboot=1
   # Stream all it logged, so an early sign-in URL isn't missed.
   agy_tailfrom="-c +$((agy_logoff + 1))"
+}
+
+# Sets agy_tokvia to how agy_exec_ls passes our token: env if the binary
+# reads it from there (it names the variable; such servers also mint the
+# UI's one-time tokens), else argv (older releases, which ignore it: they
+# would run without one), or none without a token.
+agy_token_via() {
+  agy_tokvia=none
+  [ -n "$agy_tok" ] || return 0
+  agy_tokvia=argv
+  if grep -q -F ANTIGRAVITY_SERVER_CSRF_TOKEN "$agy_bin" </dev/null >/dev/null 2>&1; then
+    agy_tokvia=env
+  else
+    printf "antigravity: this language server can't take its token from its environment, so it gets it as --csrf_token, which other users of this host can see\n" \
+      2>/dev/null >>"$agy_log"
+  fi
+}
+
+# The server started here wrote its discovery file, with our token. One that
+# has none or another (it didn't read the environment) is stopped and, if it
+# had the token there, started again with --csrf_token.
+agy_started() {
+  agy_read_disc && [ "$agy_dpid" = "$agy_lspid" ] && agy_is_ls_pid "$agy_dpid" ||
+    return 1
+  [ "$agy_dtok" != "$agy_tok" ] || return 0
+  agy_stop "$agy_lspid"
+  wait "$agy_lspid" 2>/dev/null
+  [ "$agy_tokvia" = env ] ||
+    agy_fail LS_START_FAILED 'the language server did not take its token'
+  printf 'antigravity: the language server did not take its token from its environment; starting it with --csrf_token\n' \
+    2>/dev/null >>"$agy_log"
+  agy_tokvia=argv
+  agy_spawn_ls
+  return 1
+}
+
+# Sets agy_ss (setsid) or agy_nh (nohup), what detaches the server and its
+# keeper from the session.
+agy_detacher() {
+  # By path: the LS's PATH may be the login shell's.
+  agy_ss=$(command -v setsid 2>/dev/null) || agy_ss=
+  agy_nh=
+  if [ -z "$agy_ss" ]; then
+    # Fallback only: everything the LS starts inherits the ignored SIGHUP.
+    agy_nh=$(command -v nohup 2>/dev/null) || agy_nh=
+  fi
+}
+
+# The server we attach to runs here (agy_is_ls_pid): it gets a keeper, which
+# exits at once if another one of it runs (else an older Hub started it, or
+# its keeper was killed). Hosts sharing the home then see it live, and can
+# ask it to stop.
+agy_keep_attached() {
+  agy_detacher
+  agy_spawn_keeper "$agy_dpid"
+}
+
+# Sets agy_disc_re to the discovery file's path as an extended regular
+# expression (pgrep's patterns), once.
+agy_disc_ere() {
+  [ -z "$agy_disc_re" ] || return 0
+  agy_disc_re=$(printf '%s\n' "$agy_disc" | sed 's/[][\\.*^$+?(){}|]/\\&/g')
+}
+
+# For an attach-only connect: waits while another connect holds the install
+# lock, up to agy_start_timeout s, or until a holder on this host is gone.
+agy_await_unlocked() {
+  agy_ld=$agy_root/install.lock.d
+  agy_w=0
+  while [ -d "$agy_ld" ] && [ "$agy_w" -lt "$agy_start_timeout" ]; do
+    agy_lo=
+    { IFS= read -r agy_lo <"$agy_ld/pid"; } 2>/dev/null
+    ! agy_holder_gone "$agy_lo" || return 0
+    [ "$agy_w" -gt 0 ] || agy_emit STATUS waiting
+    sleep 1
+    agy_w=$((agy_w + 1))
+    [ $((agy_w % agy_hb)) -ne 0 ] || agy_beat
+  done
+}
+
+# Starts the server's keeper (KEEPER), detached like the server.
+agy_spawn_keeper() {
+  [ -n "$agy_host" ] || return 0
+  agy_disc_ere
+  # Its script in the environment: its arguments lead its command line.
+  AGY_KEEPER=$agy_keeper_sh \${agy_ss:+"$agy_ss"} \${agy_nh:+"$agy_nh"} \
+    /bin/sh -c 'eval "$AGY_KEEPER"' agy-keeper "$agy_disc" "$agy_host" "$1" \
+    "$agy_lease_sec" "$agy_ktick" "$((agy_start_timeout + agy_start_timeout / 4))" \
+    "$agy_disc_re" \
+    </dev/null >/dev/null 2>&1 &
 }
 
 # Starts the LS in the background (agy_lspid), with agy_envsh's environment
@@ -1154,6 +1665,11 @@ agy_spawn_ls() {
     agy_exec_ls
   ) &
   agy_lspid=$!
+  # Now, not once it's up: a drop during the start must not leave a server
+  # that other hosts sharing the home can't see.
+  mkdir -p "\${agy_disc%/*}" 2>/dev/null
+  agy_record_host "$agy_lspid"
+  agy_spawn_keeper "$agy_lspid"
 }
 
 # Relays sign-in URLs. Each tick checks tail and the server (kill -0; at

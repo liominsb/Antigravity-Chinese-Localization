@@ -8,7 +8,6 @@ const MAX_HEADER_BYTES = 4 * 1024 * 1024;
 const MAX_PACKAGE_BYTES = 1024 * 1024;
 const utf8 = new TextDecoder('utf-8', { fatal: true });
 const object = value => value !== null && typeof value === 'object' && !Array.isArray(value);
-const comparable = value => process.platform === 'win32' ? value.toLowerCase() : value;
 
 function readExactly(fd, size, position) {
   const buffer = Buffer.alloc(size);
@@ -28,29 +27,15 @@ function packageVersion(bytes) {
   return metadata.version;
 }
 
-function hasSymlinkOrJunctionSync(targetPath) {
-  let curr = path.resolve(targetPath);
-  while (true) {
-    try {
-      const stat = fs.lstatSync(curr);
-      if (stat.isSymbolicLink()) return true;
-    } catch (err) {
-      if (err.code === 'ENOENT') return false;
-      throw err;
-    }
-    const parent = path.dirname(curr);
-    if (parent === curr) break;
-    curr = parent;
-  }
-  return false;
-}
-
 function unpackedPackage(asarPath, size) {
   // Never follow an archive entry's link/path. The only external metadata path
   // accepted is the standard, fixed <archive>.unpacked/package.json file.
+  // Check only <archive>.unpacked and package.json themselves rather than walking
+  // ancestor directories to '/', preventing false positives on macOS (/var -> private/var)
+  // and Linux symlinked /home setups [H-02].
   const directory = `${asarPath}.unpacked`;
   const stat = fs.lstatSync(directory);
-  if (!stat.isDirectory() || hasSymlinkOrJunctionSync(directory)) return null;
+  if (!stat.isDirectory() || stat.isSymbolicLink()) return null;
   const packagePath = path.join(directory, 'package.json');
   const file = fs.lstatSync(packagePath);
   if (!file.isFile() || file.isSymbolicLink() || file.size !== size) return null;

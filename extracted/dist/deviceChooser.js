@@ -18,11 +18,11 @@ const KIND_NOUNS = {
 const hex4 = (n) => n.toString(16).padStart(4, '0');
 const hidItem = (d) => ({
     id: d.deviceId,
-    label: `${d.name?.trim() || 'Unknown device'} (${hex4(d.vendorId)}:${hex4(d.productId)})`,
+    label: `${d.name?.trim() || '未知设备'} (${hex4(d.vendorId)}:${hex4(d.productId)})`,
 });
 const usbItem = (d) => ({
     id: d.deviceId,
-    label: `${d.productName ?? 'Unknown device'} (${hex4(d.vendorId)}:${hex4(d.productId)})`,
+    label: `${d.productName ?? '未知设备'} (${hex4(d.vendorId)}:${hex4(d.productId)})`,
 });
 const serialItem = (p) => ({
     id: p.portId,
@@ -224,10 +224,10 @@ function createDeviceChooserController(options) {
                     const { response } = await showMessageBox(win, {
                         type: 'question',
                         title: '连接设备',
-                        message: `${origin} wants to connect to a ${KIND_NOUNS[kind]}`,
+                        message: `${origin} 请求连接 ${KIND_NOUNS[kind]}`,
                         detail: cancelId
-                            ? 'Select a device:'
-                            : 'No compatible devices found.',
+                            ? '请选择设备：'
+                            : '未找到兼容设备。',
                         buttons: [...snapshot.map(({ label }) => label), '取消'],
                         cancelId,
                         defaultId: cancelId,

@@ -7,7 +7,7 @@ console.log('=== 开始 Ticket-32 Antigravity 2.29.1 官方维护版本特性专
 
 const root = path.join(__dirname, '..');
 const localizePath = path.join(root, 'localize.js');
-const localizeSource = fs.readFileSync(localizePath, 'utf-8');
+const localizeSource = require('./helpers/translator-loader').getCombinedSource();
 const packageJson = JSON.parse(fs.readFileSync(path.join(root, 'extracted', 'package.json'), 'utf-8'));
 const indexPath = path.join(root, 'index.html');
 const indexSource = fs.readFileSync(indexPath, 'utf-8');

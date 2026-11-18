@@ -9,6 +9,7 @@ const path = require('path');
 const crypto = require('crypto');
 const { Transform, pipeline: streamPipeline } = require('stream');
 const { promisify } = require('util');
+const { verifySameOriginAndToken, readJsonBody } = require('./src/http-security');
 const pipeline = promisify(streamPipeline);
 
 const REPOSITORY = 'antigravity-cn-community/Antigravity-Chinese-Localization';
@@ -51,7 +52,12 @@ function makeCacheId(tag, releaseId, sha256) {
   return `release-${safeTag}-${releaseId}-${sha256}`;
 }
 
-function createReleaseManager({ workspaceDir, request = https.request, requestTimeoutMs = 20000 } = {}) {
+function createReleaseManager({
+  workspaceDir,
+  request = https.request,
+  requestTimeoutMs = 20000,
+  securityToken
+} = {}) {
   if (!workspaceDir) throw new Error('workspaceDir is required');
   const workspace = path.resolve(workspaceDir);
   const downloadsDir = path.join(workspace, 'downloads');
@@ -98,9 +104,15 @@ function createReleaseManager({ workspaceDir, request = https.request, requestTi
     return new Promise((resolve, reject) => {
       let req;
       try {
-        req = request(url, {
+        // Explicitly enforce rejectUnauthorized: true on HTTPS requests so host
+        // NODE_TLS_REJECT_UNAUTHORIZED=0 cannot weaken GitHub TLS verification [C-09].
+        const requestOptions = {
           headers: { 'User-Agent': USER_AGENT, Accept: isApi ? 'application/vnd.github+json' : 'application/octet-stream' }
-        }, res => {
+        };
+        if (url.protocol === 'https:') {
+          requestOptions.rejectUnauthorized = true;
+        }
+        req = request(url, requestOptions, res => {
           const code = res.statusCode || 0;
           if ([301, 302, 303, 307, 308].includes(code)) {
             res.on('error', () => {});
@@ -185,35 +197,15 @@ function createReleaseManager({ workspaceDir, request = https.request, requestTi
     catch (error) { listCache.delete(page); throw error; }
   }
 
-  function checkOrigin(req) {
-    const origin = req.headers.origin;
-    if (!origin) return;
-    try {
-      const own = new URL(`${req.socket.encrypted ? 'https' : 'http'}://${req.headers.host}`);
-      const supplied = new URL(origin);
-      const local = new Set(['localhost', '127.0.0.1', '[::1]']);
-      if (local.has(own.hostname) && supplied.origin === own.origin) return;
-    } catch (_) {}
-    throw fail('下载缓存操作只允许来自本机同源控制中心', 403);
+  function checkOrigin(req, isStateChanging = false) {
+    verifySameOriginAndToken(req, {
+      securityToken,
+      requireToken: isStateChanging && Boolean(securityToken)
+    });
   }
 
   async function readBody(req) {
-    if (!/^application\/json(?:\s*;|$)/i.test(req.headers['content-type'] || '')) {
-      throw fail('请求必须使用 application/json', 415);
-    }
-    if (Number(req.headers['content-length']) > 16384) throw fail('请求正文过大', 413);
-    const chunks = [];
-    let size = 0;
-    for await (const chunk of req) {
-      size += chunk.length;
-      if (size > 16384) throw fail('请求正文过大', 413);
-      chunks.push(chunk);
-    }
-    try {
-      const parsed = JSON.parse(Buffer.concat(chunks).toString('utf8'));
-      if (!parsed || typeof parsed !== 'object' || Array.isArray(parsed)) throw new Error();
-      return parsed;
-    } catch (_) { throw fail('请求正文必须是有效 JSON 对象', 400); }
+    return readJsonBody(req, { maxBytes: 16384, allowEmpty: false });
   }
 
   function controlledPath(cacheId) {
@@ -437,13 +429,15 @@ function createReleaseManager({ workspaceDir, request = https.request, requestTi
     if (!['/api/releases', '/api/release-download', '/api/release-cache'].includes(url.pathname)) return false;
     void (async () => {
       if (url.pathname === '/api/releases' && req.method === 'GET') {
+        checkOrigin(req, false);
         const page = Number(url.searchParams.get('page') || '1');
         if (!Number.isSafeInteger(page) || page < 1 || page > 1000) throw fail('page 必须是 1 到 1000 的整数', 400);
         send(res, 200, await listReleases(page));
       } else if (url.pathname === '/api/release-download' && req.method === 'GET') {
+        checkOrigin(req, false);
         send(res, 200, { success: true, download });
       } else if (url.pathname === '/api/release-download' && req.method === 'POST') {
-        checkOrigin(req);
+        checkOrigin(req, true);
         const { releaseId } = await readBody(req);
         if (!Number.isSafeInteger(releaseId) || releaseId <= 0) throw fail('releaseId 必须是正整数', 400);
         if (download.status === 'downloading' || writeBusy) throw fail('已有下载、安装或缓存操作正在进行，请等待完成', 409);
@@ -452,9 +446,10 @@ function createReleaseManager({ workspaceDir, request = https.request, requestTi
         send(res, 202, { success: true, download });
         void downloadRelease(releaseId);
       } else if (url.pathname === '/api/release-cache' && req.method === 'GET') {
+        checkOrigin(req, false);
         send(res, 200, { success: true, files: await listFiles() });
       } else if (url.pathname === '/api/release-cache' && req.method === 'DELETE') {
-        checkOrigin(req);
+        checkOrigin(req, true);
         const { cacheId } = await readBody(req);
         if (download.status === 'downloading' || writeBusy) throw fail('已有下载、安装或缓存操作正在进行，暂时不能删除缓存', 409);
         // Reserve the writer before the first filesystem await, so a concurrent

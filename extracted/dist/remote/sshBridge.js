@@ -21,7 +21,7 @@ exports.SSH_INTENT_CHANNEL = 'ssh:intent';
 /** Same as sshDestination.ts's limit. */
 const MAX_HOST_INPUT = 1024;
 const MAX_CONFIG_FILE_INPUT = 4096;
-const BAD_CONFIG_FILE = 'The SSH config file must be a path of at most 4 KiB.';
+const BAD_CONFIG_FILE = 'SSH 配置文件路径长度不得超过 4 KiB。';
 /** The page's `{configFile}` (null means none); undefined if it isn't one. */
 function configFileOption(options) {
     const value = typeof options === 'object' && options !== null && 'configFile' in options
@@ -34,6 +34,20 @@ function configFileOption(options) {
         Buffer.byteLength(value) <= MAX_CONFIG_FILE_INPUT
         ? { configFile: value }
         : undefined;
+}
+/** The page's `{host, configFile?}`; throws if it isn't one. */
+function hostEntryOf(entry) {
+    const host = typeof entry === 'object' && entry !== null && 'host' in entry
+        ? entry.host
+        : undefined;
+    const file = configFileOption(entry);
+    if (typeof host !== 'string' ||
+        host === '' ||
+        host.length > MAX_HOST_INPUT ||
+        !file) {
+        throw new Error('Invalid SSH host entry');
+    }
+    return { host, ...file };
 }
 function parseConnectOptions(options) {
     if (typeof options !== 'object' || options === null) {
@@ -79,6 +93,10 @@ function registerSshBridgeIpc(backend) {
         }
         return backend.listHosts(file);
     });
+    electron_1.ipcMain.handle('ssh:forget-recent-host', (event, entry) => {
+        localOnly('ssh:forget-recent-host', event);
+        return backend.forgetRecentHost(hostEntryOf(entry));
+    });
     electron_1.ipcMain.handle('ssh:choose-config-file', (event) => {
         localOnly('ssh:choose-config-file', event);
         return backend.chooseConfigFile(event.sender);
@@ -89,7 +107,7 @@ function registerSshBridgeIpc(backend) {
             return {
                 ok: false,
                 code: 'INVALID_DESTINATION',
-                message: 'Enter an SSH host, for example "devbox" or "user@host".',
+                message: '请输入 SSH 主机，例如 "devbox" 或 "user@host"。',
             };
         }
         const file = configFileOption(options);

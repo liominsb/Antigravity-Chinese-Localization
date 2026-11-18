@@ -1,6 +1,6 @@
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
-exports.wcvBrowserRegistry = exports.WcvBrowserRegistry = exports.MAX_WCV_SELECTION_CONSOLE_MESSAGE_LENGTH = exports.MAX_WCV_CONSOLE_SOURCE_ID_LENGTH = exports.MAX_WCV_CONSOLE_MESSAGE_LENGTH = exports.NO_DRAG_USER_CSS = exports.WCV_GUEST_EVENT_CHANNEL = exports.DEFAULT_HIDDEN_WCV_BOUNDS = exports.DEFAULT_LOAD_SETTLED_REVEAL_TIMEOUT_MS = exports.FALLBACK_HIDDEN_WCV_MEMORY_BYTES = exports.DEFAULT_HIDDEN_WCV_MEMORY_BUDGET_BYTES = exports.DEFAULT_MIN_HIDDEN_WCV_TABS = exports.MAX_HIDDEN_WCV_TABS = void 0;
+exports.wcvBrowserRegistry = exports.WcvBrowserRegistry = exports.WCV_STOP_FIND_ACTIONS = exports.MAX_WCV_FIND_TEXT_LENGTH = exports.MAX_WCV_SELECTION_CONSOLE_MESSAGE_LENGTH = exports.MAX_WCV_CONSOLE_SOURCE_ID_LENGTH = exports.MAX_WCV_CONSOLE_MESSAGE_LENGTH = exports.NO_DRAG_USER_CSS = exports.WCV_GUEST_EVENT_CHANNEL = exports.DEFAULT_HIDDEN_WCV_BOUNDS = exports.SLOT_TRANSITION_RELEASE_TIMEOUT_MS = exports.DEFAULT_LOAD_SETTLED_REVEAL_TIMEOUT_MS = exports.FALLBACK_HIDDEN_WCV_MEMORY_BYTES = exports.DEFAULT_HIDDEN_WCV_MEMORY_BUDGET_BYTES = exports.DEFAULT_MIN_HIDDEN_WCV_TABS = exports.MAX_HIDDEN_WCV_TABS = void 0;
 exports.computeGuestMemoryBytesByWebContentsId = computeGuestMemoryBytesByWebContentsId;
 exports.normalizeWcvConsoleMessageEvent = normalizeWcvConsoleMessageEvent;
 exports.isWcvGuestAgentActive = isWcvGuestAgentActive;
@@ -21,6 +21,8 @@ exports.DEFAULT_MIN_HIDDEN_WCV_TABS = 3;
 exports.DEFAULT_HIDDEN_WCV_MEMORY_BUDGET_BYTES = 2 * 1024 * 1024 * 1024;
 exports.FALLBACK_HIDDEN_WCV_MEMORY_BYTES = 50 * 1024 * 1024;
 exports.DEFAULT_LOAD_SETTLED_REVEAL_TIMEOUT_MS = 500;
+/** Releases a slide hold this long after the last transitioning update. */
+exports.SLOT_TRANSITION_RELEASE_TIMEOUT_MS = 1000;
 /**
  * Computes physical working-set memory in bytes per guest `webContentsId` from
  * Electron `app.getAppMetrics()` (`workingSetSize` is reported in KB), dividing
@@ -187,6 +189,23 @@ function normalizeWcvConsoleMessageEvent(details, legacyArgs = []) {
         sourceId,
     };
 }
+exports.MAX_WCV_FIND_TEXT_LENGTH = 1000;
+const MAX_TRACKED_FIND_TOKENS_PER_TAB = 64;
+exports.WCV_STOP_FIND_ACTIONS = [
+    'clearSelection',
+    'keepSelection',
+    'activateSelection',
+];
+/**
+ * Clamps a content size to a non-empty clip, allowing 1 extra DIP because the
+ * clip's edges and the content size round separately at fractional zoom.
+ */
+function clampContentToClip(size, clip) {
+    return {
+        width: Math.min(size.width, clip.width + 1),
+        height: Math.min(size.height, clip.height + 1),
+    };
+}
 /**
  * Drops history entries the guest may not navigate to (the same checks a fresh
  * `loadURL` gets) and re-points `index` at the active entry. Returns undefined
@@ -292,6 +311,8 @@ class WcvBrowserRegistry {
         this.tabAcquiredListeners = new Set();
         this.clipVisibilityListeners = new Set();
         this.windowSlotBounds = new WeakMap();
+        this.findTokensByEntry = new WeakMap();
+        this.inFlightFindTokenByEntry = new WeakMap();
     }
     getVisibleEntryForWindow(win) {
         const isVis = (e) => Boolean(e &&
@@ -335,6 +356,18 @@ class WcvBrowserRegistry {
     isClipEntryRevealReady(entry) {
         return this.canHoldClipTarget(entry) && Boolean(entry.clipRevealReady);
     }
+    /**
+     * Whether a visible tab in a clip window needs `hubWcv` see-through: it has
+     * a non-empty clip, is mid-slide, or is in HTML fullscreen. A tab left at a
+     * zero-size clip after its slide ends shows nothing, so `hubWcv` can be
+     * opaque even before the renderer hides it.
+     */
+    hasClipSurface(entry) {
+        const b = entry.boundsDip;
+        return Boolean(entry.htmlFullscreen ||
+            entry.isSlotTransitioning ||
+            (b && b.width > 0 && b.height > 0));
+    }
     isClipEntryRevealed(entry) {
         const win = entry.parentWindow;
         if (!(0, utils_1.getHubClipView)(win) ||
@@ -346,6 +379,39 @@ class WcvBrowserRegistry {
         }
         const b = entry.boundsDip;
         return Boolean(entry.htmlFullscreen || (b && b.width > 0 && b.height > 0));
+    }
+    clearSlotTransitionTimer(entry) {
+        if (entry.slotTransitionTimer !== undefined) {
+            clearTimeout(entry.slotTransitionTimer);
+            entry.slotTransitionTimer = undefined;
+        }
+    }
+    /**
+     * Restarts the timer that ends `entry`'s slide hold if the renderer stops
+     * sending frames without a final non-transitioning update.
+     */
+    armSlotTransitionTimer(entry) {
+        this.clearSlotTransitionTimer(entry);
+        entry.slotTransitionTimer = setTimeout(() => {
+            entry.slotTransitionTimer = undefined;
+            const win = entry.parentWindow;
+            if (this.entries.get(entry.tabKey) !== entry ||
+                !entry.isSlotTransitioning ||
+                entry.view.webContents.isDestroyed()) {
+                return;
+            }
+            entry.isSlotTransitioning = false;
+            const b = entry.boundsDip;
+            if (entry.contentSizeDip && b && b.width > 0 && b.height > 0) {
+                entry.contentSizeDip = clampContentToClip(entry.contentSizeDip, b);
+            }
+            if ((0, utils_1.getHubClipView)(win) &&
+                !win.isDestroyed?.() &&
+                this.getVisibleEntryForWindow(win) === entry) {
+                this.syncWindowClipAndEntryBounds(win);
+                this.notifyClipVisibilityChanged(win, 'slot-transition-timeout');
+            }
+        }, exports.SLOT_TRANSITION_RELEASE_TIMEOUT_MS);
     }
     clearClipRevealTimer(entry) {
         if (entry.clipRevealTimer !== undefined) {
@@ -414,8 +480,12 @@ class WcvBrowserRegistry {
      * Synchronizes `clipView` and inner guest `WebContentsView` bounds for `win`;
      * holds `appliedBoundsDip` steady while `isAgentStepActive` is true (preserving
      * screenshot-to-CDP coordinate correspondence) until `setAgentStepActive` clears.
+     * While a slide is in flight on an already-revealed tab, the guest never
+     * shrinks below its applied size, so it lays out at most once per slide;
+     * `bypassTransitionRatchet` skips that hold when the window had no visible
+     * clip area, so an opening slide sizes the guest to its target on frame 0.
      */
-    syncWindowClipAndEntryBounds(win) {
+    syncWindowClipAndEntryBounds(win, bypassTransitionRatchet = false) {
         const clipView = (0, utils_1.getHubClipView)(win);
         if (!win || win.isDestroyed?.() || !clipView) {
             return;
@@ -435,7 +505,26 @@ class WcvBrowserRegistry {
         const fs = active.htmlFullscreen
             ? this.resolveFullscreenBounds(active)
             : undefined;
-        const targetInnerSize = fs ?? this.resolveInnerSlotSize(win, b);
+        const baseDesired = this.resolveInnerSlotSize(win, active.contentSizeDip ?? b);
+        // Never lay the guest out narrower or shorter than the clip, which can be
+        // 1 DIP larger than the rounded content size at fractional zoom.
+        const desired = fs ?? {
+            width: Math.max(baseDesired.width, b?.width ?? 0),
+            height: Math.max(baseDesired.height, b?.height ?? 0),
+        };
+        const shouldRatchet = Boolean(!fs &&
+            !bypassTransitionRatchet &&
+            active.isSlotTransitioning &&
+            active.shownInVisibleClip &&
+            active.appliedBoundsDip &&
+            active.appliedBoundsDip.width > 0 &&
+            active.appliedBoundsDip.height > 0);
+        const targetInnerSize = shouldRatchet
+            ? {
+                width: Math.max(active.appliedBoundsDip.width, desired.width),
+                height: Math.max(active.appliedBoundsDip.height, desired.height),
+            }
+            : desired;
         const deferAgentResize = Boolean(active.isAgentStepActive &&
             !fs &&
             active.appliedBoundsDip &&
@@ -540,6 +629,7 @@ class WcvBrowserRegistry {
                 }
                 existing.boundsDip = undefined;
                 existing.appliedBoundsDip = undefined;
+                existing.contentSizeDip = undefined;
                 existing.shownInVisibleClip = false;
                 if (hadOldClip && !(0, utils_1.getHubClipView)(parentWindow)) {
                     existing.view.setVisible?.(true);
@@ -721,9 +811,10 @@ class WcvBrowserRegistry {
         }
         return this.toSnapshot(entry);
     }
-    show(tabKey, boundsDip, parentWindow) {
+    show(tabKey, boundsDip, parentWindow, optionsDip) {
         const entry = this.entries.get(tabKey);
         const targetWindow = entry?.parentWindow ?? parentWindow;
+        const prevWindowHasClipArea = targetWindow !== undefined && this.windowHasClipArea(targetWindow);
         if (targetWindow) {
             this.activeRequestedTabByWindow.set(targetWindow, tabKey);
         }
@@ -738,10 +829,6 @@ class WcvBrowserRegistry {
         }
         entry.visible = true;
         entry.lastShownAt = this.now();
-        // The tab shows through the Hub UI's hole, so `hubWcv` must be see-through
-        // before the tab is placed; `reconcileWindow` makes it opaque again once
-        // no tab on the window is visible.
-        (0, utils_1.setHubSurfaceTransparent)(entry.parentWindow, true);
         entry.view.webContents.setAudioMuted?.(this.userMutedTabs.has(tabKey));
         const clipView = (0, utils_1.getHubClipView)(entry.parentWindow);
         if (clipView) {
@@ -752,12 +839,19 @@ class WcvBrowserRegistry {
                 entry.view.setVisible?.(false);
                 clipView.addChildView?.(entry.view, 0);
             }
-            this.recordNormalizedBoundsDip(entry, boundsDip);
+            this.recordNormalizedBoundsDip(entry, boundsDip, optionsDip);
+            // The tab shows through the Hub UI's hole, so `hubWcv` must be
+            // see-through before the tab is placed; `reconcileWindow` makes it
+            // opaque again once no tab on the window has a surface.
+            if (this.hasClipSurface(entry)) {
+                (0, utils_1.setHubSurfaceTransparent)(entry.parentWindow, true);
+            }
             this.detachVisibleSiblings(entry.parentWindow, entry);
             this.armClipRevealTimerIfNeeded(entry);
-            this.syncWindowClipAndEntryBounds(entry.parentWindow);
+            this.syncWindowClipAndEntryBounds(entry.parentWindow, !prevWindowHasClipArea);
             return this.toSnapshot(entry);
         }
+        (0, utils_1.setHubSurfaceTransparent)(entry.parentWindow, true);
         const contentView = contentViewOf(entry.parentWindow);
         const hubView = (0, utils_1.getHubView)(entry.parentWindow);
         const children = contentView?.children;
@@ -866,7 +960,7 @@ class WcvBrowserRegistry {
             this.syncWindowClipAndEntryBounds(parentWindow);
         }
     }
-    async rehydrateEvictedAndShow(parentWindow, hubSender, tabKey, boundsDip) {
+    async rehydrateEvictedAndShow(parentWindow, hubSender, tabKey, boundsDip, optionsDip) {
         if (!this.hasEvicted(tabKey, hubSender.id)) {
             return null;
         }
@@ -898,7 +992,9 @@ class WcvBrowserRegistry {
             }
             return null;
         }
-        return this.show(tabKey, boundsDip, parentWindow);
+        return optionsDip !== undefined
+            ? this.show(tabKey, boundsDip, parentWindow, optionsDip)
+            : this.show(tabKey, boundsDip, parentWindow);
     }
     hide(tabKey) {
         this.mutate(tabKey, (entry) => {
@@ -908,7 +1004,12 @@ class WcvBrowserRegistry {
             this.detachView(entry);
         });
     }
-    recordNormalizedBoundsDip(entry, bounds) {
+    /** Whether the tab visible in `win` currently has a non-zero clip area. */
+    windowHasClipArea(win) {
+        const b = this.getVisibleEntryForWindow(win)?.boundsDip;
+        return Boolean(b && b.width > 0 && b.height > 0);
+    }
+    recordNormalizedBoundsDip(entry, bounds, optionsDip) {
         const collapsed = !(typeof bounds.width === 'number' && Math.round(bounds.width) > 0) ||
             !(typeof bounds.height === 'number' && Math.round(bounds.height) > 0);
         if (collapsed &&
@@ -932,24 +1033,54 @@ class WcvBrowserRegistry {
             height: Math.max(0, round(bounds.height)),
         };
         entry.boundsDip = nextBounds;
-        if (nextBounds.width > 0 && nextBounds.height > 0) {
-            const win = entry.parentWindow;
-            const clipView = (0, utils_1.getHubClipView)(win);
-            if (!clipView) {
+        const win = entry.parentWindow;
+        if (!(0, utils_1.getHubClipView)(win)) {
+            if (nextBounds.width > 0 && nextBounds.height > 0) {
                 entry.lastNonZeroSize = {
                     width: nextBounds.width,
                     height: nextBounds.height,
                 };
             }
-            else if (entry.visible ||
+            return nextBounds;
+        }
+        const transitioning = Boolean(optionsDip?.isTransitioning);
+        entry.isSlotTransitioning = transitioning;
+        if (transitioning) {
+            this.armSlotTransitionTimer(entry);
+        }
+        else {
+            this.clearSlotTransitionTimer(entry);
+        }
+        const cw = round(optionsDip?.contentWidth);
+        const ch = round(optionsDip?.contentHeight);
+        let size = {
+            width: cw > 0 ? cw : nextBounds.width,
+            height: ch > 0 ? ch : nextBounds.height,
+        };
+        // Outside a slide, a stale content hint must not leave the page wider
+        // than its pane. A zero-area clip keeps the size to reopen at.
+        if (!transitioning && nextBounds.width > 0 && nextBounds.height > 0) {
+            size = clampContentToClip(size, nextBounds);
+        }
+        const { width, height } = size;
+        if (width > 0 && height > 0) {
+            entry.contentSizeDip = { width, height };
+            // Record the content size rather than the clip, so a closing sliver
+            // never becomes the default size for newly acquired tabs.
+            if (entry.visible ||
                 !this.getVisibleEntryForWindow(win) ||
                 !this.windowSlotBounds.has(win)) {
-                this.windowSlotBounds.set(win, { ...nextBounds });
+                this.windowSlotBounds.set(win, {
+                    x: nextBounds.x,
+                    y: nextBounds.y,
+                    width,
+                    height,
+                });
             }
         }
         return nextBounds;
     }
-    setBounds(tabKey, bounds) {
+    setBounds(tabKey, bounds, optionsDip) {
         const entry = this.entries.get(tabKey);
         if (!entry) {
             return;
@@ -957,15 +1088,20 @@ class WcvBrowserRegistry {
         const win = entry.parentWindow;
         const hasClip = Boolean((0, utils_1.getHubClipView)(win));
         const prevRevealed = hasClip && this.isClipEntryRevealed(entry);
-        const nextBounds = this.recordNormalizedBoundsDip(entry, bounds);
+        const prevSurface = hasClip && this.hasClipSurface(entry);
+        const prevWindowHasClipArea = hasClip && this.windowHasClipArea(win);
+        const nextBounds = this.recordNormalizedBoundsDip(entry, bounds, optionsDip);
         if (hasClip) {
             const hasArea = nextBounds.width > 0 && nextBounds.height > 0;
             if (entry.visible || (hasArea && !this.getVisibleEntryForWindow(win))) {
                 if (entry.visible && hasArea) {
                     this.armClipRevealTimerIfNeeded(entry);
                 }
-                this.syncWindowClipAndEntryBounds(win);
-                if (this.isClipEntryRevealed(entry) !== prevRevealed) {
+                this.syncWindowClipAndEntryBounds(win, !prevWindowHasClipArea);
+                // A zero-size settle leaves the tab unrevealed on both sides, so also
+                // reconcile when its surface (and so `hubWcv` transparency) changes.
+                if (this.isClipEntryRevealed(entry) !== prevRevealed ||
+                    this.hasClipSurface(entry) !== prevSurface) {
                     this.notifyClipVisibilityChanged(win, 'bounds-changed');
                 }
             }
@@ -995,6 +1131,9 @@ class WcvBrowserRegistry {
         }
         this.mutate(tabKey, (entry) => {
             entry.isAgentStepActive = active;
+            if (active) {
+                (0, guestAgentControl_1.notifyGuestAgentControlArmed)(entry.webContentsId);
+            }
             if (active && entry.htmlFullscreen) {
                 this.clearHtmlFullscreen(entry, true);
             }
@@ -1068,6 +1207,82 @@ class WcvBrowserRegistry {
         return fn(url);
     }
     /**
+     * Whether `tabKey` has run a find session since its last stop, navigation, or
+     * crash, so its page may still show find highlights.
+     */
+    hasActiveFind(tabKey) {
+        const entry = this.entries.get(tabKey);
+        return Boolean(entry && this.findTokensByEntry.has(entry));
+    }
+    clearFindTokens(entry) {
+        this.findTokensByEntry.delete(entry);
+        this.inFlightFindTokenByEntry.delete(entry);
+    }
+    /**
+     * Starts or steps a guest find-in-page session for `tabKey` and records its
+     * caller `token` against Electron's returned request ID. No-ops while the
+     * guest is under agent control.
+     */
+    find(tabKey, text, options, token) {
+        const entry = this.entries.get(tabKey);
+        if (!entry ||
+            entry.crashed ||
+            entry.isAgentStepActive ||
+            (0, guestAgentControl_1.isGuestAgentControlled)(entry.webContentsId) ||
+            entry.view.webContents.isDestroyed()) {
+            return;
+        }
+        const wc = entry.view.webContents;
+        if (typeof wc.findInPage !== 'function') {
+            return;
+        }
+        let tokens = this.findTokensByEntry.get(entry);
+        if (!tokens) {
+            tokens = new Map();
+            this.findTokensByEntry.set(entry, tokens);
+        }
+        this.inFlightFindTokenByEntry.set(entry, token);
+        let chromeRequestId;
+        let stillActive = false;
+        try {
+            chromeRequestId = wc.findInPage(text, {
+                forward: options.forward,
+                findNext: options.findNext,
+                matchCase: options.matchCase,
+            });
+            stillActive = this.inFlightFindTokenByEntry.get(entry) === token;
+        }
+        finally {
+            this.inFlightFindTokenByEntry.delete(entry);
+        }
+        if (stillActive &&
+            typeof chromeRequestId === 'number' &&
+            Number.isFinite(chromeRequestId)) {
+            if (!tokens.has(chromeRequestId) &&
+                tokens.size >= MAX_TRACKED_FIND_TOKENS_PER_TAB) {
+                const oldestKey = tokens.keys().next().value;
+                if (oldestKey !== undefined) {
+                    tokens.delete(oldestKey);
+                }
+            }
+            tokens.set(chromeRequestId, token);
+        }
+    }
+    /**
+     * Stops any active guest find-in-page session on `tabKey` and clears pending
+     * request-ID mappings, regardless of whether an agent step is active.
+     */
+    stopFind(tabKey, action) {
+        const entry = this.entries.get(tabKey);
+        if (!entry) {
+            return;
+        }
+        this.clearFindTokens(entry);
+        if (!entry.crashed && !entry.view.webContents.isDestroyed()) {
+            entry.view.webContents.stopFindInPage?.(action);
+        }
+    }
+    /**
      * Records an explicit caller-initiated navigation for `tabKey` so an
      * in-flight `acquire()` awaiting `configureProxy` will not overwrite it with
      * an `about:blank` bootstrap or stale `initialUrl`.
@@ -1077,6 +1292,7 @@ class WcvBrowserRegistry {
         if (!entry) {
             return;
         }
+        this.clearFindTokens(entry);
         this.externallyNavigatedEntries.add(entry);
         if (url && url !== 'about:blank') {
             entry.lastUrl = url;
@@ -1118,7 +1334,9 @@ class WcvBrowserRegistry {
         if (!entry) {
             return;
         }
+        this.clearFindTokens(entry);
         this.clearClipRevealTimer(entry);
+        this.clearSlotTransitionTimer(entry);
         const ownerWindow = entry.parentWindow;
         const clipView = (0, utils_1.getHubClipView)(ownerWindow);
         if (clipView) {
@@ -1164,6 +1382,10 @@ class WcvBrowserRegistry {
     }
     getEntry(tabKey) {
         return this.entries.get(tabKey);
+    }
+    /** Returns the registered tab whose guest is `webContentsId`, if any. */
+    getEntryByWebContentsId(webContentsId) {
+        return this.byWebContentsId.get(webContentsId);
     }
     getEntriesForWindow(win) {
         const result = [];
@@ -1307,7 +1529,7 @@ class WcvBrowserRegistry {
                     !entry.visible &&
                     Array.isArray(clipView.children) &&
                     clipView.children.includes(entry.view)) {
-                    this.applyClipInnerBounds(entry, this.resolveInnerSlotSize(entry.parentWindow, entry.boundsDip));
+                    this.applyClipInnerBounds(entry, this.resolveInnerSlotSize(entry.parentWindow, entry.contentSizeDip ?? entry.boundsDip));
                 }
                 this.syncWindowClipAndEntryBounds(entry.parentWindow);
             }
@@ -1355,6 +1577,8 @@ class WcvBrowserRegistry {
     }
     parkHiddenView(entry) {
         entry.visible = false;
+        entry.isSlotTransitioning = false;
+        this.clearSlotTransitionTimer(entry);
         const win = entry.parentWindow;
         const clipView = (0, utils_1.getHubClipView)(win);
         if (clipView) {
@@ -1560,6 +1784,7 @@ class WcvBrowserRegistry {
             emit('did-stop-loading');
         });
         on('did-navigate', (_event, url, httpResponseCode, httpStatusText) => {
+            this.clearFindTokens(entry);
             const hadErrorOrCrash = Boolean(entry.crashed || entry.lastLoadError);
             if (!url?.startsWith('chrome-error://')) {
                 entry.crashed = false;
@@ -1632,6 +1857,34 @@ class WcvBrowserRegistry {
             this.clearHtmlFullscreen(entry, false);
         });
         on('context-menu', (_event, params) => emit('context-menu', { params }));
+        on('found-in-page', (_event, rawResult) => {
+            if (entry.isAgentStepActive ||
+                (0, guestAgentControl_1.isGuestAgentControlled)(entry.webContentsId) ||
+                !rawResult ||
+                typeof rawResult !== 'object' ||
+                typeof rawResult.requestId !== 'number' ||
+                !Number.isFinite(rawResult.requestId)) {
+                return;
+            }
+            const token = this.findTokensByEntry.get(entry)?.get(rawResult.requestId) ??
+                this.inFlightFindTokenByEntry.get(entry);
+            if (token === undefined) {
+                return;
+            }
+            const result = {
+                requestId: token,
+                activeMatchOrdinal: typeof rawResult.activeMatchOrdinal === 'number' &&
+                    Number.isFinite(rawResult.activeMatchOrdinal)
+                    ? rawResult.activeMatchOrdinal
+                    : 0,
+                matches: typeof rawResult.matches === 'number' &&
+                    Number.isFinite(rawResult.matches)
+                    ? rawResult.matches
+                    : 0,
+                finalUpdate: Boolean(rawResult.finalUpdate),
+            };
+            emit('found-in-page', { result });
+        });
         on('console-message', (details, ...legacyArgs) => {
             const normalized = normalizeWcvConsoleMessageEvent(details, legacyArgs);
             if (normalized) {
@@ -1653,6 +1906,7 @@ class WcvBrowserRegistry {
             }
         });
         on('render-process-gone', (_e, details) => {
+            this.clearFindTokens(entry);
             entry.crashed = true;
             if ((0, utils_1.getHubClipView)(entry.parentWindow)) {
                 entry.shownInVisibleClip = false;
@@ -1661,7 +1915,9 @@ class WcvBrowserRegistry {
             emit('render-process-gone', { reason: details?.reason ?? 'crashed' });
         });
         wc.once?.('destroyed', () => {
+            this.clearFindTokens(entry);
             this.clearClipRevealTimer(entry);
+            this.clearSlotTransitionTimer(entry);
             guestWebMcpController_1.guestWebMcpController.noteGuestDisposed(entry.webContentsId);
             this.byWebContentsId.delete(entry.webContentsId);
             const isCurrent = this.entries.get(entry.tabKey) === entry;

@@ -4,9 +4,9 @@ exports.REMOTE_IPC_CHANNELS = void 0;
 /**
  * The IPC invoke channels SSH windows may use: the ones the bridges of their
  * preload invoke (nativeNotifications, nativeStorage, agent, extensions,
- * sshRemote and part of electronNative). Content in SSH windows is served by the remote host, so
- * the main process refuses it every other channel registered by
- * registerIpcHandlers.
+ * sshRemote, and parts of electronNative and desktopMic). Content in SSH
+ * windows is served by the remote host, so the main process refuses it every
+ * other channel registered by registerIpcHandlers.
  *
  * A sandboxed preload can't import this module: the preload repeats them.
  */
@@ -36,6 +36,10 @@ exports.REMOTE_IPC_CHANNELS = new Set([
     'shell:open-external',
     // extensions: refreshes the host's own plugin:// map (remoteSidecars.ts)
     'extensions:send-authorities',
+    // desktopMic, read-only: the OS mic status, and its fixed settings page
+    // while the window is focused (not mic:request-access, the OS prompt)
+    'mic:get-access-status',
+    'mic:open-system-preferences',
     // window.sshRemote (sshBridge.ts checks these senders itself)
     'ssh:get-state',
     'ssh:open-local-window',

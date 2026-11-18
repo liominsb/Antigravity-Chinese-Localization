@@ -56,11 +56,21 @@ var MenuUpdateStep;
     MenuUpdateStep["DownloadingUpdate"] = "Downloading Update...";
     MenuUpdateStep["RestartToUpdate"] = "Restart to Update";
 })(MenuUpdateStep || (exports.MenuUpdateStep = MenuUpdateStep = {}));
+const MENU_UPDATE_STEP_LABELS = {
+    [MenuUpdateStep.CheckForUpdates]: '检查更新',
+    [MenuUpdateStep.CheckingForUpdates]: '正在检查更新...',
+    [MenuUpdateStep.DownloadingUpdate]: '正在下载更新...',
+    [MenuUpdateStep.RestartToUpdate]: '重启以应用更新',
+};
 exports.updateActions = {
     [MenuUpdateStep.CheckForUpdates]: () => checkForUpdates(true),
+    '检查更新': () => checkForUpdates(true),
     [MenuUpdateStep.CheckingForUpdates]: undefined,
+    '正在检查更新...': undefined,
     [MenuUpdateStep.DownloadingUpdate]: undefined,
+    '正在下载更新...': undefined,
     [MenuUpdateStep.RestartToUpdate]: () => quitAndInstall(),
+    '重启以应用更新': () => quitAndInstall(),
 };
 // True if the last call to check for updates was from a user click in the menu.
 let isManualCheck = false;
@@ -131,7 +141,7 @@ function updateMenuState(step) {
     if (menu) {
         const item = menu.getMenuItemById('check-for-updates');
         if (item) {
-            item.label = step;
+            item.label = (typeof MENU_UPDATE_STEP_LABELS !== 'undefined' && MENU_UPDATE_STEP_LABELS[step]) || step;
             item.enabled = exports.updateActions[step] !== undefined;
         }
     }

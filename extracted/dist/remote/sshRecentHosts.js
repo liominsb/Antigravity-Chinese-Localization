@@ -91,9 +91,27 @@ class RecentSshHosts {
         }));
     }
     remember(label, configFile) {
+        const entry = configFile === undefined ? { host: label } : { host: label, configFile };
+        // Errors are only logged: a connect mustn't fail for its recent entry.
+        this.update((recent) => [entry, ...recent]).catch((err) => main_1.default.warn('[SSH] Could not save the recent hosts:', err));
+    }
+    /**
+     * Forgets the entry for `host` and `configFile` (as list() has them), if
+     * there is one; rejects only if saving fails.
+     */
+    async forget(host, configFile) {
+        const file = configFile ?? null;
+        const isIt = (r) => r.host === host && (r.configFile ?? null) === file;
+        await this.update((recent) => recent.some(isIt) ? recent.filter((r) => !isIt(r)) : null);
+    }
+    /** Saves the recent connections `change` makes of them; null saves none. */
+    update(change) {
         const save = async () => {
-            const entry = configFile === undefined ? { host: label } : { host: label, configFile };
-            const recent = dedupe([entry, ...(await this.read())]);
+            const changed = change(await this.read());
+            if (changed === null) {
+                return;
+            }
+            const recent = dedupe(changed);
             await this.storage.updateItems({
                 [RECENT_KEY]: JSON.stringify(recent),
                 [RECENT_HOSTS_KEY]: JSON.stringify([
@@ -101,11 +119,11 @@ class RecentSshHosts {
                 ]),
             });
         };
-        // Serialized: each reads, then writes back. The catch keeps the chain
-        // going after a failed save.
-        this.saving = this.saving
-            .then(save)
-            .catch((err) => main_1.default.warn('[SSH] Could not save the recent hosts:', err));
+        // Serialized: each reads, then writes back. The chain goes on after a
+        // failed save; the caller gets its own save's result.
+        const saved = this.saving.then(save);
+        this.saving = saved.catch(() => { });
+        return saved;
     }
 }
 exports.RecentSshHosts = RecentSshHosts;

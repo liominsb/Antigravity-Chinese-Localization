@@ -3,7 +3,8 @@ const path = require('path');
 const assert = require('assert');
 
 // 1. 读取当前 localize.js 源码与 extracted/package.json
-const localizeSource = fs.readFileSync(path.join(__dirname, '..', 'localize.js'), 'utf-8');
+const { getCombinedSource, compareSemver } = require('./helpers/translator-loader');
+const localizeSource = getCombinedSource();
 const packageJson = JSON.parse(fs.readFileSync(path.join(__dirname, '..', 'extracted', 'package.json'), 'utf-8'));
 
 let passed = 0;
@@ -27,8 +28,8 @@ console.log('=== 开始 Ticket-09 Antigravity 2.14.0 核心版本与特性专项
 // 1. 版本号校验
 console.log('--- 2.14.0 版本元数据校验 ---');
 const versionMatch = localizeSource.match(/const CURRENT_VERSION = ['"]([^'"]+)['"];/);
-check('localize.js CURRENT_VERSION 版本号有效且 >= 2.14.0', Boolean(versionMatch && versionMatch[1] >= '2.14.0'), true);
-check('extracted/package.json version 有效且 >= 2.14.0', Boolean(packageJson.version && packageJson.version >= '2.14.0'), true);
+check('localize.js CURRENT_VERSION 版本号有效且 >= 2.14.0', Boolean(versionMatch && compareSemver(versionMatch[1], '2.14.0') >= 0), true);
+check('extracted/package.json version 有效且 >= 2.14.0', Boolean(packageJson.version && compareSemver(packageJson.version, '2.14.0') >= 0), true);
 
 // 2. 核心文件完备性
 console.log('\n--- 核心注入文件完备性测试 ---');

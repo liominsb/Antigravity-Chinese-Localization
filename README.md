@@ -9,11 +9,11 @@ Antigravity 深度汉化与高性能本地化补丁程序
 [![GitHub stars](https://img.shields.io/github/stars/antigravity-cn-community/Antigravity-Chinese-Localization?style=flat&color=gold)](https://github.com/antigravity-cn-community/Antigravity-Chinese-Localization/stargazers)
 [![GitHub Discussions](https://img.shields.io/github/discussions/antigravity-cn-community/Antigravity-Chinese-Localization?style=flat&color=purple)](https://github.com/antigravity-cn-community/Antigravity-Chinese-Localization/discussions)
 [![Platform](https://img.shields.io/badge/Platform-Windows%20%7C%20macOS%20%7C%20Linux-blue)](https://github.com/antigravity-cn-community/Antigravity-Chinese-Localization)
-[![Package Size](https://img.shields.io/badge/ASAR%20Size-~6.3%20MB%20(Official%20Slim)-success)](https://github.com/antigravity-cn-community/Antigravity-Chinese-Localization)
+[![Package Size](https://img.shields.io/badge/ASAR%20Size-~7.1%20MB%20(Official%20Slim)-success)](https://github.com/antigravity-cn-community/Antigravity-Chinese-Localization)
 [![Node Runtime](https://img.shields.io/badge/Node.js-%3E%3D%2018.18.0-informational)](https://nodejs.org/)
 [![license](https://img.shields.io/github/license/antigravity-cn-community/Antigravity-Chinese-Localization)](LICENSE)
 
-专为 Google Antigravity 打造的高性能、非破坏性深度汉化补丁，现由开源社区组织 **[`antigravity-cn-community`](https://github.com/antigravity-cn-community/Antigravity-Chinese-Localization)** 联合维护。全面适配 **Antigravity v2.33.0+** 最新架构，深度重构基础算力层与 DOM 调度层，带来百万级吞吐量的极致流畅体验。全量汉化规划模式、系统设置、安全沙盒、Remote SSH 子系统与官方插件生态等数千条核心界面文案，严格对齐官方原生轻量级打包规格（v2.33.0 约 6.2 MB），并对用户打字与代码编辑区实施绝对物理免疫。
+专为 Google Antigravity 打造的高性能、非破坏性深度汉化补丁，现由开源社区组织 **[`antigravity-cn-community`](https://github.com/antigravity-cn-community/Antigravity-Chinese-Localization)** 联合维护。全面适配 **Antigravity v2.33.0+** 最新架构，完成 `src/` 模块化引擎解耦与 DOM 微任务调度重构，带来百万级吞吐量的极致流畅体验。全量汉化规划模式、系统设置、安全沙盒、Remote SSH 远程开发、Computer Use 桌面操控、Gemini Live 9 款语音音色与官方插件组合包（`Bundles`）等 `4,250+` 条核心界面文案，严格对齐官方原生轻量级打包规格（v2.33.0 约 7.08 MB），并对用户打字与代码编辑区实施绝对物理免疫。
 
 > [最新 Release 下载](https://github.com/antigravity-cn-community/Antigravity-Chinese-Localization/releases/latest) · [社区讨论与千星里程碑 (Discussions)](https://github.com/antigravity-cn-community/Antigravity-Chinese-Localization/discussions) · [问题反馈与建议](https://github.com/antigravity-cn-community/Antigravity-Chinese-Localization/issues)
 
@@ -25,29 +25,29 @@ Antigravity 深度汉化与高性能本地化补丁程序
 
 | 核心模块 | 覆盖深度与技术指标 | 汉化范围与业务价值 |
 | :--- | :--- | :--- |
-| **规划模式 (Planning Mode)** | 全生命周期闭环深度汉化 | 覆盖规划模式开关、实施计划 (Implementation Plan)、变更回顾 (Walkthrough)、审批阻断、待确认问题、代码拟定变更及测试验证全套流程。 |
-| **系统设置 (Settings)** | 200+ 设置项全景覆盖 | 汉化外观与配色预设主题（含中英双语配色标识）、对话流宽度自适应、防休眠、后台保活、自动检查更新、权限沙盒与模型配额卡片。 |
-| **安全与权限沙盒 (Permissions)** | 粒度精细化安全策略 | 适配全局权限、云端权限与项目继承架构，汉化终端沙盒、沙盒外命令确认、文件访问策略（允许/询问/拒绝）、网络策略及域名/命令黑白名单。 |
-| **会话分屏、拖拽与多维协作** | 原生菜单 + DOM 级联全覆盖 | 全面覆盖左右侧栏分屏、标签页原生右键菜单（关闭标签/其他/左侧/右侧）、会话派生 (Fork)、分组管理，并修复左侧栏展开状态项目拖拽偏移问题。 |
-| **侧边问答与版本控制 (Side Q & VCS)** | 全场景深度交互适配 | 深度汉化侧边问答系统、自定义分区、Remote SSH 连接生命周期与凭据弹窗、源码控制 Git Amend（追加提交）及悬停卡片。 |
-| **官方插件与远程生态 (Plugins & Remote)** | 全生命周期生态管理 | 深度汉化插件中心全套操作、构件标签（Skills/Rules/MCP/Hooks）、扩展市场生态详情页以及远程控制（Remote Control）跨设备流转弹窗。 |
+| **规划模式与步骤计划 (Planning & Step Plan)** | 全生命周期闭环深度汉化 | 覆盖规划模式开关、实施计划 (Implementation Plan)、变更回顾 (Walkthrough)、Step Plan 步骤进度胶囊、审批阻断及待确认问题全套流程。 |
+| **系统设置、语音与快捷键 (Settings & Voice)** | 250+ 设置项全景覆盖 | 覆盖双语配色主题（含 Nord / Everforest）、`VS Code Default` / `Antigravity (AGY) Style` 双模快捷键方案、Gemini Live 9 款音色与实时语音听写、浏览数据与按站点 Cookie 管理、以及模型配额与 `Orchestrator` 编排卡片。 |
+| **安全与权限沙盒 (Permissions)** | 粒度精细化安全策略 | 适配全局权限、云端权限、GitHub 细粒度权限策略与项目继承架构，汉化终端沙盒、文件访问策略（允许/询问/拒绝）、网络策略及域名/命令黑白名单。 |
+| **Remote SSH 与跨端协同** | 主进程 12 模块 + 前端联动 | 全面汉化 SSH 远程连接、断连/重启过渡页、密码/密钥口令/主机指纹弹窗、共享主目录冲突接管 (`Take Over`)、远程麦克风授权、SSH 配置文件编码/权限诊断及跨设备远程接力。 |
+| **Computer Use 与多维协作** | 原生 HUD + 实时视频流窗格 | 超前覆盖 `v2.33.0` 新增 `Computer Use` 桌面操控悬浮栏 (`hud.js`)、`Agents Live` 实时画面流与暂停接管横幅、`/btw` 侧边提问（含一键插入主对话）、会话分屏派生与侧栏项目拖拽坐标热修复。 |
+| **插件市场与组合包 (Marketplace & Bundles)** | 全生命周期生态管理 | 深度汉化扩展市场精选生态、`Bundles` 插件组合包、第三方/实验性插件安装前源码安全审查弹窗、构件标签（Skills/Rules/MCP/Hooks）及协调器 (`Coordinator`) 与定时自动化向导。 |
 
 ### 2. 专业开发哲学与物理安全装甲 (Ergonomics & Physical Sandbox)
 
 | 核心策略 | 防护机制与实现方案 | 业务价值与开发者保障 |
 | :--- | :--- | :--- |
-| **模型与思考链原生保留** | 100% 保持官方英文原生 | 严格遵循专业开发习惯，模型名称（Gemini 4 / Gemini 3.8 / Claude 等）及思考链（Thinking / Thought 过程）保留原生英文，杜绝机器硬翻引起的认知歧义。 |
-| **编辑器与输入物理免疫** | Shadow DOM 穿透隔离 | 智能免疫 `INPUT`、`TEXTAREA`、富文本输入框、Monaco 代码编辑器、Diff 比对器与用户对话气泡，绝对物理隔离，严禁篡改用户编写的代码与 Prompt。 |
-| **无损备份与一键自愈** | 双向无损瞬时切换 | 首次部署自动生成官方原版 `app.asar.bak`，支持随时通过控制面板「还原英文原版」或直接用备份覆盖 `app.asar`，毫秒级无损还原至官方纯英文状态。 |
+| **模型与思考链原生保留** | 100% 保持官方英文原生 | 严格遵循专业开发习惯，模型名称（Gemini 4 / Orchestrator / Gemini 3.8 / Claude 等）、相对时间（`24m` / `2m ago`）及思考链（Thinking / Thought 过程）保留原生英文，杜绝机器硬翻歧义。 |
+| **编辑器与输入物理免疫** | 叶子节点级 React Fiber 安全 | 智能免疫 `INPUT`、`TEXTAREA`、富文本输入框、Monaco 代码编辑器、Diff 比对器与用户对话气泡；严格仅修改叶子 `TextNode` 而不覆写容器 `Element.textContent`，杜绝破坏 React Fiber 子树。 |
+| **双轨备份与防白屏门禁** | 版本指纹预检 + 原子替换 | 部署前自动校验原版并维护版本匹配的官方备份，跨版本还原自动安全拦截防白屏；连离线批处理也内置了 PowerShell 二进制 ASAR 头解析预检。 |
 
 ### 3. 工业级底层算力与工程工艺 (High-Performance Engine & Engineering)
 
 | 工程维度 | 性能指标与工程标准 | 底层技术实现 |
 | :--- | :--- | :--- |
-| **极致吞吐与高帧率调度** | 吞吐量突破 168 万次/秒 | 采用预编译 $O(1)$ 哈希索引、纯中文 ASCII 极速短路、联合流式正则、DOM 树祖先剪枝与微任务帧聚合调度，全面保障 60fps/120fps 满帧无感运行。 |
-| **轻量打包与标准规格** | 严格对齐官方原生规格（约 6.3 MB） | 使用 `--unpack-dir` 排除外部冗余依赖，彻底消除历史版本 14MB~21MB 的体积膨胀问题，与官方原生分发包规格保持一致。 |
-| **生命周期自愈与热升级** | `injectOrUpdate` 截断更新 | 解决旧版因检测到历史标记而跳过更新的缺陷，无论是全新安装、日常热覆盖还是跨版本升级，均支持热注入与 `Ctrl + R` 瞬时重载自愈。 |
-| **全套 TDD 自动化测试门禁** | 51 组测试套件 ALL GREEN | 覆盖模块化翻译引擎、词典去重基线、原生菜单、AST 语法门禁、回环安全鉴权、文件与进程安全校验及流式发布下载防护，杜绝回归与启动崩溃。 |
+| **极致吞吐与防夹生守卫** | 吞吐量突破 168 万次/秒 | 模块化拆分为 `src/dictionary.js` 与 `src/dom-translator.js`，前置 `O(1)` 哈希精确查找、ASCII 纯中文短路、DOM 祖先剪枝、`queueMicrotask` 帧聚合及 `coreWords` 100% 实词命中防夹生守卫。 |
+| **本机回环安全装甲** | `127.0.0.1` + CSRF 强鉴权 | 控制中心强制绑定 `127.0.0.1`，全接口实施 `Host`/`Origin` 回环校验、单进程一次性 CSRF Token 鉴权、JSON 请求体大小限制与显式 TLS 证书校验。 |
+| **轻量打包与标准规格** | 严格对齐官方原生规格（约 7.08 MB） | 使用 `--unpack-dir` 排除外部解包依赖，彻底消除历史版本体积膨胀问题，与官方原生分发包规格保持一致。 |
+| **全套 TDD 自动化测试门禁** | 51 组测试套件 ALL GREEN | 覆盖模块化翻译引擎、词典零重复基线、主进程功能沙盒、AST 语法门禁、回环安全鉴权、无 Node.js 实机批处理离线桥接及流式发布下载防护。 |
 
 ---
 
@@ -82,10 +82,11 @@ Antigravity 深度汉化与高性能本地化补丁程序
 
 ### 方式一：Windows 用户（脚本与控制中心）
 
-#### 1. 图形化控制中心（推荐）
-1. 下载 Release 发布的 `default.zip`，或直接 clone 仓库 / 下载 GitHub 源码包并解压（仓库已自带 `app.asar.ready`，无需额外准备补丁文件）；
-2. 双击运行目录下的 **`双击运行汉化.bat`**；
-3. 浏览器会自动打开可视化控制中心（`http://localhost:3388`），系统会自动检测安装状态；若检测到官方更新覆盖，会在首页顶部醒目提示并支持一键恢复。
+#### 1. 图形化控制中心（支持无 Node.js 自动离线桥接）
+1. 下载 Release 发布的 **`default.zip`**（或直接 clone 仓库 / 下载源码包），**先完整解压到本地文件夹**（请勿直接在压缩包预览窗口内双击运行；压缩包内已自带 `app.asar.ready`）；
+2. 双击运行目录下的 **`双击运行汉化.bat`**：
+   - **已安装 Node.js 环境**：自动启动本地管理服务并在默认浏览器打开可视化控制中心（`http://127.0.0.1:3388`），支持状态检测、在线拉取历史/最新 Release 补丁、备份去重与一键还原；
+   - **未安装 Node.js 环境（开箱即用）**：自动识别同目录下的 `app.asar.ready`，**无缝切换至【离线安全模式】**直接校验客户端版本并完成安全备份与汉化部署，无需手动折腾运行环境！
 
 控制中心首页显示实际已安装的 `app.asar` 版本，可以直接读取 GitHub Releases，选择最新正式版或历史版本。“仅下载”将文件缓存到本项目的 `downloads/` 目录；“下载并安装”在下载和 SHA-256 校验后，确认安装到配置的目标路径。更新说明和已下载版本默认折叠；路径配置、本地脚本汉化、还原及日志可在“设置与维护”中展开。
 
@@ -94,9 +95,8 @@ Antigravity 深度汉化与高性能本地化补丁程序
 #### 2. 一键快速更新与官方更新恢复（双击即用）
 官方客户端自动更新后会还原为英文原版，此时双击运行 **`一键更新汉化.bat`**：
 - 自动检测 Node.js 环境与客户端实际版本；
-- 具备严格的版本兼容性校验（避免因跨版本强行覆盖造成客户端白屏）；
-- 自动备份原版并原子替换恢复汉化；
-- 若系统无 Node.js 环境，则自动降级为纯批处理保底流程。
+- 具备严格的版本兼容性校验（即使在未安装 Node.js 的离线保底模式下，也会通过内置 PowerShell 二进制解析器校验 ASAR 版本与汉化指纹，彻底防止跨版本覆盖白屏与备份污染）；
+- 自动备份纯净官方原版并原子替换恢复汉化。
 
 #### 3. 命令行极速部署与静默恢复（免开浏览器）
 在终端中进入项目目录，执行以下命令：
@@ -175,12 +175,20 @@ node localize.js --apply-only
 本项目并非单纯的文本查找替换脚本，而是在 Electron 原生渲染管线与 React 虚拟 DOM 调度层之间构建的一套高韧性、高吞吐的工业级本地化引擎。
 
 ```text
+[ 模块化构建层: src/ ]
+  • src/dictionary.js (4,250+ 零重复词典 + 实词库)
+  • src/dom-translator.js (Web UI 实时翻译与防夹生引擎)
+  • src/build-injection.js (编译拼接与载荷校验)
+  • src/http-security.js & src/backup-utils.js (127.0.0.1 回环鉴权与双轨备份校验)
+        │
+        ▼
 [ Antigravity 启动 ]
         │
         ├─► [ 原生层: dist/menu.js & updater.js ] ──► 本地化原生菜单栏与更新状态机
         ├─► [ 原生层: dist/tray.js & ipcHandlers.js ] ──► 本地化系统托盘与全量右键菜单
+        ├─► [ 原生层: dist/remote/* & dist/computer/* ] ──► Remote SSH 生命周期与 Computer Use HUD
         │
-        └─► [ Web 容器: dist/preload.js ]
+        └─► [ Web 容器: dist/preload.js & wizardPreload.js ]
                     │
                     ▼
         [ DOM_TRANSLATOR_INJECTION 核心引擎 ]
@@ -188,7 +196,7 @@ node localize.js --apply-only
         ┌───────────┴───────────┐
         ▼                       ▼
   [ 算力层: 预编译哈希 ]   [ 调度层: 微任务与剪枝 ]
-  • Map O(1) 极速索引     • 联合词边界流式正则 (CORE_WORDS_UNION_REGEX)
+  • Map O(1) 前置精确索引   • 100% 实词命中防夹生守卫
   • ASCII 纯中文极速短路   • DOM 树祖先剪枝 (消灭 O(N^2) 嵌套递归)
   • WeakSet 成功标记门禁   • queueMicrotask 高保真帧聚合调度
         │                       │
@@ -197,9 +205,9 @@ node localize.js --apply-only
         ┌───────────┴───────────────────────┐
         ▼                                   ▼
   [ 绝对物理免疫沙盒 ]                 [ 生命周期自愈与动态切片 ]
-  • Monaco 代码编辑器物理隔离         • Ctrl + R 重载生命周期与占位节点保护
+  • Monaco 代码编辑器物理隔离         • 叶子 TextNode 改写保护 React Fiber
   • INPUT / TEXTAREA 用户打字免疫     • React 独立节点物理切片动态自愈拼合
-  • 控制中心防密码管理器篡改装甲       • 前置长句正则与中英混排纠偏
+  • 思考链与用户提问框双重免疫       • 侧边栏展开态项目拖拽坐标补偿热修复
 ```
 
 完整架构设计、底层算力算法、50,000 次压测基准数据与工程工艺详见 [docs/](docs/)：
@@ -248,7 +256,7 @@ node localize.js --now
 > 覆盖前请确认 Antigravity 已完全退出，否则文件可能被占用而复制失败；同时建议保留一份 `app.asar.bak`，以便下次重新汉化。
 
 ### Q4: 源码包中自带的 app.asar.ready 会导致仓库体积无限膨胀吗？
-不会。终端用户下载的 Release 资产包或网页 "Download ZIP" 仅包含单版本快照（当前约 6.3 MB），零历史冗余包。对于通过 `git clone` 参与贡献的开发者，推荐使用浅克隆（Shallow Clone）：
+不会。终端用户下载的 Release 资产包或网页 "Download ZIP" 仅包含单版本快照（当前约 7.08 MB），零历史冗余包。对于通过 `git clone` 参与贡献的开发者，推荐使用浅克隆（Shallow Clone）：
 ```bash
 git clone --depth=1 https://github.com/antigravity-cn-community/Antigravity-Chinese-Localization.git
 ```
@@ -271,7 +279,7 @@ git clone --depth=1 https://github.com/antigravity-cn-community/Antigravity-Chin
 | 贡献者 | 角色与主要贡献 |
 | :--- | :--- |
 | [liominsb](https://github.com/liominsb) | 原项目创作者，搭建了最初的 Electron asar 注入与 Web 控制中心基础架构，推动仓库升级至社区组织联合运营 |
-| [LAN-TINA-WS](https://github.com/LAN-TINA-WS) | 组织化联合维护者，2.12.0+ 深度重构、算力与 DOM 调度飞跃优化（168万次/秒）、瘦身与热更新引擎、设置与插件词库全量扩充、2.32.1 持续适配 |
+| [LAN-TINA-WS](https://github.com/LAN-TINA-WS) | 组织化联合维护者，2.12.0+ 深度重构、算力与 DOM 调度飞跃优化（168万次/秒）、`src/` 模块化安全加固、设置与插件词库全量扩充及 2.33.0+ 持续适配 |
 | [Justin-Mai](https://github.com/Justin-Mai) | 2.0 汉化控制中心架构升级、多用户/自定义路径、心跳自愈与防劫持、代码预览与 Diff 防误翻译隔离机制 |
 | [songxitao](https://github.com/songxitao) | 2.10.0+ 深度适配、三层 DOM 物理隔离防护、Markdown 与代码区防污染、全套 TDD 自动化测试套件构建 |
 | [angel12538](https://github.com/angel12538) | 首页动态问候语、第三方模型上下线公告、用量窗口与设置长文案批量补漏及 Ticket-37/38 测试建设 |

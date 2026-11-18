@@ -9,11 +9,11 @@ Deep Localization & High-Performance Chinese Patch for Google Antigravity
 [![GitHub stars](https://img.shields.io/github/stars/antigravity-cn-community/Antigravity-Chinese-Localization?style=flat&color=gold)](https://github.com/antigravity-cn-community/Antigravity-Chinese-Localization/stargazers)
 [![GitHub Discussions](https://img.shields.io/github/discussions/antigravity-cn-community/Antigravity-Chinese-Localization?style=flat&color=purple)](https://github.com/antigravity-cn-community/Antigravity-Chinese-Localization/discussions)
 [![Platform](https://img.shields.io/badge/Platform-Windows%20%7C%20macOS%20%7C%20Linux-blue)](https://github.com/antigravity-cn-community/Antigravity-Chinese-Localization)
-[![Package Size](https://img.shields.io/badge/ASAR%20Size-~6.3%20MB%20(Official%20Slim)-success)](https://github.com/antigravity-cn-community/Antigravity-Chinese-Localization)
+[![Package Size](https://img.shields.io/badge/ASAR%20Size-~7.1%20MB%20(Official%20Slim)-success)](https://github.com/antigravity-cn-community/Antigravity-Chinese-Localization)
 [![Node Runtime](https://img.shields.io/badge/Node.js-%3E%3D%2018.18.0-informational)](https://nodejs.org/)
 [![license](https://img.shields.io/github/license/antigravity-cn-community/Antigravity-Chinese-Localization)](LICENSE)
 
-A high-performance, non-destructive deep Chinese localization patch designed for Google Antigravity, now co-maintained under the open-source organization **[`antigravity-cn-community`](https://github.com/antigravity-cn-community/Antigravity-Chinese-Localization)**. Fully adapted to the latest architecture of **Antigravity v2.33.0+**, featuring fundamental computational refactoring and DOM micro-batch scheduling that delivers 1.68 million queries/sec throughput. It provides comprehensive localization for Planning Mode, System Settings, Security Sandbox, Remote SSH subsystem, and the Google Plugin Ecosystem, strictly aligns with the official slim packaging spec (~6.2 MB for v2.33.0), and guarantees absolute physical immunity for code editors and user input fields.
+A high-performance, non-destructive deep Chinese localization patch designed for Google Antigravity, now co-maintained under the open-source organization **[`antigravity-cn-community`](https://github.com/antigravity-cn-community/Antigravity-Chinese-Localization)**. Fully adapted to the latest architecture of **Antigravity v2.33.0+**, featuring modular `src/` engine decoupling and DOM micro-batch scheduling that delivers 1.68 million queries/sec throughput. It provides comprehensive localization across `4,250+` UI strings covering Planning Mode, System Settings, Security Sandbox, Remote SSH development, Computer Use HUD & preview, 9 Gemini Live voices, and Marketplace `Bundles`, strictly aligns with the official slim packaging spec (~7.08 MB for v2.33.0), and guarantees absolute physical immunity for code editors and user input fields.
 
 > [Download Latest Release](https://github.com/antigravity-cn-community/Antigravity-Chinese-Localization/releases/latest) · [Discussions & 1K Stars Milestone](https://github.com/antigravity-cn-community/Antigravity-Chinese-Localization/discussions) · [Issues & Feedback](https://github.com/antigravity-cn-community/Antigravity-Chinese-Localization/issues)
 
@@ -25,29 +25,29 @@ A high-performance, non-destructive deep Chinese localization patch designed for
 
 | Core Module | Coverage Depth & Metrics | Translation Scope & Value |
 | :--- | :--- | :--- |
-| **Planning Mode** | Full Lifecycle Closed-Loop | Translates Planning Mode toggles, Implementation Plans, Walkthrough reviews, Approval prompts, Open Questions, Proposed Changes, Automated Tests, and Manual Verification workflows. |
-| **System Settings** | 200+ Configuration Items | Translates Appearance & theme presets (with bilingual palette labels), Conversation Width, Keep-awake, Background Running, Auto Updates, Permission Sandbox, and Model Quota cards. |
-| **Security & Sandbox** | Granular Policy Engine | Adapted to Global, Cloud, and Project-inherited Permissions; translates Terminal Sandbox, confirmation rules, workspace file access (Allow/Ask/Deny), network policies, and domain/command whitelists. |
-| **Split, Drag & Collaboration** | Native Menu + DOM Cascades | Covers sidebar/panel splits, native tab context menus (Close Tab / Others / Left / Right), Conversation Forking, Group Management, and hot-fixes the upstream expanded-folder project drag offset bug. |
-| **Side Questions & VCS** | Full-Scenario Adaptation | Deeply translates Side Questions, Customize Sections, Remote SSH lifecycle & credential prompts, Git Amend workflow, and Sidebar Hover Cards. |
-| **Plugins & Remote Ecosystem** | Full Lifecycle Ecosystem | Translates Plugin Center operations (Install/Uninstall/Enable/Disable), Component badges (Skills/Rules/MCP/Hooks), Marketplace listings, and Remote Control cross-device flow modals. |
+| **Planning & Step Plan** | Full Lifecycle Closed-Loop | Translates Planning Mode toggles, Implementation Plans, Walkthrough reviews, Step Plan progress pills, Approval prompts, Open Questions, and Verification workflows. |
+| **Settings, Voice & Keybindings** | 250+ Configuration Items | Translates bilingual theme presets (including Nord & Everforest), `VS Code Default` vs `Antigravity (AGY) Style` keybinding schemes, all 9 Gemini Live voices & voice dictation, Browsing Data & per-site Cookie management, and Model / `Orchestrator` cards. |
+| **Security & Sandbox** | Granular Policy Engine | Adapted to Global, Cloud, GitHub fine-grained policies, and Project-inherited Permissions; translates Terminal Sandbox, workspace file access (Allow/Ask/Deny), network policies, and domain/command whitelists. |
+| **Remote SSH & Cross-Device** | 12 Native Modules + Web UI | Covers SSH host connections, disconnect/restart pages, password/passphrase/host-key prompts, shared-home `Take Over`, remote microphone access, SSH config encoding/permission diagnostics, and cross-device handoff. |
+| **Computer Use & Collaboration** | Native HUD + Live Stream | Ahead-of-time coverage for `v2.33.0` `Computer Use` desktop HUD (`hud.js`), `Agents Live` streaming tiles & takeover banners, `/btw` side questions (`Insert into main conversation`), split panes, and the sidebar project drag offset hot-fix. |
+| **Marketplace & Bundles** | Full Lifecycle Ecosystem | Translates Marketplace plugins, `Bundles`, third-party/experimental source-review modals, Component badges (Skills/Rules/MCP/Hooks), `Coordinator`, and scheduled Automation wizards. |
 
 ### 2. Developer Ergonomics & Physical Sandbox Guard
 
 | Core Strategy | Guard Mechanism | Developer Protection & Value |
 | :--- | :--- | :--- |
-| **Native Model & Thinking Display** | 100% Native English Retained | Strictly adheres to developer ergonomics: Model names (Gemini 4 / Gemini 3.8 / Claude) and Thinking/Thought processes retain native English, eliminating confusion caused by machine translation. |
-| **Physical Code & Input Immunity** | Shadow DOM Penetration | Actively protects `INPUT`, `TEXTAREA`, rich text editors, Monaco Code Editor, Diff views, and user message bubbles with absolute physical isolation, guaranteeing zero tampering with prompts and source code. |
-| **Lossless Backup & Self-Healing** | Instant Bidirectional Switch | Automatically creates `app.asar.bak` on first run, enabling instant one-click rollback to pristine English via the dashboard's "Restore English" action, or by copying the backup over `app.asar`, at any time. |
+| **Native Model & Thinking Display** | 100% Native English Retained | Model names (Gemini 4 / Orchestrator / Gemini 3.8 / Claude), relative timestamps (`24m`, `2m ago`), and Thinking/Thought chains stay in native English. |
+| **Physical Code & Input Immunity** | Leaf-TextNode React Fiber Safety | Protects `INPUT`, `TEXTAREA`, rich text editors, Monaco Code Editor, Diff views, and user prompts; mutates leaf `TextNode` values only without overwriting `Element.textContent`. |
+| **Dual-Track Backup & Version Gate** | Fingerprint Precheck + Atomic Swap | Verifies archive versions before applying or restoring backups to prevent cross-version white-screen crashes, including a built-in PowerShell binary ASAR header parser for offline batch fallback. |
 
 ### 3. High-Performance Engine & Engineering Standards
 
 | Engineering Dimension | Performance & Standards | Implementation Details |
 | :--- | :--- | :--- |
-| **High Throughput & Frame Rate** | Over 1.68 Million QPS | Leverages precompiled $O(1)$ Hash Map, ASCII short-circuit, unified regex stream scanning, DOM ancestor pruning, and microtask frame aggregation to ensure buttery-smooth 60fps/120fps operation. |
-| **Slim Packaging Standards** | Aligned with Official Spec (~6.3 MB) | Uses `--unpack-dir` to exclude redundant external Node modules, completely eliminating legacy 14MB–21MB package bloat and matching official distribution size. |
-| **Lifecycle Self-Healing & Hot Updates** | `injectOrUpdate` Truncation Logic | Overcomes legacy limitations where existing markers prevented updates; supports hot file replacement and instantaneous `Ctrl + R` reload across versions. |
-| **TDD Automated Test Gate** | 51 Test Suites ALL GREEN | Comprehensive regression matrix (`Ticket-01` through `Ticket-44` plus security/AST/archive gates) covering modular translation engine, dictionary deduplication, native menus, loopback CSRF/Host guards, and streaming release installer safety. |
+| **High Throughput & Anti-Chinglish Guard** | Over 1.68 Million QPS | Modularized under `src/dictionary.js` & `src/dom-translator.js` with hoisted `O(1)` exact Map lookup, ASCII bypass, DOM ancestor pruning, `queueMicrotask` batching, and 100%-hit `coreWords` guards. |
+| **Loopback Security Shield** | `127.0.0.1` + CSRF Auth | Binds strictly to `127.0.0.1` with `Host`/`Origin` loopback validation, per-process CSRF tokens, JSON payload caps, and explicit TLS certificate verification. |
+| **Slim Packaging Standards** | Aligned with Official Spec (~7.08 MB) | Uses `--unpack-dir` to exclude unpacked native MCP modules, matching official distribution size. |
+| **TDD Automated Test Gate** | 51 Test Suites ALL GREEN | Comprehensive regression matrix (`Ticket-01` through `Ticket-44` plus security/AST/archive gates) including real Windows `cmd.exe` zero-Node offline auto-bridge verification. |
 
 ---
 
@@ -80,10 +80,11 @@ No Node.js or build tools required:
 
 ### Method 1: Windows Users (Scripts & Dashboard)
 
-#### 1. Web Dashboard (Recommended)
-1. Download `default.zip` from Releases, or clone the repository / grab the GitHub source archive and extract it (the repo ships `app.asar.ready`, so no separate patch file is needed);
-2. Double-click **`双击运行汉化.bat`**;
-3. The dashboard opens automatically (`http://localhost:3388`), auto-detects program status, and highlights automatic recovery if official updates have overwritten the localization.
+#### 1. Web Dashboard (with Zero-Node Auto-Offline Bridge)
+1. Download **`default.zip`** from Releases (or clone / download the source archive) and **extract the full archive to a local folder first** (do not double-click inside a ZIP preview window; `app.asar.ready` is bundled inside);
+2. Double-click **`双击运行汉化.bat`**:
+   - **With Node.js installed**: Launches the local management service and opens the Web Dashboard (`http://127.0.0.1:3388`) for status checks, online Release downloads, SHA-256 deduplicated backups, and one-click rollback;
+   - **Without Node.js installed (Zero-Config)**: Automatically detects the bundled `app.asar.ready` and **seamlessly bridges into Offline Safe Mode** to verify the client version, back up the original archive, and install localization directly!
 
 The dashboard shows the installed `app.asar` version and lets you select the latest stable, historical, or prerelease localization package from GitHub Releases. Use "仅下载" (Download Only) to cache a package, or "下载并安装" (Download and Install) to verify its SHA-256 and confirm installation. Release notes, downloaded packages, and settings/maintenance tools are collapsed by default.
 
@@ -92,9 +93,8 @@ Downloaded packages remain available until you explicitly delete them. Installat
 #### 2. One-Click Batch Update & Auto Recovery
 When an official update overwrites localization with English defaults, double-click **`一键更新汉化.bat`**:
 - Auto-detects Node.js runtime and client version;
-- Performs strict version compatibility checks to prevent white-screen crashes;
-- Creates safe backups and atomically restores Chinese localization;
-- Gracefully falls back to pure batch script mode if Node.js is not installed.
+- Performs strict version compatibility checks (including a built-in PowerShell binary ASAR header parser in offline fallback mode to prevent cross-version white-screen crashes or backup pollution);
+- Creates safe official backups and atomically restores Chinese localization.
 
 #### 3. Headless CLI Deployment & Silent Restore
 In your terminal, navigate to the folder and run:
@@ -172,12 +172,20 @@ node localize.js --apply-only
 This project is not a simple string replacement script, but an industrial-grade localization engine operating between Electron's native rendering pipeline and React's virtual DOM reconciliation loop.
 
 ```text
+[ Modular Build Layer: src/ ]
+  • src/dictionary.js (4,250+ zero-duplicate entries + coreWords)
+  • src/dom-translator.js (Web UI live translator & anti-Chinglish guard)
+  • src/build-injection.js (payload assembly & validation)
+  • src/http-security.js & src/backup-utils.js (127.0.0.1 loopback auth & versioned backups)
+        │
+        ▼
 [ Antigravity Launches ]
         │
         ├─► [ Native: dist/menu.js & updater.js ] ──► Localized menus & auto-updater state
         ├─► [ Native: dist/tray.js & ipcHandlers.js ] ──► Localized system tray & context menus
+        ├─► [ Native: dist/remote/* & dist/computer/* ] ──► Remote SSH lifecycle & Computer Use HUD
         │
-        └─► [ Web Container: dist/preload.js ]
+        └─► [ Web Container: dist/preload.js & wizardPreload.js ]
                     │
                     ▼
         [ DOM_TRANSLATOR_INJECTION Core Engine ]
@@ -185,7 +193,7 @@ This project is not a simple string replacement script, but an industrial-grade 
         ┌───────────┴───────────┐
         ▼                       ▼
   [ Compute: Precompiled Map ]   [ Scheduling: Microtasks & Pruning ]
-  • Map O(1) instant lookup      • Unified word-boundary regex (CORE_WORDS_UNION_REGEX)
+  • Map O(1) hoisted lookup      • 100%-hit coreWords anti-Chinglish guard
   • ASCII pure-Chinese bypass    • Ancestor Pruning (eliminates O(N^2) deep recursions)
   • WeakSet selective caching    • queueMicrotask high-fidelity frame scheduling
         │                       │
@@ -194,9 +202,9 @@ This project is not a simple string replacement script, but an industrial-grade 
         ┌───────────┴───────────────────────┐
         ▼                                   ▼
   [ Absolute Physical Immunity ]       [ Lifecycle Healing & Slicing ]
-  • Monaco Code Editor isolated        • Ctrl + R reload lifecycle & placeholder protection
+  • Monaco Code Editor isolated        • Leaf-TextNode mutation preserves React Fiber
   • INPUT / TEXTAREA typing immune     • React split TextNode dynamic auto-stitching
-  • Password-manager shield            • Leading regex repair for hybrid Chinese/English
+  • Thinking chain & prompt shield     • Sidebar expanded-folder project drag hot-fix
 ```
 
 Detailed architectural designs, benchmarks (1.68M qps), and engineering practices are available in [docs/](docs/):
@@ -245,7 +253,7 @@ Click "还原英文原版" in the dashboard; alternatively, copy the previously 
 > Make sure Antigravity is fully closed before copying, otherwise the file may be locked. Keeping a copy of `app.asar.bak` also lets you re-localize later.
 
 ### Q4: Will tracking app.asar.ready bloat the repository over time?
-No for end users. Release assets and GitHub "Download ZIP" archives are clean snapshots (~6.3 MB currently) with zero Git history. Developers cloning the repository can use shallow clones to avoid downloading past binary history:
+No for end users. Release assets and GitHub "Download ZIP" archives are clean snapshots (~7.08 MB currently) with zero Git history. Developers cloning the repository can use shallow clones to avoid downloading past binary history:
 ```bash
 git clone --depth=1 https://github.com/antigravity-cn-community/Antigravity-Chinese-Localization.git
 ```
@@ -268,7 +276,7 @@ For complete architectural details on binary trade-offs, history pruning, and dy
 | Contributor | Role & Contributions |
 | :--- | :--- |
 | [liominsb](https://github.com/liominsb) | Original project creator, built the initial Electron asar injection and Web dashboard architecture, and initiated the community organization transition |
-| [LAN-TINA-WS](https://github.com/LAN-TINA-WS) | Community co-maintainer, v2.12.0+ deep refactoring, 1.68M QPS engine optimization, slimming & hot-upgrade mechanism, extensive Settings/Plugins dictionary expansion, and ongoing v2.32.1 maintenance |
+| [LAN-TINA-WS](https://github.com/LAN-TINA-WS) | Community co-maintainer, v2.12.0+ deep refactoring, 1.68M QPS engine optimization, `src/` modular security hardening, extensive Settings/Plugins dictionary expansion, and ongoing v2.33.0+ maintenance |
 | [Justin-Mai](https://github.com/Justin-Mai) | 2.0 Web dashboard architecture upgrade, multi-user/custom path support, heartbeat self-healing, code preview & diff isolation mechanisms |
 | [songxitao](https://github.com/songxitao) | v2.10.0+ deep adaptation, 3-layer DOM physical isolation defense, Markdown & code area anti-pollution, and full TDD automated test suite construction |
 | [angel12538](https://github.com/angel12538) | Dynamic home greeting, third-party model notices, quota reset countdowns, settings descriptions & Ticket-37/38 test coverage |

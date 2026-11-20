@@ -4270,7 +4270,10 @@ const dictionary = {
     "Carbon that may offload routine steps to Hydrogen. Same Carbon-level quality, fewer tokens used.": "由 Carbon 主导，可将常规步骤分流至 Hydrogen 执行。保持 Carbon 级输出质量，消耗更少 Token。",
     "Argon that may offload routine steps to Hydrogen. Same Argon-level quality, fewer tokens used.": "由 Argon 主导，可将常规步骤分流至 Hydrogen 执行。保持 Argon 级输出质量，消耗更少 Token。",
     "Not PII/NTK": "勿含敏感数据",
-    "Do not use for PII/NTK data.": "请勿用于 PII/NTK 敏感数据。"
+    "Do not use for PII/NTK data.": "请勿用于 PII/NTK 敏感数据。",
+
+    // ===== 删除会话确认弹窗 =====
+    "Are you sure you want to delete this conversation? This action cannot be undone.": "确定要删除该对话吗？此操作无法撤销。"
 };
 
 const coreWords = {

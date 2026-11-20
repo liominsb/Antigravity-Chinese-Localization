@@ -1803,6 +1803,13 @@
       return replaceTrimmed(text, trimmed, fixed);
     }
 
+    // ===== 删除确认弹窗：资源名以 <strong> 插值，句子被拆成「前缀 + 名称 + 后缀」 =====
+    // 前缀（Are you sure you want to delete / ... the）词典已收录，这里只补后缀片段
+    if (/^\? This action cannot be undone\.$/.test(trimmed)) {
+      cacheSet(trimmed, '吗？此操作无法撤销。');
+      return replaceTrimmed(text, trimmed, '吗？此操作无法撤销。');
+    }
+
     // 5. 大小写不敏感词典查找与末尾标点剥离重拼（O(1)，命中写入 stringCache）
     const caseInsensitiveHit = lowerDictionary.get(trimmed.toLowerCase());
     if (caseInsensitiveHit !== undefined) {

@@ -1803,6 +1803,17 @@
       return replaceTrimmed(text, trimmed, fixed);
     }
 
+    // ===== 归档提示：markdown 里的行内图标把句子切成「前缀 + 图标 + 后缀」 =====
+    if (/^View archived in the sidebar \($/.test(trimmed)) {
+      cacheSet(trimmed, '已归档内容可在侧边栏（');
+      return replaceTrimmed(text, trimmed, '已归档内容可在侧边栏（');
+    }
+
+    if (/^menu\)\.$/.test(trimmed)) {
+      cacheSet(trimmed, '菜单）中查看。');
+      return replaceTrimmed(text, trimmed, '菜单）中查看。');
+    }
+
     // 5. 大小写不敏感词典查找与末尾标点剥离重拼（O(1)，命中写入 stringCache）
     const caseInsensitiveHit = lowerDictionary.get(trimmed.toLowerCase());
     if (caseInsensitiveHit !== undefined) {

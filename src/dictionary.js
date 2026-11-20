@@ -4270,7 +4270,11 @@ const dictionary = {
     "Carbon that may offload routine steps to Hydrogen. Same Carbon-level quality, fewer tokens used.": "由 Carbon 主导，可将常规步骤分流至 Hydrogen 执行。保持 Carbon 级输出质量，消耗更少 Token。",
     "Argon that may offload routine steps to Hydrogen. Same Argon-level quality, fewer tokens used.": "由 Argon 主导，可将常规步骤分流至 Hydrogen 执行。保持 Argon 级输出质量，消耗更少 Token。",
     "Not PII/NTK": "勿含敏感数据",
-    "Do not use for PII/NTK data.": "请勿用于 PII/NTK 敏感数据。"
+    "Do not use for PII/NTK data.": "请勿用于 PII/NTK 敏感数据。",
+
+    // ===== 归档提示 toast（消息体为 markdown，图标会截断文本节点） =====
+    "View archived in the sidebar (![filter](icon://filter_list) menu).": "已归档内容可在侧边栏（显示选项菜单）中查看。",
+    "View archived in the sidebar (Display options menu).": "已归档内容可在侧边栏（显示选项菜单）中查看。"
 };
 
 const coreWords = {

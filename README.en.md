@@ -147,7 +147,9 @@ The launcher prefers a usable Node from the current PATH and adds common Homebre
 
 ## Using Magpie
 
-Clone the full repository, choose **Add from folder** in Magpie’s Plugins page, select `integrations/magpie`, and enable it. Open **Antigravity 汉化** in the sidebar and download the patch. Quit Antigravity, choose **应用汉化** (Apply), and launch the client as usual.
+The Magpie sidebar gives users an entry point to this community localization project. It handles downloading, verifying, and applying the patch built by this repository’s translation scripts.
+
+On Windows, clone the full repository, choose **Add from folder** in Magpie’s Plugins page, select `integrations/magpie`, and enable it. Open **Antigravity 汉化** in the sidebar and download the patch. Quit Antigravity, choose **应用汉化** (Apply), and launch the client as usual. On macOS, see the code-signing note above before applying the patch.
 
 A matching cached patch can be applied offline. **还原官方版** (Restore) uses a local backup of the same client version. For a custom installation, set `appDir` in the plugin options. [View the plugin in Magpie](docs/magpie-workbench.png)
 

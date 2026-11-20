@@ -350,11 +350,9 @@ function createReleaseManager({
     return { meta, directory, filePath, metaPath, fileStat };
   }
 
-  async function writeMetadata(directory, meta) {
+  async function writeMetadata(directory, meta, temp) {
     const target = path.join(directory, META_NAME);
-    const temp = `${target}.part`;
     await regularFile(target);
-    if (await regularFile(temp)) await fsp.unlink(temp);
     await fsp.writeFile(temp, JSON.stringify(meta, null, 2), { flag: 'wx' });
     await fsp.rename(temp, target);
   }
@@ -394,8 +392,9 @@ function createReleaseManager({
       download.cacheId = cacheId;
       const directory = await ensureCacheDirectory(cacheId);
       const filePath = path.join(directory, FILE_NAME);
-      partPath = `${filePath}.part`;
-      metaPartPath = path.join(directory, `${META_NAME}.part`);
+      const nonce = crypto.randomUUID();
+      partPath = `${filePath}.${nonce}.part`;
+      metaPartPath = path.join(directory, `${META_NAME}.${nonce}.part`);
       const existing = await regularFile(filePath);
       let actual;
       let reused = false;
@@ -404,8 +403,6 @@ function createReleaseManager({
         download.receivedBytes = existing.size;
         reused = true;
       } else {
-        if (existing) throw fail('同一缓存目录中的旧文件校验失败；请手动删除该缓存后重试');
-        if (await regularFile(partPath)) await fsp.unlink(partPath);
         const response = await openResponse(url);
         if (Number(response.headers['content-length']) > MAX_ASSET_BYTES) {
           response.destroy();
@@ -437,7 +434,7 @@ function createReleaseManager({
       await writeMetadata(directory, {
         format: 1, cacheId, releaseId, tag: download.tag, filename: FILE_NAME,
         size: download.receivedBytes, sha256: actual, downloadedAt
-      });
+      }, metaPartPath);
       finalDownload = { ...download, status: 'completed', percent: 100, path: filePath, sha256: actual, verified: true };
     } catch (error) {
       finalDownload = { ...download, status: 'failed', path: '', verified: false, error: error.message || '下载失败' };

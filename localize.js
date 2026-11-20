@@ -10,9 +10,10 @@ const { execFileSync, spawn } = require('child_process');
 const { DOM_TRANSLATOR_INJECTION } = require('./src/build-injection');
 const { createReleaseManager } = require('./release-manager');
 const { createPackageInstaller } = require('./package-installer');
+const { withInstallLock } = require('./src/install-lock');
 const { isAppRunningStrict, stopAntigravityProcesses } = require('./process-check');
 const { readAsarPackageVersion } = require('./asar-version');
-const { findValidOfficialBackup } = require('./src/backup-utils');
+const { findValidOfficialBackup, normalizeVersion } = require('./src/backup-utils');
 const {
   httpError,
   isValidLoopbackHostHeader,
@@ -25,6 +26,7 @@ const {
   isLocalizedAsar,
   checkClientStatus,
   executeAutoRestore,
+  hashFile,
   findAvailablePatch,
 } = require('./auto-restore');
 
@@ -1813,9 +1815,17 @@ function describeSshConfigProblem(file, { what, why, fix }) {
 }
 
 // Full workflow runner (protected by shared writeLock, temp isolation, symlink guard & shell-free ASAR CLI)
+function runClientWrite(appDir, owner, operation) {
+  const resourcesDir = getResourcesDir(appDir);
+  return writeLock.tryRun(() => {
+    assertNotSymlinkOrJunction(appDir, '安装目录');
+    assertNotSymlinkOrJunction(resourcesDir, 'Resources 目录');
+    return withInstallLock(resourcesDir, () => operation(resourcesDir));
+  }, { owner, conflictMessage: '当前已有安装、还原或汉化任务正在进行，请稍候重试' });
+}
+
 async function runLocalizationWorkflow(appDir) {
-  return writeLock.tryRun(async () => {
-    const resourcesDir = getResourcesDir(appDir);
+  return runClientWrite(appDir, 'localize', async resourcesDir => {
     const asarPath = path.join(resourcesDir, 'app.asar');
     const backupPath = path.join(resourcesDir, 'app.asar.bak');
 
@@ -1907,13 +1917,12 @@ async function runLocalizationWorkflow(appDir) {
     }
     log('Antigravity 2.0 一键汉化成功完成！现在您可以安全启动程序了。');
     log('=================== 汉化流程结束 ===================');
-  }, { owner: 'localize', conflictMessage: '当前已有安装、下载或汉化任务正在进行，请稍候重试' });
+  });
 }
 
 // Restore workflow (unified backup discovery + strict version guard + atomic replace)
 async function runRestoreWorkflow(appDir, { forceStop = true, isAppRunning = isAppRunningStrict } = {}) {
-  return writeLock.tryRun(async () => {
-    const resourcesDir = getResourcesDir(appDir);
+  return runClientWrite(appDir, 'restore', async resourcesDir => {
     const asarPath = path.join(resourcesDir, 'app.asar');
     const legacyBackupPath = path.join(resourcesDir, 'app.asar.bak');
 
@@ -1927,7 +1936,10 @@ async function runRestoreWorkflow(appDir, { forceStop = true, isAppRunning = isA
     assertNotSymlinkOrJunction(resourcesDir, 'Resources 目录');
     assertNotSymlinkOrJunction(asarPath, 'app.asar');
 
+    const originalStat = fs.statSync(asarPath, { bigint: true });
     const currentClientVer = readAsarPackageVersion(asarPath);
+    if (!currentClientVer) throw httpError('无法确认客户端版本，已停止还原', 409);
+    const originalHash = await hashFile(asarPath);
     const backupSearch = findValidOfficialBackup({
       resourcesDir,
       targetVersion: currentClientVer,
@@ -1955,27 +1967,37 @@ async function runRestoreWorkflow(appDir, { forceStop = true, isAppRunning = isA
     else if (await isAppRunning()) throw httpError('请先正常退出 Antigravity 及其后台服务，再还原官方版', 409);
 
     log(`正在从安全备份 (${path.basename(backupPath)}) 恢复原始官方 app.asar...`);
-    const stageRestore = path.join(resourcesDir, `app.asar.restore-${process.pid}-${Date.now()}`);
+    const stageRestore = path.join(resourcesDir, `.app.asar.restore-${crypto.randomUUID()}.stage`);
+    let staged = false;
     try {
-      fs.copyFileSync(backupPath, stageRestore);
+      fs.copyFileSync(backupPath, stageRestore, fs.constants.COPYFILE_EXCL);
+      staged = true;
+      if (normalizeVersion(readAsarPackageVersion(stageRestore)) !== normalizeVersion(currentClientVer) || isLocalizedAsar(stageRestore) ||
+          await hashFile(stageRestore) !== await hashFile(backupPath)) {
+        throw httpError('原版备份发生变化，已停止还原', 409);
+      }
+      assertNotSymlinkOrJunction(asarPath, 'app.asar');
+      if (await hashFile(asarPath) !== originalHash) {
+        throw httpError('客户端在还原期间发生变化，已保留当前文件，请刷新后重试', 409);
+      }
+      if (await isAppRunning()) throw httpError('客户端已重新启动，请退出后再还原', 409);
+      const beforeCommit = fs.lstatSync(asarPath, { bigint: true });
+      if (readAsarPackageVersion(asarPath) !== currentClientVer ||
+          beforeCommit.ino !== originalStat.ino || beforeCommit.dev !== originalStat.dev ||
+          beforeCommit.ctimeNs !== originalStat.ctimeNs || beforeCommit.size !== originalStat.size) {
+        throw httpError('客户端文件已更换，已停止还原', 409);
+      }
       fs.renameSync(stageRestore, asarPath);
-      if (backupPath !== legacyBackupPath && !fs.existsSync(legacyBackupPath)) {
-        // Keep a convenient reference without duplicating if unnecessary; rename above already restored asarPath
-      }
+      staged = false;
       log('还原原始 app.asar 成功！软件已恢复为官方英文版。');
-    } catch (e) {
-      try { if (fs.existsSync(stageRestore)) fs.unlinkSync(stageRestore); } catch (_) {}
-      if (!forceStop) throw httpError('无法替换客户端文件，请确认已退出并具有写入权限', 409);
-      // Fallback direct copy if cross-device or Windows transient rename lock
-      try {
-        fs.copyFileSync(backupPath, asarPath);
-        log('还原原始 app.asar 成功！软件已恢复为官方英文版。');
-      } catch (copyErr) {
-        throw new Error('恢复文件失败: ' + copyErr.message);
-      }
+    } catch (error) {
+      if (error.code === 'ENOENT') throw httpError('客户端或备份文件已更换，请刷新后重试', 409);
+      throw error;
+    } finally {
+      if (staged) fs.unlinkSync(stageRestore);
     }
     log('=================== 还原流程结束 ===================');
-  }, { owner: 'restore', conflictMessage: '当前已有安装、还原或汉化任务正在进行，请稍候重试' });
+  });
 }
 
 function sendJson(res, statusCode, payload) {

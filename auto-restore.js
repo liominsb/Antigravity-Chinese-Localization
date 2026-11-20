@@ -4,6 +4,7 @@ const fs = require('fs');
 const fsp = fs.promises;
 const path = require('path');
 const crypto = require('crypto');
+const { withInstallLock } = require('./src/install-lock');
 const { readAsarPackageVersion } = require('./asar-version');
 const { findValidOfficialBackup, normalizeVersion } = require('./src/backup-utils');
 
@@ -231,9 +232,24 @@ async function checkClientStatus({ appDir, getResourcesDir } = {}) {
 /**
  * 执行自动恢复与安全安装
  */
-async function executeAutoRestore({
-  appDir,
-  getResourcesDir,
+async function executeAutoRestore(options = {}) {
+  function skip(status) {
+    if (!status.isInstalled) return {
+      success: false, code: 'NOT_INSTALLED', message: `未在目标目录找到 Antigravity 程序：${options.appDir}`
+    };
+    if (status.isLocalized) return {
+      success: true, code: 'ALREADY_LOCALIZED', appVersion: status.appVersion,
+      message: `当前客户端 (v${status.appVersion || '未知'}) 已处于汉化状态，无需重复安装。`
+    };
+  }
+  const before = await checkClientStatus(options);
+  return skip(before) || withInstallLock(before.resourcesDir, async () => {
+    const current = await checkClientStatus(options);
+    return skip(current) || autoRestoreLocked(options, current);
+  });
+}
+
+async function autoRestoreLocked({
   workspaceDir,
   releaseManager,
   isAppRunning,
@@ -241,26 +257,8 @@ async function executeAutoRestore({
   forceStop = true,
   candidatePatch = null,
   stopTimeoutMs = 3000
-} = {}) {
+}, status) {
   const wsDir = workspaceDir || path.resolve(__dirname);
-  const status = await checkClientStatus({ appDir, getResourcesDir });
-
-  if (!status.isInstalled) {
-    return {
-      success: false,
-      code: 'NOT_INSTALLED',
-      message: `未在目标目录找到 Antigravity 程序：${appDir}`
-    };
-  }
-
-  if (status.isLocalized) {
-    return {
-      success: true,
-      code: 'ALREADY_LOCALIZED',
-      appVersion: status.appVersion,
-      message: `当前客户端 (v${status.appVersion || '未知'}) 已处于汉化状态，无需重复安装。`
-    };
-  }
 
   // 寻找或使用指定的补丁包
   const patch = candidatePatch || await findAvailablePatch({

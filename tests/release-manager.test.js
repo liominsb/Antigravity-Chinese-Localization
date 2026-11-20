@@ -301,10 +301,19 @@ test('replaced assets preserve old downloads, tampered caches are rehashed, dele
   const damaged = (await f.call('/api/release-cache')).body.files.find(item => item.cacheId === replaced.cacheId);
   assert.equal(damaged.modified, true);
   assert.equal(damaged.size, Buffer.byteLength('changed!!!'));
+  bytes = Buffer.from('bad payload');
   await f.call('/api/release-download', 'POST', { releaseId: 401 });
   const corrupt = await f.waitFor(state => state.status === 'failed');
   assert.match(corrupt.error, /校验失败/);
   assert.equal(await fs.readFile(replaced.path, 'utf8'), 'changed!!!');
+  // 大小和版本头均可能正常，应用时仍须校验内容；重下成功才替换旧文件。
+  bytes = Buffer.from('version two');
+  await fs.writeFile(replaced.path, 'version BAD');
+  assert.equal((await f.call('/api/release-cache')).body.files.find(item => item.cacheId === replaced.cacheId).modified, false);
+  await f.call('/api/release-download', 'POST', { releaseId: 401 });
+  const repaired = await f.waitFor(state => state.status === 'completed');
+  assert.equal(repaired.cacheId, replaced.cacheId);
+  assert.deepEqual(await fs.readFile(replaced.path), bytes);
   for (const cacheId of ['../outside', original.path, 'C:\\Windows', 'not-a-cache']) {
     assert.equal((await f.call('/api/release-cache', 'DELETE', { cacheId })).status, 400);
   }

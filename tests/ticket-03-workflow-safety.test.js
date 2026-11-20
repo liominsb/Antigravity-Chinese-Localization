@@ -27,7 +27,7 @@ for (const fn of requiredFunctions) {
 assert(source.includes("fs.copyFileSync(asarPath, backupPath)"), '必须包含对 app.asar 的初始安全备份逻辑');
 console.log('[PASS] 安全备份创建逻辑已锁定');
 
-assert(source.includes("fs.copyFileSync(backupPath, asarPath)"), '必须包含从 app.asar.bak 恢复原始文件的还原逻辑');
+assert(source.includes("fs.renameSync(stageRestore, asarPath)"), '原版备份应从已校验的暂存文件原子还原');
 console.log('[PASS] 原始安全还原逻辑已锁定');
 
 // 3. 验证全局注入脚本的沙盒容错机制

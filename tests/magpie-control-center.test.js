@@ -8,6 +8,8 @@ const os = require('os');
 const path = require('path');
 const crypto = require('crypto');
 const vm = require('vm');
+const execFile = require('util').promisify(require('child_process').execFile);
+const { runRestoreWorkflow } = require('../localize');
 const { setTimeout: delay } = require('timers/promises');
 const { createReleaseManager } = require('../release-manager');
 const { createControlCenter, startControlCenter } = require('../integrations/magpie/control-center');
@@ -203,6 +205,41 @@ test('Magpie applies a matching cached patch and restores the original bytes off
   assert.deepEqual(await fs.readFile(installed), patch);
 });
 
+test('restore rejects a concurrent CLI writer and preserves an intervening official update', async t => {
+  const appDir = await tempWorkspace();
+  t.after(() => removeWorkspace(appDir));
+  const resources = path.join(appDir, 'resources');
+  const target = path.join(resources, 'app.asar');
+  const official = archive('2.33.0');
+  const updated = archive('2.34.0');
+  await fs.mkdir(resources);
+  await fs.writeFile(path.join(resources, 'app.asar.bak'), official);
+  await fs.writeFile(target, Buffer.concat([official, Buffer.from('menuTranslationMap')]));
+
+  // 父进程已经选好了备份。另一个进程走相同的 CLI/HTTP 还原入口，必须收到冲突。
+  const cli = `require('./localize').runRestoreWorkflow(process.argv[1], {
+    forceStop: false, isAppRunning: () => false
+  }).catch(e => { console.log(e.statusCode); process.exitCode = e.statusCode === 409 ? 0 : 1; })`;
+  let checks = 0;
+  await assert.rejects(runRestoreWorkflow(appDir, {
+    forceStop: false,
+    async isAppRunning() {
+      if (++checks === 1) {
+        const { stdout } = await execFile(process.execPath, ['-e', cli, appDir], {
+          cwd: path.resolve(__dirname, '..'), windowsHide: true,
+        });
+        assert.match(stdout, /409/);
+      } else {
+        await fs.writeFile(target, updated);
+      }
+      return false;
+    },
+  }), { statusCode: 409 });
+  assert.equal(checks, 2);
+  assert.deepEqual(await fs.readFile(target), updated);
+  assert.deepEqual((await fs.readdir(resources)).sort(), ['app.asar', 'app.asar.bak']);
+});
+
 test('overlapping Magpie hosts hand over the port without invalidating an open page', async t => {
   const profile = await tempWorkspace();
   const appDir = path.join(profile, 'client');
@@ -255,6 +292,7 @@ test('an open page retries a reset connection and resumes its download when the 
   };
   const window = {};
   let latestAttempts = 0;
+  let pendingLatest;
   let starts = 0;
   let applyAttempts = 0;
   let polls = 0;
@@ -279,6 +317,7 @@ test('an open page retries a reset connection and resumes its download when the 
         case '/api/status': return new Response(JSON.stringify(state));
         case '/api/latest':
           if (++latestAttempts === 1) throw new TypeError('connection reset');
+          if (latestAttempts === 3) return new Promise(resolve => { pendingLatest = resolve; });
           return new Response(JSON.stringify({ tag: 'v2.33.0', size: 1 }));
         case '/api/apply':
           if (++applyAttempts === 1) return new Response(JSON.stringify({ error: '请先退出客户端' }), { status: 409 });
@@ -320,6 +359,10 @@ test('an open page retries a reset connection and resumes its download when the 
   assert.equal(element('download').textContent, '重新下载');
   assert.equal(element('apply').disabled, false);
   assert.equal(element('restore').disabled, true);
+  await element('refresh').onclick();
+  assert.ok(pendingLatest);
+  assert.equal(element('apply').disabled, false, 'local operations must not wait for GitHub');
+  assert.equal(element('download').disabled, true);
   let open = false;
   element('confirm-action').showModal = () => { open = true; };
   element('confirm-action').close = () => { open = false; };
@@ -335,6 +378,11 @@ test('an open page retries a reset connection and resumes its download when the 
   await element('accept-action').onclick();
   assert.equal(element('restore').className, 'primary');
   assert.equal(element('apply').disabled, true);
+  pendingLatest(new Response(JSON.stringify({ error: 'GitHub 请求超时' }), { status: 503 }));
+  await delay(5);
+  assert.equal(element('restore').disabled, false);
+  assert.equal(element('restore').className, 'primary', 'a late reply must not restore stale client state');
+  assert.match(element('release-detail').textContent, /超时/);
   element('restore').onclick();
   await element('accept-action').onclick();
   assert.equal(element('apply').className, 'primary');

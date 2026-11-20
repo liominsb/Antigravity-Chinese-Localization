@@ -4,6 +4,7 @@ const fs = require('fs');
 const fsp = fs.promises;
 const path = require('path');
 const crypto = require('crypto');
+const { withInstallLock } = require('./src/install-lock');
 const { readAsarPackageVersion } = require('./asar-version');
 const { normalizeVersion } = require('./src/backup-utils');
 const {
@@ -144,6 +145,11 @@ function createPackageInstaller({
       skipped: true, backupReused: false };
     // An identical package needs no writes and should not close a running app.
     if (await hashFile(asarPath) === cache.sha256) return skippedResult;
+    return withInstallLock(resourcesDir, () => installAtTarget(cache, params, appDir, resourcesDir, skippedResult));
+  }
+
+  async function installAtTarget(cache, params, appDir, resourcesDir, skippedResult) {
+    const { asarPath } = skippedResult;
     // Block cross-version archive overwrites before stopping any active client [H-01].
     assertCompatiblePackageVersion(asarPath, cache.path);
     await stopBeforeInstall(params.forceStop === true);

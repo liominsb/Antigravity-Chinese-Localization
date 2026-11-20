@@ -16,6 +16,8 @@
   const fragment = new URLSearchParams(location.hash.slice(1));
   const wait = milliseconds => new Promise(resolve => setTimeout(resolve, milliseconds));
   let latestTag = '';
+  let latestPending = false;
+  let lastLocal = null;
   let folderState = {};
   const folders = ['cache', 'install', 'config', 'agent'];
   let localStatusLoaded = false;
@@ -120,7 +122,7 @@
 
   function setBusy(active) {
     busy = active;
-    refreshButton.disabled = active || !reconnectButton.hidden;
+    refreshButton.disabled = active || latestPending || !reconnectButton.hidden;
     downloadButton.disabled = active || !latestTag || !reconnectButton.hidden;
     applyButton.disabled = active || !canApply || !reconnectButton.hidden;
     restoreButton.disabled = active || !canRestore || !reconnectButton.hidden;
@@ -143,7 +145,7 @@
           method, credentials: 'omit', cache: 'no-store',
           headers: { 'x-localizer-token': token }, signal,
         });
-        if (response.status === 403) throw connectionError();
+        if (response.status === 403 && name !== 'latest') throw connectionError();
         data = await response.json();
       } catch (error) {
         if (response?.status === 403) throw error;
@@ -160,6 +162,7 @@
       if (!response.ok) throw new Error(data.error || '操作失败');
       return data;
     }
+    if (name === 'latest') throw new Error('暂时无法查询社区版本，请稍后刷新', { cause: failure });
     throw connectionError(failure);
   }
 
@@ -168,7 +171,9 @@
     return new Error('插件连接已中断，请重新连接', { cause });
   }
 
-  function showStatus({ client, cached, folders: locations }) {
+  function showStatus(local) {
+    lastLocal = local;
+    const { client, cached, folders: locations } = local;
     localStatusLoaded = true;
     canApply = client.isInstalled && !client.isLocalized && cached?.matchesClient;
     canRestore = client.isLocalized && client.version && client.hasBackup;
@@ -195,7 +200,7 @@
     } else if (latestMismatch) {
       hint.textContent = '最新汉化包与本机版本不匹配。请在版本更新后刷新。';
     } else if (!latestTag) {
-      hint.textContent = '本机没有可用的汉化包。请刷新版本后下载。';
+      hint.textContent = latestPending ? '正在查询可下载的汉化包…' : '本机没有可用的汉化包。请刷新版本后下载。';
     } else {
       hint.textContent = cached ? '本地汉化包不可用，请先下载最新版。' : '首次使用请先点「下载最新版」，校验通过后即可应用汉化。';
       next = 'download';
@@ -260,30 +265,41 @@
     }
   }
 
-  async function refresh() {
-    if (busy) return;
-    setBusy(true);
-    status.textContent = '正在读取版本…';
+  async function refreshLatest() {
+    latestPending = true;
+    latestTag = '';
+    byId('release-version').textContent = '—';
+    byId('release-detail').textContent = '正在查询…';
     try {
-      const [local, latest] = await Promise.allSettled([api('status'), api('latest')]);
-      latestTag = latest.status === 'fulfilled' ? latest.value.tag : '';
-      if (latestTag) showLatest(latest.value);
-      else {
-        byId('release-version').textContent = '—';
-        byId('release-detail').textContent = latest.reason.message;
-      }
-      if (local.status === 'rejected') {
-        canApply = false;
-        canRestore = false;
-        folderState = {};
-        byId('apply-hint').textContent = '读取客户端状态失败，请刷新后重试。';
-        if (!localStatusLoaded) byId('client-state').textContent = local.reason.message;
-        throw local.reason;
-      }
-      showStatus(local.value);
-      if (local.value.download.status === 'downloading') await trackDownload(local.value.download);
-      else status.textContent = latestTag ? completionMessage(local.value.download) : '本机状态已刷新，暂未查到仓库版本';
+      const release = await api('latest');
+      latestTag = release.tag;
+      showLatest(release);
     } catch (error) {
+      byId('release-detail').textContent = error.message;
+    } finally {
+      latestPending = false;
+      if (lastLocal) showStatus(lastLocal);
+      setBusy(busy);
+    }
+  }
+
+  async function refresh() {
+    if (busy || latestPending) return;
+    setBusy(true);
+    void refreshLatest();
+    status.textContent = '正在读取本机状态…';
+    try {
+      const local = await api('status');
+      showStatus(local);
+      if (local.download.status === 'downloading') await trackDownload(local.download);
+      else status.textContent = completionMessage(local.download);
+    } catch (error) {
+      lastLocal = null;
+      canApply = false;
+      canRestore = false;
+      folderState = {};
+      byId('apply-hint').textContent = '读取客户端状态失败，请刷新后重试。';
+      if (!localStatusLoaded) byId('client-state').textContent = error.message;
       status.textContent = error.message;
     } finally {
       setBusy(false);

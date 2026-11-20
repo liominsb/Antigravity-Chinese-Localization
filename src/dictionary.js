@@ -4270,7 +4270,13 @@ const dictionary = {
     "Carbon that may offload routine steps to Hydrogen. Same Carbon-level quality, fewer tokens used.": "由 Carbon 主导，可将常规步骤分流至 Hydrogen 执行。保持 Carbon 级输出质量，消耗更少 Token。",
     "Argon that may offload routine steps to Hydrogen. Same Argon-level quality, fewer tokens used.": "由 Argon 主导，可将常规步骤分流至 Hydrogen 执行。保持 Argon 级输出质量，消耗更少 Token。",
     "Not PII/NTK": "勿含敏感数据",
-    "Do not use for PII/NTK data.": "请勿用于 PII/NTK 敏感数据。"
+    "Do not use for PII/NTK data.": "请勿用于 PII/NTK 敏感数据。",
+
+    // ===== 语音模式开关与通话状态（2.33.0） =====
+    "Start Voice mode": "开启语音模式",
+    "Listening. Ask anything.": "正在聆听，随时提问。",
+    "Connecting…": "正在连接…",
+    "Still connecting…": "仍在连接…"
 };
 
 const coreWords = {

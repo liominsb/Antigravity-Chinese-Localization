@@ -1803,6 +1803,48 @@
       return replaceTrimmed(text, trimmed, fixed);
     }
 
+    // ===== 智能体权限作用域提示：<项目名> setting / Your Remote setting / Your This Computer setting =====
+    if (/^(.{1,60}) setting$/.test(trimmed)) {
+      const scopeKey = trimmed.slice(0, -8).trim();
+      // 仅当字面量像「项目名」时才处理，避免把 proxy setting 之类普通短语强翻
+      const scopeCommon = /^(?:proxy|system|display|environment|network|keyboard|editor|terminal|audio|video|browser|privacy|appearance|notification|account|billing|search|default|project|security|session|cookie)s?$/i;
+      let scopeCn = '';
+      if (scopeKey === 'Your This Computer') {
+        scopeCn = '沿用你在「本机」的设置';
+      } else if (scopeKey === 'Your Remote') {
+        scopeCn = '沿用你在「云端」的设置';
+      } else if (!scopeCommon.test(scopeKey) && (/[\u4e00-\u9fa5]/.test(scopeKey) || /^[A-Z0-9]/.test(scopeKey))) {
+        scopeCn = '沿用「' + scopeKey + '」的设置';
+      }
+      if (scopeCn) {
+        cacheSet(trimmed, scopeCn);
+        return replaceTrimmed(text, trimmed, scopeCn);
+      }
+    }
+
+    // ===== 语音通话浮层：语速提示 / 静音 tooltip / 结束按钮 =====
+    if (/^Voice speed, (.+)$/.test(trimmed)) {
+      const speedCn = '语速，' + trimmed.replace(/^Voice speed, /, '');
+      cacheSet(trimmed, speedCn);
+      return replaceTrimmed(text, trimmed, speedCn);
+    }
+
+    if (/^(Unmute|Mute) (.+) \((.+)\)$/.test(trimmed)) {
+      const muteMatch = trimmed.match(/^(Unmute|Mute) (.+) \((.+)\)$/);
+      const muteTarget = muteMatch[2] === 'mic' ? '麦克风' : muteMatch[2];
+      const muteCn = (muteMatch[1] === 'Mute' ? '静音' : '取消静音')
+        + (muteTarget === '麦克风' ? '' : ' ')
+        + muteTarget + '（' + muteMatch[3] + '）';
+      cacheSet(trimmed, muteCn);
+      return replaceTrimmed(text, trimmed, muteCn);
+    }
+
+    // 通话栏结束按钮：只匹配首字母大写的独立 "End"，避免 lowerDictionary 误伤正文里的 end
+    if (trimmed === 'End') {
+      cacheSet(trimmed, '结束');
+      return replaceTrimmed(text, trimmed, '结束');
+    }
+
     // 5. 大小写不敏感词典查找与末尾标点剥离重拼（O(1)，命中写入 stringCache）
     const caseInsensitiveHit = lowerDictionary.get(trimmed.toLowerCase());
     if (caseInsensitiveHit !== undefined) {

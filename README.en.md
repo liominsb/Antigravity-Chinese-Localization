@@ -145,6 +145,12 @@ The launcher prefers a usable Node from the current PATH and adds common Homebre
 
 ---
 
+## Using Magpie
+
+Clone the full repository, choose **Add from folder** in Magpie’s Plugins page, select `integrations/magpie`, and enable it. Open **Antigravity 汉化** in the sidebar and download the patch. Quit Antigravity, choose **应用汉化** (Apply), and launch the client as usual.
+
+A matching cached patch can be applied offline. **还原官方版** (Restore) uses a local backup of the same client version. For a custom installation, set `appDir` in the plugin options. [View the plugin in Magpie](docs/magpie-workbench.png)
+
 ## Command Line Arguments
 
 `localize.js` supports headless execution for automation or developer workflows:

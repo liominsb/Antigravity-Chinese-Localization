@@ -1911,7 +1911,7 @@ async function runLocalizationWorkflow(appDir) {
 }
 
 // Restore workflow (unified backup discovery + strict version guard + atomic replace)
-async function runRestoreWorkflow(appDir) {
+async function runRestoreWorkflow(appDir, { forceStop = true, isAppRunning = isAppRunningStrict } = {}) {
   return writeLock.tryRun(async () => {
     const resourcesDir = getResourcesDir(appDir);
     const asarPath = path.join(resourcesDir, 'app.asar');
@@ -1951,7 +1951,8 @@ async function runRestoreWorkflow(appDir) {
     const backupPath = backupSearch.match.path;
     assertNotSymlinkOrJunction(backupPath, '备份文件');
 
-    await stopAndWaitAppExit(5000);
+    if (forceStop) await stopAndWaitAppExit(5000);
+    else if (await isAppRunning()) throw httpError('请先正常退出 Antigravity 及其后台服务，再还原官方版', 409);
 
     log(`正在从安全备份 (${path.basename(backupPath)}) 恢复原始官方 app.asar...`);
     const stageRestore = path.join(resourcesDir, `app.asar.restore-${process.pid}-${Date.now()}`);
@@ -1964,6 +1965,7 @@ async function runRestoreWorkflow(appDir) {
       log('还原原始 app.asar 成功！软件已恢复为官方英文版。');
     } catch (e) {
       try { if (fs.existsSync(stageRestore)) fs.unlinkSync(stageRestore); } catch (_) {}
+      if (!forceStop) throw httpError('无法替换客户端文件，请确认已退出并具有写入权限', 409);
       // Fallback direct copy if cross-device or Windows transient rename lock
       try {
         fs.copyFileSync(backupPath, asarPath);
@@ -2470,5 +2472,6 @@ module.exports = {
   applyTranslations,
   runLocalizationWorkflow,
   runRestoreWorkflow,
+  writeLock,
   server,
 };

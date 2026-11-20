@@ -242,6 +242,7 @@ function sanitizeSingleSegmentUsername(username, { allowEmpty = true } = {}) {
 module.exports = {
   LOOPBACK_HOSTS,
   httpError,
+  safeEqualToken,
   isValidLoopbackHostHeader,
   verifySameOriginAndToken,
   readJsonBody,

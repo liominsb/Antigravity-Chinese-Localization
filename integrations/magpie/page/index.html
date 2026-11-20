@@ -1,0 +1,68 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="color-scheme" content="light dark">
+  <meta name="localizer-token" content="__LOCALIZER_TOKEN__">
+  <meta name="magpie-service-port" content="33883">
+  <title>Antigravity 汉化</title>
+  <link rel="icon" href="./icon.png">
+  <link rel="stylesheet" href="./style.css">
+  <script src="./app.js" defer></script>
+</head>
+<body>
+  <main class="workspace">
+    <header class="identity">
+      <img src="./icon.png" width="144" height="144" alt="">
+      <h1>Antigravity 汉化</h1>
+    </header>
+    <div class="content">
+      <div class="tabs" role="tablist" aria-label="插件功能">
+        <button id="settings-tab" type="button" role="tab" aria-controls="settings-panel" aria-selected="true">汉化设置</button>
+        <button id="resources-tab" type="button" role="tab" aria-controls="resources-panel" aria-selected="false" tabindex="-1">资源维护</button>
+      </div>
+      <section id="settings-panel" role="tabpanel" aria-labelledby="settings-tab" tabindex="0">
+        <div class="section-heading">
+          <h2>客户端语言</h2>
+          <button type="button" id="refresh" disabled>刷新版本</button>
+        </div>
+        <dl class="fields">
+          <div><dt>客户端版本</dt><dd id="client-version">—</dd></div>
+          <div><dt>汉化状态</dt><dd id="client-state">正在检测…</dd></div>
+          <div><dt>社区最新汉化包</dt><dd><span id="release-version">—</span><small id="release-detail">正在查询…</small></dd></div>
+          <div><dt>本地汉化包</dt><dd id="cache-detail">正在读取…</dd></div>
+        </dl>
+        <p id="apply-hint" class="hint"></p>
+        <div class="actions">
+          <button type="button" id="download" disabled>下载最新版</button>
+          <button type="button" id="apply" disabled>应用汉化</button>
+          <button type="button" id="restore" disabled>还原官方版</button>
+        </div>
+        <progress id="progress" max="100" aria-label="补丁下载进度" hidden></progress>
+      </section>
+      <section id="resources-panel" role="tabpanel" aria-labelledby="resources-tab" tabindex="0" hidden>
+        <h2>本机目录</h2>
+        <dl class="folders">
+          <div><dt>汉化包缓存</dt><dd><code id="cache-path">—</code></dd><dd><button id="open-cache" type="button" aria-label="打开汉化包缓存目录" disabled>打开文件夹</button></dd></div>
+          <div><dt>客户端安装目录</dt><dd><code id="install-path">—</code></dd><dd><button id="open-install" type="button" aria-label="打开客户端安装目录" disabled>打开文件夹</button></dd></div>
+          <div><dt>客户端配置目录</dt><dd><code id="config-path">—</code></dd><dd><button id="open-config" type="button" aria-label="打开客户端配置目录" disabled>打开文件夹</button></dd></div>
+          <div><dt>智能体数据目录</dt><dd><code id="agent-path">—</code></dd><dd><button id="open-agent" type="button" aria-label="打开智能体数据目录" disabled>打开文件夹</button></dd></div>
+        </dl>
+      </section>
+      <div class="feedback">
+        <p id="status" role="status">正在连接本机服务…</p>
+        <button type="button" id="reconnect" hidden>重新连接</button>
+      </div>
+    </div>
+  </main>
+  <dialog id="confirm-action" aria-labelledby="confirm-title" aria-describedby="confirm-detail">
+    <h2 id="confirm-title"></h2>
+    <p id="confirm-detail"></p>
+    <div class="actions">
+      <button type="button" id="cancel-action" autofocus>取消</button>
+      <button type="button" class="primary" id="accept-action"></button>
+    </div>
+  </dialog>
+</body>
+</html>

@@ -14,6 +14,7 @@ const pipeline = promisify(streamPipeline);
 
 const REPOSITORY = 'antigravity-cn-community/Antigravity-Chinese-Localization';
 const API_ROOT = `https://api.github.com/repos/${REPOSITORY}`;
+const RELEASES_URL = `https://github.com/${REPOSITORY}/releases`;
 const USER_AGENT = 'Antigravity-Chinese-Localization-Console';
 const FILE_NAME = 'app.asar.ready';
 const META_NAME = 'download.json';
@@ -21,7 +22,7 @@ const MAX_ASSET_BYTES = 128 * 1024 * 1024;
 const MAX_API_BYTES = 4 * 1024 * 1024;
 const MAX_SUMS_BYTES = 1024 * 1024;
 const MAX_REDIRECTS = 5;
-const CACHE_ID_PATTERN = /^release-[A-Za-z0-9._-]{1,48}-[1-9]\d{0,15}-[a-f0-9]{64}$/;
+const CACHE_ID_PATTERN = /^release-[A-Za-z0-9._-]{1,48}-(?:[1-9]\d{0,15}|tag)-[a-f0-9]{64}$/;
 const ASSET_HOSTS = new Set([
   'github.com', 'api.github.com', 'release-assets.githubusercontent.com',
   'objects.githubusercontent.com', 'github-releases.githubusercontent.com'
@@ -44,12 +45,21 @@ function selectAsset(release) {
     assets.find(asset => asset.name === 'app.asar') || null;
 }
 
+function describeRelease(release, asset) {
+  return {
+    id: release.id, tag: release.tag_name, name: release.name || release.tag_name,
+    publishedAt: release.published_at, prerelease: Boolean(release.prerelease),
+    releaseUrl: release.html_url, body: release.body || '',
+    asset: { name: asset.name, size: asset.size || 0, sha256: normalizeDigest(asset.digest) }
+  };
+}
+
 function makeCacheId(tag, releaseId, sha256) {
   const safeTag = String(tag || 'version').replace(/[^A-Za-z0-9._-]/g, '_')
     .replace(/^\.+|\.+$/g, '').slice(0, 48) || 'version';
   // Prefix avoids Windows reserved device names. Full hashes retain replaced
   // release assets without overwriting an older, completed download.
-  return `release-${safeTag}-${releaseId}-${sha256}`;
+  return `release-${safeTag}-${releaseId ?? 'tag'}-${sha256}`;
 }
 
 function createReleaseManager({
@@ -99,7 +109,7 @@ function createReleaseManager({
     return url;
   }
 
-  function openResponse(input, { isApi = false, redirects = 0 } = {}) {
+  function openResponse(input, { isApi = false, method = 'GET', onRedirect, redirects = 0 } = {}) {
     const url = validateUrl(input, isApi);
     return new Promise((resolve, reject) => {
       let req;
@@ -107,6 +117,7 @@ function createReleaseManager({
         // Explicitly enforce rejectUnauthorized: true on HTTPS requests so host
         // NODE_TLS_REJECT_UNAUTHORIZED=0 cannot weaken GitHub TLS verification [C-09].
         const requestOptions = {
+          method,
           headers: { 'User-Agent': USER_AGENT, Accept: isApi ? 'application/vnd.github+json' : 'application/octet-stream' }
         };
         if (url.protocol === 'https:') {
@@ -123,14 +134,17 @@ function createReleaseManager({
             }
             try {
               const next = validateUrl(new URL(res.headers.location, url), isApi);
-              resolve(openResponse(next, { isApi, redirects: redirects + 1 }));
+              if (onRedirect) onRedirect(url, next);
+              resolve(openResponse(next, { isApi, method, onRedirect, redirects: redirects + 1 }));
             } catch (error) { reject(error); }
             return;
           }
           if (code < 200 || code >= 300) {
             res.on('error', () => {});
             res.resume();
-            reject(fail(`GitHub 返回 HTTP ${code}`));
+            const error = fail(`GitHub 返回 HTTP ${code}`);
+            error.upstreamStatus = code;
+            reject(error);
             return;
           }
           resolve(res);
@@ -170,31 +184,96 @@ function createReleaseManager({
     catch (_) { throw fail('GitHub 发布数据不是有效 JSON'); }
   }
 
-  async function listReleases(page) {
-    const cached = listCache.get(page);
+  async function cacheReleaseRequest(key, load) {
+    const cached = listCache.get(key);
     if (cached && cached.expires > Date.now()) return cached.promise;
-    const promise = (async () => {
+    const promise = load();
+    listCache.set(key, { expires: Date.now() + 30000, promise });
+    if (listCache.size > 20) listCache.delete(listCache.keys().next().value);
+    try { return await promise; }
+    catch (error) {
+      if (listCache.get(key)?.promise === promise) listCache.delete(key);
+      throw error;
+    }
+  }
+
+  function listReleases(page) {
+    return cacheReleaseRequest(page, async () => {
       const { value, headers } = await readApi(`${API_ROOT}/releases?per_page=20&page=${page}`);
       if (!Array.isArray(value)) throw fail('GitHub 发布列表格式无效');
       const releases = value.filter(release => !release.draft && selectAsset(release))
-        .map(release => {
-          const asset = selectAsset(release);
-          return {
-            id: release.id, tag: release.tag_name, name: release.name || release.tag_name,
-            publishedAt: release.published_at, prerelease: Boolean(release.prerelease),
-            releaseUrl: release.html_url, body: release.body || '',
-            asset: { name: asset.name, size: asset.size || 0, sha256: normalizeDigest(asset.digest) }
-          };
-        });
+        .map(release => describeRelease(release, selectAsset(release)));
       return {
         success: true, releases, page,
         hasMore: headers.link ? /rel="next"/.test(headers.link) : value.length === 20
       };
-    })();
-    listCache.set(page, { expires: Date.now() + 30000, promise });
-    if (listCache.size > 20) listCache.delete(listCache.keys().next().value);
-    try { return await promise; }
-    catch (error) { listCache.delete(page); throw error; }
+    });
+  }
+
+  async function latestFromPublicRelease() {
+    // REST 匿名限流时使用 GitHub 自己的 latest 跳转，固定版本后再查同一发布的资产。
+    const latestUrl = RELEASES_URL + '/latest';
+    const prefix = `/${REPOSITORY}/releases/tag/`;
+    let tag;
+    const page = await openResponse(latestUrl, {
+      method: 'HEAD',
+      onRedirect(from, to) {
+        if (from.href !== latestUrl) return;
+        const candidate = to.pathname.slice(prefix.length);
+        if (to.hostname !== 'github.com' || !to.pathname.startsWith(prefix) ||
+            !/^[A-Za-z0-9][A-Za-z0-9._-]{0,47}$/.test(candidate)) {
+          throw fail('GitHub 最新发布未跳转到指定仓库的有效版本');
+        }
+        tag = candidate;
+      },
+    });
+    page.resume();
+    if (!tag) throw fail('无法从 GitHub 最新发布地址识别版本');
+
+    const base = `${RELEASES_URL}/download/${tag}/`;
+    async function inspectAsset(name) {
+      const browser_download_url = base + name;
+      const response = await openResponse(browser_download_url, { method: 'HEAD' });
+      const size = Number(response.headers['content-length']);
+      response.resume();
+      if (!Number.isSafeInteger(size) || size < 1 || size > MAX_ASSET_BYTES) {
+        throw fail('公开发布资产大小无效或超过 128 MB 限制');
+      }
+      return { name, size, browser_download_url };
+    }
+    let asset;
+    try { asset = await inspectAsset(FILE_NAME); }
+    catch (error) {
+      if (error.upstreamStatus !== 404) throw error;
+      asset = await inspectAsset('app.asar');
+    }
+    return {
+      id: null, tag_name: tag, html_url: RELEASES_URL + '/tag/' + tag,
+      assets: [asset, { name: 'SHA256SUMS.txt', browser_download_url: base + 'SHA256SUMS.txt' }],
+    };
+  }
+
+  function loadLatestRelease() {
+    return cacheReleaseRequest('latest', async () => {
+      let release;
+      try {
+        ({ value: release } = await readApi(`${API_ROOT}/releases/latest`));
+      } catch (error) {
+        if (![403, 429].includes(error.upstreamStatus)) throw error;
+        return latestFromPublicRelease();
+      }
+      if (!release || release.draft || release.prerelease ||
+          !Number.isSafeInteger(release.id) || release.id <= 0) {
+        throw fail('GitHub 未返回可用的正式发布');
+      }
+      if (!selectAsset(release)) throw fail('仓库最新正式版没有汉化补丁资产');
+      return release;
+    });
+  }
+
+  async function getLatestRelease() {
+    const release = await loadLatestRelease();
+    return describeRelease(release, selectAsset(release));
   }
 
   function checkOrigin(req, isStateChanging = false) {
@@ -258,7 +337,7 @@ function createReleaseManager({
     try { meta = JSON.parse(await fsp.readFile(metaPath, 'utf8')); }
     catch (_) { throw fail('下载缓存元数据无效', 404); }
     if (meta.format !== 1 || meta.cacheId !== cacheId || meta.filename !== FILE_NAME ||
-        !Number.isSafeInteger(meta.releaseId) || meta.releaseId <= 0 ||
+        (meta.releaseId !== null && (!Number.isSafeInteger(meta.releaseId) || meta.releaseId <= 0)) ||
         typeof meta.tag !== 'string' || !/^[a-f0-9]{64}$/.test(meta.sha256 || '') ||
         makeCacheId(meta.tag, meta.releaseId, meta.sha256) !== cacheId ||
         !Number.isSafeInteger(meta.size) || meta.size < 1 || meta.size > MAX_ASSET_BYTES ||
@@ -295,12 +374,12 @@ function createReleaseManager({
     throw fail('SHA256SUMS.txt 未包含所选资产的有效校验值');
   }
 
-  async function downloadRelease(releaseId) {
+  async function downloadRelease(releaseId, latestRelease) {
     let partPath;
     let metaPartPath;
     let finalDownload;
     try {
-      const { value: release } = await readApi(`${API_ROOT}/releases/${releaseId}`);
+      const release = latestRelease || (await readApi(`${API_ROOT}/releases/${releaseId}`)).value;
       if (!release || release.id !== releaseId || release.draft) throw fail('所选发布版本不存在或不可下载');
       const asset = selectAsset(release);
       if (!asset) throw fail('此版本没有 app.asar.ready 或 app.asar 资产');
@@ -423,6 +502,23 @@ function createReleaseManager({
     } finally { writeBusy = false; }
   }
 
+  function getDownload() {
+    return { ...download };
+  }
+
+  function queueDownload(releaseId, latestRelease) {
+    if (download.status === 'downloading' || writeBusy) throw fail('已有下载、安装或缓存操作正在进行，请等待完成', 409);
+    download = { status: 'downloading', releaseId, tag: '', filename: FILE_NAME, cacheId: '',
+      receivedBytes: 0, totalBytes: 0, percent: 0, path: '', error: '', sha256: '', verified: false };
+    void downloadRelease(releaseId, latestRelease);
+    return getDownload();
+  }
+
+  async function startLatestDownload() {
+    const release = await loadLatestRelease();
+    return queueDownload(release.id, release);
+  }
+
   function handleRequest(req, res) {
     let url;
     try { url = new URL(req.url, 'http://localhost'); } catch (_) { return false; }
@@ -435,16 +531,12 @@ function createReleaseManager({
         send(res, 200, await listReleases(page));
       } else if (url.pathname === '/api/release-download' && req.method === 'GET') {
         checkOrigin(req, false);
-        send(res, 200, { success: true, download });
+        send(res, 200, { success: true, download: getDownload() });
       } else if (url.pathname === '/api/release-download' && req.method === 'POST') {
         checkOrigin(req, true);
         const { releaseId } = await readBody(req);
         if (!Number.isSafeInteger(releaseId) || releaseId <= 0) throw fail('releaseId 必须是正整数', 400);
-        if (download.status === 'downloading' || writeBusy) throw fail('已有下载、安装或缓存操作正在进行，请等待完成', 409);
-        download = { status: 'downloading', releaseId, tag: '', filename: FILE_NAME, cacheId: '',
-          receivedBytes: 0, totalBytes: 0, percent: 0, path: '', error: '', sha256: '', verified: false };
-        send(res, 202, { success: true, download });
-        void downloadRelease(releaseId);
+        send(res, 202, { success: true, download: queueDownload(releaseId) });
       } else if (url.pathname === '/api/release-cache' && req.method === 'GET') {
         checkOrigin(req, false);
         send(res, 200, { success: true, files: await listFiles() });
@@ -466,7 +558,7 @@ function createReleaseManager({
     return true;
   }
 
-  return { handleRequest, withCachedFile, listFiles };
+  return { handleRequest, withCachedFile, listFiles, getLatestRelease, getDownload, startLatestDownload };
 }
 
 module.exports = { createReleaseManager };

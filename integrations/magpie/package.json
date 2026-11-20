@@ -1,0 +1,16 @@
+{
+  "name": "magpie-antigravity-cn-localization",
+  "version": "0.1.0",
+  "private": true,
+  "description": "在 Magpie 中查看 Antigravity 版本并下载社区汉化补丁",
+  "main": "plugin.mjs",
+  "license": "MIT",
+  "magpie": {
+    "page": {
+      "title": "Antigravity 汉化",
+      "file": "page/index.html",
+      "service": { "port": 33883, "option": "port" }
+    },
+    "permissions": []
+  }
+}

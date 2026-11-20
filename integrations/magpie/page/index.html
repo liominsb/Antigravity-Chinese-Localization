@@ -1,0 +1,49 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="color-scheme" content="light dark">
+  <meta name="localizer-token" content="__LOCALIZER_TOKEN__">
+  <meta name="magpie-service-port" content="33883">
+  <title>Antigravity 汉化控制中心</title>
+  <link rel="stylesheet" href="./style.css">
+  <script src="./app.js" defer></script>
+</head>
+<body>
+  <main>
+    <header class="top-bar">
+      <h1>Antigravity 汉化</h1>
+      <button type="button" id="refresh" disabled>刷新版本</button>
+    </header>
+
+    <div class="version-grid">
+      <section class="card" aria-labelledby="client-heading">
+        <h2 id="client-heading">本机客户端</h2>
+        <p class="version" id="client-version">—</p>
+        <p class="detail" id="client-state">等待检测</p>
+        <code id="client-path" hidden></code>
+      </section>
+
+      <section class="card" aria-labelledby="release-heading">
+        <h2 id="release-heading">仓库最新正式版</h2>
+        <p class="version" id="release-version">—</p>
+        <p class="detail" id="release-detail">等待查询</p>
+        <button type="button" class="primary-btn" id="download" disabled>下载最新版</button>
+      </section>
+    </div>
+
+    <section class="card download-card" aria-labelledby="cache-heading">
+      <h2 id="cache-heading">下载缓存</h2>
+      <p class="detail" id="cache-detail">暂无已下载的补丁</p>
+      <code id="cache-path" hidden></code>
+      <progress id="progress" max="100" aria-label="补丁下载进度" hidden></progress>
+    </section>
+
+    <div class="feedback">
+      <p id="status" role="status">正在连接本机服务…</p>
+      <button type="button" id="reconnect" hidden>重新连接</button>
+    </div>
+  </main>
+</body>
+</html>

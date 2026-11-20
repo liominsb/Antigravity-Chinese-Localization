@@ -56,6 +56,7 @@ const tests = [
   'process-check.test.js',
   'package-installer.test.js',
   'release-manager.test.js',
+  'magpie-control-center.test.js',
 ];
 
 console.log(`================ 全套 TDD 回归测试套件 (${tests.length} 组) ================\n`);

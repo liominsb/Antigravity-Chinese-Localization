@@ -145,6 +145,14 @@ The launcher prefers a usable Node from the current PATH and adds common Homebre
 
 ---
 
+## Magpie Plugin Page
+
+Clone the repository and use **Add from folder** in Magpie's Plugins page to select `integrations/magpie`. Enable the plugin and open **Antigravity 汉化** in the sidebar.
+
+The page shows the installed client version, localization status, and the latest stable release. **下载最新版** downloads the patch to `work/magpie/downloads/` and reports SHA-256 verification, the cached file path, and client version compatibility. Use the downloaded `app.asar.ready` with the installation instructions above.
+
+For a non-default installation, set `appDir` in the Magpie plugin options. The service listens on `127.0.0.1:33883` by default. Set `port` in the same options to use a different port.
+
 ## Command Line Arguments
 
 `localize.js` supports headless execution for automation or developer workflows:

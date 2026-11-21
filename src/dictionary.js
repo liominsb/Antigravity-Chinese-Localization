@@ -436,7 +436,6 @@ const dictionary = {
     "Overview": "概览",
     "Artifacts": "工件",
     "Conversations": "对话",
-    "Agent settings and permissions for conversations outside of projects.": "项目外部对话的智能体设置和权限配置。",
     "Not in Project": "不在项目中",
     "Manage project folders, agent settings, and permissions.": "管理项目文件夹、智能体设置和专属权限。",
     "Requires manual review for all terminal commands and file accesses outside of the working folders.": "对所有终端命令以及工作区文件夹之外的文件访问均需要手动审查。",
@@ -4429,7 +4428,28 @@ const dictionary = {
     "Weekly": "每周",
     "(opens in external browser)": "（在外部浏览器中打开）",
     "(opens in a new tab)": "（在新标签页中打开）",
-    "Failed to create automation.": "创建自动化失败。"
+    "Failed to create automation.": "创建自动化失败。",
+    // ===== 2.34.0 增量：技能卡与插件描述、遗漏界面文案（对齐上游 055ca22 之外的缺口） =====
+    "Build, package, and debug MCP Apps for Antigravity: MCP server tools whose results render as interactive UI in the conversation, in the side pane, or full-page from the sidebar. Use when adding a UI to an MCP tool, building or theming the app itself, packaging it as a plugin, or debugging an app that doesn't render or behave as expected.": "为 Antigravity 构建、打包并调试 MCP 应用：这类 MCP 服务器工具的返回结果会以交互式 UI 呈现——可显示在对话中、侧边面板内，或从侧边栏打开为整页。适用于为 MCP 工具添加界面、构建或定制应用主题、将其打包为插件，以及调试渲染或行为不符合预期的应用。",
+    "Migrates the user's MCP servers, skills, slash commands, subagents, and instruction files from other coding agents (Claude Code, Codex, Cursor, Gemini CLI) into one new Antigravity plugin. Use when the user wants to bring over, import, or migrate their setup or config from another agent or tool. Don't use for installing Marketplace plugins or authoring a new plugin from scratch (use the plugin skill).": "把用户在其他编码智能体（Claude Code、Codex、Cursor、Gemini CLI）中的 MCP 服务器、技能、斜杠命令、子智能体与指令文件迁移到一个新的 Antigravity 插件中。适用于用户希望导入或迁移其他智能体或工具的配置。不适用于安装市场插件或从零编写新插件（请使用 plugin 技能）。",
+    "(Preview & Quota Heavy) Run a swarm: several agents working in parallel on one task, each in its own conversation, collaborating through a shared message board. Use when the work splits into pieces that can be done at the same time, or when a second pair of eyes should check the first pair's work.": "（预览版，消耗额度较多）运行一个编排集群：多个智能体并行处理同一任务，各自在独立对话中工作，并通过共享留言板协作。适用于任务可拆分为可同时推进的多块，或需要第二组人复核第一组工作的情况。",
+    "How to write and run a dynamic workflow script with the `run_workflow` tool: a Python script that orchestrates many agents with `agent`, `parallel`, `pipeline`, and `phase`. Use when a task splits into many independent or staged pieces of agent work (fan out over files, modules, bugs, or review angles, then aggregate), or when the user asks for a workflow. Don't use for a single delegated task (use a subagent) or for legacy workflow files (see migrate-workflows).": "介绍如何用 `run_workflow` 工具编写并运行动态工作流脚本：这是一段 Python 脚本，通过 `agent`、`parallel`、`pipeline` 与 `phase` 来编排多个智能体。适用于任务可拆成多个独立或分阶段的智能体工作（按文件、模块、缺陷或评审角度分发后再汇总），或用户明确要求工作流时。不适用于单次委派任务（请用子智能体）或旧版工作流文件（见 migrate-workflows）。",
+    "ONLY for the native-swarm worker whose brief says it is the monitor. On a timer, it checks whether the whole swarm has stalled and calls on the one member who can unstick it. Coordinators and other workers: do not load this.": "仅用于简介中声明自己是 monitor 的 native-swarm 工作者。它按定时器检查整个集群是否停滞，并召集唯一能让其恢复推进的成员。协调者与其他工作者请勿加载本技能。",
+    "ONLY for the native-swarm worker whose brief says it is the narrator. It watches the board and keeps the facts behind the user's Overview (view.json) current. Coordinators and other workers: do not load this.": "仅用于简介中声明自己是 narrator 的 native-swarm 工作者。它监视留言板，维护用户「概览」（view.json）背后的事实数据。协调者与其他工作者请勿加载本技能。",
+    "What the coordinator writes so the Swarm UI's Overview can show the swarm's goal, its groups of work and a screenshot timeline. Load it before you brief and add the first workers to a swarm.": "协调者写入的内容，用于让 Swarm 界面的「概览」展示集群目标、工作分组与截图时间线。在为集群撰写简介并加入首批工作者之前加载本技能。",
+    "e.g. work": "例如：work",
+    "e.g., curl": "例如：curl",
+    "Open in Cider": "在 Cider 中打开",
+    "e.g., npm test": "例如：npm test",
+    "Couldn't connect": "无法连接",
+    "Method not found": "方法不存在",
+    "e.g., example.com": "例如：example.com",
+    "e.g., chromium/src": "例如：chromium/src",
+    "e.g., /path/to/file": "例如：/path/to/file",
+    "Skipping...": "正在跳过…",
+    "e.g., main or refs/heads/main": "例如：main 或 refs/heads/main",
+    "script source must not be empty": "脚本源码不能为空",
+    "Unlock the power of agent swarms.": "解锁智能体集群的全部能力。",
 };
 
 const coreWords = {

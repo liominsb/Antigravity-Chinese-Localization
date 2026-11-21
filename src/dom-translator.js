@@ -2119,6 +2119,33 @@
       cacheSet(trimmed, fixed);
       return replaceTrimmed(text, trimmed, fixed);
     }
+    // ===== 快捷键录制区无障碍标签：Recording shortcut for <action>... =====
+    if (/^Recording shortcut for (.+)\. Press keys to bind, Enter to save, Escape to cancel\.$/.test(trimmed)) {
+      const recCn = trimmed.replace(/^Recording shortcut for (.+)\. Press keys to bind, Enter to save, Escape to cancel\.$/, (_m, act) => '正在为 ' + act + ' 录制快捷键。按下按键绑定，Enter 保存，Escape 取消。');
+      cacheSet(trimmed, recCn);
+      return replaceTrimmed(text, trimmed, recCn);
+    }
+
+    // ===== 项目外对话设置的描述：Settings for conversations outside of <projects> =====
+    if (/^Settings for conversations outside of (.+)\.$/.test(trimmed)) {
+      const nounMap = { projects: '项目', workspaces: '工作区', folders: '文件夹', conversations: '对话' };
+      const outsideCn = trimmed.replace(/^Settings for conversations outside of (.+)\.$/, (_m, noun) => {
+        const cn = nounMap[String(noun).trim().toLowerCase()] || noun;
+        return cn + '之外对话的设置。';
+      });
+      cacheSet(trimmed, outsideCn);
+      return replaceTrimmed(text, trimmed, outsideCn);
+    }
+
+    if (/^Agent settings and permissions for conversations outside of (.+)\.$/.test(trimmed)) {
+      const nounMap2 = { projects: '项目', workspaces: '工作区', folders: '文件夹', conversations: '对话' };
+      const permCn = trimmed.replace(/^Agent settings and permissions for conversations outside of (.+)\.$/, (_m, noun) => {
+        const cn = nounMap2[String(noun).trim().toLowerCase()] || noun;
+        return cn + '之外对话的智能体设置与权限。';
+      });
+      cacheSet(trimmed, permCn);
+      return replaceTrimmed(text, trimmed, permCn);
+    }
     // 5. 大小写不敏感词典查找与末尾标点剥离重拼（O(1)，命中写入 stringCache）
     const caseInsensitiveHit = lowerDictionary.get(trimmed.toLowerCase());
     if (caseInsensitiveHit !== undefined) {

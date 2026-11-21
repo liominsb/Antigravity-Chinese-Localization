@@ -1,13 +1,10 @@
 'use strict';
 
-const fs = require('fs');
-const path = require('path');
 const assert = require('assert');
 const { loadTranslatorSandbox } = require('./helpers/translator-loader');
 
 console.log('=== 开始 Ticket-47 归档提示 toast 专项测试 ===\n');
 
-const ROOT = path.resolve(__dirname, '..');
 let passed = 0;
 let total = 0;
 
@@ -46,7 +43,6 @@ check(
 // -----------------------------------------------------------------------------
 console.log('--- 2. 节点级片段 ---');
 check('前缀片段', translateString('View archived in the sidebar ('), '已归档内容可在侧边栏（');
-// replaceTrimmed 会保留节点原有前后空白，因此这里带前导空格
 check('后缀片段（保留前导空格）', translateString(' menu).'), ' 菜单）中查看。');
 
 // -----------------------------------------------------------------------------
@@ -56,10 +52,12 @@ console.log('--- 3. 幂等性 ---');
 for (const text of [
   'View archived in the sidebar (![filter](icon://filter_list) menu).',
   ' menu).',
+  'menu).',
   'View archived in the sidebar (',
+  ' View archived in the sidebar ( ',
 ]) {
   const first = translateString(text);
-  const second = translateString(text); // 同一输入第二次调用会命中 stringCache
+  const second = translateString(text);
   check(`二次命中缓存不叠加空白：${text}`, second, first);
   check(`译文再次翻译不变：${text}`, translateString(first), first);
 }

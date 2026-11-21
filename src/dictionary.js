@@ -4272,6 +4272,16 @@ const dictionary = {
     "Not PII/NTK": "勿含敏感数据",
     "Do not use for PII/NTK data.": "请勿用于 PII/NTK 敏感数据。",
 
+    // ===== 语音模式开关与通话状态（2.33.0） =====
+    "Start Voice mode": "开启语音模式",
+    "Listening. Ask anything.": "正在聆听，随时提问。",
+    "Connecting…": "正在连接…",
+    "Still connecting…": "仍在连接…",
+
+    // ===== 删除确认弹窗 =====
+    "Are you sure you want to delete this conversation? This action cannot be undone.": "确定要删除该对话吗？此操作无法撤销。",
+    "? This will remove it from your MCP configuration.": "吗？这将从你的 MCP 配置中移除。",
+
     // ===== 归档提示 toast（消息体为 markdown，图标会截断文本节点） =====
     "View archived in the sidebar (![filter](icon://filter_list) menu).": "已归档内容可在侧边栏（显示选项菜单）中查看。",
     "View archived in the sidebar (Display options menu).": "已归档内容可在侧边栏（显示选项菜单）中查看。"

@@ -4289,7 +4289,37 @@ electron_1.contextBridge.exposeInMainWorld('wizardAPI', wizardAPI);
     "Carbon that may offload routine steps to Hydrogen. Same Carbon-level quality, fewer tokens used.": "由 Carbon 主导，可将常规步骤分流至 Hydrogen 执行。保持 Carbon 级输出质量，消耗更少 Token。",
     "Argon that may offload routine steps to Hydrogen. Same Argon-level quality, fewer tokens used.": "由 Argon 主导，可将常规步骤分流至 Hydrogen 执行。保持 Argon 级输出质量，消耗更少 Token。",
     "Not PII/NTK": "勿含敏感数据",
-    "Do not use for PII/NTK data.": "请勿用于 PII/NTK 敏感数据。"
+    "Do not use for PII/NTK data.": "请勿用于 PII/NTK 敏感数据。",
+    "Start Voice mode": "开启语音模式",
+    "Listening. Ask anything.": "正在聆听，随时提问。",
+    "Connecting…": "正在连接…",
+    "Still connecting…": "仍在连接…",
+    "Are you sure you want to delete this conversation? This action cannot be undone.": "确定要删除该对话吗？此操作无法撤销。",
+    "? This will remove it from your MCP configuration.": "吗？这将从你的 MCP 配置中移除。",
+    "View archived in the sidebar (![filter](icon://filter_list) menu).": "已归档内容可在侧边栏（显示选项菜单）中查看。",
+    "View archived in the sidebar (Display options menu).": "已归档内容可在侧边栏（显示选项菜单）中查看。",
+    "Your This Computer setting": "沿用你在「本机」的设置",
+    "Your Remote setting": "沿用你在「远程」的设置",
+    "Compacting": "正在压缩上下文",
+    "Compacting...": "正在压缩上下文...",
+    "Compacting…": "正在压缩上下文…",
+    "Shares this repository, with a working copy of its own. Uncommitted changes stay behind.": "共享此仓库并拥有独立工作副本，未提交的更改将留在原处。",
+    "A copy of the workspace snapshot recorded at this step.": "此步骤记录的工作区快照副本。",
+    "A full copy of this workspace, uncommitted changes included.": "此工作区的完整副本（包含未提交的更改）。",
+    "Rewinds the conversation only. Files in this workspace stay as they are now.": "仅回退对话历史，此工作区中的文件保持当前状态不变。",
+    "Keeps working in this workspace. Nothing is copied.": "继续在此工作区中工作，不会复制任何内容。",
+    "Creating worktree for the forked conversation...": "正在为派生的对话创建工作树...",
+    "Creating workspace for the forked conversation...": "正在为派生的对话创建工作区...",
+    "Creating the forked conversation...": "正在创建派生的对话...",
+    "For most deep reasoning and complex problems": "适用于大多数深度推理与复杂问题",
+    "For most deep reasoning and complex problems.": "适用于大多数深度推理与复杂问题。",
+    "For your hardest, long-horizon tasks": "适用于最具挑战性的长周期复杂任务",
+    "For your hardest, long-horizon tasks.": "适用于最具挑战性的长周期复杂任务。",
+    "The original Gemini 4 model for advanced workflows": "初代 Gemini 4 模型，适用于进阶工作流",
+    "The original Gemini 4 model for advanced workflows.": "初代 Gemini 4 模型，适用于进阶工作流。",
+    "For speed and efficiency in execution tasks": "适用于追求速度与效率的执行类任务",
+    "For speed and efficiency in execution tasks.": "适用于追求速度与效率的执行类任务。",
+    "Neon that may offload routine steps to Hydrogen. Same Neon-level quality, fewer tokens used.": "由 Neon 主导，可将常规步骤分流至 Hydrogen 执行。保持 Neon 级输出质量，消耗更少 Token。"
 };
 
   const coreWords = {
@@ -5036,8 +5066,37 @@ electron_1.contextBridge.exposeInMainWorld('wizardAPI', wizardAPI);
     }
 
     // ===== 侧边栏、分支、浏览器与 Hooks 动态短语 =====
+    if (/^Compacting\s*·\s*(.+)$/i.test(trimmed)) {
+      const fixed = trimmed.replace(/^Compacting\s*·\s*(.+)$/i, (_m, dur) => '正在压缩上下文 · ' + dur);
+      cacheSet(trimmed, fixed);
+      return replaceTrimmed(text, trimmed, fixed);
+    }
+
+    if (/^Model unavailable,\s*retrying(?:\s+in\s+(\d+s))?(?:\s*\(attempt\s+(\d+)\/(\d+)\))?$/i.test(trimmed)) {
+      const fixed = trimmed.replace(
+        /^Model unavailable,\s*retrying(?:\s+in\s+(\d+s))?(?:\s*\(attempt\s+(\d+)\/(\d+)\))?$/i,
+        (_m, waitSec, cur, max) => {
+          const base = waitSec ? ('模型暂不可用，将在 ' + waitSec + ' 后重试') : '模型暂不可用，正在重试';
+          return (cur && max) ? (base + '（第 ' + cur + '/' + max + ' 次尝试）') : base;
+        }
+      );
+      cacheSet(trimmed, fixed);
+      return replaceTrimmed(text, trimmed, fixed);
+    }
+
+    if (/^Using browser\s*\((\d+s)\)$/i.test(trimmed)) {
+      const fixed = trimmed.replace(/^Using browser\s*\((\d+s)\)$/i, '正在使用浏览器 ($1)');
+      cacheSet(trimmed, fixed);
+      return replaceTrimmed(text, trimmed, fixed);
+    }
+
     if (/^Using browser\s*·\s*(.+)$/i.test(trimmed)) {
-      const fixed = trimmed.replace(/^Using browser\s*·\s*(.+)$/i, (_m, target) => '正在使用浏览器 · ' + target);
+      const fixed = trimmed.replace(/^Using browser\s*·\s*(.+)$/i, (_m, target) => {
+        const t = target
+          .replace(/^Thinking\s*\((\d+s)\)[.…]*$/i, '思考中 ($1)…')
+          .replace(/^Thinking[.…]*$/i, '思考中…');
+        return '正在使用浏览器 · ' + t;
+      });
       cacheSet(trimmed, fixed);
       return replaceTrimmed(text, trimmed, fixed);
     }
@@ -6215,6 +6274,73 @@ electron_1.contextBridge.exposeInMainWorld('wizardAPI', wizardAPI);
       return replaceTrimmed(text, trimmed, fixed);
     }
 
+    // ===== 智能体权限作用域提示：<项目名> setting / Your Remote setting / Your This Computer setting =====
+    if (/^(.{1,60}) setting$/.test(trimmed)) {
+      const scopeKey = trimmed.slice(0, -8).trim();
+      // 停用常见英文设置词，并为英文长句设置首词/大小写守卫，同时兼容 my-app 等小写项目文件夹名
+      const scopeCommon = /^(?:proxy|system|display|environment|network|keyboard|editor|terminal|audio|video|browser|privacy|appearance|notification|account|billing|search|default|project|security|session|cookie|user|local|global|custom|theme|font|language|timezone|timeout|color|tab|spacing|indent|scale|cursor|permissions?|this|that|your|my|our|their|his|her|its|the|an?|some|any|each|every|one|same|other|new|old|current|previous|next|first|last)s?$/i;
+      const scopeProseStarter = /^(?:configure|enable|disable|change|update|reset|set|use|keep|edit|select|choose|check|override|follow|apply|increase|decrease|adjust|modify|save|clear|delete|remove|find|see|try|need|want|make|too|no|not|all|any|some|each|every|your|this|that|the|an?|our|their|his|her|its)\b/i;
+      let scopeCn = '';
+      if (scopeKey === 'Your This Computer') {
+        scopeCn = '沿用你在「本机」的设置';
+      } else if (scopeKey === 'Your Remote') {
+        scopeCn = '沿用你在「远程」的设置';
+      } else if (scopeKey && !scopeCommon.test(scopeKey)) {
+        const hasCjk = /[\u4e00-\u9fa5]/.test(scopeKey);
+        const isSingleToken = !/\s/.test(scopeKey);
+        const isSlugOrScoped = isSingleToken && (/^[A-Z]/.test(scopeKey) || /[-_.\d]/.test(scopeKey));
+        const isTitlePhrase = /\s/.test(scopeKey)
+          && !scopeProseStarter.test(scopeKey)
+          && scopeKey.split(/\s+/).every(tok => /^[A-Z0-9]/.test(tok) || /^(?:of|for|and|in|on|to|v\d+)$/i.test(tok));
+        if (hasCjk || isSlugOrScoped || isTitlePhrase) {
+          scopeCn = '沿用「' + scopeKey + '」的设置';
+        }
+      }
+      if (scopeCn) {
+        cacheSet(trimmed, scopeCn);
+        return replaceTrimmed(text, trimmed, scopeCn);
+      }
+    }
+
+    // ===== 语音通话浮层：语速提示 / 静音 tooltip / 结束按钮 =====
+    if (/^Voice speed, (.+)$/.test(trimmed)) {
+      const speedCn = '语速，' + trimmed.replace(/^Voice speed, /, '');
+      cacheSet(trimmed, speedCn);
+      return replaceTrimmed(text, trimmed, speedCn);
+    }
+
+    if (/^(Unmute|Mute) (mic|Antigravity|Jetski) \(([^)]+)\)$/.test(trimmed)) {
+      const muteMatch = trimmed.match(/^(Unmute|Mute) (mic|Antigravity|Jetski) \(([^)]+)\)$/);
+      const muteTarget = muteMatch[2] === 'mic' ? '麦克风' : muteMatch[2];
+      const muteCn = (muteMatch[1] === 'Mute' ? '静音' : '取消静音')
+        + (muteTarget === '麦克风' ? '' : ' ')
+        + muteTarget + ' (' + muteMatch[3] + ')';
+      cacheSet(trimmed, muteCn);
+      return replaceTrimmed(text, trimmed, muteCn);
+    }
+
+    // 通话栏结束按钮：只匹配首字母大写的独立 "End"，避免 lowerDictionary 误伤正文里的 end
+    if (trimmed === 'End') {
+      cacheSet(trimmed, '结束');
+      return replaceTrimmed(text, trimmed, '结束');
+    }
+
+    // ===== 删除确认弹窗：资源名以 <strong> 插值，句子被拆成「前缀 + 名称 + 后缀」 =====
+    // 前缀（Are you sure you want to delete / ... the）词典已收录，这里只补后缀片段
+    if (/^\? This action cannot be undone\.$/.test(trimmed)) {
+      cacheSet(trimmed, '吗？此操作无法撤销。');
+      return replaceTrimmed(text, trimmed, '吗？此操作无法撤销。');
+    }
+    // ===== 归档提示：markdown 里的行内图标把句子切成「前缀 + 图标 + 后缀」 =====
+    if (/^View archived in the sidebar \($/.test(trimmed)) {
+      cacheSet(trimmed, '已归档内容可在侧边栏（');
+      return replaceTrimmed(text, trimmed, '已归档内容可在侧边栏（');
+    }
+
+    if (/^menu\)\.$/.test(trimmed)) {
+      cacheSet(trimmed, '菜单）中查看。');
+      return replaceTrimmed(text, trimmed, '菜单）中查看。');
+    }
     // 5. 大小写不敏感词典查找与末尾标点剥离重拼（O(1)，命中写入 stringCache）
     const caseInsensitiveHit = lowerDictionary.get(trimmed.toLowerCase());
     if (caseInsensitiveHit !== undefined) {

@@ -4284,7 +4284,30 @@ const dictionary = {
 
     // ===== 归档提示 toast（消息体为 markdown，图标会截断文本节点） =====
     "View archived in the sidebar (![filter](icon://filter_list) menu).": "已归档内容可在侧边栏（显示选项菜单）中查看。",
-    "View archived in the sidebar (Display options menu).": "已归档内容可在侧边栏（显示选项菜单）中查看。"
+    "View archived in the sidebar (Display options menu).": "已归档内容可在侧边栏（显示选项菜单）中查看。",
+
+    "Your This Computer setting": "沿用你在「本机」的设置",
+    "Your Remote setting": "沿用你在「远程」的设置",
+    "Compacting": "正在压缩上下文",
+    "Compacting...": "正在压缩上下文...",
+    "Compacting…": "正在压缩上下文…",
+    "Shares this repository, with a working copy of its own. Uncommitted changes stay behind.": "共享此仓库并拥有独立工作副本，未提交的更改将留在原处。",
+    "A copy of the workspace snapshot recorded at this step.": "此步骤记录的工作区快照副本。",
+    "A full copy of this workspace, uncommitted changes included.": "此工作区的完整副本（包含未提交的更改）。",
+    "Rewinds the conversation only. Files in this workspace stay as they are now.": "仅回退对话历史，此工作区中的文件保持当前状态不变。",
+    "Keeps working in this workspace. Nothing is copied.": "继续在此工作区中工作，不会复制任何内容。",
+    "Creating worktree for the forked conversation...": "正在为派生的对话创建工作树...",
+    "Creating workspace for the forked conversation...": "正在为派生的对话创建工作区...",
+    "Creating the forked conversation...": "正在创建派生的对话...",
+    "For most deep reasoning and complex problems": "适用于大多数深度推理与复杂问题",
+    "For most deep reasoning and complex problems.": "适用于大多数深度推理与复杂问题。",
+    "For your hardest, long-horizon tasks": "适用于最具挑战性的长周期复杂任务",
+    "For your hardest, long-horizon tasks.": "适用于最具挑战性的长周期复杂任务。",
+    "The original Gemini 4 model for advanced workflows": "初代 Gemini 4 模型，适用于进阶工作流",
+    "The original Gemini 4 model for advanced workflows.": "初代 Gemini 4 模型，适用于进阶工作流。",
+    "For speed and efficiency in execution tasks": "适用于追求速度与效率的执行类任务",
+    "For speed and efficiency in execution tasks.": "适用于追求速度与效率的执行类任务。",
+    "Neon that may offload routine steps to Hydrogen. Same Neon-level quality, fewer tokens used.": "由 Neon 主导，可将常规步骤分流至 Hydrogen 执行。保持 Neon 级输出质量，消耗更少 Token。"
 };
 
 const coreWords = {

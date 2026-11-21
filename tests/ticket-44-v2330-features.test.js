@@ -300,6 +300,31 @@ check('防截胡回归: Canceled deletion of setup routine', translateString('Ca
 check('防夹生回归: Command prompt', translateString('Command prompt'), '命令提示符');
 check('历史高频修复守护: NEW -> 新 / Repo -> 仓库', [translateString('NEW'), translateString('Repo')], ['新', '仓库']);
 check('红线守护: 时间戳与模型名原样保留', [translateString('24m'), translateString('2m ago'), translateString('Gemini 3.8 Flash')], ['24m', '2m ago', 'Gemini 3.8 Flash']);
+check('上下文压缩状态行: Compacting / Compacting · 5m 38s', [
+  translateString('Compacting'),
+  translateString('Compacting · 5m 38s'),
+], ['正在压缩上下文', '正在压缩上下文 · 5m 38s']);
+check('模型不可用自动重试状态行汉化', [
+  translateString('Model unavailable, retrying in 5s (attempt 2/5)'),
+  translateString('Model unavailable, retrying'),
+], ['模型暂不可用，将在 5s 后重试（第 2/5 次尝试）', '模型暂不可用，正在重试']);
+check('浏览器子智能体耗时与思考状态行汉化', [
+  translateString('Using browser (12s)'),
+  translateString('Using browser · Thinking (15s)…'),
+], ['正在使用浏览器 (12s)', '正在使用浏览器 · 思考中 (15s)…']);
+check('Gemini 4 全系列模型悬浮说明气泡汉化 (Neon / Carbon / Argon / Hydrogen / Orchestrator Neon)', [
+  translateString('For most deep reasoning and complex problems'),
+  translateString('For your hardest, long-horizon tasks'),
+  translateString('The original Gemini 4 model for advanced workflows'),
+  translateString('For speed and efficiency in execution tasks'),
+  translateString('Neon that may offload routine steps to Hydrogen. Same Neon-level quality, fewer tokens used.'),
+], [
+  '适用于大多数深度推理与复杂问题',
+  '适用于最具挑战性的长周期复杂任务',
+  '初代 Gemini 4 模型，适用于进阶工作流',
+  '适用于追求速度与效率的执行类任务',
+  '由 Neon 主导，可将常规步骤分流至 Hydrogen 执行。保持 Neon 级输出质量，消耗更少 Token。',
+]);
 
 console.log(`\n======================================================`);
 console.log(`Ticket-44 v2.33.0 专项验收结果: ${passed}/${total} 断言通过`);

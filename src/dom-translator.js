@@ -624,8 +624,37 @@
     }
 
     // ===== 侧边栏、分支、浏览器与 Hooks 动态短语 =====
+    if (/^Compacting\s*·\s*(.+)$/i.test(trimmed)) {
+      const fixed = trimmed.replace(/^Compacting\s*·\s*(.+)$/i, (_m, dur) => '正在压缩上下文 · ' + dur);
+      cacheSet(trimmed, fixed);
+      return replaceTrimmed(text, trimmed, fixed);
+    }
+
+    if (/^Model unavailable,\s*retrying(?:\s+in\s+(\d+s))?(?:\s*\(attempt\s+(\d+)\/(\d+)\))?$/i.test(trimmed)) {
+      const fixed = trimmed.replace(
+        /^Model unavailable,\s*retrying(?:\s+in\s+(\d+s))?(?:\s*\(attempt\s+(\d+)\/(\d+)\))?$/i,
+        (_m, waitSec, cur, max) => {
+          const base = waitSec ? ('模型暂不可用，将在 ' + waitSec + ' 后重试') : '模型暂不可用，正在重试';
+          return (cur && max) ? (base + '（第 ' + cur + '/' + max + ' 次尝试）') : base;
+        }
+      );
+      cacheSet(trimmed, fixed);
+      return replaceTrimmed(text, trimmed, fixed);
+    }
+
+    if (/^Using browser\s*\((\d+s)\)$/i.test(trimmed)) {
+      const fixed = trimmed.replace(/^Using browser\s*\((\d+s)\)$/i, '正在使用浏览器 ($1)');
+      cacheSet(trimmed, fixed);
+      return replaceTrimmed(text, trimmed, fixed);
+    }
+
     if (/^Using browser\s*·\s*(.+)$/i.test(trimmed)) {
-      const fixed = trimmed.replace(/^Using browser\s*·\s*(.+)$/i, (_m, target) => '正在使用浏览器 · ' + target);
+      const fixed = trimmed.replace(/^Using browser\s*·\s*(.+)$/i, (_m, target) => {
+        const t = target
+          .replace(/^Thinking\s*\((\d+s)\)[.…]*$/i, '思考中 ($1)…')
+          .replace(/^Thinking[.…]*$/i, '思考中…');
+        return '正在使用浏览器 · ' + t;
+      });
       cacheSet(trimmed, fixed);
       return replaceTrimmed(text, trimmed, fixed);
     }
@@ -1806,15 +1835,24 @@
     // ===== 智能体权限作用域提示：<项目名> setting / Your Remote setting / Your This Computer setting =====
     if (/^(.{1,60}) setting$/.test(trimmed)) {
       const scopeKey = trimmed.slice(0, -8).trim();
-      // 仅当字面量像「项目名」时才处理，避免把 proxy setting 之类普通短语强翻
-      const scopeCommon = /^(?:proxy|system|display|environment|network|keyboard|editor|terminal|audio|video|browser|privacy|appearance|notification|account|billing|search|default|project|security|session|cookie)s?$/i;
+      // 停用常见英文设置词，并为英文长句设置首词/大小写守卫，同时兼容 my-app 等小写项目文件夹名
+      const scopeCommon = /^(?:proxy|system|display|environment|network|keyboard|editor|terminal|audio|video|browser|privacy|appearance|notification|account|billing|search|default|project|security|session|cookie|user|local|global|custom|theme|font|language|timezone|timeout|color|tab|spacing|indent|scale|cursor|permissions?|this|that|your|my|our|their|his|her|its|the|an?|some|any|each|every|one|same|other|new|old|current|previous|next|first|last)s?$/i;
+      const scopeProseStarter = /^(?:configure|enable|disable|change|update|reset|set|use|keep|edit|select|choose|check|override|follow|apply|increase|decrease|adjust|modify|save|clear|delete|remove|find|see|try|need|want|make|too|no|not|all|any|some|each|every|your|this|that|the|an?|our|their|his|her|its)\b/i;
       let scopeCn = '';
       if (scopeKey === 'Your This Computer') {
         scopeCn = '沿用你在「本机」的设置';
       } else if (scopeKey === 'Your Remote') {
-        scopeCn = '沿用你在「云端」的设置';
-      } else if (!scopeCommon.test(scopeKey) && (/[\u4e00-\u9fa5]/.test(scopeKey) || /^[A-Z0-9]/.test(scopeKey))) {
-        scopeCn = '沿用「' + scopeKey + '」的设置';
+        scopeCn = '沿用你在「远程」的设置';
+      } else if (scopeKey && !scopeCommon.test(scopeKey)) {
+        const hasCjk = /[\u4e00-\u9fa5]/.test(scopeKey);
+        const isSingleToken = !/\s/.test(scopeKey);
+        const isSlugOrScoped = isSingleToken && (/^[A-Z]/.test(scopeKey) || /[-_.\d]/.test(scopeKey));
+        const isTitlePhrase = /\s/.test(scopeKey)
+          && !scopeProseStarter.test(scopeKey)
+          && scopeKey.split(/\s+/).every(tok => /^[A-Z0-9]/.test(tok) || /^(?:of|for|and|in|on|to|v\d+)$/i.test(tok));
+        if (hasCjk || isSlugOrScoped || isTitlePhrase) {
+          scopeCn = '沿用「' + scopeKey + '」的设置';
+        }
       }
       if (scopeCn) {
         cacheSet(trimmed, scopeCn);
@@ -1829,12 +1867,12 @@
       return replaceTrimmed(text, trimmed, speedCn);
     }
 
-    if (/^(Unmute|Mute) (.+) \((.+)\)$/.test(trimmed)) {
-      const muteMatch = trimmed.match(/^(Unmute|Mute) (.+) \((.+)\)$/);
+    if (/^(Unmute|Mute) (mic|Antigravity|Jetski) \(([^)]+)\)$/.test(trimmed)) {
+      const muteMatch = trimmed.match(/^(Unmute|Mute) (mic|Antigravity|Jetski) \(([^)]+)\)$/);
       const muteTarget = muteMatch[2] === 'mic' ? '麦克风' : muteMatch[2];
       const muteCn = (muteMatch[1] === 'Mute' ? '静音' : '取消静音')
         + (muteTarget === '麦克风' ? '' : ' ')
-        + muteTarget + '（' + muteMatch[3] + '）';
+        + muteTarget + ' (' + muteMatch[3] + ')';
       cacheSet(trimmed, muteCn);
       return replaceTrimmed(text, trimmed, muteCn);
     }

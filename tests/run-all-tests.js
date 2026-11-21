@@ -50,6 +50,7 @@ const tests = [
   'ticket-42-group-by-repo.test.js',
   'ticket-43-comprehensive-audit-fixes.test.js',
   'ticket-44-v2330-features.test.js',
+  'ticket-45-scope-and-voice.test.js',
   'check-injection-syntax.js',
   'verify-ready-asar.js',
   'asar-version.test.js',

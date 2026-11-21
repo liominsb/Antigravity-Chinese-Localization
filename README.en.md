@@ -173,7 +173,7 @@ This project is not a simple string replacement script, but an industrial-grade 
 
 ```text
 [ Modular Build Layer: src/ ]
-  • src/dictionary.js (4,250+ zero-duplicate entries + coreWords)
+  • src/dictionary.js (4,440+ zero-duplicate entries + coreWords)
   • src/dom-translator.js (Web UI live translator & anti-Chinglish guard)
   • src/build-injection.js (payload assembly & validation)
   • src/http-security.js & src/backup-utils.js (127.0.0.1 loopback auth & versioned backups)

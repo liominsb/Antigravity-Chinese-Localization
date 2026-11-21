@@ -13,7 +13,7 @@ Antigravity 深度汉化与高性能本地化补丁程序
 [![Node Runtime](https://img.shields.io/badge/Node.js-%3E%3D%2018.18.0-informational)](https://nodejs.org/)
 [![license](https://img.shields.io/github/license/antigravity-cn-community/Antigravity-Chinese-Localization)](LICENSE)
 
-专为 Google Antigravity 打造的高性能、非破坏性深度汉化补丁，现由开源社区组织 **[`antigravity-cn-community`](https://github.com/antigravity-cn-community/Antigravity-Chinese-Localization)** 联合维护。全面适配 **Antigravity v2.34.0+** 最新架构，完成 `src/` 模块化引擎解耦与 DOM 微任务调度重构，带来百万级吞吐量的极致流畅体验。全量汉化规划模式、系统设置、安全沙盒、Remote SSH 远程开发、Computer Use 桌面操控与锁屏预览、内联审批/提问卡片、Orchestrator 编排器与 `4,440+` 条零重复核心界面文案，严格对齐官方原生轻量级打包规格（v2.34.0 约 7.40 MiB），并对用户打字与代码编辑区实施绝对物理免疫。
+专为 Google Antigravity 打造的高性能、非破坏性深度汉化补丁，现由开源社区组织 **[`antigravity-cn-community`](https://github.com/antigravity-cn-community/Antigravity-Chinese-Localization)** 联合维护。全面适配 **Antigravity v2.34.0+** 最新架构，完成 `src/` 模块化引擎解耦与 DOM 微任务调度重构，带来百万级吞吐量的极致流畅体验。全量汉化规划模式、系统设置、安全沙盒、Remote SSH 远程开发、Computer Use 桌面操控与锁屏预览、内联审批/提问卡片、`Orchestrator` 模式设置与 `4,440+` 条零重复核心界面文案，严格对齐官方原生轻量级打包规格（v2.34.0 约 7.40 MiB），并对用户打字与代码编辑区实施绝对物理免疫。
 
 > [最新 Release 下载](https://github.com/antigravity-cn-community/Antigravity-Chinese-Localization/releases/latest) · [社区讨论与千星里程碑 (Discussions)](https://github.com/antigravity-cn-community/Antigravity-Chinese-Localization/discussions) · [问题反馈与建议](https://github.com/antigravity-cn-community/Antigravity-Chinese-Localization/issues)
 
@@ -26,7 +26,7 @@ Antigravity 深度汉化与高性能本地化补丁程序
 | 核心模块 | 覆盖深度与技术指标 | 汉化范围与业务价值 |
 | :--- | :--- | :--- |
 | **规划模式与步骤计划 (Planning & Step Plan)** | 全生命周期闭环深度汉化 | 覆盖规划模式开关、实施计划 (Implementation Plan)、变更回顾 (Walkthrough)、Step Plan 步骤进度胶囊、审批阻断及待确认问题全套流程。 |
-| **系统设置、语音与快捷键 (Settings & Voice)** | 250+ 设置项全景覆盖 | 覆盖双语配色主题（含 Nord / Everforest）、`VS Code Default` / `Antigravity (AGY) Style` 双模快捷键方案、Gemini Live 9 款音色与实时语音听写、浏览数据与按站点 Cookie 管理、以及模型配额与 `Orchestrator` 编排卡片。 |
+| **系统设置、语音与快捷键 (Settings & Voice)** | 250+ 设置项全景覆盖 | 覆盖双语配色主题（含 Nord / Everforest）、`VS Code Default` / `Antigravity (AGY) Style` 双模快捷键方案、Gemini Live 9 款音色与实时语音听写、浏览数据与按站点 Cookie 管理、以及模型配额与 `Orchestrator` 模式设置卡片。 |
 | **安全与权限沙盒 (Permissions)** | 粒度精细化安全策略 | 适配全局权限、云端权限、GitHub 细粒度权限策略与项目继承架构，汉化终端沙盒、文件访问策略（允许/询问/拒绝）、网络策略及域名/命令黑白名单。 |
 | **Remote SSH 与跨端协同** | 主进程 12 模块 + 前端联动 | 全面汉化 SSH 远程连接、断连/重启过渡页、密码/密钥口令/主机指纹弹窗、共享主目录冲突接管 (`Take Over`)、远程麦克风授权、SSH 配置文件编码/权限诊断及跨设备远程接力。 |
 | **Computer Use 与多维协作** | 原生 HUD + 实时视频流窗格 | 全面覆盖 `v2.34.0` 升级后的 `Computer Use` 桌面操控 HUD (`hud.js` 停用/重新允许与接管状态)、锁屏及实时预览不可用提示、macOS 权限引导、`Agents Live` 视频流与多维侧栏自定义/筛选排序。 |
@@ -176,7 +176,7 @@ node localize.js --apply-only
 
 ```text
 [ 模块化构建层: src/ ]
-  • src/dictionary.js (4,250+ 零重复词典 + 实词库)
+  • src/dictionary.js (4,440+ 零重复词典 + 实词库)
   • src/dom-translator.js (Web UI 实时翻译与防夹生引擎)
   • src/build-injection.js (编译拼接与载荷校验)
   • src/http-security.js & src/backup-utils.js (127.0.0.1 回环鉴权与双轨备份校验)

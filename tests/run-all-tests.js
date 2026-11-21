@@ -55,6 +55,7 @@ const tests = [
   'ticket-47-archive-toast.test.js',
   'ticket-48-v2340-features.test.js',
   'ticket-49-v2340-remaining-gaps.test.js',
+  'ticket-50-issue68-and-tier-fixes.test.js',
   'check-injection-syntax.js',
   'verify-ready-asar.js',
   'asar-version.test.js',

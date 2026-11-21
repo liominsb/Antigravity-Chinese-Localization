@@ -134,12 +134,12 @@ To prevent password managers (1Password, Bitwarden, etc.) from falsely recognizi
 
 ## 6. Package Slimming & Upgrades
 
-### 1. Official Slim Size Guarantee (4.53 MB on v2.12.0 / ~6.23 MB on v2.33.0 / ~7.37 MiB on v2.34.0)
+### 1. Official Slim Size Guarantee (4.53 MB on v2.12.0 / ~6.23 MB on v2.33.0 / ~7.40 MiB on v2.34.0)
 Native modules like `chrome-devtools-mcp` reside in `resources/app.asar.unpacked/`. Packing rules must explicitly decouple them:
 ```bash
 npx --yes @electron/asar@3.2.18 pack "<extract_dir>" "<output_asar>" --unpack-dir "**/chrome-devtools-mcp/**"
 ```
-This prevents 21MB+ bundle bloat and keeps `app.asar` strictly aligned with each upstream version's official distribution size (4.53 MB on v2.12.0, ~6.23 MB on v2.33.0, ~7.37 MiB on v2.34.0). In addition, the dictionary and DOM runtime engine are modularized under `src/dictionary.js`, `src/dom-translator.js`, and `src/build-injection.js` to eliminate backtick template-escaping bugs.
+This prevents 21MB+ bundle bloat and keeps `app.asar` strictly aligned with each upstream version's official distribution size (4.53 MB on v2.12.0, ~6.23 MB on v2.33.0, ~7.40 MiB on v2.34.0). In addition, the dictionary and DOM runtime engine are modularized under `src/dictionary.js`, `src/dom-translator.js`, and `src/build-injection.js` to eliminate backtick template-escaping bugs.
 
 ### 2. `injectOrUpdate` Seamless Upgrades
 Truncates legacy injection blocks cleanly and writes the updated engine payload, ensuring smooth upgrades without manual cleanups.

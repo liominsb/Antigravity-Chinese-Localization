@@ -136,13 +136,13 @@
 
 ## 六、打包瘦身与热升级机制 (Packaging & Upgrades)
 
-### 1. 官方基准瘦身原理（v2.12.0 基线 4.53 MB / v2.33.0 约 6.23 MB / v2.34.0 约 7.37 MiB）
+### 1. 官方基准瘦身原理（v2.12.0 基线 4.53 MB / v2.33.0 约 6.23 MB / v2.34.0 约 7.40 MiB）
 官方 Antigravity 在打包时将 `chrome-devtools-mcp` 等原生依赖模块存放在 `resources/app.asar.unpacked/` 中。若重新打包时不加过滤，打包工具会将外置文件冗余压缩进 `app.asar` 导致体积大幅膨胀至 21MB+。  
 本项目在重打包命令中严谨注入：
 ```bash
 npx --yes @electron/asar@3.2.18 pack "<extract_dir>" "<output_asar>" --unpack-dir "**/chrome-devtools-mcp/**"
 ```
-保持外置目录解耦，使输出的 `app.asar` 物理体积严格对齐各版本的官方原生轻量基准（v2.12.0 基线 4.53 MB，v2.33.0 约 6.23 MB，当前 v2.34.0 约 7.37 MiB）。同时前端词典与运行时引擎已解耦为 `src/dictionary.js`、`src/dom-translator.js` 与 `src/build-injection.js` 模块化架构，杜绝单文件模板字符串转义腐蚀。
+保持外置目录解耦，使输出的 `app.asar` 物理体积严格对齐各版本的官方原生轻量基准（v2.12.0 基线 4.53 MB，v2.33.0 约 6.23 MB，当前 v2.34.0 约 7.40 MiB）。同时前端词典与运行时引擎已解耦为 `src/dictionary.js`、`src/dom-translator.js` 与 `src/build-injection.js` 模块化架构，杜绝单文件模板字符串转义腐蚀。
 
 ### 2. `injectOrUpdate` 平滑升级机制
 摒弃检测到标记即跳过的旧版逻辑，采用正确定位与截断技术：

@@ -518,10 +518,10 @@
       return replaceTrimmed(text, trimmed, fixed);
     }
 
-    if (/^(Low|Medium|High|Extra|Max)\s*·\s*(.+)$/i.test(trimmed)) {
-      const fixed = trimmed.replace(/^(Low|Medium|High|Extra|Max)\s*·\s*(.+)$/i, (_m, tier, ctx) => {
-        const tierMap = { low: '低', medium: '中', high: '高', xhigh: '极高', extra: '极高', max: '最高' };
-        return (tierMap[tier.toLowerCase()] || tier) + ' · ' + ctx;
+    if (/^(Low|Medium|High|Extra\s+High|Extra|Max)\s*·\s*(.+)$/i.test(trimmed)) {
+      const fixed = trimmed.replace(/^(Low|Medium|High|Extra\s+High|Extra|Max)\s*·\s*(.+)$/i, (_m, tier, ctx) => {
+        const tierMap = { low: '低', medium: '中', high: '高', xhigh: '极高', 'extra high': '极高', extra: '极高', max: '最高' };
+        return (tierMap[tier.trim().toLowerCase()] || tier) + ' · ' + ctx;
       });
       cacheSet(trimmed, fixed);
       return replaceTrimmed(text, trimmed, fixed);
@@ -2145,6 +2145,129 @@
       });
       cacheSet(trimmed, permCn);
       return replaceTrimmed(text, trimmed, permCn);
+    }
+
+    // ===== Issue #68：终端高危命令/跨区删除/运行时权限审批选项与标题模板 =====
+    if (/^Yes,\s+allow downloads from (.+?) for this run$/i.test(trimmed)) {
+      const fixed = trimmed.replace(/^Yes,\s+allow downloads from (.+?) for this run$/i, '是，本次运行允许从 $1 下载');
+      cacheSet(trimmed, fixed);
+      return replaceTrimmed(text, trimmed, fixed);
+    }
+
+    if (/^Yes,\s+save rule for (.+?) in this conversation$/i.test(trimmed)) {
+      const fixed = trimmed.replace(/^Yes,\s+save rule for (.+?) in this conversation$/i, '是，在当前对话中为 $1 保存规则');
+      cacheSet(trimmed, fixed);
+      return replaceTrimmed(text, trimmed, fixed);
+    }
+
+    if (/^Yes,\s+allow downloads from (.+?) in this conversation$/i.test(trimmed)) {
+      const fixed = trimmed.replace(/^Yes,\s+allow downloads from (.+?) in this conversation$/i, '是，在当前对话中允许从 $1 下载');
+      cacheSet(trimmed, fixed);
+      return replaceTrimmed(text, trimmed, fixed);
+    }
+
+    if (/^Yes,\s+and always allow (.+?) in this conversation$/i.test(trimmed)) {
+      const fixed = trimmed.replace(/^Yes,\s+and always allow (.+?) in this conversation$/i, '是，并在当前对话中始终允许 $1');
+      cacheSet(trimmed, fixed);
+      return replaceTrimmed(text, trimmed, fixed);
+    }
+
+    if (/^Yes,\s+allow (.+?) in this conversation$/i.test(trimmed)) {
+      const fixed = trimmed.replace(/^Yes,\s+allow (.+?) in this conversation$/i, '是，在当前对话中允许 $1');
+      cacheSet(trimmed, fixed);
+      return replaceTrimmed(text, trimmed, fixed);
+    }
+
+    if (/^Yes,\s+save rule for (.+?) globally$/i.test(trimmed)) {
+      const fixed = trimmed.replace(/^Yes,\s+save rule for (.+?) globally$/i, '是，全局保存 $1 的规则');
+      cacheSet(trimmed, fixed);
+      return replaceTrimmed(text, trimmed, fixed);
+    }
+
+    if (/^Yes,\s+always allow downloads from (.+)$/i.test(trimmed)) {
+      const fixed = trimmed.replace(/^Yes,\s+always allow downloads from (.+)$/i, '是，始终允许从 $1 下载');
+      cacheSet(trimmed, fixed);
+      return replaceTrimmed(text, trimmed, fixed);
+    }
+
+    if (/^Yes,\s+always allow (.+)$/i.test(trimmed)) {
+      const fixed = trimmed.replace(/^Yes,\s+always allow (.+)$/i, '是，始终允许 $1');
+      cacheSet(trimmed, fixed);
+      return replaceTrimmed(text, trimmed, fixed);
+    }
+
+    if (/^Yes,\s+and always allow (.+)$/i.test(trimmed)) {
+      const fixed = trimmed.replace(/^Yes,\s+and always allow (.+)$/i, '是，并始终允许 $1');
+      cacheSet(trimmed, fixed);
+      return replaceTrimmed(text, trimmed, fixed);
+    }
+
+    if (/^Conflicts with your configured Ask permission:\s*(.+)$/i.test(trimmed)) {
+      const fixed = trimmed.replace(/^Conflicts with your configured Ask permission:\s*(.+)$/i, '与您配置的询问权限冲突：$1');
+      cacheSet(trimmed, fixed);
+      return replaceTrimmed(text, trimmed, fixed);
+    }
+
+    if (/^Requires manual confirmation:\s*(.+)$/i.test(trimmed)) {
+      const fixed = trimmed.replace(/^Requires manual confirmation:\s*(.+)$/i, '需要人工确认：$1');
+      cacheSet(trimmed, fixed);
+      return replaceTrimmed(text, trimmed, fixed);
+    }
+
+    if (/^Save rule to always allow (.+?)\?$/i.test(trimmed)) {
+      const actionMap = {
+        'running this command': '运行此命令',
+        'running this command outside the sandbox': '在沙盒外运行此命令',
+        'using this mcp tool': '使用此 MCP 工具',
+        'a one-time administrator (uac) elevation': '一次性管理员 (UAC) 提权',
+        'access to this resource': '访问此资源',
+      };
+      const fixed = trimmed.replace(/^Save rule to always allow (.+?)\?$/i, (_m, act) => {
+        const actCn = actionMap[act.trim().toLowerCase()] || act;
+        return '保存规则以始终允许' + actCn + '？';
+      });
+      cacheSet(trimmed, fixed);
+      return replaceTrimmed(text, trimmed, fixed);
+    }
+
+    if (/^Allow ([^?\r\n]{2,120})\?$/i.test(trimmed)) {
+      const allowActionMap = {
+        'running this command': '运行此命令',
+        'running this command outside the sandbox': '在沙盒外运行此命令',
+        'using this mcp tool': '使用此 MCP 工具',
+        'a one-time administrator (uac) elevation': '一次性管理员 (UAC) 提权',
+        'access to this resource': '访问此资源',
+        'the browser agent to download a file': '浏览器智能体下载文件',
+      };
+      const fixed = trimmed.replace(/^Allow ([^?\r\n]{2,120})\?$/i, (_m, act) => {
+        const actCn = allowActionMap[act.trim().toLowerCase()] || act;
+        return '是否允许 ' + actCn + '？';
+      }).replace(/^是否允许 (运行此命令|在沙盒外运行此命令|使用此 MCP 工具|一次性管理员 \(UAC\) 提权|访问此资源|浏览器智能体下载文件)？$/, '是否允许$1？');
+      cacheSet(trimmed, fixed);
+      return replaceTrimmed(text, trimmed, fixed);
+    }
+
+    if (/^Recursively\s+deleting\s+the\s+pre-existing\s+directory\s+(.+?)\s+permanently\s+destroys\s+files\s+outside\s+the\s+workspace\s+that\s+cannot\s+be\s+locally\s+recovered\.?$/i.test(trimmed)) {
+      const fixed = trimmed.replace(
+        /^Recursively\s+deleting\s+the\s+pre-existing\s+directory\s+(.+?)\s+permanently\s+destroys\s+files\s+outside\s+the\s+workspace\s+that\s+cannot\s+be\s+locally\s+recovered\.?$/i,
+        '递归删除已有目录 $1 将永久销毁工作区外且无法在本地恢复的文件。'
+      );
+      cacheSet(trimmed, fixed);
+      return replaceTrimmed(text, trimmed, fixed);
+    }
+
+    if (/^Requesting permission to (access|execute|run|read|write|edit|modify|delete|use|download)\s+(.+)$/i.test(trimmed)) {
+      const verbMap = {
+        access: '访问', execute: '执行', run: '运行', read: '读取',
+        write: '写入', edit: '编辑', modify: '修改', delete: '删除',
+        use: '使用', download: '下载',
+      };
+      const fixed = trimmed.replace(
+        /^Requesting permission to (access|execute|run|read|write|edit|modify|delete|use|download)\s+(.+)$/i,
+        (_m, verb, target) => '正在请求' + (verbMap[verb.toLowerCase()] || verb) + '权限：' + target
+      );
+      cacheSet(trimmed, fixed);
+      return replaceTrimmed(text, trimmed, fixed);
     }
     // 5. 大小写不敏感词典查找与末尾标点剥离重拼（O(1)，命中写入 stringCache）
     const caseInsensitiveHit = lowerDictionary.get(trimmed.toLowerCase());

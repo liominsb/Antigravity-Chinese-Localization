@@ -9,18 +9,19 @@
 ### 1. 官方 v2.34.0 主进程补丁点精确校准与兼容升级
 - **更新器状态机兼容修复 (`dist/updater.js`)**：跟进官方 `2.34.0` 将 `RestartToUpdate` 箭头函数调整为 `() => void quitAndInstall()` 的签名变化，升级 `localize.js` 自动匹配官方新版及历史 Mock 用例，`applyTranslations` 实现 `0` 跳过全量命中。
 - **Computer Use 悬浮栏与接管状态升级 (`dist/computer/hud.js`、`hudState.js`)**：适配新版按钮 `<button id="resume" title="...">Allow again</button>` ➔ `重新允许` 与悬停提示“重新允许智能体使用此 Mac。已停止的任务不会自动重启。”，以及 `hudState.hudView` 按 `pauseCause === 'user_takeover'` 区分“您已接管 — 智能体已停止”与“智能体已停止”，同时保留全部 `agy-hud:` IPC 协议令牌与向后兼容分支。
-- **同步官方新增主进程模块与预打包资产**：同步官方 `v2.34.0` 新增 `dist/authBootstrap.js`、`dist/browserStream/*` (7 个模块)、`dist/computer/screenLock.js` 与 `dist/proto/browser_viewer_pb.js`（均严格保持协议/错误码原生）；重建轻量版 `app.asar.ready`（`7,729,248` 字节 / `7.37 MiB`，版本 `2.34.0`）。
+- **同步官方新增主进程模块与预打包资产**：同步官方 `v2.34.0` 新增 `dist/authBootstrap.js`、`dist/browserStream/*` (7 个模块)、`dist/computer/screenLock.js` 与 `dist/proto/browser_viewer_pb.js`（均严格保持协议/错误码原生）；重建轻量版 `app.asar.ready`（`7,756,964` 字节 / `7.40 MiB`，版本 `2.34.0`）。
 
-### 2. Web UI 增量全量覆盖与协同补漏（+120 条词典、+22 组动态规则）
+### 2. Web UI 增量全量覆盖与协同补漏（+150 条词典、+40 组动态规则，含 PR #67 & Issue #68）
 - **输入框与消息发送体验 (`Input Box` & `Send message`)**：全面汉化 `Cmd+Enter` / `Ctrl+Enter` / `Enter` 发送快捷键说明、消息即时发送设置引导（`Messages now send immediately. Configure in` / `Instead of queueing...`）、`Queue Message` / `Cmd+click to open` / `Ctrl+click to open` 及小写标题版 `Sync JJ worktrees to head`。
-- **编排器设置 (`Orchestrator Settings`) 与思考深度 (`Thinking effort`)**：新增编排器模型与执行器模型双卡说明、默认规划器文案、思考深度提示气泡、`ELMO Composite` 语音角色与 `Coordinator` 词条。
-- **内联提问与运行时权限审批卡片**：覆盖 `Skip`、`Skipped`、`Add note`、`Add a note or condition...`、`In chat`、`Answered:`、`Resolved in chat`、`Replaced by newer request`、`Expired · Action not taken`、`Ask to retry`、`Select one or more options`、`Other answer`、`Retry requested`、四大权限作用域选项（`Yes, allow for this conversation` / `Allow for conversation` / `Allow in project` / `Allow in workspace`）、`Runtime permission`、沙盒外运行安全警示与 `Deny with note` / `Tell the agent what to do instead...`，并支持 `Please retry: ...` / `Sent response: ...` / `Skipped: ...` / `Open Subagent: ...` 动态前缀。
-- **侧边栏自定义、筛选排序与归档提示升级**：补齐 `Customize Sidebar` 全套开关（`Idle Conversations`、`Decorations`、`Filters`、`Show Automation Conversations`、`Show Plugin Conversations`）、`Filter and Sort` 菜单（`Needs Input`、`Last Activity`、`Any time` / `7 days` / `14 days` / `21 days`、`Manual Order`）、`Pin Entire Workspace/Project` 动态置顶及 `v2.34.0` 新版归档提示 `(![tune](icon://tune) Customize Sidebar).` 碎片与全文兼容。
-- **Computer Use 锁屏、预览与 macOS 权限向导**：覆盖锁屏横幅 `Screen locked: agents can't use this Mac until you unlock it`、`Connecting to the live preview…`（修复原 SSH 规则半英文泄露 `正在连接到 the live preview…`）、`Live preview unavailable · ...`、`N agent(s) working, live preview unavailable`、以及 `Open System Settings ↗` / `Reopen ↗` / `Allowed ✓` / `Waiting…` / `Continue Task →` / 权限引导分步句子与重启完成提示。
-- **遥测账号声明、更早消息分页、UI 插件、自动化调度与快捷键冲突扩展**：覆盖账号关闭遥测后的说明长段、`Searching older messages…` 等分页状态与 `No messages in last N steps...` / `showing X of Y`、`UI Plugin (SidePanel)` / `Start Plugin` / `No sign-in required. This app is ready to use.`、定时任务 `Weekdays` / `Weekly`、`Open image X of Y` / `Show N More` / `(experimental)` / `Line X → Y` / 任务倒计时 `Xs left` / `Xd Yh Zm left` 以及快捷键 `reserved for sidebar switching` 冲突提示。
+- **Orchestrator 设置、`Thinking effort` 与 `Extra High` 校准**：保持 `Orchestrator` 模式名英文原生不翻译，汉化 `Orchestrator 设置`、`Orchestrator 模型`、`Executor Model`、思考深度提示气泡、`ELMO Composite` 与 `Coordinator`，并精确收录 `Extra High` ➔ `极高`（修复原本分词叠加出的 `"极高高"`）。
+- **内联提问与运行时/终端高危权限审批卡片 (Issue #68)**：全量补齐 `Skip`、`Skipped`、`Add note`、`Resolved in chat`、`Replaced by newer request`、`Expired · Action not taken`、`Ask to retry`、`Select one or more options`、`Other answer`、`Yes, allow this time` / `Yes, allow this download` / `Yes, save rule ...` / `Yes, and always allow ...` 全套静动态命令规则、`No (tell the agent what to do instead)`、`Allow <action/command>?`、`Recursively deleting the pre-existing directory ...` 跨区销毁警告、`Runtime permission` 与 `Deny with note` / `Please retry:` 等动态前缀。
+- **侧边栏自定义、筛选排序与归档提示升级**：补齐 `Customize Sidebar` 全套开关、`Filter and Sort` 菜单、`Pin Entire Workspace/Project`，并跟进 `v2.34.0` 把归档 Toast 拆分碎片扩展到 `(![tune](icon://tune) Customize Sidebar).`。
+- **Computer Use 锁屏、预览与 macOS 权限向导**：覆盖锁屏横幅、实时预览连接与不可用状态（修复 `"Connecting to the live preview…"` 半英文泄露）、macOS 权限引导全套片段与动态提示。
+- **技能卡、插件描述、设置模板与快捷键录制（整合 PR #67）**：新增 `mcp-app-development` / `migrate-agent-settings` / `native_swarm` / `run-workflow` / `swarm_*` 等 7 条内置技能卡、`Unlock the power of agent swarms.`、快捷键录制提示 `Recording shortcut for ...` 及项目外对话设置变体规则 `Settings / Agent settings for conversations outside of ...`。
+- **遥测账号声明、更早消息分页、UI 插件、自动化调度与快捷键冲突扩展**：覆盖账号关闭遥测后的说明长段、更早消息分页与步骤计数、`UI Plugin (SidePanel)`、`Weekdays` / `Weekly`、`Open image X of Y`、`Show N More`、`(experimental)`、`Line X → Y`、`Xs left` / `Xd Yh Zm left` 倒计时及快捷键 `reserved for sidebar switching` 冲突提示。
 
 ### 3. 全链路验证与测试门禁
-- 词典全量维持 **`4,414` 键 `0` 重复**，新增 `tests/ticket-48-v2340-features.test.js`（同步调整 `ticket-44` HUD 断言适配 v2.34.0），全工程 **55 组 TDD 自动化测试套件 100% ALL GREEN**。
+- 词典全量维持 **`4,444` 键 `0` 重复**，新增 `tests/ticket-48-v2340-features.test.js`、`tests/ticket-49-v2340-remaining-gaps.test.js` 与 `tests/ticket-50-issue68-and-tier-fixes.test.js`，全工程 **57 组 TDD 自动化测试套件 100% ALL GREEN**。
 
 ---
 

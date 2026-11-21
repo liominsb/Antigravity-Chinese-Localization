@@ -44,6 +44,7 @@ const wcvBrowserRegistry_1 = require("./wcvBrowserRegistry");
 const fs = __importStar(require("fs"));
 const crypto = __importStar(require("crypto"));
 const readline = __importStar(require("readline"));
+const authBootstrap_1 = require("./authBootstrap");
 const utils_1 = require("./utils");
 const languageServer_1 = require("./languageServer");
 const updater_1 = require("./updater");
@@ -77,6 +78,8 @@ const sshWindowRestore_1 = require("./remote/sshWindowRestore");
 const mainClient_1 = require("./actuator/mainClient");
 const computer_1 = require("./computer");
 const previewIpc_1 = require("./computer/previewIpc");
+const captureWindow_1 = require("./browserStream/captureWindow");
+const browserViewerHandler_1 = require("./browserStream/browserViewerHandler");
 const gotTheLock = electron_1.app.requestSingleInstanceLock();
 if (!gotTheLock) {
     electron_1.app.quit();
@@ -93,6 +96,8 @@ let isQuitting = false;
 // request an update. Kept at module scope so it is not garbage collected.
 let hostBridgeServer;
 let mendelFlagSync;
+let browserViewerStorageSub;
+let browserViewerRegistered = false;
 let remoteManager;
 /** The SSH windows to reopen at the next start; unset when headless. */
 let sshWindows;
@@ -162,6 +167,13 @@ if (computerUseOn) {
 // Application Lifecycle
 // ---------------------------------------------------------------------------
 let pendingDeepLink = null;
+function resolveLocalHubEntryUrl() {
+    if (DEV_URL) {
+        return DEV_URL;
+    }
+    const port = (0, languageServer_1.getLsPort)();
+    return port > 0 ? `${constants_1.WINDOW_ORIGIN}:${port}/` : undefined;
+}
 /**
  * Gives `url` to the first local window as handleDeepLink does, but without
  * bringing it up or opening one. For a link that carries nothing (an SSH
@@ -174,8 +186,11 @@ function sendDeepLinkQuietly(url) {
         return; // A window opened later loads its plugin list anyway.
     }
     const hubContents = (0, utils_1.getHubWebContents)(win);
+    const isUncommittedNavigation = typeof hubContents?.getURL === 'function' && !hubContents.getURL();
     if (!hubContents ||
         hubContents.isDestroyed?.() ||
+        (0, utils_1.isHubWindowBootstrapping)?.(win) ||
+        isUncommittedNavigation ||
         hubContents.isLoadingMainFrame?.()) {
         // As in handleDeepLink, but never in place of an unread local link.
         pendingDeepLink ?? (pendingDeepLink = url);
@@ -205,8 +220,11 @@ function handleDeepLink(url) {
         wins[0].focus();
         electron_1.app.focus({ steal: true });
         const hubContents = (0, utils_1.getHubWebContents)(wins[0]);
+        const isUncommittedNavigation = typeof hubContents?.getURL === 'function' && !hubContents.getURL();
         if (!hubContents ||
             hubContents.isDestroyed?.() ||
+            (0, utils_1.isHubWindowBootstrapping)?.(wins[0]) ||
+            isUncommittedNavigation ||
             hubContents.isLoadingMainFrame?.()) {
             // The window is still loading (e.g. it was just created by
             // `second-instance`), so the renderer has not subscribed to 'deep-link'
@@ -222,8 +240,11 @@ function handleDeepLink(url) {
         pendingDeepLink = url;
         // No local window (maybe only SSH windows): open one to take the link.
         if (!HEADLESS && hasStartedMainApplication) {
-            (0, utils_1.createWindow)(DEV_URL ?? `${constants_1.WINDOW_ORIGIN}:${(0, languageServer_1.getLsPort)()}/`, storageManager);
-            electron_1.app.focus({ steal: true });
+            const entryUrl = resolveLocalHubEntryUrl();
+            if (entryUrl) {
+                (0, utils_1.createWindow)(entryUrl, storageManager);
+                electron_1.app.focus({ steal: true });
+            }
         }
     }
 }
@@ -308,17 +329,19 @@ electron_1.app.on('open-url', (event, url) => {
     handleDeepLink(url);
 });
 electron_1.app.on('session-created', (targetSession) => {
-    if ((0, scriptJail_1.isScriptJailSession)(targetSession)) {
+    if ((0, scriptJail_1.isScriptJailSession)(targetSession) ||
+        (0, captureWindow_1.isBrowserStreamSession)(targetSession)) {
         return;
     }
     (0, webauthn_1.configureSessionWebAuthn)(targetSession);
     (0, guestPromptController_1.configureSessionPromptPreload)(targetSession);
 });
 electron_1.app.on('web-contents-created', (_event, contents) => {
-    // Not SSH sessions: the setup below would undo their hardening (e.g. re-add
-    // the session preloads it removed).
+    // Not SSH or capture sessions: the setup below would undo their hardening
+    // (e.g. re-add the session preloads it removed).
     if ((0, scriptJail_1.isScriptJailSession)(contents.session) ||
-        (0, remoteWindowSecurity_1.isRemoteSession)(contents.session)) {
+        (0, remoteWindowSecurity_1.isRemoteSession)(contents.session) ||
+        (0, captureWindow_1.isBrowserStreamSession)(contents.session)) {
         return;
     }
     (0, deviceChooser_1.configureSessionDeviceChooser)(contents.session);
@@ -358,7 +381,7 @@ electron_1.app
     // Handle deep link URL from command line arguments (All platforms)
     const deepLinkFromArg = process.argv.find((arg) => arg.startsWith(`${PROTOCOL}://`));
     if (deepLinkFromArg) {
-        console.log('Launched with deep link:', deepLinkFromArg);
+        console.log('Launched with deep link:', (0, authBootstrap_1.redactUrlTokens)(deepLinkFromArg));
         pendingDeepLink = deepLinkFromArg;
     }
     if (!HEADLESS) {
@@ -371,7 +394,10 @@ electron_1.app
         appVersion: electron_1.app.getVersion(),
         isInsiders: IS_INSIDERS,
         openLocalWindow: () => {
-            (0, utils_1.createWindow)(DEV_URL ?? `${constants_1.WINDOW_ORIGIN}:${(0, languageServer_1.getLsPort)()}/`, storageManager, { cascade: true });
+            const entryUrl = resolveLocalHubEntryUrl();
+            if (entryUrl) {
+                (0, utils_1.createWindow)(entryUrl, storageManager, { cascade: true });
+            }
         },
         onWindowOpened: (win, host) => sshWindows?.track(win, host),
     });
@@ -390,6 +416,8 @@ electron_1.app
         // The Agents pane's live preview signaling (P3-1), local Hub UI only.
         (0, previewIpc_1.registerComputerPreviewIpc)();
     }
+    // The Agents pane's Stop all / Stop agent; no-ops with computer use off.
+    (0, previewIpc_1.registerComputerStopIpc)(computerUseOn);
     electron_1.ipcMain.handle('deep-link:get-stored', (event) => {
         if ((0, remoteWindowSecurity_1.isRemoteContents)(event?.sender)) {
             return null; // Deep links are for local windows only.
@@ -430,7 +458,7 @@ electron_1.app
     });
     (0, webauthn_1.configureSessionWebAuthn)(electron_1.session.defaultSession);
     if (DEV_URL) {
-        console.log('Starting in dev mode with URL:', DEV_URL);
+        console.log('Starting in dev mode with URL:', (0, authBootstrap_1.redactUrlTokens)(DEV_URL));
         (0, utils_1.createWindow)(DEV_URL, storageManager);
         hasStartedMainApplication = true;
         openStartupSshWindows();
@@ -480,6 +508,9 @@ electron_1.app
             wslOptions = { distro: WSL_DISTRO, binaryPath };
         }
         catch (err) {
+            if (isQuitting) {
+                return;
+            }
             const msg = `Failed to install the server into WSL distro "${WSL_DISTRO}":\n${err.message}`;
             (0, wsl_1.persistWslDistro)(path.join(electron_1.app.getPath('userData'), wsl_1.WSL_STATE_FILE), '');
             if (HEADLESS) {
@@ -515,6 +546,9 @@ electron_1.app
     let handle;
     let lsExited = false;
     const targetPort = Number(process.env.JETSKI_LS_PORT) || constants_1.DYNAMIC_PORT;
+    if (isQuitting) {
+        return;
+    }
     try {
         handle = await (0, languageServer_1.startAndMonitorLanguageServer)(targetPort, csrf, {
             headless: HEADLESS,
@@ -523,28 +557,45 @@ electron_1.app
             hostBridgeToken: hostBridgeServer?.token,
             onExited: () => {
                 lsExited = true;
+                void (0, browserViewerHandler_1.resetBrowserViewerSessions)();
+                (0, captureWindow_1.disposeCaptureWindow)();
                 mendelFlagSync?.onPortChanged(0);
             },
             onPortChanged: (newPort) => {
                 lsExited = false;
+                void (0, browserViewerHandler_1.resetBrowserViewerSessions)();
+                (0, captureWindow_1.disposeCaptureWindow)();
                 mendelFlagSync?.onPortChanged(newPort);
-                const newUrl = `${constants_1.WINDOW_ORIGIN}:${newPort}/`;
-                console.log(`[Auto-Restart] Port changed! Reloading all windows with URL: ${newUrl}`);
+                const newBaseUrl = `${constants_1.WINDOW_ORIGIN}:${newPort}`;
+                console.log(`[Auto-Restart] Port changed! Reloading all windows with URL: ${newBaseUrl}/`);
                 // Apply cert trust
                 (0, languageServer_1.setupLocalCertTrust)();
                 // Main-process ActuatorService streams follow the LS to its new port.
                 (0, mainClient_1.mainActuatorClientPortChanged)(newPort);
                 if (!HEADLESS) {
-                    // Hub windows only: the desktop HUD keeps its own page.
+                    // Hub windows only: the desktop HUD and SSH windows keep their own pages.
                     const windows = (0, utils_1.getLocalHubWindows)();
-                    for (const win of windows) {
-                        void win.loadURL(newUrl);
+                    if (windows.length === 0 && pendingDeepLink !== null) {
+                        (0, utils_1.createWindow)(`${newBaseUrl}/`, storageManager);
+                        electron_1.app.focus({ steal: true });
+                    }
+                    else {
+                        for (const win of windows) {
+                            const currentUrl = (0, utils_1.getHubWebContents)(win)?.getURL?.();
+                            const targetUrl = (0, authBootstrap_1.buildLsRestartWindowUrl)(currentUrl, newBaseUrl);
+                            if (targetUrl) {
+                                void (0, utils_1.loadHubWindowUrl)(win, targetUrl);
+                            }
+                        }
                     }
                 }
             },
         });
     }
     catch (err) {
+        if (isQuitting) {
+            return;
+        }
         const msg = err.message;
         if (HEADLESS) {
             console.error('Startup failed:', msg);
@@ -555,10 +606,38 @@ electron_1.app
         electron_1.app.quit();
         return;
     }
+    const syncBrowserViewerRegistration = (syncPresence = false) => {
+        if (isQuitting) {
+            return;
+        }
+        const items = typeof storageManager?.getItemsSync === 'function'
+            ? storageManager.getItemsSync()
+            : undefined;
+        const enabled = (0, mendelFlagSync_1.evaluateRemoteControlBrowserStreamEnabled)(items, process.env, Boolean(electron_1.app.isPackaged));
+        if (enabled && !browserViewerRegistered) {
+            browserViewerRegistered = true;
+            (0, browserViewerHandler_1.registerBrowserViewer)();
+            if (syncPresence) {
+                (0, browserViewerHandler_1.syncBrowserViewerHostPresence)();
+            }
+        }
+        else if (!enabled && browserViewerRegistered) {
+            browserViewerRegistered = false;
+            void (0, browserViewerHandler_1.unregisterBrowserViewer)().catch(() => undefined);
+            (0, captureWindow_1.disposeCaptureWindow)();
+        }
+    };
     mendelFlagSync = (0, mendelFlagSync_1.startMendelFlagSync)({
         port: lsExited ? 0 : handle.port,
         csrfToken: csrf,
         storageManager,
+    });
+    browserViewerStorageSub?.dispose();
+    browserViewerStorageSub = storageManager.onDidChange?.((changes) => {
+        if (constants_1.RC_BROWSER_STREAM_FLAG in changes ||
+            constants_1.CUSTOM_FLAG_OVERRIDES_STORAGE_KEY in changes) {
+            syncBrowserViewerRegistration(true);
+        }
     });
     const url = `${constants_1.WINDOW_ORIGIN}:${handle.port}/`;
     // Main-process ActuatorClient (actuator types hosted by the main process
@@ -566,6 +645,7 @@ electron_1.app
     if (computerUseOn) {
         (0, computer_1.registerComputerUse)({ headless: HEADLESS }); // `computer` actuator
     }
+    syncBrowserViewerRegistration(false);
     (0, mainClient_1.startMainActuatorClient)(handle.port, csrf);
     console.log('\n' + '='.repeat(60));
     console.log(`  Local:       ${url}`);
@@ -593,11 +673,21 @@ electron_1.app
     if (!HEADLESS) {
         (0, menu_1.setupApplicationMenu)(url);
         (0, utils_1.createWindow)(url, storageManager);
+        if (browserViewerRegistered) {
+            (0, browserViewerHandler_1.syncBrowserViewerHostPresence)();
+        }
         if (electron_1.app.dock) {
             const dockMenu = electron_1.Menu.buildFromTemplate([
                 {
                     label: '新建窗口',
-                    click: () => (0, utils_1.createWindow)(url, storageManager, { cascade: true }),
+                    click: () => {
+                        const entryUrl = resolveLocalHubEntryUrl();
+                        if (entryUrl) {
+                            (0, utils_1.createWindow)(entryUrl, storageManager, {
+                                cascade: true,
+                            });
+                        }
+                    },
                 },
             ]);
             electron_1.app.dock.setMenu(dockMenu);
@@ -687,7 +777,12 @@ electron_1.app.on('before-quit', async (event) => {
     if (!utils_1.showQuitConfirmation) {
         event.preventDefault();
         isQuitting = true;
+        browserViewerStorageSub?.dispose();
+        browserViewerStorageSub = undefined;
+        browserViewerRegistered = false;
         mendelFlagSync?.dispose();
+        void (0, browserViewerHandler_1.resetBrowserViewerSessions)();
+        (0, captureWindow_1.disposeCaptureWindow)();
         // Persist the focused/open Hub window bounds and full-screen/maximized state
         // before `win.destroy()`, which bypasses the normal `'close'` event.
         (0, windowState_1.flushTrackedWindowState)((0, utils_1.getFocusedHubWindow)());
@@ -709,12 +804,17 @@ electron_1.app.on('before-quit', async (event) => {
         // Computer use first aborts any batch in flight and stops its helper
         // (rt P3-21); only on a confirmed quit, never before the Cmd+Q dialog.
         await Promise.race([
-            Promise.all([
-                (0, computer_1.unregisterComputerUse)().catch((err) => {
-                    console.error('[ComputerUse] failed to unregister:', err);
-                }),
-                (0, mainClient_1.stopMainActuatorClient)(),
-            ]),
+            (async () => {
+                await Promise.all([
+                    (0, computer_1.unregisterComputerUse)().catch((err) => {
+                        console.error('[ComputerUse] failed to unregister:', err);
+                    }),
+                    (0, browserViewerHandler_1.unregisterBrowserViewer)().catch((err) => {
+                        console.error('[BrowserViewer] failed to unregister:', err);
+                    }),
+                ]);
+                await (0, mainClient_1.stopMainActuatorClient)();
+            })(),
             new Promise((resolve) => setTimeout(resolve, 2000)),
         ]);
         // Close all active connections and kill the language server in parallel
@@ -762,6 +862,8 @@ electron_1.app.on('before-quit', async (event) => {
     }
 });
 electron_1.app.on('will-quit', () => {
+    browserViewerStorageSub?.dispose();
+    browserViewerStorageSub = undefined;
     mendelFlagSync?.dispose();
 });
 /**
@@ -772,7 +874,9 @@ electron_1.app.on('activate', () => {
     // On Mac, re-open a window when the user clicks the dock
     // icon and no windows are open.
     if (!HEADLESS && (0, utils_1.getHubWindows)().length === 0) {
-        const url = DEV_URL ?? `${constants_1.WINDOW_ORIGIN}:${(0, languageServer_1.getLsPort)()}/`;
-        (0, utils_1.createWindow)(url, storageManager);
+        const entryUrl = resolveLocalHubEntryUrl();
+        if (entryUrl) {
+            (0, utils_1.createWindow)(entryUrl, storageManager);
+        }
     }
 });

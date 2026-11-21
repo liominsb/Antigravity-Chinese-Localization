@@ -132,6 +132,12 @@ const wcvBrowserAPI = {
     onZOrderChanged: (cb) => subscribeIpcChannel('wcv:z-order-changed', cb),
     onShortcutForwarded: (cb) => subscribeIpcChannel('wcv:shortcut-forwarded', cb),
     onCursorChanged: (cb) => subscribeIpcChannel('wcv:cursor-changed', cb),
+    pushCursorState: (k, s) => electron_1.ipcRenderer.invoke('wcv:push-cursor-state', k, s),
+    onRemoteControlCommand: (cb) => subscribeIpcChannel('wcv:remote-control-command', cb),
+    ackRemoteControlCommand: (a) => electron_1.ipcRenderer.invoke('wcv:remote-control-command-ack', a),
+    reclaimRemoteControl: (k, opts) => opts !== undefined
+        ? electron_1.ipcRenderer.invoke('wcv:reclaim-remote-control', k, opts)
+        : electron_1.ipcRenderer.invoke('wcv:reclaim-remote-control', k),
 };
 let promptRequestSubscriberCount = 0;
 const electronNativeAPI = {
@@ -429,8 +435,30 @@ function permissionsOf(v) {
         screenRecordingNeedsRelaunch: o['screenRecordingNeedsRelaunch'] === true,
     };
 }
+const PANE_REGISTRATIONS = [
+    'prompted',
+    'already-granted',
+    'skipped',
+    'failed',
+];
+function openSettingsResultOf(v) {
+    const o = (v && typeof v === 'object' ? v : {});
+    const r = PANE_REGISTRATIONS.find((x) => x === o['registered']);
+    return {
+        registered: r ?? 'failed',
+        promptedThisSession: o['promptedThisSession'] === true,
+    };
+}
 const computerPreviewAPI = {
-    open: () => electron_1.ipcRenderer.invoke('computer-preview:open'),
+    open: async () => {
+        const r = await electron_1.ipcRenderer.invoke('computer-preview:open');
+        // previewIpc.ts's PreviewOpenResult: a failure rejects as before, now
+        // with a stable code first ("SIDECAR_MISSING: ...") the pane can show.
+        if (r?.ok === false) {
+            throw new Error(`${r.error?.code}: ${r.error?.message}`);
+        }
+        return { sessionId: r.sessionId, type: r.type, sdp: r.sdp };
+    },
     answer: (sessionId, sdp) => electron_1.ipcRenderer.invoke('computer-preview:answer', sessionId, sdp),
     renew: (sessionId) => electron_1.ipcRenderer.invoke('computer-preview:renew', sessionId),
     close: (sessionId) => electron_1.ipcRenderer.invoke('computer-preview:close', sessionId),
@@ -459,10 +487,16 @@ const computerPreviewAPI = {
         if (pane !== 'accessibility' && pane !== 'screenRecording') {
             throw new Error('openPermissionSettings: unknown pane');
         }
-        await electron_1.ipcRenderer.invoke('computer-permissions:open-settings', pane);
+        return openSettingsResultOf(await electron_1.ipcRenderer.invoke('computer-permissions:open-settings', pane));
     },
     relaunchApp: async () => {
         await electron_1.ipcRenderer.invoke('computer-permissions:relaunch');
+    },
+    stopAll: async () => {
+        await electron_1.ipcRenderer.invoke('computer-preview:stop-all');
+    },
+    stopAgent: async (actorId) => {
+        await electron_1.ipcRenderer.invoke('computer-preview:stop-agent', actorId);
     },
 };
 electron_1.contextBridge.exposeInMainWorld('nativeNotifications', notificationAPI);
@@ -5174,7 +5208,127 @@ if (!isRemoteWindow) {
     "The original Gemini 4 model for advanced workflows.": "初代 Gemini 4 模型，适用于进阶工作流。",
     "For speed and efficiency in execution tasks": "适用于追求速度与效率的执行类任务",
     "For speed and efficiency in execution tasks.": "适用于追求速度与效率的执行类任务。",
-    "Neon that may offload routine steps to Hydrogen. Same Neon-level quality, fewer tokens used.": "由 Neon 主导，可将常规步骤分流至 Hydrogen 执行。保持 Neon 级输出质量，消耗更少 Token。"
+    "Neon that may offload routine steps to Hydrogen. Same Neon-level quality, fewer tokens used.": "由 Neon 主导，可将常规步骤分流至 Hydrogen 执行。保持 Neon 级输出质量，消耗更少 Token。",
+    "Input Box": "输入框",
+    "Choose which key sends a message in the chat composer.": "选择在聊天输入框中按哪个键发送消息。",
+    "Press Cmd+Enter to send, Enter for a new line.": "按 Cmd+Enter 发送，按 Enter 换行。",
+    "Press Ctrl+Enter to send, Enter for a new line.": "按 Ctrl+Enter 发送，按 Enter 换行。",
+    "Press Enter to send, Shift+Enter for a new line.": "按 Enter 发送，按 Shift+Enter 换行。",
+    "Messages now send immediately. Configure in": "消息现在将立即发送。前往",
+    "Instead of queueing, try asking the agent to do something after the current task.": "消息现在直接发送而非排队；如需后续处理，请让智能体在当前任务完成后再执行。",
+    "Cmd+click to open": "Cmd+单击打开",
+    "Ctrl+click to open": "Ctrl+单击打开",
+    "Describe your changes": "描述您的更改",
+    "Describe your changes, or leave empty to auto-generate": "描述您的更改，或留空以自动生成",
+    "Sync JJ worktrees to head": "将 JJ 工作树同步到 Head",
+    "Orchestrator Settings": "编排器设置",
+    "Choose the models Orchestrator uses. A larger, smarter orchestrator model with a faster, cheaper executor gives high quality for fewer tokens.": "选择编排器使用的模型。以更强、更聪明的编排器模型搭配更快、更实惠的执行器模型，可在消耗更少 Token 的同时获得高质量输出。",
+    "Orchestrator Model": "编排器模型",
+    "Plans the work, makes design decisions, and reviews the result. Pick a top-tier model. You can also pick one per conversation from the Orchestrator row in the model menu.": "负责规划任务、做出设计决策并审查最终结果，建议选择顶尖模型。您也可以在模型菜单的 Orchestrator 行中为单次对话单独指定。",
+    "Executor Model": "执行器模型",
+    "Carries out the plan: searches, edits, builds, and tests. Pick a faster, cheaper model.": "负责执行计划：检索、编辑、构建与测试，建议选择速度更快、成本更低的模型。",
+    "Orchestrator": "编排器",
+    "Offloads routine steps to a faster executor. Same quality, fewer tokens used.": "将常规步骤分流至更快的执行器模型，质量不减，Token 消耗更低。",
+    "The Orchestrator's own planner": "编排器自带规划器",
+    "Thinking effort": "思考深度",
+    "Controls how much time and quota the model spends reasoning before responding. Higher effort improves accuracy on hard problems, at the cost of slower responses and higher quota use.": "控制模型在回复前用于深度推理的时间与配额。提高思考深度有助于攻克难题，但也会相应增加响应耗时与配额消耗。",
+    "ELMO Composite": "ELMO 复合语音",
+    "Run Jetski Live on the ELMO composite voice actor.": "在 ELMO 复合语音角色上运行 Jetski Live。",
+    "Coordinator": "协调器",
+    "Skip": "跳过",
+    "Skipped": "已跳过",
+    "Add note": "添加备注",
+    "Add a note or condition...": "添加备注或条件...",
+    "In chat": "在对话中查看",
+    "Answered": "已回答",
+    "Answered:": "已回答：",
+    "Resolved in chat": "已在对话中处理",
+    "Replaced by newer request": "已被新请求替代",
+    "Expired · Action not taken": "已过期 · 未执行操作",
+    "Ask to retry": "请求重试",
+    "Select one or more options": "选择一个或多个选项",
+    "Other answer": "其他回答",
+    "Retry requested": "已请求重试",
+    "Yes, allow for this conversation": "是，在当前对话中允许",
+    "Allow for conversation": "在当前对话中允许",
+    "Allow in project": "在当前项目中允许",
+    "Allow in workspace": "在当前工作区中允许",
+    "Runtime permission": "运行时权限",
+    "Permission approval scope": "权限审批作用域",
+    "Confirm the command is safe to run outside of the sandbox with full network and disk access.": "请确认该命令在拥有完整网络和磁盘访问权限的沙盒外环境运行是否安全。",
+    "Tell the agent what to do instead...": "告诉智能体改为执行什么操作...",
+    "Deny with note": "附带备注拒绝",
+    "Reply": "回复",
+    "Customize Sidebar": "自定义侧边栏",
+    "View archived in the sidebar (Customize Sidebar).": "已归档内容可在侧边栏（自定义侧边栏）中查看。",
+    "View archived in the sidebar (![tune](icon://tune) Customize Sidebar).": "已归档内容可在侧边栏（自定义侧边栏）中查看。",
+    "Idle Conversations": "空闲对话",
+    "Only applies when grouped by status": "仅在按状态分组时生效",
+    "Decorations": "装饰元素",
+    "Filters": "筛选器",
+    "Show Automation Conversations": "显示自动化对话",
+    "Show Plugin Conversations": "显示插件对话",
+    "Filter and Sort": "筛选与排序",
+    "Last Activity": "最近活动",
+    "Any time": "不限时间",
+    "7 days": "7 天",
+    "14 days": "14 天",
+    "21 days": "21 天",
+    "Manual Order": "手动排序",
+    "Needs Input": "等待输入",
+    "Edits the conversation title": "编辑对话标题",
+    "Unsent draft": "未发送的草稿",
+    "Category": "分类",
+    "Clear category": "清除分类",
+    "Most popular matches first": "优先显示最热门匹配",
+    "Most popular first": "优先显示最热门",
+    "Set up my environment": "配置我的环境",
+    "Screen locked: agents can't use this Mac until you unlock it": "屏幕已锁定：在您解锁之前，智能体无法使用此 Mac",
+    "Connecting to the live preview…": "正在连接实时预览…",
+    "Connecting to the live preview...": "正在连接实时预览...",
+    "Live preview unavailable": "实时预览不可用",
+    "Open System Settings ↗": "打开系统设置 ↗",
+    "Reopen ↗": "重新打开 ↗",
+    "Allowed ✓": "已允许 ✓",
+    "Waiting…": "等待中…",
+    "Granted": "已授予",
+    "Continue Task →": "继续任务 →",
+    "Continue Task": "继续任务",
+    "In System Settings, turn on": "在“系统设置”中开启",
+    ". If it isn't in the list, drag it in from the small window next to System Settings.": "。如果列表中没有，请从“系统设置”旁的小窗口将其拖入。",
+    "In System Settings, click": "在“系统设置”中点击",
+    ", choose": "，选择",
+    ", then turn it on.": "，然后开启它。",
+    "Already on? Select": "已经开启？请选中",
+    ", then": "，然后",
+    "drag it back in from the small window.": "从旁边的小窗口重新拖入。",
+    "and add it again.": "并重新添加。",
+    "not installed": "未安装",
+    "Telemetry is turned off for your account.": "您的账号已关闭遥测功能。",
+    "This setting is turned off for your account.": "您的账号已关闭此设置。",
+    "Searching older messages…": "正在搜索更早的消息…",
+    "Searching older messages...": "正在搜索更早的消息...",
+    "Loading older messages…": "正在加载更早的消息…",
+    "Loading older messages...": "正在加载更早的消息...",
+    "Couldn't load older messages — retry": "无法加载更早的消息 — 点击重试",
+    "Couldn't load older messages, retry": "无法加载更早的消息，点击重试",
+    "Couldn't load older messages · Retry": "无法加载更早的消息 · 重试",
+    "Loaded older messages": "已加载更早的消息",
+    "Couldn't load older messages. Try again.": "无法加载更早的消息，请重试。",
+    "UI Plugin (SidePanel)": "UI 插件（侧边栏面板）",
+    "UI Plugins": "UI 插件",
+    "UI plugins": "UI 插件",
+    "This plugin is currently stopped. Events and stdout streams will appear here once started.": "此插件当前已停止。启动后，事件和标准输出流将在此处显示。",
+    "Events and stdout streams will appear here as they occur.": "事件和标准输出流将在发生时实时显示在此处。",
+    "Start Plugin": "启动插件",
+    "No sign-in required. This app is ready to use.": "无需登录，此应用已就绪可用。",
+    "Signing out…": "正在退出登录…",
+    "Signing out...": "正在退出登录...",
+    "Weekdays": "每个工作日",
+    "Weekly": "每周",
+    "(opens in external browser)": "（在外部浏览器中打开）",
+    "(opens in a new tab)": "（在新标签页中打开）",
+    "Failed to create automation.": "创建自动化失败。"
 };
 
   const coreWords = {
@@ -6923,6 +7077,12 @@ if (!isRemoteWindow) {
         if (/^Conflicts with "(.+)" \(managed by application menu\)$/i.test(part)) {
           return part.replace(/^Conflicts with "(.+)" \(managed by application menu\)$/i, '与“$1”冲突（由应用程序菜单管理）');
         }
+        if (/^Conflicts with "(.+)" \(reserved for sidebar switching\)$/i.test(part)) {
+          return part.replace(/^Conflicts with "(.+)" \(reserved for sidebar switching\)$/i, '与“$1”冲突（保留用于侧栏切换）');
+        }
+        if (/^Conflicts with "(.+)" \((.+)\)$/i.test(part)) {
+          return part.replace(/^Conflicts with "(.+)" \((.+)\)$/i, '与“$1”冲突（$2）');
+        }
         if (/^Conflicts with "(.+)"$/i.test(part)) {
           return part.replace(/^Conflicts with "(.+)"$/i, '与“$1”冲突');
         }
@@ -7065,8 +7225,8 @@ if (!isRemoteWindow) {
       return replaceTrimmed(text, trimmed, fixed);
     }
 
-    if (/^Connecting to\s+(.+?)[.…]*$/i.test(trimmed)) {
-      const fixed = trimmed.replace(/^Connecting to\s+(.+?)[.…]*$/i, '正在连接到 $1…');
+    if (/^Connecting to\s+(?!the\s+live\s+preview)(.+?)[.…]*$/i.test(trimmed)) {
+      const fixed = trimmed.replace(/^Connecting to\s+(?!the\s+live\s+preview)(.+?)[.…]*$/i, '正在连接到 $1…');
       cacheSet(trimmed, fixed);
       return replaceTrimmed(text, trimmed, fixed);
     }
@@ -7195,6 +7355,220 @@ if (!isRemoteWindow) {
     if (/^menu\)\.$/.test(trimmed)) {
       cacheSet(trimmed, '菜单）中查看。');
       return replaceTrimmed(text, trimmed, '菜单）中查看。');
+    }
+
+    if (/^Customize Sidebar\)\.$/.test(trimmed)) {
+      cacheSet(trimmed, '自定义侧边栏）中查看。');
+      return replaceTrimmed(text, trimmed, '自定义侧边栏）中查看。');
+    }
+
+    // ===== Antigravity v2.34.0 动态规则：遥测说明 / Computer Use 权限与预览 / 内联卡片 / 分页 / 侧栏与倒计时 =====
+    if (/^Telemetry is turned off for your account\.\s+This means\s+(.+?)\s+does not collect any of your prompts,\s*content,\s*or model responses,\s*but will still collect general usage patterns\s*\(e\.g\.,\s*feature adoption,\s*active user counts\)\.?$/i.test(trimmed)) {
+      const fixed = trimmed.replace(
+        /^Telemetry is turned off for your account\.\s+This means\s+(.+?)\s+does not collect any of your prompts,\s*content,\s*or model responses,\s*but will still collect general usage patterns\s*\(e\.g\.,\s*feature adoption,\s*active user counts\)\.?$/i,
+        '您的账号已关闭遥测功能。这意味着 $1 不会收集您的任何提示词、内容或模型回复，但仍会收集常规使用模式（例如功能采用率、活跃用户数）。'
+      );
+      cacheSet(trimmed, fixed);
+      return replaceTrimmed(text, trimmed, fixed);
+    }
+
+    if (/^(Open |Reopen )?(Accessibility|Screen Recording) settings$/i.test(trimmed)) {
+      const fixed = trimmed.replace(
+        /^(Open |Reopen )?(Accessibility|Screen Recording) settings$/i,
+        (_m, act, perm) => {
+          const actCn = act ? (/^Reopen/i.test(act) ? '重新打开' : '打开') : '';
+          const permCn = /^Accessibility$/i.test(perm) ? '辅助功能' : '屏幕录制';
+          return actCn + permCn + '设置';
+        }
+      );
+      cacheSet(trimmed, fixed);
+      return replaceTrimmed(text, trimmed, fixed);
+    }
+
+    if (/^(.+?) needs (Accessibility|Screen Recording|both) to use your computer\.$/i.test(trimmed)) {
+      const fixed = trimmed.replace(
+        /^(.+?) needs (Accessibility|Screen Recording|both) to use your computer\.$/i,
+        (_m, app, perm) => {
+          const permCn = /^both$/i.test(perm) ? '辅助功能和屏幕录制权限' : (/^Accessibility$/i.test(perm) ? '辅助功能权限' : '屏幕录制权限');
+          return app + ' 需要' + permCn + '才能控制您的电脑。';
+        }
+      );
+      cacheSet(trimmed, fixed);
+      return replaceTrimmed(text, trimmed, fixed);
+    }
+
+    if (/^Relaunch (.+?) to finish Screen Recording\.$/i.test(trimmed)) {
+      const fixed = trimmed.replace(/^Relaunch (.+?) to finish Screen Recording\.$/i, '重启 $1 以完成屏幕录制权限配置。');
+      cacheSet(trimmed, fixed);
+      return replaceTrimmed(text, trimmed, fixed);
+    }
+
+    if (/^(\d+)\s+agents?\s+working,\s*live preview unavailable$/i.test(trimmed)) {
+      const fixed = trimmed.replace(/^(\d+)\s+agents?\s+working,\s*live preview unavailable$/i, '$1 个智能体正在工作，实时预览不可用');
+      cacheSet(trimmed, fixed);
+      return replaceTrimmed(text, trimmed, fixed);
+    }
+
+    if (/^Live preview unavailable\s*·\s*(.+)$/i.test(trimmed)) {
+      const fixed = trimmed.replace(/^Live preview unavailable\s*·\s*(.+)$/i, (_m, detail) => {
+        const detailCn = detail === 'not installed' ? '未安装' : detail;
+        return '实时预览不可用 · ' + detailCn;
+      });
+      cacheSet(trimmed, fixed);
+      return replaceTrimmed(text, trimmed, fixed);
+    }
+
+    if (/^Please retry:\s*(.+)$/.test(trimmed)) {
+      const fixed = trimmed.replace(/^Please retry:\s*(.+)$/, '请重试：$1');
+      cacheSet(trimmed, fixed);
+      return replaceTrimmed(text, trimmed, fixed);
+    }
+
+    if (/^Sent response:\s*(.+)$/.test(trimmed)) {
+      const fixed = trimmed.replace(/^Sent response:\s*(.+)$/, '已发送回复：$1');
+      cacheSet(trimmed, fixed);
+      return replaceTrimmed(text, trimmed, fixed);
+    }
+
+    if (/^Skipped:\s*(.+)$/.test(trimmed)) {
+      const fixed = trimmed.replace(/^Skipped:\s*(.+)$/, '已跳过：$1');
+      cacheSet(trimmed, fixed);
+      return replaceTrimmed(text, trimmed, fixed);
+    }
+
+    if (/^Skipped\s+(.+)$/.test(trimmed)) {
+      const fixed = trimmed.replace(/^Skipped\s+(.+)$/, '已跳过：$1');
+      cacheSet(trimmed, fixed);
+      return replaceTrimmed(text, trimmed, fixed);
+    }
+
+    if (/^Open Subagent:\s*(.+)$/.test(trimmed)) {
+      const fixed = trimmed.replace(/^Open Subagent:\s*(.+)$/, '打开子智能体：$1');
+      cacheSet(trimmed, fixed);
+      return replaceTrimmed(text, trimmed, fixed);
+    }
+
+    if (/^(Pin Entire|Unpin) (Workspace|Project|Repo)$/i.test(trimmed)) {
+      const fixed = trimmed.replace(/^(Pin Entire|Unpin) (Workspace|Project|Repo)$/i, (_m, act, target) => {
+        const actCn = /^Unpin/i.test(act) ? '取消置顶' : '置顶整个';
+        const targetCn = /^Workspace$/i.test(target) ? '工作区' : (/^Project$/i.test(target) ? '项目' : '代码库');
+        return actCn + targetCn;
+      });
+      cacheSet(trimmed, fixed);
+      return replaceTrimmed(text, trimmed, fixed);
+    }
+
+    if (/^Opens the New Conversation screen for this (workspace|project)$/i.test(trimmed)) {
+      const fixed = trimmed.replace(
+        /^Opens the New Conversation screen for this (workspace|project)$/i,
+        (_m, t) => '为此' + (/^workspace$/i.test(t) ? '工作区' : '项目') + '打开新建对话界面'
+      );
+      cacheSet(trimmed, fixed);
+      return replaceTrimmed(text, trimmed, fixed);
+    }
+
+    if (/^No messages in last (\d+) steps\s*(?:—|,|·)\s*(load older|Load more)$/i.test(trimmed)) {
+      const fixed = trimmed.replace(/^No messages in last (\d+) steps\s*(—|,|·)\s*(load older|Load more)$/i, (_m, n, _sep, tail) => {
+        if (/Load more/i.test(tail)) return '最近 ' + n + ' 步中无消息 · 加载更多';
+        if (trimmed.includes(',')) return '最近 ' + n + ' 步中无消息，加载更早内容';
+        return '最近 ' + n + ' 步中无消息 — 加载更早内容';
+      });
+      cacheSet(trimmed, fixed);
+      return replaceTrimmed(text, trimmed, fixed);
+    }
+
+    if (/^No visible messages in last (\d+) steps\. Activate Load older messages to continue\.$/i.test(trimmed)) {
+      const fixed = trimmed.replace(
+        /^No visible messages in last (\d+) steps\. Activate Load older messages to continue\.$/i,
+        '最近 $1 步中没有可见消息，激活“加载更早的消息”以继续。'
+      );
+      cacheSet(trimmed, fixed);
+      return replaceTrimmed(text, trimmed, fixed);
+    }
+
+    if (/^(.+),\s*showing (\d+) of (\d+)$/i.test(trimmed)) {
+      const fixed = trimmed.replace(/^(.+),\s*showing (\d+) of (\d+)$/i, (_m, prefix, shown, total) => {
+        const prefixCn = lowerDictionary.get(prefix.toLowerCase()) || prefix;
+        return prefixCn + '，已显示 ' + shown + ' / ' + total + ' 条';
+      });
+      cacheSet(trimmed, fixed);
+      return replaceTrimmed(text, trimmed, fixed);
+    }
+
+    if (/^Select Sidebar Item (\d+)$/i.test(trimmed)) {
+      const fixed = trimmed.replace(/^Select Sidebar Item (\d+)$/i, '选择侧边栏第 $1 项');
+      cacheSet(trimmed, fixed);
+      return replaceTrimmed(text, trimmed, fixed);
+    }
+
+    if (/^(UI Plugin|Automation) (\d+)$/i.test(trimmed)) {
+      const fixed = trimmed.replace(/^(UI Plugin|Automation) (\d+)$/i, (_m, kind, n) => {
+        return (/^UI Plugin$/i.test(kind) ? 'UI 插件 ' : '自动化 ') + n;
+      });
+      cacheSet(trimmed, fixed);
+      return replaceTrimmed(text, trimmed, fixed);
+    }
+
+    if (/^More options for (.+)$/.test(trimmed)) {
+      const fixed = trimmed.replace(/^More options for (.+)$/, '$1 的更多选项');
+      cacheSet(trimmed, fixed);
+      return replaceTrimmed(text, trimmed, fixed);
+    }
+
+    if (/^Open image (\d+) of (\d+)$/i.test(trimmed)) {
+      const fixed = trimmed.replace(/^Open image (\d+) of (\d+)$/i, '打开第 $1 张图片（共 $2 张）');
+      cacheSet(trimmed, fixed);
+      return replaceTrimmed(text, trimmed, fixed);
+    }
+
+    if (/^Image (\d+)$/i.test(trimmed)) {
+      const fixed = trimmed.replace(/^Image (\d+)$/i, '图片 $1');
+      cacheSet(trimmed, fixed);
+      return replaceTrimmed(text, trimmed, fixed);
+    }
+
+    if (/^Show (\d+) More$/i.test(trimmed)) {
+      const fixed = trimmed.replace(/^Show (\d+) More$/i, '显示其余 $1 项');
+      cacheSet(trimmed, fixed);
+      return replaceTrimmed(text, trimmed, fixed);
+    }
+
+    if (/^(.+) \(experimental\)$/i.test(trimmed)) {
+      const fixed = trimmed.replace(/^(.+) \(experimental\)$/i, '$1（实验性）');
+      cacheSet(trimmed, fixed);
+      return replaceTrimmed(text, trimmed, fixed);
+    }
+
+    if (/^Line (\d+) → (\d+)$/.test(trimmed)) {
+      const fixed = trimmed.replace(/^Line (\d+) → (\d+)$/, '第 $1 → $2 行');
+      cacheSet(trimmed, fixed);
+      return replaceTrimmed(text, trimmed, fixed);
+    }
+
+    if (/^(?:(\d+)s left|(?:(\d+)d\s+)?(?:(\d+)h\s+)?(\d+)m left|(\d+)h left)$/.test(trimmed)) {
+      const mLeft = trimmed.match(/^(?:(\d+)s left|(?:(\d+)d\s+)?(?:(\d+)h\s+)?(\d+)m left|(\d+)h left)$/);
+      let leftCn = trimmed;
+      if (mLeft[1] !== undefined) {
+        leftCn = '剩余 ' + mLeft[1] + ' 秒';
+      } else if (mLeft[5] !== undefined) {
+        leftCn = '剩余 ' + mLeft[5] + ' 小时';
+      } else {
+        const parts = [];
+        if (mLeft[2] !== undefined) parts.push(mLeft[2] + ' 天');
+        if (mLeft[3] !== undefined) parts.push(mLeft[3] + ' 小时');
+        if (mLeft[4] !== undefined) parts.push(mLeft[4] + ' 分钟');
+        leftCn = '剩余 ' + parts.join(' ');
+      }
+      cacheSet(trimmed, leftCn);
+      return replaceTrimmed(text, trimmed, leftCn);
+    }
+
+    if (/^(.+?) \(opens in (external browser|a new tab)\)$/i.test(trimmed)) {
+      const fixed = trimmed.replace(/^(.+?) \(opens in (external browser|a new tab)\)$/i, (_m, prefix, kind) => {
+        return prefix + (/external/i.test(kind) ? '（在外部浏览器中打开）' : '（在新标签页中打开）');
+      });
+      cacheSet(trimmed, fixed);
+      return replaceTrimmed(text, trimmed, fixed);
     }
     // 5. 大小写不敏感词典查找与末尾标点剥离重拼（O(1)，命中写入 stringCache）
     const caseInsensitiveHit = lowerDictionary.get(trimmed.toLowerCase());

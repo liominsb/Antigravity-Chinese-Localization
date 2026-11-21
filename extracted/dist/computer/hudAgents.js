@@ -25,7 +25,7 @@ function row(actor, appName, mode, stopped = false, paused = false) {
     };
 }
 /**
- * The rows to show: none while paused (the HUD offers Resume instead);
+ * The rows to show: none while fenced (the HUD offers "Allow again");
  * Layer 2's agents when it reports them (working ones first, then stopped
  * ones; most recent first within each; deduplicated; at most
  * {@link MAX_HUD_AGENTS}); otherwise one row for the single agent while it is

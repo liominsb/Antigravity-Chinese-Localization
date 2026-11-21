@@ -348,7 +348,9 @@ function buildMinimalAsar(pkgObj, preloadContent = '"use strict";\n') {
   const sshConnJs = fs.readFileSync(path.join(distDir, 'remote', 'sshConnection.js'), 'utf-8');
 
   check('updater.js 挂载中文 updateActions 键并映射 MENU_UPDATE_STEP_LABELS',
-    updaterJs.includes("'检查更新': () => checkForUpdates(true)") && updaterJs.includes("'重启以应用更新': () => quitAndInstall()") && updaterJs.includes('MENU_UPDATE_STEP_LABELS'),
+    updaterJs.includes("'检查更新': () => checkForUpdates(true)") &&
+      (updaterJs.includes("'重启以应用更新': () => quitAndInstall()") || updaterJs.includes("'重启以应用更新': () => void quitAndInstall()")) &&
+      updaterJs.includes('MENU_UPDATE_STEP_LABELS'),
     true
   );
   check('menu.js 缩放菜单兼容中文 "视图" 标签', menuJs.includes("item.label === 'View' || item.label === '视图'"), true);

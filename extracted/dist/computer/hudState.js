@@ -9,7 +9,12 @@ const MAX_APP_NAME = 60;
 function hudView(s) {
     const visible = s.agentActive || s.paused;
     if (s.paused) {
-        return { state: 'paused', text: '智能体已暂停 — 您已接管控制', visible };
+        // The agent's task has ended either way (the LS answers USER_TAKEOVER /
+        // USER_STOP and the agent stops), so never claim a resumable pause.
+        const text = s.pauseCause === 'user_takeover'
+            ? '您已接管 — 智能体已停止'
+            : '智能体已停止';
+        return { state: 'paused', text, visible };
     }
     if (!s.agentActive) {
         return { state: 'idle', text: '智能体空闲', visible };

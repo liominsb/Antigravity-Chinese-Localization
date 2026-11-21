@@ -28,8 +28,8 @@ const {
   findAvailablePatch,
 } = require('./auto-restore');
 
-const CURRENT_VERSION = '2.33.0';
-const RELEASE_VERSION = '2.33.0'; // 补丁发版追踪号；CURRENT_VERSION 保持与目标客户端及 app.asar.ready 一致
+const CURRENT_VERSION = '2.34.0';
+const RELEASE_VERSION = '2.34.0'; // 补丁发版追踪号；CURRENT_VERSION 保持与目标客户端及 app.asar.ready 一致
 
 function compareVersions(v1, v2) {
   const parse = (v) => {
@@ -988,15 +988,43 @@ function translateContextLabel(lbl) {
     replaceInFile(updaterPath, "title: 'Check for Updates',", "title: '检查更新',");
     replaceInFile(updaterPath, "message: 'No updates available',", "message: '当前已是最新版本，暂无可用更新。',");
     replaceInFile(updaterPath, "buttons: ['OK'],", "buttons: ['确定'],");
-    replaceInFile(
-      updaterPath,
-      `exports.updateActions = {
+    const updaterHasVoid = fs.readFileSync(updaterPath, 'utf-8').includes('() => void quitAndInstall()');
+    if (updaterHasVoid) {
+      replaceInFile(
+        updaterPath,
+        `exports.updateActions = {
+    [MenuUpdateStep.CheckForUpdates]: () => checkForUpdates(true),
+    [MenuUpdateStep.CheckingForUpdates]: undefined,
+    [MenuUpdateStep.DownloadingUpdate]: undefined,
+    [MenuUpdateStep.RestartToUpdate]: () => void quitAndInstall(),
+};`,
+        `const MENU_UPDATE_STEP_LABELS = {
+    [MenuUpdateStep.CheckForUpdates]: '检查更新',
+    [MenuUpdateStep.CheckingForUpdates]: '正在检查更新...',
+    [MenuUpdateStep.DownloadingUpdate]: '正在下载更新...',
+    [MenuUpdateStep.RestartToUpdate]: '重启以应用更新',
+};
+exports.updateActions = {
+    [MenuUpdateStep.CheckForUpdates]: () => checkForUpdates(true),
+    '检查更新': () => checkForUpdates(true),
+    [MenuUpdateStep.CheckingForUpdates]: undefined,
+    '正在检查更新...': undefined,
+    [MenuUpdateStep.DownloadingUpdate]: undefined,
+    '正在下载更新...': undefined,
+    [MenuUpdateStep.RestartToUpdate]: () => void quitAndInstall(),
+    '重启以应用更新': () => void quitAndInstall(),
+};`
+      );
+    } else {
+      replaceInFile(
+        updaterPath,
+        `exports.updateActions = {
     [MenuUpdateStep.CheckForUpdates]: () => checkForUpdates(true),
     [MenuUpdateStep.CheckingForUpdates]: undefined,
     [MenuUpdateStep.DownloadingUpdate]: undefined,
     [MenuUpdateStep.RestartToUpdate]: () => quitAndInstall(),
 };`,
-      `const MENU_UPDATE_STEP_LABELS = {
+        `const MENU_UPDATE_STEP_LABELS = {
     [MenuUpdateStep.CheckForUpdates]: '检查更新',
     [MenuUpdateStep.CheckingForUpdates]: '正在检查更新...',
     [MenuUpdateStep.DownloadingUpdate]: '正在下载更新...',
@@ -1012,7 +1040,8 @@ exports.updateActions = {
     [MenuUpdateStep.RestartToUpdate]: () => quitAndInstall(),
     '重启以应用更新': () => quitAndInstall(),
 };`
-    );
+      );
+    }
     replaceInFile(
       updaterPath,
       `            item.label = step;
@@ -1732,23 +1761,47 @@ function describeSshConfigProblem(file, { what, why, fix }) {
     );
   }
 
-  // 25. Localize dist/computer/* (v2.33.0 Computer Use 桌面控制悬浮栏 HUD 与边框遮罩)
+  // 25. Localize dist/computer/* (v2.33.0 ~ v2.34.0 Computer Use 桌面控制悬浮栏 HUD 与边框遮罩)
   const hudPath = path.join(targetExtractDir, 'dist', 'computer', 'hud.js');
   if (fs.existsSync(hudPath)) {
-    replaceInFile(
-      hudPath,
-      `<body><div id="bar"><div id="dot"></div><div id="status">AGY is controlling your Mac</div>
+    const hudRaw = fs.readFileSync(hudPath, 'utf-8');
+    if (hudRaw.includes('Allow again') || hudRaw.includes('重新允许')) {
+      replaceInFile(
+        hudPath,
+        `<body><div id="bar"><div id="dot"></div><div id="status">AGY is controlling your Mac</div>
+<button id="stop">Stop</button><button id="resume" title="Let agents use this Mac again. The stopped task does not restart.">Allow again</button></div>`,
+        `<body><div id="bar"><div id="dot"></div><div id="status">AGY 正在控制您的 Mac</div>
+<button id="stop">停止</button><button id="resume" title="重新允许智能体使用此 Mac。已停止的任务不会自动重启。">重新允许</button></div>`
+      );
+    } else {
+      replaceInFile(
+        hudPath,
+        `<body><div id="bar"><div id="dot"></div><div id="status">AGY is controlling your Mac</div>
 <button id="stop">Stop</button><button id="resume">Resume</button></div>`,
-      `<body><div id="bar"><div id="dot"></div><div id="status">AGY 正在控制您的 Mac</div>
+        `<body><div id="bar"><div id="dot"></div><div id="status">AGY 正在控制您的 Mac</div>
 <button id="stop">停止</button><button id="resume">继续</button></div>`
-    );
+      );
+    }
     replaceInFile(hudPath, "end.textContent = 'Stopped';", "end.textContent = '已停止';");
     replaceInFile(hudPath, "end.textContent = 'Stop';", "end.textContent = '停止';");
   }
 
   const hudStatePath = path.join(targetExtractDir, 'dist', 'computer', 'hudState.js');
   if (fs.existsSync(hudStatePath)) {
-    replaceInFile(hudStatePath, "return { state: 'paused', text: 'Agent paused — you have control', visible };", "return { state: 'paused', text: '智能体已暂停 — 您已接管控制', visible };");
+    const hudStateRaw = fs.readFileSync(hudStatePath, 'utf-8');
+    if (hudStateRaw.includes("s.pauseCause === 'user_takeover'")) {
+      replaceInFile(
+        hudStatePath,
+        `        const text = s.pauseCause === 'user_takeover'
+            ? 'You took over — agent stopped'
+            : 'Agent stopped';`,
+        `        const text = s.pauseCause === 'user_takeover'
+            ? '您已接管 — 智能体已停止'
+            : '智能体已停止';`
+      );
+    } else {
+      replaceInFile(hudStatePath, "return { state: 'paused', text: 'Agent paused — you have control', visible };", "return { state: 'paused', text: '智能体已暂停 — 您已接管控制', visible };");
+    }
     replaceInFile(hudStatePath, "return { state: 'idle', text: 'Agent idle', visible };", "return { state: 'idle', text: '智能体空闲', visible };");
     replaceInFile(
       hudStatePath,

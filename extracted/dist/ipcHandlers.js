@@ -38,7 +38,6 @@ var __importDefault = (this && this.__importDefault) || function (mod) {
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.registerIpcHandlers = registerIpcHandlers;
 const electron_1 = require("electron");
-const electron_updater_1 = require("electron-updater");
 const types_1 = require("./types");
 const updater_1 = require("./updater");
 const main_1 = __importDefault(require("electron-log/main"));
@@ -58,6 +57,7 @@ const menu_1 = require("./menu");
 const scriptJail_1 = require("./scriptJail");
 const externalUrl_1 = require("./externalUrl");
 const utils_1 = require("./utils");
+const windowState_1 = require("./windowState");
 const hubZoom_1 = require("./hubZoom");
 const wcvBrowserRegistry_1 = require("./wcvBrowserRegistry");
 const wcvIpcHandlers_1 = require("./wcvIpcHandlers");
@@ -265,13 +265,7 @@ function registerIpcHandlers(storageManager, deps = {}) {
     localOnly('updater:apply', async () => {
         (0, updater_1.broadcastState)({ type: types_1.UpdateState.Ready });
     });
-    localOnly('updater:quit-and-install', () => {
-        if (!electron_1.app.isPackaged) {
-            console.log('[AutoUpdater] Skipping quitAndInstall (requires a packaged app).');
-            return;
-        }
-        electron_updater_1.autoUpdater.quitAndInstall();
-    });
+    localOnly('updater:quit-and-install', () => (0, updater_1.quitAndInstall)());
     localOnly('updater:get-state', () => {
         return (0, updater_1.getLastState)();
     });
@@ -481,12 +475,22 @@ function registerIpcHandlers(storageManager, deps = {}) {
     });
     // Window
     electron_1.ipcMain.handle('window:set-title-bar-overlay', async (event, options) => {
-        const win = getTargetHubWindow(event?.sender);
-        if (win && process.platform === 'win32') {
+        // The sender's own window: each window has its own overlay, and a theme
+        // change reaches every window's renderer, focused or not.
+        const win = windowForSender(event?.sender);
+        // Windows and Linux windows both get a native caption-button overlay
+        // (see createWindow in utils.ts), so keep them in sync; macOS has none.
+        if (win && !(0, utils_1.isMacOS)()) {
+            // Omit a missing height: Electron keeps the fields it isn't given, so
+            // a colors-only update must not reset a taller titlebar's buttons.
+            // The key is left out rather than set to `undefined`: Electron checks
+            // whether each field is present, and today an `undefined` one is only
+            // skipped because converting it to an int fails quietly.
+            const height = (0, windowState_1.titleBarOverlayHeight)(options.height);
             win.setTitleBarOverlay({
                 color: options.color,
                 symbolColor: options.symbolColor,
-                height: 30,
+                ...(height !== undefined ? { height } : {}),
             });
         }
     });

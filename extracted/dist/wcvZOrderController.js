@@ -475,7 +475,7 @@ class WcvZOrderController {
                 this.registry.exitHtmlFullscreen?.(entry.tabKey);
                 return;
             }
-            rec.userElevationLatch = true;
+            this.setUserElevationLatch(entry, rec, true);
             this.reconcileWindow(entry.parentWindow, 'enter-html-full-screen');
             entry.view.webContents.focus?.();
             return;
@@ -638,9 +638,10 @@ class WcvZOrderController {
                 if (!skipCrashedClipGuest) {
                     void this.syncPopupSuppression(entry, rec);
                 }
-                if (clipView &&
-                    !skipCrashedClipGuest &&
-                    !entry.view.webContents.isDestroyed()) {
+                if (!entry.crashed &&
+                    (clipView ||
+                        rec.focusEmulationEnabled ||
+                        this.registry.isRemoteStreamActive(entry.tabKey))) {
                     this.syncTabFocusEmulation(entry, rec);
                 }
                 if (!skipCrashedClipGuest &&
@@ -660,7 +661,10 @@ class WcvZOrderController {
                 focusRevoked || (focusRevoked = this.blurOnHide(entry, rec, hasCatcher && hadUserLatch));
                 rec.userElevationLatch = false;
             }
-            if (clipView && !skipCrashedClipGuest) {
+            if (!entry.crashed &&
+                (clipView ||
+                    rec.focusEmulationEnabled ||
+                    this.registry.isRemoteStreamActive(entry.tabKey))) {
                 this.syncTabFocusEmulation(entry, rec);
             }
             const desired = this.isElevationBlocked(entry, rec) ? 0 : 1;
@@ -1332,6 +1336,7 @@ class WcvZOrderController {
         const ok = hasXY(p) && isNum(p.deltaX) && isNum(p.deltaY);
         const t = ok ? this.catcherTarget(w) : null;
         if (t && !this.hasActiveHoldOrReplay(t.st)) {
+            this.registry.requestRemoteControlRevocation?.(t.tab.tabKey, 'local-user-interaction');
             const { x, y, deltaX, deltaY } = p;
             const modifiers = toMods(p.modifiers);
             const ev = { type: 'mouseWheel', x, y, deltaX, deltaY, modifiers };
@@ -1341,6 +1346,7 @@ class WcvZOrderController {
     handleCatcherPinch(w, p) {
         const t = hasXY(p) && isNum(p.scaleFactor) ? this.catcherTarget(w) : null;
         if (t && !this.hasActiveHoldOrReplay(t.st)) {
+            this.registry.requestRemoteControlRevocation?.(t.tab.tabKey, 'local-user-interaction');
             const g = { x: p.x, y: p.y, scaleFactor: p.scaleFactor };
             void this.synthesizePinchGesture(t.tab.tabKey, g).catch(noop);
         }
@@ -1579,6 +1585,7 @@ class WcvZOrderController {
                 this.syncCatcher(w);
             }
             else if (p.button === 'back' || p.button === 'forward') {
+                this.registry.requestRemoteControlRevocation?.(curTab.tabKey, 'local-user-interaction');
                 this.navigateGuestHistory(curTab.tabKey, p.button);
             }
             else if (press && st.presses.get(p.pressId) === press) {
@@ -1940,6 +1947,9 @@ class WcvZOrderController {
         this.blurOnHide(entry, rec, !latched && rec.userElevationLatch);
         rec.userElevationLatch = latched;
         rec.pendingLeaveBlur = latched ? false : rec.pendingLeaveBlur;
+        if (latched && entry) {
+            this.registry.requestRemoteControlRevocation?.(entry.tabKey, 'local-user-interaction');
+        }
         if (entry && (0, utils_1.getHubClipView)(entry.parentWindow)) {
             this.syncTabFocusEmulation(entry, rec);
         }
@@ -1972,6 +1982,9 @@ class WcvZOrderController {
         if (rec.zOrder === 1 && focusBrowser) {
             this.setUserElevationLatch(entry, rec, true);
             entry.view.webContents.focus?.();
+        }
+        else if (focusBrowser && !entry.isAgentStepActive) {
+            this.registry.requestRemoteControlRevocation?.(tabKey, 'local-user-interaction');
         }
         return this.getState(tabKey);
     }
@@ -2125,7 +2138,7 @@ class WcvZOrderController {
     async ensureCdpAttached(entry) {
         // eslint-disable-next-line @typescript-eslint/no-explicit-any
         const wc = entry.view.webContents;
-        if (!wc || wc.isDestroyed?.()) {
+        if (!wc || entry.crashed || wc.isDestroyed?.()) {
             return;
         }
         const rec = this.ensureRecord(entry);
@@ -2235,12 +2248,12 @@ class WcvZOrderController {
             !this.isElevationBlocked(entry, rec));
     }
     syncTabFocusEmulation(entry, rec) {
-        if (entry.view.webContents.isDestroyed() ||
-            this.isCrashedClipEntry(entry)) {
+        if (entry.view.webContents.isDestroyed() || entry.crashed) {
             return;
         }
         if (!rec.cdpAttached) {
-            if (this.shouldRetainUserFocusEmulation(entry, rec)) {
+            if (this.shouldRetainUserFocusEmulation(entry, rec) ||
+                this.registry.isRemoteStreamActive(entry.tabKey)) {
                 void this.ensureCdpAttached(entry);
             }
             return;
@@ -2249,20 +2262,21 @@ class WcvZOrderController {
     }
     /**
      * Synchronizes Chromium CDP focus emulation (`Emulation.setFocusEmulationEnabled`)
-     * on `entry` so background agent input, cold unshown clip tabs, and active
-     * user-focused clip tabs maintain guest focus state independent of native OS
-     * view focus.
+     * on `entry` so background agent input, cold unshown clip tabs, active
+     * user-focused clip tabs, and remotely streamed tabs maintain guest focus
+     * state independent of native OS view focus.
      */
     async syncFocusEmulation(entry, rec) {
         if (rec.pendingLeaveBlur ||
             !rec.cdpAttached ||
             entry.view.webContents.isDestroyed() ||
-            this.isCrashedClipEntry(entry)) {
+            entry.crashed) {
             return;
         }
         const wantEnabled = Boolean(entry.isAgentStepActive ||
             ((0, utils_1.getHubClipView)(entry.parentWindow) && !entry.shownInVisibleClip) ||
-            this.shouldRetainUserFocusEmulation(entry, rec));
+            this.shouldRetainUserFocusEmulation(entry, rec) ||
+            this.registry.isRemoteStreamActive(entry.tabKey));
         if (!wantEnabled && !rec.focusEmulationEnabled) {
             return;
         }
@@ -2552,7 +2566,7 @@ class WcvZOrderController {
             return;
         }
         const hasClip = Boolean((0, utils_1.getHubClipView)(entry.parentWindow));
-        if (this.isCrashedClipEntry(entry)) {
+        if (entry.crashed) {
             const vp = update && 'caller' in update
                 ? this.viewportOverrides.get(entry.tabKey)
                 : undefined;
@@ -2606,7 +2620,7 @@ class WcvZOrderController {
             .then(async () => {
             if (wc.isDestroyed?.() ||
                 this.viewportOverrides.get(entry.tabKey) !== vpRec ||
-                this.isCrashedClipEntry(entry)) {
+                entry.crashed) {
                 return;
             }
             vpRec.fallbackDesired = this.resolveClipFallbackSize(entry);
@@ -2629,7 +2643,7 @@ class WcvZOrderController {
                 return;
             }
             await this.ensureCdpAttached(entry);
-            if (this.isCrashedClipEntry(entry)) {
+            if (entry.crashed) {
                 return;
             }
             vpRec.fallbackDesired = this.resolveClipFallbackSize(entry);
@@ -3071,7 +3085,11 @@ class WcvZOrderController {
     async insertText(tabKey, text) {
         await this.sendCdp(tabKey, 'Input.insertText', { text });
     }
-    async capturePage(tabKey) {
+    /**
+     * Captures the tab's current compositor surface as an unresized
+     * `Electron.NativeImage`, returning `null` when unavailable or empty.
+     */
+    async capturePageImage(tabKey) {
         const entry = this.registry.getEntry(tabKey);
         if (!entry || entry.view.webContents.isDestroyed()) {
             return null;
@@ -3148,6 +3166,13 @@ class WcvZOrderController {
             }
         }
         if (!image || image.isEmpty?.()) {
+            return null;
+        }
+        return image;
+    }
+    async capturePage(tabKey) {
+        const image = await this.capturePageImage(tabKey);
+        if (!image) {
             return null;
         }
         const size = image.getSize?.();
@@ -3418,36 +3443,6 @@ class WcvZOrderController {
                     void this.applyViewportOverride(entry).catch(() => undefined);
                 }
             });
-            bind(wc, 'render-process-gone', () => {
-                if (!(0, utils_1.getHubClipView)(entry.parentWindow) ||
-                    rec.webContentsId !== entry.webContentsId) {
-                    return;
-                }
-                this.bumpClipCommitSeq(entry, rec);
-                rec.cdpMouseInFlight = 0;
-                rec.cdpAttachEpoch = (rec.cdpAttachEpoch ?? 0) + 1;
-                rec.cdpAttachInFlight = undefined;
-                rec.cdpAttached = false;
-                rec.pendingLeaveBlur = false;
-                rec.focusEmulationEnabled = undefined;
-                rec.focusEmulationSeq = 0;
-                [rec.dragInterceptionEnabled, rec.dragInterceptionSeq] = [undefined, 0];
-                rec.guestCssCursor = 'default';
-                this.resetTabPinchState(rec);
-                this.clearTabInputQueues(rec);
-                if ((0, utils_1.getHubCatcherView)(entry.parentWindow)) {
-                    this.syncWindowCatcherCursor(entry.parentWindow);
-                }
-                rec.popupCssGeneration = (rec.popupCssGeneration ?? 0) + 1;
-                rec.popupSuppressionCssKey = undefined;
-                rec.popupSuppressionCssInFlight = undefined;
-                rec.isolatedGuardSuppressed = undefined;
-                const vpRec = this.viewportOverrides.get(entry.tabKey);
-                if (vpRec && vpRec.webContentsId === entry.webContentsId) {
-                    vpRec.appliedKey = undefined;
-                    vpRec.pipeDirty = false;
-                }
-            });
         }
         if (((0, utils_1.getHubClipView)(entry.parentWindow) ||
             (0, utils_1.getHubCatcherView)(entry.parentWindow)) &&
@@ -3462,6 +3457,40 @@ class WcvZOrderController {
         rec.listenersAttached = true;
         // eslint-disable-next-line @typescript-eslint/no-explicit-any
         const onWc = (ev, fn) => bind(wc, ev, fn);
+        onWc('render-process-gone', () => {
+            if (rec.webContentsId !== entry.webContentsId) {
+                return;
+            }
+            const hasClip = Boolean((0, utils_1.getHubClipView)(entry.parentWindow));
+            if (hasClip) {
+                this.bumpClipCommitSeq(entry, rec);
+            }
+            rec.cdpMouseInFlight = 0;
+            rec.cdpAttachEpoch = (rec.cdpAttachEpoch ?? 0) + 1;
+            rec.cdpAttachInFlight = undefined;
+            rec.cdpAttached = false;
+            rec.pendingLeaveBlur = false;
+            rec.focusEmulationEnabled = undefined;
+            rec.focusEmulationSeq = 0;
+            [rec.dragInterceptionEnabled, rec.dragInterceptionSeq] = [undefined, 0];
+            rec.guestCssCursor = 'default';
+            this.resetTabPinchState(rec);
+            this.clearTabInputQueues(rec);
+            if (hasClip && (0, utils_1.getHubCatcherView)(entry.parentWindow)) {
+                this.syncWindowCatcherCursor(entry.parentWindow);
+            }
+            rec.popupCssGeneration = (rec.popupCssGeneration ?? 0) + 1;
+            rec.popupSuppressionCssKey = undefined;
+            rec.popupSuppressionCssInFlight = undefined;
+            rec.isolatedGuardSuppressed = undefined;
+            const vpRec = this.viewportOverrides.get(entry.tabKey);
+            if (vpRec && vpRec.webContentsId === entry.webContentsId) {
+                vpRec.appliedKey = undefined;
+                if (hasClip) {
+                    vpRec.pipeDirty = false;
+                }
+            }
+        });
         onWc('before-mouse-event', (_event, mouse) => {
             if (entry.visible &&
                 mouse?.type === 'mouseDown' &&
@@ -3661,8 +3690,10 @@ class WcvZOrderController {
                     void this.applyViewportOverride(entry).catch(() => undefined);
                 }
             }
-            if ((entry.isAgentStepActive ||
-                this.shouldRetainUserFocusEmulation(entry, rec)) &&
+            if (!entry.crashed &&
+                (entry.isAgentStepActive ||
+                    this.shouldRetainUserFocusEmulation(entry, rec) ||
+                    this.registry.isRemoteStreamActive(entry.tabKey)) &&
                 !rec.cdpAttached) {
                 void this.ensureCdpAttached(entry);
             }
@@ -3710,8 +3741,10 @@ class WcvZOrderController {
         });
         onWc('devtools-closed', () => {
             if (rec.webContentsId === entry.webContentsId &&
+                !entry.crashed &&
                 !wc.isDestroyed?.() &&
-                entry.isAgentStepActive &&
+                (entry.isAgentStepActive ||
+                    this.registry.isRemoteStreamActive(entry.tabKey)) &&
                 (!rec.cdpAttached || !wc.debugger?.isAttached?.())) {
                 void this.ensureCdpAttached(entry);
             }

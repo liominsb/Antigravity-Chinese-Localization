@@ -1502,6 +1502,11 @@ class ComputerActuatorHandler {
                                         allowed.add(b.appId);
                                         r1.resolvedBundleId = (0, computerOps_1.truncateUtf8)(b.appId, 256);
                                         lastApp = b.appId;
+                                        // Its preview tile from the bind on (scripts too).
+                                        background().notePreviewTarget?.(b.appId, {
+                                            policy: (0, computerOps_1.toDriverPolicy)(allowed, req.urlPolicy),
+                                            ...actorOpt,
+                                        });
                                     }
                                     this.setAppName(b.appName || b.appId);
                                     break;

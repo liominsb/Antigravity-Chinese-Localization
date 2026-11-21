@@ -50,7 +50,7 @@ const HUD_HTML = `<!doctype html>
   .stopped-tag{font-size:11px;color:rgba(255,255,255,.6);padding:3px 4px}
 </style></head>
 <body><div id="bar"><div id="dot"></div><div id="status">AGY 正在控制您的 Mac</div>
-<button id="stop">停止</button><button id="resume">继续</button></div>
+<button id="stop">停止</button><button id="resume" title="重新允许智能体使用此 Mac。已停止的任务不会自动重启。">重新允许</button></div>
 <div id="agents"></div>
 <script>
   document.getElementById('stop').addEventListener('click', () => console.log('${MSG_STOP}'));
@@ -355,6 +355,7 @@ class DesktopHud {
         this.state = {
             agentActive: state.agentActive,
             paused: state.paused,
+            pauseCause: state.pauseCause,
             mode: state.mode,
             appName: state.appName,
         };

@@ -1,5 +1,9 @@
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
+exports.STOP_CHANNELS = void 0;
+exports.registerComputerStopIpc = registerComputerStopIpc;
+exports.previewUnavailable = previewUnavailable;
+exports.previewOpenFailed = previewOpenFailed;
 exports.registerComputerPreviewIpc = registerComputerPreviewIpc;
 /**
  * Local signaling for the computer pane's live preview (P3-1): the renderer
@@ -13,9 +17,14 @@ exports.registerComputerPreviewIpc = registerComputerPreviewIpc;
  * a session belongs to the webContents that opened it: only
  * it can answer, renew or close it, and its sessions close when it goes
  * away. SDP is never logged.
+ *
+ * Stop all / Stop agent (`computer-preview:stop-all`, `:stop-agent`) take the
+ * same host path as the viewer's DataChannel messages but need no session,
+ * so the Agents pane can stop agents while the preview is down.
  */
 const electron_1 = require("electron");
 const remoteWindowSecurity_1 = require("../remote/remoteWindowSecurity");
+const protocol_1 = require("../desktopHost/protocol");
 const index_1 = require("./index");
 const permissionsIpc_1 = require("./permissionsIpc");
 const previewViewers_1 = require("./previewViewers");
@@ -48,18 +57,81 @@ function preview() {
     }
     return p;
 }
+exports.STOP_CHANNELS = Object.freeze({
+    stopAll: 'computer-preview:stop-all',
+    stopAgent: 'computer-preview:stop-agent',
+});
+/**
+ * Stop all / Stop agent for the Hub UI. With computer use off they resolve
+ * as no-ops (nothing can run), so the Agents pane's Stop never errors.
+ */
+function registerComputerStopIpc(computerUseOn) {
+    if (!computerUseOn) {
+        electron_1.ipcMain.handle(exports.STOP_CHANNELS.stopAll, () => { });
+        electron_1.ipcMain.handle(exports.STOP_CHANNELS.stopAgent, () => { });
+        return;
+    }
+    electron_1.ipcMain.handle(exports.STOP_CHANNELS.stopAll, async (e) => {
+        checkSender(e);
+        await (0, index_1.stopAllComputerAgents)('Agents pane Stop');
+    });
+    electron_1.ipcMain.handle(exports.STOP_CHANNELS.stopAgent, (e, actorId) => {
+        checkSender(e);
+        if (!(0, protocol_1.isActorId)(actorId)) {
+            throw new Error('computer preview: bad actor id');
+        }
+        (0, index_1.stopComputerAgent)(actorId);
+    });
+}
+/** The failure for an open with no preview running. */
+function previewUnavailable(sidecarMissing) {
+    return sidecarMissing
+        ? {
+            ok: false,
+            error: {
+                code: 'SIDECAR_MISSING',
+                message: 'live preview unavailable: agy-desktop-rtc is not installed',
+            },
+        }
+        : {
+            ok: false,
+            error: {
+                code: 'UNAVAILABLE',
+                message: 'computer preview is not available',
+            },
+        };
+}
+/** The failure for an open that threw (never SDP: an error message only). */
+function previewOpenFailed(err) {
+    const message = (err instanceof Error ? err.message : String(err)).slice(0, 200);
+    // DesktopHelper fails what waits on a child that never spawned this way.
+    const code = /helper spawn error/.test(message)
+        ? 'SPAWN_FAILED'
+        : 'OPEN_FAILED';
+    return { ok: false, error: { code, message } };
+}
 function registerComputerPreviewIpc() {
     // The permission onboarding card (macOS TCC); works with the preview off.
     (0, permissionsIpc_1.registerComputerPermissionsIpc)();
     electron_1.ipcMain.handle('computer-preview:open', async (e) => {
         const wc = checkSender(e);
-        const p = preview();
+        const p = (0, index_1.computerPreview)();
+        if (!p) {
+            return previewUnavailable((0, index_1.previewSidecarMissing)());
+        }
         if (!hooked.has(p)) {
             hooked.add(p);
             // TTL expiry, PC failure, DataChannel close: forget the owner too.
             p.onClosed((sid) => owners.delete(sid));
         }
-        const offer = await p.open();
+        let offer;
+        try {
+            offer = await p.open();
+        }
+        catch (err) {
+            console.warn('[ComputerUse] preview open failed:', err);
+            return previewOpenFailed(err);
+        }
         if (wc.isDestroyed()) {
             // The window went away while the offer was gathered.
             p.close(offer.sessionId);
@@ -79,7 +151,7 @@ function registerComputerPreviewIpc() {
                 }
             });
         }
-        return offer;
+        return { ok: true, ...offer };
     });
     electron_1.ipcMain.handle('computer-preview:get-active', (e) => {
         checkSender(e);

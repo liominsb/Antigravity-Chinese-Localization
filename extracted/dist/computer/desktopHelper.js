@@ -34,10 +34,35 @@ var __importStar = (this && this.__importStar) || (function () {
 })();
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.DesktopHelper = exports.MAX_MEDIA_BACKLOG_BYTES = void 0;
+exports.probeHelperOnce = probeHelperOnce;
 const child_process_1 = require("child_process");
 const events_1 = require("events");
 const readline = __importStar(require("readline"));
 const frames_1 = require("../desktopHost/frames");
+const runFile = (file, args, o) => new Promise((resolve, reject) => {
+    (0, child_process_1.execFile)(file, args, { timeout: o.timeoutMs, ...(o.env ? { env: o.env } : {}) }, (err, stdout) => (err ? reject(err) : resolve(String(stdout))));
+});
+const ONE_SHOT_PROBE_TIMEOUT_MS = 5000;
+/**
+ * Runs `agy-desktop-helper probe` once and parses its JSON line: the TCC
+ * grants as the actuating binary reads them (the code path `serve` uses),
+ * fresh rather than a long-lived process's cached
+ * CGPreflightScreenCaptureAccess(). Read-only (it never prompts, activates
+ * or takes input).
+ */
+async function probeHelperOnce(binaryPath, env, run = runFile) {
+    const out = await run(binaryPath, ['probe'], {
+        env,
+        timeoutMs: ONE_SHOT_PROBE_TIMEOUT_MS,
+    });
+    const line = out.trim().split('\n').pop() ?? '';
+    const p = JSON.parse(line);
+    if (typeof p.grants?.accessibility !== 'boolean' ||
+        typeof p.grants?.screen_recording !== 'boolean') {
+        throw new Error('helper probe: no grants in its output');
+    }
+    return { ...p, ok: true };
+}
 /** Media fd backlog above which writeMedia drops instead of buffering. */
 exports.MAX_MEDIA_BACKLOG_BYTES = 2 * 1024 * 1024;
 const DEFAULT_TIMEOUT_MS = 20000;

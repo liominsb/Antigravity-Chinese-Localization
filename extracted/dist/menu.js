@@ -39,6 +39,8 @@ exports.wslReopenLocallyTemplate = wslReopenLocallyTemplate;
 exports.relaunchWithWslDistro = relaunchWithWslDistro;
 const electron_1 = require("electron");
 const path = __importStar(require("path"));
+const authBootstrap_1 = require("./authBootstrap");
+const constants_1 = require("./constants");
 const utils_1 = require("./utils");
 const updater_1 = require("./updater");
 const wsl_1 = require("./wsl");
@@ -152,7 +154,16 @@ function setupApplicationMenu(url) {
         label: 'New Window',
         accelerator: 'CmdOrCtrl+Shift+N',
         click: () => {
-            (0, utils_1.createWindow)(url, undefined, { cascade: true });
+            if (!process.env.DEV_URL &&
+                url.startsWith(`${constants_1.WINDOW_ORIGIN}:`) &&
+                typeof authBootstrap_1.getActiveLsPort === 'function' &&
+                (0, authBootstrap_1.getActiveLsPort)() <= 0) {
+                return;
+            }
+            const targetUrl = typeof utils_1.resolveCurrentHubUrl === 'function'
+                ? (0, utils_1.resolveCurrentHubUrl)(url)
+                : url;
+            (0, utils_1.createWindow)(targetUrl, undefined, { cascade: true });
         },
     }));
     // Add "Check for Updates" to the application menu on macOS.

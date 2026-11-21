@@ -35,6 +35,7 @@ var __importStar = (this && this.__importStar) || (function () {
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.MENDEL_EMPTY_RETRY_DELAY_MS = exports.MENDEL_POLL_INTERVAL_MS = exports.MENDEL_POLL_TIMEOUT_MS = void 0;
 exports.parseMendelBoolFlag = parseMendelBoolFlag;
+exports.evaluateRemoteControlBrowserStreamEnabled = evaluateRemoteControlBrowserStreamEnabled;
 exports.startMendelFlagSync = startMendelFlagSync;
 const https = __importStar(require("node:https"));
 const constants_1 = require("./constants");
@@ -70,6 +71,33 @@ function parseMendelBoolFlag(body, flagKey) {
     return experiments.some((entry) => isRecord(entry) &&
         entry.keyString === flagKey &&
         (entry.disabled === undefined || entry.disabled === false));
+}
+/**
+ * Evaluates whether the Remote Control built-in browser stream actuator is
+ * enabled (default off), giving boolean `customFlagOverrides` precedence over
+ * unpackaged `AGY_ENABLE_RC_BROWSER_STREAM=1` and synced Mendel storage.
+ */
+function evaluateRemoteControlBrowserStreamEnabled(items, env = process.env, packaged = true) {
+    const rawOverrides = items?.[constants_1.CUSTOM_FLAG_OVERRIDES_STORAGE_KEY];
+    if (typeof rawOverrides === 'string') {
+        try {
+            const parsed = JSON.parse(rawOverrides);
+            if (isRecord(parsed) && !Array.isArray(parsed)) {
+                const override = parsed[constants_1.RC_BROWSER_STREAM_FLAG];
+                if (typeof override === 'boolean') {
+                    return override;
+                }
+            }
+        }
+        catch {
+            // Ignore malformed customFlagOverrides JSON and fall through.
+        }
+    }
+    if (!packaged && env.AGY_ENABLE_RC_BROWSER_STREAM === '1') {
+        return true;
+    }
+    const saved = items?.[constants_1.RC_BROWSER_STREAM_FLAG];
+    return saved === true || saved === 'true';
 }
 function fetchMendelFlags(port, csrfToken, requestImpl, setAbort) {
     return new Promise((resolve) => {
@@ -221,8 +249,9 @@ function startMendelFlagSync(options) {
         if (disposed || runEpoch !== epoch) {
             return;
         }
-        const enabled = parseMendelBoolFlag(body, constants_1.WCV_THREE_LAYER_STACK_FLAG);
-        if (enabled === undefined) {
+        const wcvEnabled = parseMendelBoolFlag(body, constants_1.WCV_THREE_LAYER_STACK_FLAG);
+        const rcEnabled = parseMendelBoolFlag(body, constants_1.RC_BROWSER_STREAM_FLAG);
+        if (wcvEnabled === undefined || rcEnabled === undefined) {
             if (retryOnEmpty && retryTimer === undefined && activePort > 0) {
                 retryTimer = setTimeout(() => {
                     retryTimer = undefined;
@@ -233,17 +262,27 @@ function startMendelFlagSync(options) {
             return;
         }
         clearRetryTimer();
-        const nextVal = enabled ? 'true' : 'false';
+        const nextWcvVal = wcvEnabled ? 'true' : 'false';
+        const nextRcVal = rcEnabled ? 'true' : 'false';
         try {
             const currentItems = await storageManager.getItems();
-            if (disposed ||
-                runEpoch !== epoch ||
-                currentItems[constants_1.WCV_THREE_LAYER_STACK_FLAG] === nextVal) {
+            if (disposed || runEpoch !== epoch) {
                 return;
             }
-            await storageManager.updateItems({
-                [constants_1.WCV_THREE_LAYER_STACK_FLAG]: nextVal,
-            });
+            const updates = {};
+            if (currentItems[constants_1.WCV_THREE_LAYER_STACK_FLAG] !== nextWcvVal) {
+                updates[constants_1.WCV_THREE_LAYER_STACK_FLAG] = nextWcvVal;
+            }
+            if (rcEnabled
+                ? currentItems[constants_1.RC_BROWSER_STREAM_FLAG] !== 'true'
+                : currentItems[constants_1.RC_BROWSER_STREAM_FLAG] !== undefined &&
+                    currentItems[constants_1.RC_BROWSER_STREAM_FLAG] !== nextRcVal) {
+                updates[constants_1.RC_BROWSER_STREAM_FLAG] = nextRcVal;
+            }
+            if (Object.keys(updates).length === 0) {
+                return;
+            }
+            await storageManager.updateItems(updates);
         }
         catch {
             // Contain StorageFullError and transient disk errors so background polls

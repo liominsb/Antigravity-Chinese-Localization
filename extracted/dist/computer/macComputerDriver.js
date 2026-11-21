@@ -217,6 +217,8 @@ const FOREGROUND_OPS = new Set([
     'type',
 ]);
 const WINDOW_OPS = new Set([
+    // Only via notePreviewTarget: the helper's bind_app carries no policy.
+    'bind_app',
     'ax_snapshot',
     'ax_press',
     'ax_set_value',
@@ -282,7 +284,7 @@ class MacComputerSurfaceDriver {
         // Idle answers only for a helper that never started: one that crashed (in
         // restart backoff) is probed, so its failure isn't reported HEALTHY.
         const p = idle && this.helper.running === false && this.helper.started !== true
-            ? idle()
+            ? await idle()
             : await this.helper.probe();
         const level = Number(p.confinement_version ?? 0);
         this.agentQueues = p.agent_queues === true;
@@ -522,6 +524,10 @@ class MacComputerSurfaceDriver {
         return () => {
             this.targetListeners.delete(listener);
         };
+    }
+    /** Previews a just-bound app's window (recorded as a bind_app target). */
+    notePreviewTarget(appId, o) {
+        this.recordTarget('bind_app', { app: appId, ...policyArgs(o.policy), ...actorArgs(o) }, { ok: true });
     }
     /** Forgets an agent's targets (its lease ended or it was stopped). */
     forgetPreviewTargets(actorId) {

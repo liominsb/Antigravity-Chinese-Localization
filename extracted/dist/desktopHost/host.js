@@ -17,6 +17,7 @@
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.scriptRunnerFor = scriptRunnerFor;
 exports.stopLikePause = stopLikePause;
+exports.focusEventLine = focusEventLine;
 exports.typingActivity = typingActivity;
 exports.startDesktopHost = startDesktopHost;
 const computerActuator_1 = require("../computerActuator");
@@ -59,6 +60,24 @@ function scriptRunnerFor(binaryPath, log, available) {
  */
 function stopLikePause(s) {
     return (s.paused && s.pauseCause !== undefined && s.pauseCause !== 'user_takeover');
+}
+/**
+ * The log line for a helper focus guard event (focus_restored,
+ * activation_unexplained): app ids, reason and outcome only. A restore is
+ * only requested (activate()); whether it landed is not confirmed.
+ */
+function focusEventLine(m) {
+    const s = (k) => {
+        const v = m[k];
+        return typeof v === 'string' ? v.slice(0, 256) : '';
+    };
+    if (m['event'] === 'focus_restored') {
+        return `[DesktopHost] focus_restored reason=${s('reason')} app=${s('app_id')} restored=${s('restored_bundle_id')} restore_requested=${m['restore_requested'] === true}`;
+    }
+    if (m['event'] === 'activation_unexplained') {
+        return `[DesktopHost] activation_unexplained app=${s('app_id')} actor=${s('actor_tag')} restore_requested=${m['restore_requested'] === true} focus_guard=${s('focus_guard')} window=${s('window')} skip=${s('skip_reason')}`;
+    }
+    return undefined;
 }
 /**
  * The activity of a helper `typing` event: caret progress of a running agent
@@ -382,6 +401,17 @@ function startDesktopHost(o) {
             activities.push(colors.recolor(a));
         }
     });
+    // The focus guard (agent apps never take focus from the user): log each
+    // self-activation and each restore requested for the user's app, so how
+    // often it happens can be measured.
+    for (const ev of ['focus_restored', 'activation_unexplained']) {
+        helper.onEvent(ev, (m) => {
+            const line = focusEventLine(m);
+            if (line) {
+                log(line);
+            }
+        });
+    }
     const killSwitch = o.killSwitch ?? (() => (0, config_1.killSwitchEngaged)());
     const poll = () => void registration.setEnabled(!killSwitch());
     poll();
@@ -413,6 +443,7 @@ function startDesktopHost(o) {
         resume,
         revokeViewerDevice: (id) => viewer?.revokeDevice(id) ?? false,
         setOverlaySuppressed: (s) => overlay?.setSuppressed(s),
+        setScreenLocked: (l) => sender?.setScreenLocked(l),
         stop: async () => {
             if (stopped) {
                 return;

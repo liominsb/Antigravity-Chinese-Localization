@@ -1,6 +1,6 @@
 {
   "name": "antigravity-chinese-localization",
-  "version": "2.33.0",
+  "version": "2.34.0",
   "private": true,
   "description": "High-performance, non-destructive Chinese localization patch and control center for Google Antigravity",
   "main": "localize.js",

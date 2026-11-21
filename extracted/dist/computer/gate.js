@@ -22,9 +22,10 @@ exports.resolveMaxPreviewSlots = resolveMaxPreviewSlots;
 exports.isComputerUseEnabled = isComputerUseEnabled;
 exports.cuaEnv = cuaEnv;
 exports.helperEnv = helperEnv;
+const constants_1 = require("../constants");
 const protocol_1 = require("../desktopHost/protocol");
 exports.CUA_FLAG = 'enable-agy-hub-cua-macos';
-exports.CUSTOM_FLAG_OVERRIDES_KEY = 'jetski.developer.customFlagOverrides';
+exports.CUSTOM_FLAG_OVERRIDES_KEY = constants_1.CUSTOM_FLAG_OVERRIDES_STORAGE_KEY;
 /** The override's value: true / false when set to a boolean, else undefined. */
 function cuaFlagOverride(items) {
     // A store that failed to load reads as no override.

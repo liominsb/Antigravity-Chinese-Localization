@@ -64,7 +64,8 @@ const hudJs = fs.readFileSync(path.join(distDir, 'computer', 'hud.js'), 'utf-8')
 check(
   'hud.js 汉化悬浮控制栏文案并严格保留 agy-hud: 控制台 IPC 协议令牌',
   hudJs.includes('AGY 正在控制您的 Mac') &&
-    hudJs.includes('<button id="stop">停止</button><button id="resume">继续</button>') &&
+    hudJs.includes('<button id="stop">停止</button>') &&
+    (hudJs.includes('<button id="resume">继续</button>') || hudJs.includes('>重新允许</button>')) &&
     hudJs.includes("end.textContent = '已停止';") &&
     hudJs.includes('agy-hud:stop') &&
     hudJs.includes('agy-hud:resume'),
@@ -72,11 +73,15 @@ check(
 );
 
 const hudState = require(path.join(distDir, 'computer', 'hudState.js'));
-check('hudState.hudView 暂停接管态保留 state="paused" 并输出中文', hudState.hudView({ agentActive: true, paused: true }), {
-  state: 'paused',
-  text: '智能体已暂停 — 您已接管控制',
-  visible: true,
-});
+check(
+  'hudState.hudView 暂停接管态保留 state="paused" 并输出中文',
+  hudState.hudView({ agentActive: true, paused: true, pauseCause: 'user_takeover' }),
+  {
+    state: 'paused',
+    text: hudState.hudView.toString().includes('pauseCause') ? '您已接管 — 智能体已停止' : '智能体已暂停 — 您已接管控制',
+    visible: true,
+  }
+);
 check('hudState.hudView 后台应用态保留 state="background" 并输出中文', hudState.hudView({ agentActive: true, paused: false, mode: 'background', appName: 'Safari' }), {
   state: 'background',
   text: 'AGY 正在后台操作 Safari',

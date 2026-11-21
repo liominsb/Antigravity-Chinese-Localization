@@ -10,9 +10,13 @@ exports.registerComputerPermissionsIpc = registerComputerPermissionsIpc;
  *
  * Only the top frame of a Hub UI window may call it (not popups, webview
  * guests or subframes). Reading the grants is passive (Electron's TCC queries;
- * the desktop helper is never started for it), settings panes are named, not
- * passed as URLs, and a relaunch quits gracefully (the language server and
- * the helper are shut down) before the Hub starts again.
+ * the desktop helper is never started for it, and nothing prompts), settings
+ * panes are named, not passed as URLs, and a relaunch quits gracefully (the
+ * language server and the helper are shut down) before the Hub starts again.
+ *
+ * Open never asks macOS for a permission (no prompting TCC call, so no
+ * "would like to control this computer" alert): it opens the named pane and
+ * reports whether that pane is already granted, read passively.
  */
 const electron_1 = require("electron");
 const utils_1 = require("../utils");
@@ -52,6 +56,21 @@ function registerComputerPermissionsIpc(deps = {}) {
     const openExternal = deps.openExternal ?? ((url) => electron_1.shell.openExternal(url));
     const relaunch = deps.relaunch ?? defaultRelaunch;
     const refreshHello = deps.refreshHello ?? index_1.refreshComputerHello;
+    const readGrants = deps.readGrants ?? defaultReadGrants;
+    /** What an Open reports: the pane's grant, read passively; never asks. */
+    const paneState = (pane) => {
+        let granted = false;
+        try {
+            granted = readGrants()[pane] === true;
+        }
+        catch (_e) {
+            granted = false;
+        }
+        return {
+            registered: granted ? 'already-granted' : 'skipped',
+            promptedThisSession: false,
+        };
+    };
     const check = (e) => {
         const wc = e.sender;
         if (wc.isDestroyed() ||
@@ -68,11 +87,14 @@ function registerComputerPermissionsIpc(deps = {}) {
         const flipped = now.accessibility !== last.accessibility ||
             now.screenRecording !== last.screenRecording;
         last = now;
+        // Every check re-reads the helper's grants (the ones the LS gates on),
+        // which can change without the Hub's own read flipping. On a flip the
+        // card waits for it: the LS sees the new grants before the card offers
+        // to continue, not on the next Hello timer (a stale PERMISSION_MISSING).
+        const refreshed = refreshHello().catch(() => { });
         if (flipped) {
-            // The LS sees the new grants before the card offers to continue,
-            // not on the next Hello timer (a stale PERMISSION_MISSING).
             await Promise.race([
-                refreshHello().catch(() => { }),
+                refreshed,
                 new Promise((resolve) => setTimeout(resolve, REFRESH_HELLO_TIMEOUT_MS)),
             ]);
         }
@@ -80,7 +102,11 @@ function registerComputerPermissionsIpc(deps = {}) {
     });
     electron_1.ipcMain.handle(exports.PERMISSIONS_CHANNELS.openSettings, async (e, pane) => {
         check(e);
-        await openExternal((0, permissions_1.permissionPaneUrl)(pane));
+        // Validated before anything runs: only the two named panes.
+        const url = (0, permissions_1.permissionPaneUrl)(pane);
+        const result = paneState(pane);
+        await openExternal(url);
+        return result;
     });
     let relaunching = false;
     electron_1.ipcMain.handle(exports.PERMISSIONS_CHANNELS.relaunch, (e) => {

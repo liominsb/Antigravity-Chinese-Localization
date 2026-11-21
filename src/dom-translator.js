@@ -1626,6 +1626,12 @@
         if (/^Conflicts with "(.+)" \(managed by application menu\)$/i.test(part)) {
           return part.replace(/^Conflicts with "(.+)" \(managed by application menu\)$/i, '与“$1”冲突（由应用程序菜单管理）');
         }
+        if (/^Conflicts with "(.+)" \(reserved for sidebar switching\)$/i.test(part)) {
+          return part.replace(/^Conflicts with "(.+)" \(reserved for sidebar switching\)$/i, '与“$1”冲突（保留用于侧栏切换）');
+        }
+        if (/^Conflicts with "(.+)" \((.+)\)$/i.test(part)) {
+          return part.replace(/^Conflicts with "(.+)" \((.+)\)$/i, '与“$1”冲突（$2）');
+        }
         if (/^Conflicts with "(.+)"$/i.test(part)) {
           return part.replace(/^Conflicts with "(.+)"$/i, '与“$1”冲突');
         }
@@ -1768,8 +1774,8 @@
       return replaceTrimmed(text, trimmed, fixed);
     }
 
-    if (/^Connecting to\s+(.+?)[.…]*$/i.test(trimmed)) {
-      const fixed = trimmed.replace(/^Connecting to\s+(.+?)[.…]*$/i, '正在连接到 $1…');
+    if (/^Connecting to\s+(?!the\s+live\s+preview)(.+?)[.…]*$/i.test(trimmed)) {
+      const fixed = trimmed.replace(/^Connecting to\s+(?!the\s+live\s+preview)(.+?)[.…]*$/i, '正在连接到 $1…');
       cacheSet(trimmed, fixed);
       return replaceTrimmed(text, trimmed, fixed);
     }
@@ -1898,6 +1904,220 @@
     if (/^menu\)\.$/.test(trimmed)) {
       cacheSet(trimmed, '菜单）中查看。');
       return replaceTrimmed(text, trimmed, '菜单）中查看。');
+    }
+
+    if (/^Customize Sidebar\)\.$/.test(trimmed)) {
+      cacheSet(trimmed, '自定义侧边栏）中查看。');
+      return replaceTrimmed(text, trimmed, '自定义侧边栏）中查看。');
+    }
+
+    // ===== Antigravity v2.34.0 动态规则：遥测说明 / Computer Use 权限与预览 / 内联卡片 / 分页 / 侧栏与倒计时 =====
+    if (/^Telemetry is turned off for your account\.\s+This means\s+(.+?)\s+does not collect any of your prompts,\s*content,\s*or model responses,\s*but will still collect general usage patterns\s*\(e\.g\.,\s*feature adoption,\s*active user counts\)\.?$/i.test(trimmed)) {
+      const fixed = trimmed.replace(
+        /^Telemetry is turned off for your account\.\s+This means\s+(.+?)\s+does not collect any of your prompts,\s*content,\s*or model responses,\s*but will still collect general usage patterns\s*\(e\.g\.,\s*feature adoption,\s*active user counts\)\.?$/i,
+        '您的账号已关闭遥测功能。这意味着 $1 不会收集您的任何提示词、内容或模型回复，但仍会收集常规使用模式（例如功能采用率、活跃用户数）。'
+      );
+      cacheSet(trimmed, fixed);
+      return replaceTrimmed(text, trimmed, fixed);
+    }
+
+    if (/^(Open |Reopen )?(Accessibility|Screen Recording) settings$/i.test(trimmed)) {
+      const fixed = trimmed.replace(
+        /^(Open |Reopen )?(Accessibility|Screen Recording) settings$/i,
+        (_m, act, perm) => {
+          const actCn = act ? (/^Reopen/i.test(act) ? '重新打开' : '打开') : '';
+          const permCn = /^Accessibility$/i.test(perm) ? '辅助功能' : '屏幕录制';
+          return actCn + permCn + '设置';
+        }
+      );
+      cacheSet(trimmed, fixed);
+      return replaceTrimmed(text, trimmed, fixed);
+    }
+
+    if (/^(.+?) needs (Accessibility|Screen Recording|both) to use your computer\.$/i.test(trimmed)) {
+      const fixed = trimmed.replace(
+        /^(.+?) needs (Accessibility|Screen Recording|both) to use your computer\.$/i,
+        (_m, app, perm) => {
+          const permCn = /^both$/i.test(perm) ? '辅助功能和屏幕录制权限' : (/^Accessibility$/i.test(perm) ? '辅助功能权限' : '屏幕录制权限');
+          return app + ' 需要' + permCn + '才能控制您的电脑。';
+        }
+      );
+      cacheSet(trimmed, fixed);
+      return replaceTrimmed(text, trimmed, fixed);
+    }
+
+    if (/^Relaunch (.+?) to finish Screen Recording\.$/i.test(trimmed)) {
+      const fixed = trimmed.replace(/^Relaunch (.+?) to finish Screen Recording\.$/i, '重启 $1 以完成屏幕录制权限配置。');
+      cacheSet(trimmed, fixed);
+      return replaceTrimmed(text, trimmed, fixed);
+    }
+
+    if (/^(\d+)\s+agents?\s+working,\s*live preview unavailable$/i.test(trimmed)) {
+      const fixed = trimmed.replace(/^(\d+)\s+agents?\s+working,\s*live preview unavailable$/i, '$1 个智能体正在工作，实时预览不可用');
+      cacheSet(trimmed, fixed);
+      return replaceTrimmed(text, trimmed, fixed);
+    }
+
+    if (/^Live preview unavailable\s*·\s*(.+)$/i.test(trimmed)) {
+      const fixed = trimmed.replace(/^Live preview unavailable\s*·\s*(.+)$/i, (_m, detail) => {
+        const detailCn = detail === 'not installed' ? '未安装' : detail;
+        return '实时预览不可用 · ' + detailCn;
+      });
+      cacheSet(trimmed, fixed);
+      return replaceTrimmed(text, trimmed, fixed);
+    }
+
+    if (/^Please retry:\s*(.+)$/.test(trimmed)) {
+      const fixed = trimmed.replace(/^Please retry:\s*(.+)$/, '请重试：$1');
+      cacheSet(trimmed, fixed);
+      return replaceTrimmed(text, trimmed, fixed);
+    }
+
+    if (/^Sent response:\s*(.+)$/.test(trimmed)) {
+      const fixed = trimmed.replace(/^Sent response:\s*(.+)$/, '已发送回复：$1');
+      cacheSet(trimmed, fixed);
+      return replaceTrimmed(text, trimmed, fixed);
+    }
+
+    if (/^Skipped:\s*(.+)$/.test(trimmed)) {
+      const fixed = trimmed.replace(/^Skipped:\s*(.+)$/, '已跳过：$1');
+      cacheSet(trimmed, fixed);
+      return replaceTrimmed(text, trimmed, fixed);
+    }
+
+    if (/^Skipped\s+(.+)$/.test(trimmed)) {
+      const fixed = trimmed.replace(/^Skipped\s+(.+)$/, '已跳过：$1');
+      cacheSet(trimmed, fixed);
+      return replaceTrimmed(text, trimmed, fixed);
+    }
+
+    if (/^Open Subagent:\s*(.+)$/.test(trimmed)) {
+      const fixed = trimmed.replace(/^Open Subagent:\s*(.+)$/, '打开子智能体：$1');
+      cacheSet(trimmed, fixed);
+      return replaceTrimmed(text, trimmed, fixed);
+    }
+
+    if (/^(Pin Entire|Unpin) (Workspace|Project|Repo)$/i.test(trimmed)) {
+      const fixed = trimmed.replace(/^(Pin Entire|Unpin) (Workspace|Project|Repo)$/i, (_m, act, target) => {
+        const actCn = /^Unpin/i.test(act) ? '取消置顶' : '置顶整个';
+        const targetCn = /^Workspace$/i.test(target) ? '工作区' : (/^Project$/i.test(target) ? '项目' : '代码库');
+        return actCn + targetCn;
+      });
+      cacheSet(trimmed, fixed);
+      return replaceTrimmed(text, trimmed, fixed);
+    }
+
+    if (/^Opens the New Conversation screen for this (workspace|project)$/i.test(trimmed)) {
+      const fixed = trimmed.replace(
+        /^Opens the New Conversation screen for this (workspace|project)$/i,
+        (_m, t) => '为此' + (/^workspace$/i.test(t) ? '工作区' : '项目') + '打开新建对话界面'
+      );
+      cacheSet(trimmed, fixed);
+      return replaceTrimmed(text, trimmed, fixed);
+    }
+
+    if (/^No messages in last (\d+) steps\s*(?:—|,|·)\s*(load older|Load more)$/i.test(trimmed)) {
+      const fixed = trimmed.replace(/^No messages in last (\d+) steps\s*(—|,|·)\s*(load older|Load more)$/i, (_m, n, _sep, tail) => {
+        if (/Load more/i.test(tail)) return '最近 ' + n + ' 步中无消息 · 加载更多';
+        if (trimmed.includes(',')) return '最近 ' + n + ' 步中无消息，加载更早内容';
+        return '最近 ' + n + ' 步中无消息 — 加载更早内容';
+      });
+      cacheSet(trimmed, fixed);
+      return replaceTrimmed(text, trimmed, fixed);
+    }
+
+    if (/^No visible messages in last (\d+) steps\. Activate Load older messages to continue\.$/i.test(trimmed)) {
+      const fixed = trimmed.replace(
+        /^No visible messages in last (\d+) steps\. Activate Load older messages to continue\.$/i,
+        '最近 $1 步中没有可见消息，激活“加载更早的消息”以继续。'
+      );
+      cacheSet(trimmed, fixed);
+      return replaceTrimmed(text, trimmed, fixed);
+    }
+
+    if (/^(.+),\s*showing (\d+) of (\d+)$/i.test(trimmed)) {
+      const fixed = trimmed.replace(/^(.+),\s*showing (\d+) of (\d+)$/i, (_m, prefix, shown, total) => {
+        const prefixCn = lowerDictionary.get(prefix.toLowerCase()) || prefix;
+        return prefixCn + '，已显示 ' + shown + ' / ' + total + ' 条';
+      });
+      cacheSet(trimmed, fixed);
+      return replaceTrimmed(text, trimmed, fixed);
+    }
+
+    if (/^Select Sidebar Item (\d+)$/i.test(trimmed)) {
+      const fixed = trimmed.replace(/^Select Sidebar Item (\d+)$/i, '选择侧边栏第 $1 项');
+      cacheSet(trimmed, fixed);
+      return replaceTrimmed(text, trimmed, fixed);
+    }
+
+    if (/^(UI Plugin|Automation) (\d+)$/i.test(trimmed)) {
+      const fixed = trimmed.replace(/^(UI Plugin|Automation) (\d+)$/i, (_m, kind, n) => {
+        return (/^UI Plugin$/i.test(kind) ? 'UI 插件 ' : '自动化 ') + n;
+      });
+      cacheSet(trimmed, fixed);
+      return replaceTrimmed(text, trimmed, fixed);
+    }
+
+    if (/^More options for (.+)$/.test(trimmed)) {
+      const fixed = trimmed.replace(/^More options for (.+)$/, '$1 的更多选项');
+      cacheSet(trimmed, fixed);
+      return replaceTrimmed(text, trimmed, fixed);
+    }
+
+    if (/^Open image (\d+) of (\d+)$/i.test(trimmed)) {
+      const fixed = trimmed.replace(/^Open image (\d+) of (\d+)$/i, '打开第 $1 张图片（共 $2 张）');
+      cacheSet(trimmed, fixed);
+      return replaceTrimmed(text, trimmed, fixed);
+    }
+
+    if (/^Image (\d+)$/i.test(trimmed)) {
+      const fixed = trimmed.replace(/^Image (\d+)$/i, '图片 $1');
+      cacheSet(trimmed, fixed);
+      return replaceTrimmed(text, trimmed, fixed);
+    }
+
+    if (/^Show (\d+) More$/i.test(trimmed)) {
+      const fixed = trimmed.replace(/^Show (\d+) More$/i, '显示其余 $1 项');
+      cacheSet(trimmed, fixed);
+      return replaceTrimmed(text, trimmed, fixed);
+    }
+
+    if (/^(.+) \(experimental\)$/i.test(trimmed)) {
+      const fixed = trimmed.replace(/^(.+) \(experimental\)$/i, '$1（实验性）');
+      cacheSet(trimmed, fixed);
+      return replaceTrimmed(text, trimmed, fixed);
+    }
+
+    if (/^Line (\d+) → (\d+)$/.test(trimmed)) {
+      const fixed = trimmed.replace(/^Line (\d+) → (\d+)$/, '第 $1 → $2 行');
+      cacheSet(trimmed, fixed);
+      return replaceTrimmed(text, trimmed, fixed);
+    }
+
+    if (/^(?:(\d+)s left|(?:(\d+)d\s+)?(?:(\d+)h\s+)?(\d+)m left|(\d+)h left)$/.test(trimmed)) {
+      const mLeft = trimmed.match(/^(?:(\d+)s left|(?:(\d+)d\s+)?(?:(\d+)h\s+)?(\d+)m left|(\d+)h left)$/);
+      let leftCn = trimmed;
+      if (mLeft[1] !== undefined) {
+        leftCn = '剩余 ' + mLeft[1] + ' 秒';
+      } else if (mLeft[5] !== undefined) {
+        leftCn = '剩余 ' + mLeft[5] + ' 小时';
+      } else {
+        const parts = [];
+        if (mLeft[2] !== undefined) parts.push(mLeft[2] + ' 天');
+        if (mLeft[3] !== undefined) parts.push(mLeft[3] + ' 小时');
+        if (mLeft[4] !== undefined) parts.push(mLeft[4] + ' 分钟');
+        leftCn = '剩余 ' + parts.join(' ');
+      }
+      cacheSet(trimmed, leftCn);
+      return replaceTrimmed(text, trimmed, leftCn);
+    }
+
+    if (/^(.+?) \(opens in (external browser|a new tab)\)$/i.test(trimmed)) {
+      const fixed = trimmed.replace(/^(.+?) \(opens in (external browser|a new tab)\)$/i, (_m, prefix, kind) => {
+        return prefix + (/external/i.test(kind) ? '（在外部浏览器中打开）' : '（在新标签页中打开）');
+      });
+      cacheSet(trimmed, fixed);
+      return replaceTrimmed(text, trimmed, fixed);
     }
     // 5. 大小写不敏感词典查找与末尾标点剥离重拼（O(1)，命中写入 stringCache）
     const caseInsensitiveHit = lowerDictionary.get(trimmed.toLowerCase());

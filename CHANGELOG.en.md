@@ -4,6 +4,26 @@ This document tracks all version releases, core architecture adaptations, and fe
 
 ---
 
+## v2.34.0 (2026-11-21) — Full Official v2.34.0 Support: Input Box Shortcuts, Orchestrator Settings & Thinking Effort, Inline Approval/Question Cards, Sidebar Filter & Sort, and Computer Use HUD Upgrade
+
+### 1. Official v2.34.0 Main-Process Patch Alignment & Compatibility
+- **Updater State Machine Update (`dist/updater.js`)**: Adapted to upstream `v2.34.0` adding `void` in `() => void quitAndInstall()`, with backward fallback for existing test mocks, achieving `0` skipped patches in `applyTranslations`.
+- **Computer Use HUD & Takeover Banner Upgrade (`dist/computer/hud.js`, `hudState.js`)**: Updated the resume button and tooltip (`Allow again` ➔ `重新允许`) plus `hudView` pause-cause distinction (`user_takeover` ➔ `您已接管 — 智能体已停止` vs `智能体已停止`), preserving all `agy-hud:` IPC tokens and v2.33.0 fallback compatibility.
+- **Synced New Upstream Modules & Slim `app.asar.ready`**: Synced upstream `v2.34.0` files including `dist/authBootstrap.js`, `dist/browserStream/*` (7 modules), `dist/computer/screenLock.js`, and `dist/proto/browser_viewer_pb.js` while leaving protocol/internal strings untouched; rebuilt slim `app.asar.ready` (`7,729,248` bytes / `7.37 MiB`, version `2.34.0`).
+
+### 2. Complete Web UI Delta Coverage & Sibling Completion (+120 Dictionary Keys, +22 Dynamic Regex Rules)
+- **Input Box & Immediate Sending (`Input Box` & `Send message`)**: Localized `Cmd+Enter` / `Ctrl+Enter` / `Enter` composer shortcuts, immediate-sending inline notice (`Messages now send immediately. Configure in` / `Instead of queueing...`), `Cmd+click to open` / `Ctrl+click to open`, and lowercase `Sync JJ worktrees to head`.
+- **Orchestrator Settings & Thinking Effort**: Localized `Orchestrator Settings`, `Orchestrator Model`, `Executor Model`, `The Orchestrator's own planner`, `Thinking effort` tooltip details, `ELMO Composite`, and `Coordinator`.
+- **Inline Question & Runtime Permission Cards**: Localized `Skip`, `Skipped`, `Add note`, `Add a note or condition...`, `In chat`, `Answered:`, `Resolved in chat`, `Replaced by newer request`, `Expired · Action not taken`, `Ask to retry`, `Select one or more options`, `Other answer`, `Retry requested`, all 4 permission scope choices, `Runtime permission`, unsandboxed execution warning, `Deny with note`, and dynamic `Please retry: ...` / `Sent response: ...` / `Skipped: ...` / `Open Subagent: ...` labels.
+- **Customize Sidebar, Filter & Sort, and Archive Toast v2.34.0**: Added `Customize Sidebar` options (`Idle Conversations`, `Decorations`, `Filters`, `Show Automation Conversations`, `Show Plugin Conversations`), `Filter and Sort` menu (`Needs Input`, `Last Activity`, `Any time` / `7 days` / `14 days` / `21 days`, `Manual Order`), `Pin Entire Workspace/Project`, and the new `(![tune](icon://tune) Customize Sidebar).` archive toast split handling.
+- **Computer Use Screen Lock, Preview & macOS Permission Guide**: Localized `Screen locked: agents can't use this Mac until you unlock it`, `Connecting to the live preview…` (eliminating the SSH regex leak `"正在连接到 the live preview…"`), `Live preview unavailable · ...`, `N agent(s) working, live preview unavailable`, and macOS permission badges (`Allowed ✓`, `Waiting…`, `Open System Settings ↗`, `Reopen ↗`, `Continue Task →`, and step-by-step instructions).
+- **Account Telemetry, Older Messages Pagination, UI Plugins, Schedules & Keybinding Conflicts**: Added telemetry opt-out paragraph matching, older-message search/loading/error/step-count pagination strings, `UI Plugin (SidePanel)` / `Start Plugin` / ready status, `Weekdays` / `Weekly` schedules, `Open image X of Y` / `Show N More` / `(experimental)` / `Line X → Y` / task countdowns (`Xs left`, `Xd Yh Zm left`), and `reserved for sidebar switching` chord conflict hints.
+
+### 3. End-to-End Verification & Test Gate
+- Zero-duplicate dictionary expanded to **`4,414` entries**, added `tests/ticket-48-v2340-features.test.js` (with `ticket-44` updated for v2.34.0 HUD copy), and verified **55/55 TDD test suites 100% ALL GREEN**.
+
+---
+
 ## v2.33.0 (2026-11-18) — Full Official v2.33.0 Support: Computer Use & Agents Live Preview, Remote SSH Lifecycle Upgrade, 9 New Voices & Dictation, Marketplace Bundles & Modular Hardening
 
 ### 1. Comprehensive Localization for Official v2.33.0 Features

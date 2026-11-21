@@ -36,14 +36,19 @@ Object.defineProperty(exports, "__esModule", { value: true });
 exports.BUNDLED_HELPER_CONFINEMENT = exports.BUNDLED_HELPER_VERSION = exports.BUNDLED_HELPER_PROTOCOL = exports.persistedActuatorId = exports.makeActuatorId = exports.killSwitchEngaged = exports.KILL_SWITCH_FILE = exports.filePauseStore = exports.confinementCap = void 0;
 exports.computerUseEnabledAtStartup = computerUseEnabledAtStartup;
 exports.previewSlotsAtStartup = previewSlotsAtStartup;
+exports.electronHelperProbe = electronHelperProbe;
 exports.idleHelperProbe = idleHelperProbe;
 exports.desktopHelperPath = desktopHelperPath;
 exports.desktopScriptPath = desktopScriptPath;
 exports.desktopRtcPath = desktopRtcPath;
 exports.previewEnabled = previewEnabled;
+exports.previewSidecarInstalled = previewSidecarInstalled;
+exports.previewSidecarMissing = previewSidecarMissing;
 exports.configurePreviewWebRtc = configurePreviewWebRtc;
 exports.remoteViewEnabled = remoteViewEnabled;
 exports.computerPreview = computerPreview;
+exports.stopAllComputerAgents = stopAllComputerAgents;
+exports.stopComputerAgent = stopComputerAgent;
 exports.registerComputerUse = registerComputerUse;
 exports.refreshComputerHello = refreshComputerHello;
 exports.unregisterComputerUse = unregisterComputerUse;
@@ -55,11 +60,13 @@ const config_1 = require("../desktopHost/config");
 const paths_1 = require("../paths");
 const storage_1 = require("../storage");
 const utils_1 = require("../utils");
+const desktopHelper_1 = require("./desktopHelper");
 const gate_1 = require("./gate");
 const host_1 = require("../desktopHost/host");
 const hud_1 = require("./hud");
 const hudAgents_1 = require("./hudAgents");
 const previewViewers_1 = require("./previewViewers");
+const screenLock_1 = require("./screenLock");
 var config_2 = require("../desktopHost/config");
 Object.defineProperty(exports, "confinementCap", { enumerable: true, get: function () { return config_2.confinementCap; } });
 Object.defineProperty(exports, "filePauseStore", { enumerable: true, get: function () { return config_2.filePauseStore; } });
@@ -113,11 +120,13 @@ exports.BUNDLED_HELPER_PROTOCOL = 1;
 exports.BUNDLED_HELPER_VERSION = '0.2.0';
 exports.BUNDLED_HELPER_CONFINEMENT = 3;
 /**
- * The actuator Hello's surface info while the helper hasn't started: the
- * main display from Electron, the TCC grants of the Hub (the helper is its
- * child, so they are the helper's), and the bundled helper's versions.
+ * The surface info from Electron: the main display, the Hub process's TCC
+ * grants and the bundled helper's versions. Only a fallback for
+ * {@link idleHelperProbe}: the helper (the Hub's child, so charged to the
+ * same responsible process) has the same grants, but Electron's Screen
+ * Recording read is cached for the Hub's lifetime, so it goes stale.
  */
-function idleHelperProbe() {
+function electronHelperProbe() {
     const d = electron_1.screen.getPrimaryDisplay();
     const scale = d.scaleFactor || 1;
     return {
@@ -143,6 +152,34 @@ function idleHelperProbe() {
         },
     };
 }
+let idleProbeInFlight;
+let idleProbeFailing = false;
+/**
+ * The actuator Hello's surface info while the helper hasn't started: a
+ * one-shot `agy-desktop-helper probe`, so the grants the LS gates on (before
+ * any consent card) are the actuating binary's, read fresh on every Hello
+ * refresh (registerComputerActuator's timer re-advertises a change). Falls
+ * back to {@link electronHelperProbe} when the probe fails. Concurrent calls
+ * share one probe.
+ */
+function idleHelperProbe(probeOnce = () => (0, desktopHelper_1.probeHelperOnce)(desktopHelperPath(), (0, gate_1.helperEnv)(process.env, electron_1.app.isPackaged))) {
+    idleProbeInFlight ?? (idleProbeInFlight = probeOnce()
+        .then((p) => {
+        idleProbeFailing = false;
+        return p;
+    })
+        .catch((err) => {
+        if (!idleProbeFailing) {
+            idleProbeFailing = true;
+            console.warn('[ComputerUse] helper probe failed; reporting the Hub grants:', err);
+        }
+        return electronHelperProbe();
+    })
+        .finally(() => {
+        idleProbeInFlight = undefined;
+    }));
+    return idleProbeInFlight;
+}
 /** Hub window focus for the HUD (Hub windows are BaseWindows). */
 const hubFocusSource = {
     isHubFocused: () => !!(0, utils_1.getFocusedHubWindow)(),
@@ -158,6 +195,7 @@ const hubFocusSource = {
  */
 let host;
 let hud;
+let unwatchScreenLock;
 /** Path of the Swift helper next to the language server binary. */
 function desktopHelperPath() {
     return electron_1.app.isPackaged
@@ -194,6 +232,25 @@ function previewEnabled(e = env()) {
     return e.AGY_DESKTOP_PREVIEW !== '0';
 }
 /**
+ * Whether the agy-desktop-rtc sidecar is at `rtcPath`. A checkout run
+ * without scripts/install_desktop_rtc.sh has none: the host then starts
+ * without the preview, logged here once, instead of every pane open failing
+ * with a spawn ENOENT.
+ */
+function previewSidecarInstalled(rtcPath, exists = fs.existsSync, log = (m) => console.warn(m)) {
+    if (exists(rtcPath)) {
+        return true;
+    }
+    log(`[ComputerUse] live preview unavailable: no agy-desktop-rtc at ${rtcPath} (scripts/install_desktop_rtc.sh installs it)`);
+    return false;
+}
+/** Set when the preview is on but its sidecar isn't installed. */
+let rtcMissing = false;
+/** Whether the preview is off because agy-desktop-rtc isn't installed. */
+function previewSidecarMissing() {
+    return rtcMissing;
+}
+/**
  * Lets the Hub UI (only) reach the desktop host over loopback WebRTC; see
  * previewViewers.ts. Call before the app is ready.
  */
@@ -210,6 +267,22 @@ function remoteViewEnabled(e = env()) {
 /** The live preview for the renderer's computer pane, if running. */
 function computerPreview() {
     return host?.preview;
+}
+/**
+ * The user's Stop all from the Hub UI: the same host path as the live
+ * preview's `stopAll` viewer message, so it works without a preview session.
+ * A no-op while computer use isn't running.
+ */
+async function stopAllComputerAgents(detail) {
+    await host?.stopAll(detail);
+}
+/**
+ * The user stopped one agent from the Hub UI: the same host path as the live
+ * preview's `stopAgent` viewer message. A no-op while computer use isn't
+ * running.
+ */
+function stopComputerAgent(actorId) {
+    host?.stopAgent(actorId);
 }
 /**
  * Registers computer use with the main-process ActuatorClient (by default
@@ -229,6 +302,11 @@ function registerComputerUse(opts = {}) {
             : new hud_1.DesktopHud(hubFocusSource);
         hud = h;
         const e = env();
+        const rtcPath = desktopRtcPath(e);
+        // previewEnabled() alone still gates the viewer allowlist and the pane's
+        // agents-active pushes, so the pane auto-opens and can say why.
+        const preview = previewEnabled(e) && previewSidecarInstalled(rtcPath);
+        rtcMissing = previewEnabled(e) && !preview;
         const started = (0, host_1.startDesktopHost)({
             client: opts.client ?? (0, mainClient_1.getMainActuatorClient)(),
             clientName: opts.client ? 'custom' : 'hub-main',
@@ -244,10 +322,11 @@ function registerComputerUse(opts = {}) {
             maxConfinementVersion: () => (0, config_1.confinementCap)(e),
             actuatorId: (0, config_1.persistedActuatorId)(path.join(userData, 'desktop_endpoint_id')),
             pauseStore: (0, config_1.filePauseStore)(path.join(userData, 'desktop_pause.json')),
-            preview: previewEnabled(e)
-                ? { rtcPath: desktopRtcPath(e), maxSlots: previewSlotsAtStartup() }
+            preview: preview
+                ? { rtcPath, maxSlots: previewSlotsAtStartup() }
                 : undefined,
-            remoteView: remoteViewEnabled(e)
+            // Remote viewing needs the preview (startDesktopHost throws without).
+            remoteView: preview && remoteViewEnabled(e)
                 ? {
                     desktopLabel: electron_1.app.getName(),
                     pairingFile: path.join(userData, 'desktop_view_pairings.json'),
@@ -257,6 +336,7 @@ function registerComputerUse(opts = {}) {
                 h?.setState({
                     agentActive: s.agentActive,
                     paused: s.paused,
+                    pauseCause: s.pauseCause,
                     mode: s.mode,
                     appName: s.appName,
                 });
@@ -274,6 +354,8 @@ function registerComputerUse(opts = {}) {
         h?.onStopAgent?.((actorId) => started.stopAgent(actorId));
         // The same cover hides the desktop overlay marks around the Hub.
         h?.onCoveredChange?.((c) => started.setOverlaySuppressed(c));
+        // The Agents pane says agents wait for an unlock instead of "idle".
+        unwatchScreenLock = (0, screenLock_1.watchScreenLock)(electron_1.powerMonitor, (l) => started.setScreenLocked(l));
         // main.ts's confirmed-quit path calls unregisterComputerUse() (rt P3-21):
         // a bare 'before-quit' hook would run before the Cmd+Q confirmation, so
         // Cancel would leave computer use torn down.
@@ -295,6 +377,8 @@ async function refreshComputerHello() {
 async function unregisterComputerUse() {
     const h = host;
     host = undefined;
+    unwatchScreenLock?.();
+    unwatchScreenLock = undefined;
     await h?.stop();
     hud?.destroy();
     hud = undefined;

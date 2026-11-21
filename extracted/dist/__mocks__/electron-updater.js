@@ -15,8 +15,12 @@ exports.autoUpdaterEvents = {};
 exports.autoUpdater = {
     autoDownload: false,
     autoInstallOnAppQuit: false,
+    disableWebInstaller: false,
+    disableDifferentialDownload: false,
     forceDevUpdateConfig: false,
     updateConfigPath: '',
+    installerPath: null,
+    quitAndInstallCalled: false,
     on: vitest_1.vi.fn().mockImplementation((event, cb) => {
         exports.autoUpdaterEvents[event] = cb;
     }),

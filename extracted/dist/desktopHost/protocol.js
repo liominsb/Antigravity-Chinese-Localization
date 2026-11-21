@@ -16,6 +16,7 @@ exports.videoMids = videoMids;
 exports.slotMid = slotMid;
 exports.encodeHostMessage = encodeHostMessage;
 exports.frameMeta = frameMeta;
+exports.isActorId = isActorId;
 exports.parseViewerMessage = parseViewerMessage;
 exports.DC_LABEL = 'agy-computer';
 exports.PROTOCOL_V = 1;
@@ -73,7 +74,8 @@ function slotMid(slot) {
 /**
  * Why a stream is black (state 'redacted'): 'starting' is the helper's
  * initial hold (not a verdict; the tile says "Starting preview…"); the rest
- * are policy verdicts (secure_field, denied_app, title_rule, page, policy).
+ * are policy verdicts (secure_field, denied_app, title_rule, page, policy),
+ * or screen_locked (the Mac's screen is locked).
  */
 exports.REDACT_STARTING = 'starting';
 /** A verdict the helper did not name. */
@@ -111,6 +113,10 @@ function frameMeta(appId, h, redactReason, colorIndex) {
     return m;
 }
 const ACTOR_ID = /^[\x21-\x7e]{1,128}$/;
+/** A well-formed actor id (printable ASCII, 1..128 chars). */
+function isActorId(v) {
+    return typeof v === 'string' && ACTOR_ID.test(v);
+}
 const STREAM_ID = /^[\x21-\x7e]{1,64}$/;
 /**
  * A viewer message if it is one of the allowed ones and well formed, else
@@ -142,9 +148,7 @@ function parseViewerMessage(raw) {
         case 'takeOver':
         case 'handBack': {
             const id = o['actorId'];
-            return typeof id === 'string' && ACTOR_ID.test(id)
-                ? { v: 1, t: o['t'], actorId: id }
-                : undefined;
+            return isActorId(id) ? { v: 1, t: o['t'], actorId: id } : undefined;
         }
         case 'stopAll':
             return { v: 1, t: 'stopAll' };

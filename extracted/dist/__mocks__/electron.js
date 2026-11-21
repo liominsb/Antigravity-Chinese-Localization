@@ -79,6 +79,8 @@ function createMockContainerView() {
         }),
         getVisible: vitest_1.vi.fn(() => visible),
         setBackgroundColor: vitest_1.vi.fn(),
+        on: vitest_1.vi.fn(),
+        off: vitest_1.vi.fn(),
     };
 }
 const _mockBrowserWindowInstance = {

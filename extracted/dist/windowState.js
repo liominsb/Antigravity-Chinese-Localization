@@ -33,7 +33,8 @@ var __importStar = (this && this.__importStar) || (function () {
     };
 })();
 Object.defineProperty(exports, "__esModule", { value: true });
-exports.MIN_WINDOW_HEIGHT = exports.MIN_WINDOW_WIDTH = exports.DEFAULT_WINDOW_HEIGHT = exports.DEFAULT_WINDOW_WIDTH = void 0;
+exports.DEFAULT_TITLE_BAR_OVERLAY_HEIGHT = exports.MIN_WINDOW_HEIGHT = exports.MIN_WINDOW_WIDTH = exports.DEFAULT_WINDOW_HEIGHT = exports.DEFAULT_WINDOW_WIDTH = void 0;
+exports.titleBarOverlayHeight = titleBarOverlayHeight;
 exports.parseWindowState = parseWindowState;
 exports.readPersistedWindowState = readPersistedWindowState;
 exports.persistWindowState = persistWindowState;
@@ -50,6 +51,29 @@ exports.DEFAULT_WINDOW_WIDTH = 1400;
 exports.DEFAULT_WINDOW_HEIGHT = 900;
 exports.MIN_WINDOW_WIDTH = 500;
 exports.MIN_WINDOW_HEIGHT = 400;
+/**
+ * Height of the native Windows and Linux caption-button overlay when a window
+ * is created.
+ */
+exports.DEFAULT_TITLE_BAR_OVERLAY_HEIGHT = 30;
+// The clamp checks untrusted input, not just typos: SSH windows can call
+// setTitleBarOverlay too (RemoteElectronNativeKey), so remote content must not
+// be able to size the caption buttons arbitrarily.
+const MIN_TITLE_BAR_OVERLAY_HEIGHT = 20;
+const MAX_TITLE_BAR_OVERLAY_HEIGHT = 96;
+/**
+ * Resolves the caption-button overlay height a renderer asked for, so the
+ * buttons can match a taller custom titlebar. Clamps a usable number to a sane
+ * range; returns `undefined` for missing or non-numeric values so the caller
+ * leaves the current height alone (Electron only updates the overlay fields it
+ * is given).
+ */
+function titleBarOverlayHeight(requested) {
+    if (typeof requested !== 'number' || !Number.isFinite(requested)) {
+        return undefined;
+    }
+    return Math.round(Math.min(MAX_TITLE_BAR_OVERLAY_HEIGHT, Math.max(MIN_TITLE_BAR_OVERLAY_HEIGHT, requested)));
+}
 const MIN_VISIBLE_PX = 64;
 const CASCADE_OFFSET_PX = 28;
 const SAVE_DEBOUNCE_MS = 250;

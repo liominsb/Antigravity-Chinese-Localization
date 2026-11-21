@@ -41,6 +41,9 @@ exports.getLsCL = getLsCL;
 exports.extractOpenUrl = extractOpenUrl;
 exports.getLsProcess = getLsProcess;
 exports.getLsPort = getLsPort;
+exports.getLsCsrfToken = getLsCsrfToken;
+exports.getLsBaseUrl = getLsBaseUrl;
+exports.mintLanguageServerBootstrapToken = mintLanguageServerBootstrapToken;
 exports.clearLsProcess = clearLsProcess;
 exports.extractCrashStackTrace = extractCrashStackTrace;
 exports.prefetchShellEnv = prefetchShellEnv;
@@ -55,6 +58,8 @@ const fs = __importStar(require("fs"));
 const path_1 = __importDefault(require("path"));
 const readline = __importStar(require("readline"));
 const stream_1 = require("stream");
+const util_1 = require("util");
+const authBootstrap_1 = require("./authBootstrap");
 const paths_1 = require("./paths");
 const utils_1 = require("./utils");
 const wsl_1 = require("./wsl");
@@ -71,6 +76,8 @@ const RESTART_WINDOW_MS = 60000;
 const MAX_RESTARTS = 3;
 const RESTART_COOLDOWN_MS = 2000;
 const MAX_STDERR_BUFFER = 100000;
+/** Exit code used by `language_server` when requesting an immediate self-restart. */
+const LS_RESTART_EXIT_CODE = 42;
 const CRASH_TRIGGER_PHRASES = [
     'panic:',
     'fatal error:',
@@ -81,7 +88,7 @@ const CRASH_TRIGGER_PHRASES = [
 ];
 const isWindows = process.platform === 'win32';
 const binName = isWindows ? 'language_server.exe' : 'language_server';
-exports.LS_BINARY = electron_1.app.isPackaged
+exports.LS_BINARY = electron_1.app?.isPackaged && process.resourcesPath
     ? path_1.default.join(process.resourcesPath, 'bin', binName)
     : process.env.CODEIUM_LANGUAGE_SERVER_BIN ||
         path_1.default.join(__dirname, '..', 'bin', binName);
@@ -125,18 +132,30 @@ function extractOpenUrl(line) {
 // State
 // ---------------------------------------------------------------------------
 let _lsProcess = null;
-let _lsPort = 0;
 let _intentionalTermination = false;
 let _restartCount = 0;
 let _lastRestartTime = 0;
 let _lsStdinIsLiveness = false;
+let _killLsPromise = null;
 /** Returns the active language server process, or null if not running. */
 function getLsProcess() {
     return _lsProcess;
 }
 /** Returns the active language server port, or 0 if not running. */
 function getLsPort() {
-    return _lsPort;
+    return (0, authBootstrap_1.getActiveLsPort)();
+}
+/** Returns the active language server admin CSRF token held in main-process memory. */
+function getLsCsrfToken() {
+    return (0, authBootstrap_1.getActiveLsCsrfToken)();
+}
+/** Returns the base URL (e.g. `https://127.0.0.1:54321`) of the active language server, if running. */
+function getLsBaseUrl() {
+    return (0, authBootstrap_1.getActiveLsBaseUrl)();
+}
+/** Mints a single-use UI bootstrap token from `POST /auth/mint` on the active language server. */
+async function mintLanguageServerBootstrapToken() {
+    return (0, authBootstrap_1.mintActiveLsBootstrapToken)();
 }
 /** Clears the language server process reference (call after killing it). */
 function clearLsProcess() {
@@ -217,22 +236,28 @@ function prefetchShellEnv() {
 async function startLanguageServer(port, csrf, options = {}) {
     const { headless, hostBridgeUrl, hostBridgeToken, wsl } = options;
     const loginShellEnv = await shellEnvReads.take();
+    if (_intentionalTermination) {
+        throw new Error('Language server startup aborted during shutdown');
+    }
     return new Promise((resolve, reject) => {
         const logStream = fs.createWriteStream((0, paths_1.getLsLogPath)(), { flags: 'w' });
-        // We need to pass the override flags because the LS is running in standalone mode
+        (0, authBootstrap_1.setActiveLanguageServerAuth)({ csrfToken: csrf });
+        // We need to pass the override flags because the LS is running in standalone mode.
+        // Secrets (CSRF token and host bridge token) are passed via child env / stdin
+        // rather than CLI argv so they are never exposed in `ps` or `/proc/<pid>/cmdline`.
         const args = [
             ...(0, lsDefaults_1.baseLsArgs)({
                 ideVersion: electron_1.app.getVersion(),
                 httpsServerPort: port,
-                csrfToken: csrf,
                 appDataDir: (0, paths_1.getAppDataDirName)(),
             }),
             '--enable_sidecars',
         ];
         // Point the LS at the main process' host bridge server. The LS tolerates
         // these being absent, but we always pass them when the server is up.
-        if (hostBridgeUrl && hostBridgeToken) {
-            args.push(`--host_bridge_url=${hostBridgeUrl}`, `--host_bridge_token=${hostBridgeToken}`);
+        const hasHostBridgeToken = Boolean(hostBridgeUrl && hostBridgeToken);
+        if (hasHostBridgeToken) {
+            args.push(`--host_bridge_url=${hostBridgeUrl}`, '--read_host_bridge_token_from_stdin');
         }
         if (headless) {
             args.push('--headless');
@@ -249,6 +274,11 @@ async function startLanguageServer(port, csrf, options = {}) {
         // Electron apps don't inherit shell environment variables when they are not launched through the terminal.
         // We need to load the shell env explicitly so the language server can discover tools in the user's environment.
         const env = { ...process.env, ...loginShellEnv };
+        env['ANTIGRAVITY_SERVER_CSRF_TOKEN'] = csrf;
+        env['AGY_REQUIRE_AUTHENTICATED_UI_BOOTSTRAP'] = '1';
+        if (wsl) {
+            (0, authBootstrap_1.appendWslAuthEnvForwarding)(env);
+        }
         if (electron_1.app.commandLine?.hasSwitch?.('remote-debugging-port')) {
             // Pass the path without reading it so LS discovers the opt-in debug port lazily.
             env['AGY_BROWSER_ACTIVE_PORT_FILE'] = (0, paths_1.getActivePortFilePath)();
@@ -270,15 +300,35 @@ async function startLanguageServer(port, csrf, options = {}) {
         env['CHROME_DEVTOOLS_MCP_NO_CONFIG_DISCOVERY'] = '1';
         env['CHROME_DEVTOOLS_MCP_NO_USAGE_STATISTICS'] = '1';
         env['CHROME_DEVTOOLS_MCP_NO_UPDATE_CHECKS'] = '1';
+        console.log(`Spawning: ${spawnCmd} ${(0, authBootstrap_1.redactSensitiveArgsForLog)(spawnArgs).join(' ')}`);
         _lsProcess = (0, child_process_1.spawn)(spawnCmd, spawnArgs, {
             stdio: ['pipe', 'pipe', 'pipe'],
             env,
         });
         _lsStdinIsLiveness = !!wsl;
-        if (!headless && !wsl) {
+        _lsProcess.stdin?.on?.('error', () => {
+            // Ignore EPIPE if the child exits before consuming stdin.
+        });
+        if (hasHostBridgeToken && hostBridgeToken) {
+            if (wsl) {
+                // `--exit_on_stdin_close` is true: `readHostTokensFromStdin` returns
+                // immediately after line 1, and stdin must stay open for liveness.
+                _lsProcess.stdin?.write?.(`${hostBridgeToken}\n`);
+            }
+            else if (headless) {
+                // `--exit_on_stdin_close` is false, and stdin stays open for headless
+                // OAuth input: send line 1 + empty line 2 so LS startup does not block.
+                _lsProcess.stdin?.write?.(`${hostBridgeToken}\n\n`);
+            }
+            else {
+                // Desktop local mode: write hostBridgeToken + empty line 2 and close stdin.
+                _lsProcess.stdin?.end?.(`${hostBridgeToken}\n\n`);
+            }
+        }
+        else if (!headless && !wsl) {
             // Close stdin immediately — the LS may block waiting for metadata on stdin.
             // In WSL mode stdin must stay open: it is the LS's liveness signal.
-            _lsProcess.stdin.end();
+            _lsProcess.stdin?.end?.();
         }
         const combined = new stream_1.PassThrough();
         _lsProcess.stdout.pipe(combined, { end: false });
@@ -319,7 +369,7 @@ async function startLanguageServer(port, csrf, options = {}) {
                     resolved = true;
                     clearTimeout(timer);
                     const actualPort = parseInt(m[1], 10);
-                    _lsPort = actualPort;
+                    (0, authBootstrap_1.setActiveLanguageServerAuth)({ port: actualPort, csrfToken: csrf });
                     resolve({
                         port: actualPort,
                         process: _lsProcess,
@@ -343,8 +393,12 @@ async function startLanguageServer(port, csrf, options = {}) {
         });
         // Exit promise — resolves whenever the process exits (whether during
         // startup or after). Includes crash stack trace extraction.
+        const proc = _lsProcess;
         const exitPromise = new Promise((exitResolve) => {
-            _lsProcess.on('exit', (code, signal) => {
+            proc.on('exit', (code, signal) => {
+                if (_lsProcess === proc) {
+                    clearLsProcess();
+                }
                 if (!logStreamEnded) {
                     logStreamEnded = true;
                     logStream.end();
@@ -373,9 +427,9 @@ function setIntentionalTermination(value) {
 async function startAndMonitorLanguageServer(port, csrf, options = {}) {
     setIntentionalTermination(false); // Reset
     const handle = await startLanguageServer(port, csrf, options);
-    _lsPort = handle.port;
+    (0, authBootstrap_1.setActiveLanguageServerAuth)({ port: handle.port, csrfToken: csrf });
     if (options.onPortChanged) {
-        options.onPortChanged(_lsPort);
+        options.onPortChanged(handle.port);
     }
     monitorLsCrashInternal(handle, port, csrf, options);
     return handle;
@@ -383,49 +437,61 @@ async function startAndMonitorLanguageServer(port, csrf, options = {}) {
 function monitorLsCrashInternal(handle, port, csrf, options) {
     void handle.exitPromise.then(async (exitInfo) => {
         clearLsProcess();
+        (0, authBootstrap_1.setActiveLanguageServerAuth)({ port: 0 });
         options.onExited?.();
         if (_intentionalTermination) {
             return;
         }
         const { code, signal, crashStackTrace } = exitInfo;
-        const summary = signal
-            ? `killed by signal ${signal}`
-            : `exited with code ${code}`;
-        console.error(`\nLanguage server crashed: ${summary}`);
-        if (crashStackTrace) {
-            console.error('--- Crash Stack Trace ---');
-            console.error(crashStackTrace);
-            console.error('--- End Crash Stack trace ---');
+        const isSelfRestart = code === LS_RESTART_EXIT_CODE && !signal;
+        if (isSelfRestart) {
+            console.log(`Language server exited for restart (code ${LS_RESTART_EXIT_CODE}). Restarting…`);
         }
-        const now = Date.now();
-        if (now - _lastRestartTime > RESTART_WINDOW_MS) {
-            _restartCount = 0;
+        else {
+            const summary = signal
+                ? `killed by signal ${signal}`
+                : `exited with code ${code}`;
+            console.error(`\nLanguage server crashed: ${summary}`);
+            if (crashStackTrace) {
+                console.error('--- Crash Stack Trace ---');
+                console.error(crashStackTrace);
+                console.error('--- End Crash Stack trace ---');
+            }
+            const now = Date.now();
+            if (now - _lastRestartTime > RESTART_WINDOW_MS) {
+                _restartCount = 0;
+            }
+            _lastRestartTime = now;
+            if (_restartCount >= MAX_RESTARTS) {
+                const msg = `Language server crashed ${MAX_RESTARTS} times in a row. Giving up.`;
+                console.error(msg);
+                (0, authBootstrap_1.setActiveLanguageServerAuth)({ port: 0, csrfToken: '' });
+                return;
+            }
+            _restartCount++;
+            console.log(`Attempting restart ${_restartCount}/${MAX_RESTARTS} in ${RESTART_COOLDOWN_MS / 1000}s...`);
+            await sleep(RESTART_COOLDOWN_MS);
         }
-        _lastRestartTime = now;
-        if (_restartCount >= MAX_RESTARTS) {
-            const msg = `Language server crashed ${MAX_RESTARTS} times in a row. Giving up.`;
-            console.error(msg);
-            return;
-        }
-        _restartCount++;
-        console.log(`Attempting restart ${_restartCount}/${MAX_RESTARTS} in ${RESTART_COOLDOWN_MS / 1000}s...`);
-        await sleep(RESTART_COOLDOWN_MS);
         if (_intentionalTermination) {
             return;
         }
         try {
-            // Pass the same options through, otherwise a restarted LS silently
-            // loses --headless and the host bridge flags.
+            // Pass the same options and main-process CSRF token through so main-process
+            // RPC clients (ActuatorService, MendelFlagSync) stay authenticated across
+            // restarts while each window re-mints a fresh #t= token on the new port.
             const newHandle = await startLanguageServer(port, csrf, options);
-            _lsPort = newHandle.port;
+            (0, authBootstrap_1.setActiveLanguageServerAuth)({ port: newHandle.port, csrfToken: csrf });
             if (options.onPortChanged) {
-                options.onPortChanged(_lsPort);
+                options.onPortChanged(newHandle.port);
             }
             // Recurse
             monitorLsCrashInternal(newHandle, port, csrf, options);
         }
         catch (err) {
-            console.error(`Failed to restart language server: ${err.message}`);
+            if (!_intentionalTermination) {
+                console.error(`Failed to restart language server: ${err.message}`);
+            }
+            (0, authBootstrap_1.setActiveLanguageServerAuth)({ port: 0, csrfToken: '' });
         }
     });
 }
@@ -434,8 +500,19 @@ function sleep(ms) {
 }
 async function killLanguageServer() {
     setIntentionalTermination(true);
-    const proc = getLsProcess();
-    if (proc) {
+    if (_killLsPromise) {
+        return _killLsPromise;
+    }
+    _killLsPromise = (async () => {
+        const proc = getLsProcess();
+        if (!proc) {
+            return;
+        }
+        if ((proc.exitCode ?? null) !== null ||
+            (proc.signalCode ?? null) !== null) {
+            clearLsProcess();
+            return;
+        }
         const pid = proc.pid;
         console.log('Shutting down language server…');
         const exitPromise = new Promise((resolve) => {
@@ -449,12 +526,22 @@ async function killLanguageServer() {
             // graceful shutdown instead.
             proc.stdin.end();
         }
+        else if (process.platform === 'win32' && pid !== undefined) {
+            // Kill the full Windows process tree (agy-node.cmd -> Antigravity.exe,
+            // MCP servers, sidecars, tsserver) while parent-child links are intact.
+            await (0, util_1.promisify)(child_process_1.execFile)('taskkill', ['/pid', String(pid), '/T', '/F'], {
+                timeout: 5000,
+                windowsHide: true,
+            }).catch(() => {
+                proc.kill('SIGTERM');
+            });
+        }
         else {
             proc.kill('SIGTERM');
         }
         const result = await Promise.race([
             exitPromise.then(() => 'exited'),
-            new Promise((resolve) => setTimeout(() => resolve('timeout'), 5000)),
+            sleep(5000).then(() => 'timeout'),
         ]);
         if (result === 'timeout' && pid !== undefined) {
             console.warn(`Language server (PID ${pid}) did not exit gracefully within 5s. Sending SIGKILL.`);
@@ -466,7 +553,12 @@ async function killLanguageServer() {
             }
         }
         clearLsProcess();
-    }
+    })().finally(() => {
+        clearLsProcess();
+        (0, authBootstrap_1.setActiveLanguageServerAuth)({ port: 0, csrfToken: '' });
+        _killLsPromise = null;
+    });
+    return _killLsPromise;
 }
 /**
  * Sets up certificate verification in Electron to trust local connections

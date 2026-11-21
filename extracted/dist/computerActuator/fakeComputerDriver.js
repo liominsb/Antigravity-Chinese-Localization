@@ -229,6 +229,8 @@ class FakeBackgroundComputerDriver extends FakeComputerDriver {
         this.confinement = 3;
         /** Whether it reports per-agent state (ComputerMultiAgentDriver). */
         this.multi = true;
+        /** notePreviewTarget calls, in order (not in `calls`: no surface op). */
+        this.previewTargets = [];
         /** The text the next snapshots return. */
         this.snapshotText = 's1:e1 AXWindow "Untitled"\n  s1:e2 AXTextArea value=""';
         /** The app element actions report as the element's owner. */
@@ -256,6 +258,13 @@ class FakeBackgroundComputerDriver extends FakeComputerDriver {
         this.noteActor('bind_app', o);
         await this.run('bind_app', { app });
         return { ...exports.FAKE_BOUND };
+    }
+    notePreviewTarget(appId, o) {
+        this.previewTargets.push({
+            appId,
+            allowedAppIds: [...o.policy.allowedAppIds],
+            ...(o.actor ? { actorId: o.actor.id } : {}),
+        });
     }
     async axSnapshot(o) {
         const args = {

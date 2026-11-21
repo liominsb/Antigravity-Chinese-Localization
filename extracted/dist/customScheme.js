@@ -1,12 +1,13 @@
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
-exports.extensionAuthorities = void 0;
+exports.extensionAuthorities = exports.BROWSER_STREAM_SCHEME = void 0;
 exports.registerCustomSchemes = registerCustomSchemes;
 exports.handleFaviconProtocolRequest = handleFaviconProtocolRequest;
 exports.registerCustomSchemeHandlers = registerCustomSchemeHandlers;
 const electron_1 = require("electron");
 const faviconStore_1 = require("./faviconStore");
 const redirects_1 = require("./redirects");
+exports.BROWSER_STREAM_SCHEME = 'agy-browser-stream';
 // A map of extension authority -> original URL (http://localhost:<port>)
 // The authority is usually a hash of unique extension identifiers
 // like extension ID + port + project ID. An extension running on localhost:<port>
@@ -29,6 +30,12 @@ function registerCustomSchemes() {
             // Serves cached favicon bytes to the Hub renderer's <img> tags only, so
             // no fetch, CORS, or service-worker privileges.
             scheme: faviconStore_1.FAVICON_SCHEME,
+            privileges: { standard: true, secure: true },
+        },
+        {
+            // Serves the isolated capture page and script in its own partition only;
+            // never bound on defaultSession and granted no fetch, CORS, or SW.
+            scheme: exports.BROWSER_STREAM_SCHEME,
             privileges: { standard: true, secure: true },
         },
     ]);

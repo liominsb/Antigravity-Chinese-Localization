@@ -69,9 +69,10 @@ exports.updateActions = {
     '正在检查更新...': undefined,
     [MenuUpdateStep.DownloadingUpdate]: undefined,
     '正在下载更新...': undefined,
-    [MenuUpdateStep.RestartToUpdate]: () => quitAndInstall(),
-    '重启以应用更新': () => quitAndInstall(),
+    [MenuUpdateStep.RestartToUpdate]: () => void quitAndInstall(),
+    '重启以应用更新': () => void quitAndInstall(),
 };
+let installingUpdate = false;
 // True if the last call to check for updates was from a user click in the menu.
 let isManualCheck = false;
 // How long to wait after app start before first update check (ms)
@@ -157,6 +158,7 @@ function updateMenuState(step) {
  * 4. Broadcast state to the renderer so AppUpdateButton can display progress.
  */
 function initAutoUpdater(isHeadless, settingsService) {
+    installingUpdate = false;
     // In dev mode (npm start), electron-updater skips checks because the app
     // isn't packaged. Force it to use the dev config file instead.
     if (!electron_1.app.isPackaged) {
@@ -168,13 +170,18 @@ function initAutoUpdater(isHeadless, settingsService) {
     // On macOS and linux, Electron automatically appends the OS to the channel name.
     if (process.platform === 'win32') {
         electron_updater_1.autoUpdater.channel = `latest-${process.arch}-win`;
+        electron_updater_1.autoUpdater.disableWebInstaller = true;
+        electron_updater_1.autoUpdater.disableDifferentialDownload = true;
     }
     else {
         electron_updater_1.autoUpdater.channel = `latest-${process.arch}`;
     }
     electron_updater_1.autoUpdater.requestHeaders = { 'x-app-version': electron_1.app.getVersion() };
     electron_updater_1.autoUpdater.autoDownload = true;
-    electron_updater_1.autoUpdater.autoInstallOnAppQuit = electron_1.app.isPackaged;
+    // Silent `/S` NSIS install-on-quit skips ShutdownBlockReasonCreate and can
+    // delete $INSTDIR if interrupted by OS shutdown or blocked by file locks.
+    electron_updater_1.autoUpdater.autoInstallOnAppQuit =
+        electron_1.app.isPackaged && process.platform !== 'win32';
     // Auto-updater event handlers → broadcast to renderer
     electron_updater_1.autoUpdater.on('checking-for-update', () => {
         console.log('[AutoUpdater] Checking for update…');
@@ -225,7 +232,7 @@ function initAutoUpdater(isHeadless, settingsService) {
                     headlessQuitAndInstall(downloadedFilePath);
                 }
                 else {
-                    electron_updater_1.autoUpdater.quitAndInstall();
+                    void quitAndInstall(true);
                 }
             }
             else {
@@ -262,8 +269,34 @@ function checkForUpdates(isManual = false) {
         console.error('[AutoUpdater] Failed to check for updates:', err.message);
     });
 }
-function quitAndInstall() {
-    electron_updater_1.autoUpdater.quitAndInstall();
+async function quitAndInstall(isSilent = false) {
+    if (!electron_1.app.isPackaged) {
+        console.log('[AutoUpdater] Skipping quitAndInstall (requires a packaged app).');
+        return;
+    }
+    if (installingUpdate) {
+        return;
+    }
+    const updater = electron_updater_1.autoUpdater;
+    // On Windows, electron-updater spawns the NSIS installer before calling
+    // app.quit(), so shut down the language server and its child tree first.
+    if (process.platform === 'win32' && updater.installerPath) {
+        installingUpdate = true;
+        let launched = false;
+        try {
+            const { killLanguageServer } = await Promise.resolve().then(() => __importStar(require('./languageServer')));
+            await killLanguageServer();
+            electron_updater_1.autoUpdater.quitAndInstall(isSilent, true);
+            launched = Boolean(updater.quitAndInstallCalled);
+        }
+        finally {
+            if (!launched) {
+                installingUpdate = false;
+            }
+        }
+        return;
+    }
+    electron_updater_1.autoUpdater.quitAndInstall(isSilent, true);
 }
 /**
  * Builds the update status served to the language server over the loopback
@@ -307,7 +340,7 @@ function applyHostUpdate() {
                 console.log('[AutoUpdater] Skipping quitAndInstall (requires a packaged app).');
                 return false;
             }
-            quitAndInstall();
+            void quitAndInstall();
             return true;
         case types_1.UpdateState.AvailableForDownload:
         case types_1.UpdateState.Downloading:

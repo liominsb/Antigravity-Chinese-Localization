@@ -310,6 +310,8 @@ class WcvBrowserRegistry {
         this.htmlFullscreenListeners = new Set();
         this.tabAcquiredListeners = new Set();
         this.clipVisibilityListeners = new Set();
+        this.remoteControlRevokedListeners = new Set();
+        this.remoteStreamDisconnectListeners = new Set();
         this.windowSlotBounds = new WeakMap();
         this.findTokensByEntry = new WeakMap();
         this.inFlightFindTokenByEntry = new WeakMap();
@@ -336,12 +338,17 @@ class WcvBrowserRegistry {
             return { width: preferred.width, height: preferred.height };
         }
         const s = this.windowSlotBounds.get(win);
-        return s && s.width > 0 && s.height > 0
-            ? { width: s.width, height: s.height }
-            : {
-                width: exports.DEFAULT_HIDDEN_WCV_BOUNDS.width,
-                height: exports.DEFAULT_HIDDEN_WCV_BOUNDS.height,
-            };
+        if (s && s.width > 0 && s.height > 0) {
+            return { width: s.width, height: s.height };
+        }
+        // Floor cold-park height to window content height so deferred mid-step reveals back clipView from frame 1.
+        const w = win;
+        const rawH = !w.isDestroyed?.() ? w.getContentSize?.()?.[1] : undefined;
+        const contentH = typeof rawH === 'number' && Number.isFinite(rawH) ? Math.round(rawH) : 0;
+        return {
+            width: exports.DEFAULT_HIDDEN_WCV_BOUNDS.width,
+            height: Math.max(exports.DEFAULT_HIDDEN_WCV_BOUNDS.height, contentH),
+        };
     }
     applyClipInnerBounds(entry, sz) {
         const inner = { x: 0, y: 0, width: sz.width, height: sz.height };
@@ -352,6 +359,9 @@ class WcvBrowserRegistry {
     }
     canHoldClipTarget(e) {
         return !e.crashed && !e.lastLoadError && !e.view.webContents.isDestroyed();
+    }
+    isStreamKeepaliveEntry(entry) {
+        return Boolean(entry.remoteStreamActive && this.canHoldClipTarget(entry));
     }
     isClipEntryRevealReady(entry) {
         return this.canHoldClipTarget(entry) && Boolean(entry.clipRevealReady);
@@ -460,7 +470,7 @@ class WcvBrowserRegistry {
             this.notifyClipVisibilityChanged(win, reason);
         }
     }
-    hideClipEntryOnFault(entry, reason) {
+    hideClipEntryOnFault(entry, reason, forceSync = false) {
         entry.clipRevealReady = false;
         this.clearClipRevealTimer(entry);
         const win = entry.parentWindow;
@@ -471,7 +481,8 @@ class WcvBrowserRegistry {
             this.clearHtmlFullscreen(entry, false);
         }
         entry.view.setVisible?.(false);
-        if (entry.visible && !win.isDestroyed?.()) {
+        if ((entry.visible || forceSync || entry.remoteStreamActive) &&
+            !win.isDestroyed?.()) {
             this.syncWindowClipAndEntryBounds(win);
             this.notifyClipVisibilityChanged(win, reason);
         }
@@ -491,13 +502,45 @@ class WcvBrowserRegistry {
             return;
         }
         const active = this.getVisibleEntryForWindow(win);
+        const streamedHidden = [];
         for (const e of this.getEntriesForWindow(win)) {
             if (e !== active && !e.view.webContents.isDestroyed()) {
-                e.view.setVisible?.(false);
+                if (this.isStreamKeepaliveEntry(e)) {
+                    if (!Array.isArray(clipView.children) ||
+                        !clipView.children.includes(e.view)) {
+                        e.appliedBoundsDip = undefined;
+                        clipView.addChildView?.(e.view, 0);
+                    }
+                    if (!e.appliedBoundsDip ||
+                        e.appliedBoundsDip.width <= 0 ||
+                        e.appliedBoundsDip.height <= 0) {
+                        this.applyClipInnerBounds(e, this.resolveInnerSlotSize(win, e.contentSizeDip ?? e.boundsDip));
+                    }
+                    e.view.setVisible?.(true);
+                    streamedHidden.push(e);
+                }
+                else {
+                    e.view.setVisible?.(false);
+                }
             }
         }
         if (!active) {
-            clipView.setVisible?.(false);
+            if (streamedHidden.length > 0) {
+                const baseSize = this.resolveInnerSlotSize(win, streamedHidden[0].contentSizeDip ?? streamedHidden[0].boundsDip);
+                let width = baseSize.width;
+                let height = baseSize.height;
+                for (const e of streamedHidden) {
+                    if (e.appliedBoundsDip) {
+                        width = Math.max(width, e.appliedBoundsDip.width);
+                        height = Math.max(height, e.appliedBoundsDip.height);
+                    }
+                }
+                clipView.setBounds?.({ x: 0, y: 0, width, height });
+                clipView.setVisible?.(true);
+            }
+            else {
+                clipView.setVisible?.(false);
+            }
             return;
         }
         const b = active.boundsDip;
@@ -623,7 +666,7 @@ class WcvBrowserRegistry {
                 contentViewOf(oldWindow)?.removeChildView?.(existing.view);
                 if (hadOldClip && !oldWindow.isDestroyed?.()) {
                     this.syncWindowClipAndEntryBounds(oldWindow);
-                    if (wasVisibleOnOld) {
+                    if (wasVisibleOnOld || existing.remoteStreamActive) {
                         this.notifyClipVisibilityChanged(oldWindow, 'tab-reparented');
                     }
                 }
@@ -641,6 +684,11 @@ class WcvBrowserRegistry {
                             hasRevealableClipDoc(existing, existing.lastUrl);
                 }
                 this.parkHiddenView(existing);
+                if (existing.remoteStreamActive &&
+                    (0, utils_1.getHubClipView)(parentWindow) &&
+                    !parentWindow.isDestroyed?.()) {
+                    this.notifyClipVisibilityChanged(parentWindow, 'tab-reparented');
+                }
             }
             if ((0, guestNetworkController_1.isNetworkTrackableContents)(existing.view.webContents)) {
                 guestNetworkController_1.guestNetworkController.trackGuest(existing.view.webContents, {
@@ -662,6 +710,7 @@ class WcvBrowserRegistry {
         }
         const preservedUrl = existing?.lastUrl || saved?.url || '';
         const lastTitle = existing?.lastTitle || saved?.title || request.title || '';
+        const everAgentOwned = Boolean(existing?.everAgentOwned || saved?.everAgentOwned);
         if (existing) {
             this.dispose(request.tabKey, false);
         }
@@ -701,6 +750,7 @@ class WcvBrowserRegistry {
             lastUrl,
             lastTitle,
             clipRevealReady: false,
+            ...(everAgentOwned ? { everAgentOwned: true } : {}),
         };
         this.entries.set(request.tabKey, entry);
         this.byWebContentsId.set(wc.id, entry);
@@ -1118,8 +1168,151 @@ class WcvBrowserRegistry {
             }
         }
     }
+    emitGuestStateEvent(entry, type) {
+        if (!entry.hubSender.isDestroyed()) {
+            entry.hubSender.send(exports.WCV_GUEST_EVENT_CHANNEL, {
+                type,
+                ...this.toSnapshot(entry),
+            });
+        }
+    }
     setPinned(tabKey, pinned) {
-        this.mutate(tabKey, (entry) => (entry.pinned = pinned));
+        this.mutate(tabKey, (entry) => {
+            entry.pinned = pinned;
+            if (pinned) {
+                entry.everAgentOwned = true;
+            }
+        });
+    }
+    /** Returns whether `tabKey` was ever created or controlled by an agent before disposal. */
+    isTabEverAgentOwned(tabKey) {
+        return Boolean(this.entries.get(tabKey)?.everAgentOwned ||
+            this.evicted.get(tabKey)?.everAgentOwned);
+    }
+    /**
+     * Marks whether `tabKey` is actively streamed remotely so hidden compositor
+     * capture and eviction exemption stay active until released, disposed, or crashed.
+     */
+    setRemoteStreamActive(tabKey, active) {
+        const next = Boolean(active);
+        const entry = this.entries.get(tabKey);
+        if (!entry) {
+            return;
+        }
+        if (next && (entry.crashed || entry.view.webContents.isDestroyed())) {
+            return;
+        }
+        if (Boolean(entry.remoteStreamActive) === next) {
+            if (!next && entry.remoteControlActive) {
+                entry.remoteControlActive = false;
+                this.emitGuestStateEvent(entry, 'remote-state-changed');
+            }
+            return;
+        }
+        entry.remoteStreamActive = next;
+        if (!next) {
+            entry.remoteControlActive = false;
+        }
+        const win = entry.parentWindow;
+        const reason = next ? 'remote-stream-started' : 'remote-stream-stopped';
+        if ((0, utils_1.getHubClipView)(win)) {
+            if (!win.isDestroyed?.()) {
+                this.syncWindowClipAndEntryBounds(win);
+                this.notifyClipVisibilityChanged(win, reason);
+            }
+        }
+        else {
+            if (!entry.visible && !entry.view.webContents.isDestroyed()) {
+                if (next) {
+                    entry.view.setVisible?.(true);
+                }
+                this.parkHiddenView(entry);
+            }
+            if (!win.isDestroyed?.()) {
+                this.notifyClipVisibilityChanged(win, reason);
+            }
+        }
+        this.emitGuestStateEvent(entry, 'remote-state-changed');
+        if (!next) {
+            this.evictHiddenIfNeeded();
+        }
+    }
+    /** Returns whether `tabKey` is live and actively marked for remote streaming. */
+    isRemoteStreamActive(tabKey) {
+        const entry = this.entries.get(tabKey);
+        return Boolean(entry &&
+            entry.remoteStreamActive &&
+            !entry.crashed &&
+            !entry.view.webContents.isDestroyed());
+    }
+    /** Marks whether a remote viewer holds an active control grant on `tabKey`. */
+    setRemoteControlActive(tabKey, active) {
+        const next = Boolean(active);
+        const entry = this.entries.get(tabKey);
+        if (!entry) {
+            return;
+        }
+        if (next &&
+            (entry.crashed ||
+                entry.isAgentStepActive ||
+                entry.view.webContents.isDestroyed())) {
+            return;
+        }
+        if (Boolean(entry.remoteControlActive) === next) {
+            return;
+        }
+        entry.remoteControlActive = next;
+        this.emitGuestStateEvent(entry, 'remote-state-changed');
+        if (!next) {
+            this.evictHiddenIfNeeded();
+        }
+    }
+    /** Returns whether `tabKey` is live and currently under an active remote control grant. */
+    isRemoteControlActive(tabKey) {
+        const entry = this.entries.get(tabKey);
+        return Boolean(entry &&
+            entry.remoteControlActive &&
+            !entry.crashed &&
+            !entry.isAgentStepActive &&
+            !entry.view.webContents.isDestroyed());
+    }
+    /** Registers a listener invoked whenever local activity or an agent step revokes remote control on `tabKey`. */
+    onRemoteControlRevoked(listener) {
+        this.remoteControlRevokedListeners.add(listener);
+        return () => {
+            this.remoteControlRevokedListeners.delete(listener);
+        };
+    }
+    /** Revokes any active remote control grant on `tabKey` and notifies registered host listeners. */
+    requestRemoteControlRevocation(tabKey, reason = 'local-user-interaction') {
+        this.setRemoteControlActive(tabKey, false);
+        for (const listener of [...this.remoteControlRevokedListeners]) {
+            try {
+                listener(tabKey, reason);
+            }
+            catch {
+                // Isolate listener errors from local input and agent step transitions.
+            }
+        }
+    }
+    /** Registers a listener invoked when the local Hub requests disconnecting remote viewer streams on `tabKey`. */
+    onRemoteStreamDisconnectRequested(listener) {
+        this.remoteStreamDisconnectListeners.add(listener);
+        return () => {
+            this.remoteStreamDisconnectListeners.delete(listener);
+        };
+    }
+    /** Revokes remote control and requests disconnecting all remote viewer streams on `tabKey`. */
+    requestRemoteStreamDisconnect(tabKey) {
+        this.requestRemoteControlRevocation(tabKey, 'local-disconnect');
+        for (const listener of [...this.remoteStreamDisconnectListeners]) {
+            try {
+                listener(tabKey);
+            }
+            catch {
+                // Isolate listener errors from local UI handlers.
+            }
+        }
     }
     setAgentStepActive(tabKey, active) {
         const wasActive = Boolean(this.entries.get(tabKey)?.isAgentStepActive);
@@ -1132,6 +1325,7 @@ class WcvBrowserRegistry {
         this.mutate(tabKey, (entry) => {
             entry.isAgentStepActive = active;
             if (active) {
+                entry.everAgentOwned = true;
                 (0, guestAgentControl_1.notifyGuestAgentControlArmed)(entry.webContentsId);
             }
             if (active && entry.htmlFullscreen) {
@@ -1145,6 +1339,9 @@ class WcvBrowserRegistry {
                 this.syncWindowClipAndEntryBounds(entry.parentWindow);
             }
         });
+        if (active) {
+            this.requestRemoteControlRevocation(tabKey, 'agent-step-started');
+        }
     }
     /** Exits HTML fullscreen for `tabKey` and restores its split-pane bounds. */
     exitHtmlFullscreen(tabKey) {
@@ -1339,6 +1536,10 @@ class WcvBrowserRegistry {
         this.clearSlotTransitionTimer(entry);
         const ownerWindow = entry.parentWindow;
         const clipView = (0, utils_1.getHubClipView)(ownerWindow);
+        const wasVisible = Boolean(entry.visible);
+        const wasRemoteStreamActive = Boolean(entry.remoteStreamActive);
+        entry.remoteStreamActive = false;
+        entry.remoteControlActive = false;
         if (clipView) {
             entry.visible = false;
         }
@@ -1362,6 +1563,10 @@ class WcvBrowserRegistry {
         deviceChooser_1.deviceChooserController.cancelForGuest(entry.webContentsId);
         if (clipView) {
             this.syncWindowClipAndEntryBounds(ownerWindow);
+            if ((wasVisible || wasRemoteStreamActive) &&
+                !ownerWindow.isDestroyed?.()) {
+                this.notifyClipVisibilityChanged(ownerWindow, 'disposed');
+            }
         }
     }
     disposeForWindow(win) {
@@ -1589,7 +1794,9 @@ class WcvBrowserRegistry {
                 contentViewOf(win)?.removeChildView?.(entry.view);
             }
             else {
-                entry.view.setVisible?.(false);
+                if (!this.isStreamKeepaliveEntry(entry)) {
+                    entry.view.setVisible?.(false);
+                }
                 if (!Array.isArray(clipView.children) ||
                     !clipView.children.includes(entry.view)) {
                     entry.appliedBoundsDip = undefined;
@@ -1612,13 +1819,31 @@ class WcvBrowserRegistry {
             contentView?.removeChildView?.(entry.view);
             return;
         }
-        // Insert directly below the curtain (above older hidden tabs) so that
-        // stacked hidden tabs never occlude the most recently parked one, and set
+        // Insert directly below the curtain (above older hidden tabs) — or below
+        // any hidden streamed tabs when non-streamed — so stacked hidden tabs never
+        // occlude an active remote stream or the most recently parked tab, and set
         // bounds after `addChildView` so the attached view updates its native origin.
         const children = contentView?.children ?? [];
         const withoutEntry = children.filter((child) => child !== entry.view);
         const curtainIdx = withoutEntry.indexOf(curtainView);
-        contentView?.addChildView?.(entry.view, Math.max(0, curtainIdx));
+        let insertIdx = Math.max(0, curtainIdx);
+        if (!this.isStreamKeepaliveEntry(entry) && curtainIdx > 0) {
+            const streamedViews = new Set();
+            for (const e of this.getEntriesForWindow(win)) {
+                if (e !== entry && !e.visible && this.isStreamKeepaliveEntry(e)) {
+                    streamedViews.add(e.view);
+                }
+            }
+            if (streamedViews.size > 0) {
+                for (let i = 0; i < curtainIdx; i += 1) {
+                    if (streamedViews.has(withoutEntry[i])) {
+                        insertIdx = i;
+                        break;
+                    }
+                }
+            }
+        }
+        contentView?.addChildView?.(entry.view, insertIdx);
         entry.view.setBounds?.(this.resolveHiddenBounds(entry));
     }
     detachVisibleSiblings(parentWindow, exceptEntry) {
@@ -1656,6 +1881,8 @@ class WcvBrowserRegistry {
             .filter((e) => !e.visible &&
             !e.pinned &&
             !e.isAgentStepActive &&
+            !e.remoteStreamActive &&
+            !e.remoteControlActive &&
             !this.operationPins.has(e.tabKey))
             .sort((a, b) => a.lastShownAt - b.lastShownAt);
         if (idleHidden.length === 0) {
@@ -1692,6 +1919,7 @@ class WcvBrowserRegistry {
                 hubSenderId: victim.hubSender.id,
                 parentWindow: victim.parentWindow,
                 history: captureHistory(victim.view.webContents),
+                ...(victim.everAgentOwned ? { everAgentOwned: true } : {}),
             });
             this.dispose(victim.tabKey, false);
         }
@@ -1803,6 +2031,20 @@ class WcvBrowserRegistry {
                 if (hadErrorOrCrash) {
                     this.armClipRevealTimerIfNeeded(entry);
                 }
+                const win = entry.parentWindow;
+                if (this.isStreamKeepaliveEntry(entry) &&
+                    !entry.visible &&
+                    !win.isDestroyed?.()) {
+                    if ((0, utils_1.getHubClipView)(win)) {
+                        this.syncWindowClipAndEntryBounds(win);
+                        if (!this.getVisibleEntryForWindow(win)) {
+                            this.notifyClipVisibilityChanged(win, 'remote-stream-recovered');
+                        }
+                    }
+                    else {
+                        this.parkHiddenView(entry);
+                    }
+                }
             }
             if (entry.htmlFullscreen) {
                 this.clearHtmlFullscreen(entry, false);
@@ -1907,17 +2149,32 @@ class WcvBrowserRegistry {
         });
         on('render-process-gone', (_e, details) => {
             this.clearFindTokens(entry);
+            const wasRemoteStreamActive = Boolean(entry.remoteStreamActive);
+            entry.remoteStreamActive = false;
+            entry.remoteControlActive = false;
             entry.crashed = true;
-            if ((0, utils_1.getHubClipView)(entry.parentWindow)) {
+            const win = entry.parentWindow;
+            const clipView = (0, utils_1.getHubClipView)(win);
+            if (clipView) {
                 entry.shownInVisibleClip = false;
             }
-            this.hideClipEntryOnFault(entry, 'guest-render-process-gone');
+            this.hideClipEntryOnFault(entry, 'guest-render-process-gone', wasRemoteStreamActive);
+            if (!clipView && wasRemoteStreamActive && !win.isDestroyed?.()) {
+                if (!entry.visible) {
+                    this.parkHiddenView(entry);
+                }
+                this.notifyClipVisibilityChanged(win, 'guest-render-process-gone');
+            }
             emit('render-process-gone', { reason: details?.reason ?? 'crashed' });
         });
         wc.once?.('destroyed', () => {
             this.clearFindTokens(entry);
             this.clearClipRevealTimer(entry);
             this.clearSlotTransitionTimer(entry);
+            const wasVisible = Boolean(entry.visible);
+            const wasRemoteStreamActive = Boolean(entry.remoteStreamActive);
+            entry.remoteStreamActive = false;
+            entry.remoteControlActive = false;
             guestWebMcpController_1.guestWebMcpController.noteGuestDisposed(entry.webContentsId);
             this.byWebContentsId.delete(entry.webContentsId);
             const isCurrent = this.entries.get(entry.tabKey) === entry;
@@ -1940,6 +2197,9 @@ class WcvBrowserRegistry {
                 contentViewOf(win)?.removeChildView?.(entry.view);
                 if (!win.isDestroyed?.()) {
                     this.syncWindowClipAndEntryBounds(win);
+                    if (isCurrent && (wasVisible || wasRemoteStreamActive)) {
+                        this.notifyClipVisibilityChanged(win, 'guest-destroyed');
+                    }
                 }
             }
         });
@@ -1964,6 +2224,8 @@ class WcvBrowserRegistry {
             visible: Boolean(entry.visible),
             pinned: Boolean(entry.pinned),
             crashed: Boolean(entry.crashed),
+            remoteStreamActive: Boolean(entry.remoteStreamActive),
+            remoteControlActive: Boolean(entry.remoteControlActive),
             lastHttpResponseCode: entry.lastHttpResponseCode ?? null,
             lastLoadError: entry.lastLoadError ?? null,
         };

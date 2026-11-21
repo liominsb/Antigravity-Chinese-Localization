@@ -104,6 +104,23 @@
       .join('+');
   }
 
+  const SHORTCUT_SINGLE_KEY_RE = /^(?:Enter|Return|Esc|Escape|Tab|Space|Backspace|Delete|Del|Insert|Ins|Home|End|PageUp|PageDown|Up|Down|Left|Right|ArrowUp|ArrowDown|ArrowLeft|ArrowRight|Forward|Back|F(?:[1-9]|1\d|2[0-4])|[^\s])$/;
+  const SHORTCUT_MOD_CHORD_RE = /^(?:(?:Ctrl|Cmd|Command|Control|Alt|Opt|Option|Shift|Meta|Super|Win|Fn)\+)+[^\s+]+$/i;
+  const SHORTCUT_GLYPH_RE = /[⌘⌥⌃⇧⏎⌫⌦⇥⎋↑↓←→]/;
+
+  function isLikelyShortcutKeys(rawKeys) {
+    if (!rawKeys) return false;
+    const normalized = rawKeys.trim().replace(/\s*\+\s*/g, '+');
+    if (!normalized) return false;
+    const tokens = normalized.split(/\s+/);
+    if (tokens.length > 4) return false;
+    return tokens.every(tok =>
+      SHORTCUT_GLYPH_RE.test(tok) ||
+      SHORTCUT_MOD_CHORD_RE.test(tok) ||
+      SHORTCUT_SINGLE_KEY_RE.test(tok)
+    );
+  }
+
   function translateString(text) {
     if (!text || typeof text !== 'string') return text;
     const trimmed = text.trim();
@@ -148,13 +165,18 @@
 
     // 4. 动态正则匹配管线（全部标准原生正则字面量，命中统一写入 stringCache）
 
-    const shortcut = trimmed.match(/^(Add shortcut|Remove shortcut|Shortcut)(?: (.{1,45}))? for (.{1,140})$/);
-    if (shortcut) {
-      const [, operation, keys, action] = shortcut;
-      const labels = { 'Add shortcut': '添加快捷键', 'Remove shortcut': '移除快捷键', Shortcut: '快捷键' };
-      const fixed = `${labels[operation]}${keys ? ' ' + keys : ''}（${translateString(action)}）`;
-      cacheSet(trimmed, fixed);
-      return replaceTrimmed(text, trimmed, fixed);
+    const shortcutMatch = trimmed.match(/^(Add shortcut|Remove shortcut|Shortcut)(?:\s+(?!for(?:\s|$))(.{1,45}?))?\s+for\s+(.{1,140})$/);
+    if (shortcutMatch) {
+      const [, operation, keys, action] = shortcutMatch;
+      const actionTrimmed = action.trim();
+      const validKeys = !keys || isLikelyShortcutKeys(keys);
+      if (validKeys && actionTrimmed && !/(?:^|[^.])\.$|[?!]$/.test(actionTrimmed)) {
+        const labels = { 'Add shortcut': '添加快捷键', 'Remove shortcut': '移除快捷键', Shortcut: '快捷键' };
+        const keyPart = keys ? ' ' + keys.trim() : '';
+        const fixed = `${labels[operation]}${keyPart}（${translateString(actionTrimmed)}）`;
+        cacheSet(trimmed, fixed);
+        return replaceTrimmed(text, trimmed, fixed);
+      }
     }
 
     // ===== 首页问候语（3 组模板 × 有/无用户名） =====
@@ -2740,16 +2762,126 @@
     }
   }
 
-  function translateComposerLabel(node) {
-    const label = node.getAttribute && node.getAttribute('aria-label');
-    if (label === 'Message input') {
-      const role = node.getAttribute('role');
-      if (role === 'textbox' || role === 'combobox') {
-        node.setAttribute('aria-label', translateString(label));
-      }
-    } else if ((label === 'Start Voice mode' || label === 'End Voice mode') && node.tagName === 'BUTTON') {
-      node.setAttribute('aria-label', translateString(label));
+  const COMPOSER_ARIA_ALLOWED = new Set(['Message input']);
+  const VOICE_BUTTON_ARIA_ALLOWED = new Set(['Start Voice mode', 'End Voice mode']);
+
+  function isNonComposerProtectedSelf(cur) {
+    if (!cur || cur.nodeType !== Node.ELEMENT_NODE) return false;
+    const curTag = (cur.tagName || '').toUpperCase();
+    if (curTag === 'PRE' || curTag === 'CODE' || curTag === 'SVG' || curTag === 'MATH' || curTag === 'MJX-CONTAINER' || curTag === 'SCRIPT' || curTag === 'STYLE' || curTag === 'NOSCRIPT') {
+      return true;
     }
+    if (cur.getAttribute && (
+      cur.getAttribute('data-testid') === 'user-message-content' ||
+      cur.getAttribute('role') === 'code' ||
+      cur.getAttribute('data-language') ||
+      cur.getAttribute('data-code') ||
+      cur.getAttribute('data-line') ||
+      cur.getAttribute('data-line-number')
+    )) {
+      return true;
+    }
+    if (cur.classList && (
+      cur.classList.contains('group/user-input-step') ||
+      cur.classList.contains('user-message') ||
+      cur.classList.contains('thought-content') ||
+      cur.classList.contains('thinking-content') ||
+      cur.classList.contains('thought-box') ||
+      cur.classList.contains('cursor-edit') ||
+      cur.classList.contains('cursor-text') ||
+      cur.classList.contains('monaco-editor') ||
+      cur.classList.contains('editor-instance') ||
+      cur.classList.contains('katex') ||
+      cur.classList.contains('katex-display') ||
+      cur.classList.contains('katex-html') ||
+      cur.classList.contains('mjx-container')
+    )) {
+      return true;
+    }
+    if (cur.className && typeof cur.className === 'string') {
+      const lowerClass = cur.className.toLowerCase();
+      if (lowerClass.includes('code-line') || lowerClass.includes('view-line') || codeClassPattern.test(cur.className)) {
+        return true;
+      }
+    }
+    if (cur.parentElement && cur.parentElement.querySelector) {
+      const trigger = cur.parentElement.querySelector(':scope > button[data-testid="thinking-collapsible-trigger"]');
+      if (trigger && cur !== trigger && !trigger.contains(cur)) {
+        return true;
+      }
+    }
+    return false;
+  }
+
+  function isProtectedFromComposerLabel(node) {
+    let cur = node && node.nodeType === Node.TEXT_NODE ? node.parentElement : node;
+    while (cur && cur !== document.body) {
+      if (isNonComposerProtectedSelf(cur)) return true;
+      cur = cur.parentElement;
+    }
+    return false;
+  }
+
+  function translateComposerLabel(node, skipAncestorCheck = false) {
+    if (!node || node.nodeType !== Node.ELEMENT_NODE || !node.getAttribute) return;
+    const label = node.getAttribute('aria-label');
+    if (!label) return;
+    const trimmed = label.trim();
+    const upperTag = (node.tagName || '').toUpperCase();
+    let eligible = false;
+    if (COMPOSER_ARIA_ALLOWED.has(trimmed)) {
+      const role = node.getAttribute('role');
+      eligible = role === 'textbox' || role === 'combobox' || upperTag === 'TEXTAREA';
+    } else if (VOICE_BUTTON_ARIA_ALLOWED.has(trimmed)) {
+      eligible = upperTag === 'BUTTON';
+    }
+    if (!eligible || (!skipAncestorCheck && isProtectedFromComposerLabel(node))) return;
+    const translated = translateString(label);
+    if (translated && translated !== label) {
+      node.setAttribute('aria-label', translated);
+    }
+  }
+
+  function isEditableSurface(node) {
+    if (!node || node.nodeType !== Node.ELEMENT_NODE) return false;
+    return Boolean(node.isContentEditable || (node.getAttribute && (
+      node.getAttribute('contenteditable') === 'true' ||
+      node.getAttribute('data-lexical-editor') === 'true'
+    )));
+  }
+
+  function isComposerSubtreeRoot(node) {
+    if (!node || node.nodeType !== Node.ELEMENT_NODE) return false;
+    if (node.classList && (node.classList.contains('chat-input') || node.classList.contains('input-area'))) {
+      return true;
+    }
+    return isEditableSurface(node) || Boolean(node.getAttribute && (
+      node.getAttribute('role') === 'textbox' ||
+      node.getAttribute('role') === 'combobox'
+    ));
+  }
+
+  function translateComposerLabelsInSubtree(rootNode) {
+    if (!rootNode || rootNode.nodeType !== Node.ELEMENT_NODE) return;
+    if (isProtectedFromComposerLabel(rootNode)) return;
+    const walk = (el) => {
+      if (!el || el.nodeType !== Node.ELEMENT_NODE || isNonComposerProtectedSelf(el)) return;
+      translateComposerLabel(el, true);
+      // 抵达真实编辑区本体（contenteditable / Lexical）后立即剪枝，绝不遍历用户粘贴的大量草稿子节点
+      if (isEditableSurface(el)) return;
+      if (el.shadowRoot) {
+        observeRoot(el.shadowRoot);
+        const srChildren = el.shadowRoot.childNodes;
+        for (let i = 0; srChildren && i < srChildren.length; i++) {
+          walk(srChildren[i]);
+        }
+      }
+      const children = el.childNodes;
+      for (let i = 0; children && i < children.length; i++) {
+        walk(children[i]);
+      }
+    };
+    walk(rootNode);
   }
 
   function translateNode(node) {
@@ -2771,14 +2903,22 @@
               }
             }
           });
+        } else {
+          translateComposerLabel(node);
         }
         return;
       }
     }
 
     if (shouldSkipNode(node)) {
-      // 输入区仍跳过正文，只处理已知控件的辅助功能名称。
-      if (node.nodeType === Node.ELEMENT_NODE) translateComposerLabel(node);
+      // 输入区仍跳过正文，只处理已知控件的辅助功能名称（穿透 .chat-input / .input-area 容器但不触碰任何文本节点）。
+      if (node.nodeType === Node.ELEMENT_NODE) {
+        if (isComposerSubtreeRoot(node)) {
+          translateComposerLabelsInSubtree(node);
+        } else {
+          translateComposerLabel(node);
+        }
+      }
       return;
     }
 

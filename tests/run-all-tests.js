@@ -54,6 +54,7 @@ const tests = [
   'ticket-46-delete-confirm.test.js',
   'ticket-47-archive-toast.test.js',
   'ticket-48-v2340-features.test.js',
+  'ticket-49-v2340-remaining-gaps.test.js',
   'check-injection-syntax.js',
   'verify-ready-asar.js',
   'asar-version.test.js',

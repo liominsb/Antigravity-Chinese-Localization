@@ -4280,7 +4280,11 @@ const dictionary = {
 
     // ===== 删除确认弹窗 =====
     "Are you sure you want to delete this conversation? This action cannot be undone.": "确定要删除该对话吗？此操作无法撤销。",
-    "? This will remove it from your MCP configuration.": "吗？这将从你的 MCP 配置中移除。"
+    "? This will remove it from your MCP configuration.": "吗？这将从你的 MCP 配置中移除。",
+
+    // ===== 归档提示 toast（消息体为 markdown，图标会截断文本节点） =====
+    "View archived in the sidebar (![filter](icon://filter_list) menu).": "已归档内容可在侧边栏（显示选项菜单）中查看。",
+    "View archived in the sidebar (Display options menu).": "已归档内容可在侧边栏（显示选项菜单）中查看。"
 };
 
 const coreWords = {

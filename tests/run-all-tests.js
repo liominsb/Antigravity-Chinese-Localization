@@ -52,6 +52,7 @@ const tests = [
   'ticket-44-v2330-features.test.js',
   'ticket-45-scope-and-voice.test.js',
   'ticket-46-delete-confirm.test.js',
+  'ticket-47-archive-toast.test.js',
   'check-injection-syntax.js',
   'verify-ready-asar.js',
   'asar-version.test.js',

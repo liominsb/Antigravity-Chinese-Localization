@@ -148,6 +148,15 @@
 
     // 4. 动态正则匹配管线（全部标准原生正则字面量，命中统一写入 stringCache）
 
+    const shortcut = trimmed.match(/^(Add shortcut|Remove shortcut|Shortcut)(?: (.{1,45}))? for (.{1,140})$/);
+    if (shortcut) {
+      const [, operation, keys, action] = shortcut;
+      const labels = { 'Add shortcut': '添加快捷键', 'Remove shortcut': '移除快捷键', Shortcut: '快捷键' };
+      const fixed = `${labels[operation]}${keys ? ' ' + keys : ''}（${translateString(action)}）`;
+      cacheSet(trimmed, fixed);
+      return replaceTrimmed(text, trimmed, fixed);
+    }
+
     // ===== 首页问候语（3 组模板 × 有/无用户名） =====
     if (/^(?:Hey|Welcome back|Good to see you)/i.test(trimmed)) {
       const greetingRules = [
@@ -2731,6 +2740,18 @@
     }
   }
 
+  function translateComposerLabel(node) {
+    const label = node.getAttribute && node.getAttribute('aria-label');
+    if (label === 'Message input') {
+      const role = node.getAttribute('role');
+      if (role === 'textbox' || role === 'combobox') {
+        node.setAttribute('aria-label', translateString(label));
+      }
+    } else if ((label === 'Start Voice mode' || label === 'End Voice mode') && node.tagName === 'BUTTON') {
+      node.setAttribute('aria-label', translateString(label));
+    }
+  }
+
   function translateNode(node) {
     if (!node) return;
 
@@ -2755,7 +2776,11 @@
       }
     }
 
-    if (shouldSkipNode(node)) return;
+    if (shouldSkipNode(node)) {
+      // 输入区仍跳过正文，只处理已知控件的辅助功能名称。
+      if (node.nodeType === Node.ELEMENT_NODE) translateComposerLabel(node);
+      return;
+    }
 
     if (node.nodeType === Node.TEXT_NODE) {
       translateTextNode(node);
@@ -2868,7 +2893,10 @@
           const canTranslateAttrs = isInputLike
             ? (!target.parentElement || !shouldSkipNode(target.parentElement))
             : !shouldSkipNode(target);
-          if (!canTranslateAttrs) continue;
+          if (!canTranslateAttrs) {
+            if (attrs.has('aria-label')) translateComposerLabel(target);
+            continue;
+          }
 
           for (const attrName of attrs) {
             if (attrName === 'value' && isInputLike) continue;

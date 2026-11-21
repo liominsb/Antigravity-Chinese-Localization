@@ -1,13 +1,10 @@
 'use strict';
 
-const fs = require('fs');
-const path = require('path');
 const assert = require('assert');
 const { loadTranslatorSandbox } = require('./helpers/translator-loader');
 
 console.log('=== 开始 Ticket-46 删除确认弹窗专项测试 ===\n');
 
-const ROOT = path.resolve(__dirname, '..');
 let passed = 0;
 let total = 0;
 
@@ -43,6 +40,11 @@ console.log('--- 2. 节点级片段 ---');
 check('前缀片段（词典既有）', translateString('Are you sure you want to delete the '), '确定要删除 ');
 check('前缀片段（无 the，词典既有）', translateString('Are you sure you want to delete '), '确定要删除 ');
 check('后缀片段', translateString('? This action cannot be undone.'), '吗？此操作无法撤销。');
+check(
+  'MCP 服务器删除确认后缀片段',
+  translateString('? This will remove it from your MCP configuration.'),
+  '吗？这将从你的 MCP 配置中移除。'
+);
 
 // -----------------------------------------------------------------------------
 // 3. 幂等性：二次翻译必须与一次结果一致（缓存不得存带空白的译文）
@@ -51,10 +53,12 @@ console.log('--- 3. 幂等性 ---');
 for (const text of [
   'Are you sure you want to delete this conversation? This action cannot be undone.',
   '? This action cannot be undone.',
+  ' ? This action cannot be undone. ',
+  ' ? This will remove it from your MCP configuration.',
   'Are you sure you want to delete the ',
 ]) {
   const first = translateString(text);
-  const second = translateString(text); // 同一输入第二次调用会命中 stringCache
+  const second = translateString(text);
   check(`二次命中缓存不叠加空白：${text}`, second, first);
   check(`译文再次翻译不变：${text}`, translateString(first), first);
 }
